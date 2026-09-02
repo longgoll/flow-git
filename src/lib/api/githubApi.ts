@@ -181,3 +181,101 @@ export async function createGitHubRepository(
   }
   return await res.json();
 }
+
+export async function createGitHubPullRequest(
+  owner: string,
+  repo: string,
+  title: string,
+  body: string,
+  head: string,
+  base: string,
+  draft: boolean = false,
+  token?: string
+): Promise<GitHubPullRequest> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      ...getHeaders(token),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      title,
+      body,
+      head,
+      base,
+      draft,
+    }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    let msg = errorData.message || `GitHub API Error (${res.status})`;
+    if (errorData.errors && Array.isArray(errorData.errors)) {
+      const details = errorData.errors.map((e: any) => e.message || JSON.stringify(e)).join('; ');
+      msg += `: ${details}`;
+    }
+    throw new Error(msg);
+  }
+  return await res.json();
+}
+
+export async function fetchGitHubPullRequestDetail(
+  owner: string,
+  repo: string,
+  pullNumber: number,
+  token?: string
+): Promise<GitHubPullRequest> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}`;
+  const res = await fetch(url, { headers: getHeaders(token) });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`GitHub API Error (${res.status}): ${errorText}`);
+  }
+  return await res.json();
+}
+
+export async function mergeGitHubPullRequest(
+  owner: string,
+  repo: string,
+  pullNumber: number,
+  mergeMethod: 'merge' | 'squash' | 'rebase' = 'merge',
+  commitTitle?: string,
+  commitMessage?: string,
+  token?: string
+): Promise<{ sha: string; merged: boolean; message: string }> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/merge`;
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      ...getHeaders(token),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      merge_method: mergeMethod,
+      ...(commitTitle ? { commit_title: commitTitle } : {}),
+      ...(commitMessage ? { commit_message: commitMessage } : {}),
+    }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    let msg = errorData.message || `Merge failed (${res.status})`;
+    throw new Error(msg);
+  }
+  return await res.json();
+}
+
+export async function deleteGitHubBranch(
+  owner: string,
+  repo: string,
+  branchName: string,
+  token?: string
+): Promise<boolean> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/git/refs/heads/${encodeURIComponent(branchName)}`;
+  const res = await fetch(url, {
+    method: 'DELETE',
+    headers: getHeaders(token),
+  });
+  return res.ok || res.status === 204;
+}
+
+

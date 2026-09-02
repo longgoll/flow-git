@@ -17,6 +17,7 @@
   import CreateBranchModal from "./lib/components/CreateBranchModal.svelte";
   import QuickHotfixModal from "./lib/components/QuickHotfixModal.svelte";
   import PullRequestReviewer from "./lib/components/PullRequestReviewer.svelte";
+  import CreatePullRequestModal from "./lib/components/CreatePullRequestModal.svelte";
   import NukeHistoryModal from "./lib/components/NukeHistoryModal.svelte";
   import RemoteManagerModal from "./lib/components/RemoteManagerModal.svelte";
   import InteractiveRebaseModal from "./lib/components/InteractiveRebaseModal.svelte";
@@ -162,6 +163,15 @@
 
   // Publish to GitHub state
   let showPublishModal = $state<boolean>(false);
+
+  // Create Pull Request state
+  let showCreatePRModal = $state<boolean>(false);
+  let createPRSourceBranch = $state<string>("");
+
+  function handleOpenCreatePR(sourceBranch?: string) {
+    createPRSourceBranch = sourceBranch || repo.repoSummary?.current_branch || "";
+    showCreatePRModal = true;
+  }
 
   let unlistenWatcher: (() => void) | null = null;
 
@@ -584,6 +594,17 @@
       () => loadRepository(repo.currentRepoPath),
     );
     repo.statusMessage = res.message;
+    if (res.success && branch.shorthand !== "main" && branch.shorthand !== "master") {
+      toast.success(
+        `Đã publish nhánh '${branch.shorthand}'`,
+        `Bạn có muốn tạo Pull Request cho nhánh này không?`,
+        {
+          label: "Tạo Pull Request",
+          onClick: () => handleOpenCreatePR(branch.shorthand),
+        },
+        8000,
+      );
+    }
   }
 
   async function handlePushBranch(branch: BranchInfo, force = false) {
@@ -598,6 +619,17 @@
       () => loadRepository(repo.currentRepoPath),
     );
     repo.statusMessage = res.message;
+    if (res.success && branch.shorthand !== "main" && branch.shorthand !== "master") {
+      toast.success(
+        `Đã push nhánh '${branch.shorthand}'`,
+        `Bạn có muốn tạo Pull Request vào nhánh chính không?`,
+        {
+          label: "Tạo Pull Request",
+          onClick: () => handleOpenCreatePR(branch.shorthand),
+        },
+        8000,
+      );
+    }
   }
 
   async function handlePushCurrentBranch() {
@@ -1094,6 +1126,7 @@
         onCleanMergedBranches={handleOpenCleanMerged}
         onDeleteTag={handleDeleteTag}
         onOpenWorktrees={handleOpenWorktreesModal}
+        onCreatePullRequest={(b) => handleOpenCreatePR(b.shorthand)}
         {remotes}
         onOpenRemoteManager={() => (showRemoteManagerModal = true)}
         onFetchRemote={handleFetchSpecificRemote}
@@ -1427,6 +1460,7 @@
         <PullRequestReviewer
           remoteOriginUrl={originRemoteUrl}
           localBranches={repo.branches}
+          onOpenCreatePR={() => handleOpenCreatePR()}
           onCheckoutBranch={async (b) => {
             await checkoutBranch(repo.currentRepoPath, b);
             await loadRepository(repo.currentRepoPath);
@@ -1713,6 +1747,22 @@
   onOpenTrash={() => safety.openTrash(repo.currentRepoPath)}
   onOpenTimeMachine={() => safety.openTimeMachine(repo.currentRepoPath)}
   onRepoRefreshed={async () => {
+    if (repo.currentRepoPath) {
+      await loadRepository(repo.currentRepoPath);
+    }
+  }}
+/>
+
+<!-- Create Pull Request Modal -->
+<CreatePullRequestModal
+  isOpen={showCreatePRModal}
+  remoteOriginUrl={originRemoteUrl}
+  branches={repo.branches}
+  initialSourceBranch={createPRSourceBranch}
+  onClose={() => (showCreatePRModal = false)}
+  onSuccess={async () => {
+    showCreatePRModal = false;
+    viewMode = "pr";
     if (repo.currentRepoPath) {
       await loadRepository(repo.currentRepoPath);
     }

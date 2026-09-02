@@ -17,25 +17,31 @@
     ShieldAlert,
     MessageCircle,
     Check,
+    GitMerge,
   } from 'lucide-svelte';
   import type { BranchInfo, GitHubPRComment, GitHubPRFile, GitHubPullRequest } from '../types';
   import {
     fetchGitHubPullRequests,
     fetchGitHubPullRequestFiles,
     fetchGitHubPullRequestComments,
+    fetchGitHubPullRequestDetail,
     createGitHubInlineComment,
     submitGitHubPullRequestReview,
+    mergeGitHubPullRequest,
+    deleteGitHubBranch,
     parseGitHubRemote,
     saveGitHubToken,
     getStoredGitHubToken,
   } from '../api/githubApi';
   import { getActiveAccount } from '../api/auth';
   import { toast } from '../state/toastState.svelte';
+  import CreatePullRequestModal from './CreatePullRequestModal.svelte';
 
   interface Props {
     remoteOriginUrl?: string | null;
     localBranches?: BranchInfo[];
     onCheckoutBranch?: (branchName: string) => Promise<void>;
+    onOpenCreatePR?: () => void;
     onClose?: () => void;
   }
 
@@ -43,6 +49,7 @@
     remoteOriginUrl = '',
     localBranches = [],
     onCheckoutBranch,
+    onOpenCreatePR,
     onClose,
   }: Props = $props();
 
@@ -52,6 +59,16 @@
   let repoName = $state('');
   let patToken = $state(getStoredGitHubToken());
   let showTokenInput = $state(false);
+  let showLocalCreatePRModal = $state(false);
+  let activeAccountUsername = $state('');
+
+  // Merge PR State
+  let showMergeModal = $state(false);
+  let mergeMethod = $state<'merge' | 'squash' | 'rebase'>('merge');
+  let mergeCommitTitle = $state('');
+  let mergeCommitMessage = $state('');
+  let deleteBranchAfterMerge = $state(false);
+  let isMerging = $state(false);
 
   // Data state
   let prList = $state<GitHubPullRequest[]>([]);
@@ -77,6 +94,13 @@
   let reviewBody = $state('');
   let isSubmittingReview = $state(false);
 
+  // Check if current authenticated user is PR author
+  let isOwnPR = $derived(
+    !!selectedPR &&
+    !!activeAccountUsername &&
+    selectedPR.user.login.toLowerCase() === activeAccountUsername.toLowerCase()
+  );
+
   // Sync state with detected remote
   $effect(() => {
     if (parsedRemote) {
@@ -93,9 +117,19 @@
           patToken = activeAcc.token;
           saveGitHubToken(activeAcc.token);
         }
+        if (activeAcc?.username) {
+          activeAccountUsername = activeAcc.username;
+        }
       } catch (err) {
         console.warn('Could not load active account token', err);
       }
+    } else {
+      try {
+        const activeAcc = await getActiveAccount('github');
+        if (activeAcc?.username) {
+          activeAccountUsername = activeAcc.username;
+        }
+      } catch {}
     }
     if (repoOwner && repoName) {
       loadPullRequests();
@@ -132,18 +166,67 @@
     inlineCommentLine = null;
     inlineCommentText = '';
     selectedFileIndex = 0;
+    mergeCommitTitle = `Merge pull request #${pr.number} from ${pr.head.ref}`;
+    mergeCommitMessage = pr.title;
+    if (isOwnPR) {
+      reviewEvent = 'COMMENT';
+    }
     try {
       isLoadingDetails = true;
-      const [files, comments] = await Promise.all([
+      const [files, comments, detail] = await Promise.all([
         fetchGitHubPullRequestFiles(repoOwner, repoName, pr.number, patToken).catch(() => []),
         fetchGitHubPullRequestComments(repoOwner, repoName, pr.number, patToken).catch(() => []),
+        fetchGitHubPullRequestDetail(repoOwner, repoName, pr.number, patToken).catch(() => null),
       ]);
       prFiles = files;
       prComments = comments;
+      if (detail) {
+        selectedPR = { ...pr, ...detail };
+      }
     } catch (err: any) {
       toast.error('Lỗi tải chi tiết PR', err.message || String(err));
     } finally {
       isLoadingDetails = false;
+    }
+  }
+
+  async function handleConfirmMerge() {
+    if (!selectedPR) return;
+    try {
+      isMerging = true;
+      await mergeGitHubPullRequest(
+        repoOwner,
+        repoName,
+        selectedPR.number,
+        mergeMethod,
+        mergeCommitTitle.trim() || undefined,
+        mergeCommitMessage.trim() || undefined,
+        patToken
+      );
+
+      toast.success(
+        'Hợp nhất Pull Request thành công!',
+        `PR #${selectedPR.number} đã được merge vào nhánh '${selectedPR.base.ref}'.`
+      );
+
+      if (deleteBranchAfterMerge && selectedPR.head.ref) {
+        try {
+          await deleteGitHubBranch(repoOwner, repoName, selectedPR.head.ref, patToken);
+          toast.info(`Đã xóa nhánh remote '${selectedPR.head.ref}'.`);
+        } catch (delErr) {
+          console.warn('Could not delete remote branch after merge', delErr);
+        }
+      }
+
+      showMergeModal = false;
+      await loadPullRequests();
+      if (selectedPR) {
+        selectedPR = { ...selectedPR, state: 'closed', merged: true };
+      }
+    } catch (err: any) {
+      toast.error('Không thể merge Pull Request', err.message || String(err));
+    } finally {
+      isMerging = false;
     }
   }
 
@@ -226,7 +309,11 @@
       toast.success('Đã gửi Review thành công', `Đã gửi đánh giá (${reviewEvent}) cho PR #${selectedPR.number}.`);
       loadPullRequests();
     } catch (err: any) {
-      toast.error('Không thể gửi Review', err.message || String(err));
+      let errMsg = err.message || String(err);
+      if (errMsg.includes('Can not approve your own pull request') || errMsg.includes('cannot approve your own pull request')) {
+        errMsg = 'Bạn là tác giả của PR này nên không thể tự Approve. Vui lòng chọn mục "Comment" để gửi nhận xét.';
+      }
+      toast.error('Không thể gửi Review', errMsg);
     } finally {
       isSubmittingReview = false;
     }
@@ -256,8 +343,23 @@
       </div>
     </div>
 
-    <!-- Controls: Token, Refresh, Close -->
+    <!-- Controls: Create PR, Token, Refresh, Close -->
     <div class="flex items-center gap-2">
+      <button
+        onclick={() => {
+          if (onOpenCreatePR) {
+            onOpenCreatePR();
+          } else {
+            showLocalCreatePRModal = true;
+          }
+        }}
+        class="px-2.5 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+        title="Tạo Pull Request mới lên GitHub"
+      >
+        <Plus class="w-3.5 h-3.5" />
+        <span>Tạo Pull Request</span>
+      </button>
+
       {#if !patToken}
         <button
           onclick={() => (showTokenInput = true)}
@@ -358,8 +460,22 @@
             <span>Đang tải danh sách PRs từ GitHub...</span>
           </div>
         {:else if filteredPRs.length === 0}
-          <div class="p-6 text-center text-xs text-zinc-400 dark:text-zinc-500">
-            Không tìm thấy Pull Request nào.
+          <div class="p-6 text-center text-xs text-zinc-400 dark:text-zinc-500 space-y-3">
+            <div>Không tìm thấy Pull Request nào.</div>
+            <button
+              type="button"
+              onclick={() => {
+                if (onOpenCreatePR) {
+                  onOpenCreatePR();
+                } else {
+                  showLocalCreatePRModal = true;
+                }
+              }}
+              class="px-3 py-1.5 rounded-lg bg-cyan-50 dark:bg-cyan-950/60 hover:bg-cyan-100 dark:hover:bg-cyan-900 border border-cyan-200 dark:border-cyan-800 text-cyan-700 dark:text-cyan-300 font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Plus class="w-3.5 h-3.5" />
+              <span>Tạo Pull Request mới</span>
+            </button>
           </div>
         {:else}
           {#each filteredPRs as pr}
@@ -437,8 +553,22 @@
               </button>
             {/if}
 
+            {#if selectedPR.state === 'open'}
+              <button
+                onclick={() => (showMergeModal = true)}
+                class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-98"
+                title="Hợp nhất Pull Request vào nhánh chính"
+              >
+                <GitMerge class="w-3.5 h-3.5" />
+                <span>Merge</span>
+              </button>
+            {/if}
+
             <button
-              onclick={() => (showReviewModal = true)}
+              onclick={() => {
+                if (isOwnPR) reviewEvent = 'COMMENT';
+                showReviewModal = true;
+              }}
               class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-98"
             >
               <CheckCircle2 class="w-3.5 h-3.5" />
@@ -514,6 +644,53 @@
                     <p class="text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">{comment.body}</p>
                   </div>
                 {/each}
+              </div>
+            {/if}
+
+            <!-- GitHub Merge Pull Request Card -->
+            {#if selectedPR.state === 'open'}
+              <div class="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 shadow-xs space-y-3 mt-4">
+                <div class="flex items-start gap-3">
+                  <div class="p-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    <Check class="w-4 h-4 stroke-[3]" />
+                  </div>
+                  <div class="space-y-0.5 flex-1">
+                    <div class="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                      No conflicts with base branch ({selectedPR.base.ref})
+                    </div>
+                    <div class="text-[11px] text-zinc-500 dark:text-zinc-400">
+                      Merging can be performed automatically on GitHub.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onclick={() => (showMergeModal = true)}
+                    class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-2 transition-all shadow-md hover:shadow-emerald-500/20 cursor-pointer active:scale-98"
+                  >
+                    <GitMerge class="w-4 h-4" />
+                    <span>Merge pull request</span>
+                  </button>
+                  <span class="text-[11px] text-zinc-400">
+                    Sẵn sàng hợp nhất {selectedPR.head.ref} vào {selectedPR.base.ref}
+                  </span>
+                </div>
+              </div>
+            {:else if selectedPR.merged}
+              <div class="p-4 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/50 dark:bg-purple-950/30 flex items-center gap-3 mt-4">
+                <div class="p-2 rounded-full bg-purple-100 dark:bg-purple-900/70 text-purple-700 dark:text-purple-300">
+                  <GitMerge class="w-4 h-4 stroke-[2.5]" />
+                </div>
+                <div>
+                  <div class="text-xs font-bold text-purple-900 dark:text-purple-200">
+                    Pull Request #{selectedPR.number} đã được Merge thành công
+                  </div>
+                  <div class="text-[11px] text-purple-700/80 dark:text-purple-400/80">
+                    Toàn bộ thay đổi đã được tích hợp vào nhánh {selectedPR.base.ref}.
+                  </div>
+                </div>
               </div>
             {/if}
           </div>
@@ -668,6 +845,12 @@
       </div>
 
       <div class="p-6 space-y-4">
+        {#if isOwnPR}
+          <div class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-xs">
+            Bạn là tác giả của PR này. Theo quy định GitHub, bạn chỉ có thể gửi <strong>Comment</strong>, không thể tự Approve chính mình.
+          </div>
+        {/if}
+
         <!-- Review Action Type -->
         <div class="grid grid-cols-3 gap-2">
           <button
@@ -680,16 +863,20 @@
           </button>
           <button
             type="button"
+            disabled={isOwnPR}
             onclick={() => (reviewEvent = 'APPROVE')}
-            class="p-2.5 rounded-xl border text-xs font-medium transition-all cursor-pointer flex flex-col items-center gap-1 {reviewEvent === 'APPROVE' ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-bold' : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'}"
+            title={isOwnPR ? 'Bạn là tác giả PR nên không thể tự Approve' : 'Chấp thuận PR'}
+            class="p-2.5 rounded-xl border text-xs font-medium transition-all flex flex-col items-center gap-1 {isOwnPR ? 'opacity-40 cursor-not-allowed border-zinc-200 dark:border-zinc-800 text-zinc-400' : 'cursor-pointer'} {reviewEvent === 'APPROVE' && !isOwnPR ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-bold' : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'}"
           >
             <Check class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Approve</span>
           </button>
           <button
             type="button"
+            disabled={isOwnPR}
             onclick={() => (reviewEvent = 'REQUEST_CHANGES')}
-            class="p-2.5 rounded-xl border text-xs font-medium transition-all cursor-pointer flex flex-col items-center gap-1 {reviewEvent === 'REQUEST_CHANGES' ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-500 text-rose-800 dark:text-rose-300 font-bold' : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'}"
+            title={isOwnPR ? 'Bạn là tác giả PR nên không thể Request Changes' : 'Yêu cầu sửa đổi'}
+            class="p-2.5 rounded-xl border text-xs font-medium transition-all flex flex-col items-center gap-1 {isOwnPR ? 'opacity-40 cursor-not-allowed border-zinc-200 dark:border-zinc-800 text-zinc-400' : 'cursor-pointer'} {reviewEvent === 'REQUEST_CHANGES' && !isOwnPR ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-500 text-rose-800 dark:text-rose-300 font-bold' : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'}"
           >
             <ShieldAlert class="w-4 h-4 text-rose-600 dark:text-rose-400" />
             <span>Request Changes</span>
@@ -732,3 +919,144 @@
     </div>
   </div>
 {/if}
+
+<!-- Create Pull Request Modal -->
+<CreatePullRequestModal
+  isOpen={showLocalCreatePRModal}
+  {remoteOriginUrl}
+  branches={localBranches}
+  onClose={() => (showLocalCreatePRModal = false)}
+  onSuccess={async (newPR) => {
+    showLocalCreatePRModal = false;
+    await loadPullRequests();
+    selectPR(newPR);
+  }}
+/>
+
+<!-- Merge Pull Request Confirmation Modal -->
+{#if showMergeModal && selectedPR}
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150"
+    onclick={() => (showMergeModal = false)}
+  >
+    <div
+      class="w-full max-w-lg bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-800/60 rounded-2xl shadow-2xl overflow-hidden flex flex-col font-sans animate-in zoom-in-95 duration-150"
+      onclick={(e) => e.stopPropagation()}
+    >
+      <div class="px-6 py-4 bg-zinc-50 dark:bg-zinc-900/80 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400">
+            <GitMerge class="w-4 h-4" />
+          </div>
+          <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            Hợp nhất Pull Request #{selectedPR.number}
+          </h2>
+        </div>
+        <button
+          onclick={() => (showMergeModal = false)}
+          class="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+        >
+          <X class="w-4 h-4" />
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4 text-xs">
+        <!-- Merge Method Selector -->
+        <div class="space-y-1.5">
+          <span class="font-semibold text-zinc-700 dark:text-zinc-300 block">Kiểu Merge:</span>
+          <div class="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onclick={() => (mergeMethod = 'merge')}
+              class="p-2.5 rounded-xl border text-left cursor-pointer transition-all {mergeMethod === 'merge' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 font-bold' : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800'}"
+            >
+              <div class="font-semibold">Create Merge</div>
+              <div class="text-[10px] opacity-75 font-normal">Giữ nguyên lịch sử</div>
+            </button>
+            <button
+              type="button"
+              onclick={() => (mergeMethod = 'squash')}
+              class="p-2.5 rounded-xl border text-left cursor-pointer transition-all {mergeMethod === 'squash' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 font-bold' : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800'}"
+            >
+              <div class="font-semibold">Squash & Merge</div>
+              <div class="text-[10px] opacity-75 font-normal">Gộp 1 commit</div>
+            </button>
+            <button
+              type="button"
+              onclick={() => (mergeMethod = 'rebase')}
+              class="p-2.5 rounded-xl border text-left cursor-pointer transition-all {mergeMethod === 'rebase' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 font-bold' : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800'}"
+            >
+              <div class="font-semibold">Rebase & Merge</div>
+              <div class="text-[10px] opacity-75 font-normal">Rebase nhánh</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Commit Title & Message -->
+        <div class="space-y-1.5">
+          <label for="merge-commit-title" class="font-semibold text-zinc-700 dark:text-zinc-300 block">
+            Tiêu đề Commit Merge:
+          </label>
+          <input
+            id="merge-commit-title"
+            type="text"
+            bind:value={mergeCommitTitle}
+            class="w-full px-3 py-2 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-mono text-xs focus:ring-1 focus:ring-emerald-500 outline-hidden"
+          />
+        </div>
+
+        <div class="space-y-1.5">
+          <label for="merge-commit-msg" class="font-semibold text-zinc-700 dark:text-zinc-300 block">
+            Nội dung Commit Message:
+          </label>
+          <textarea
+            id="merge-commit-msg"
+            bind:value={mergeCommitMessage}
+            rows="3"
+            class="w-full px-3 py-2 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-mono text-xs focus:ring-1 focus:ring-emerald-500 outline-hidden resize-none"
+          ></textarea>
+        </div>
+
+        <!-- Delete Branch Checkbox -->
+        <label class="flex items-center gap-2.5 cursor-pointer pt-1 select-none">
+          <input
+            type="checkbox"
+            bind:checked={deleteBranchAfterMerge}
+            class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900"
+          />
+          <span class="text-zinc-700 dark:text-zinc-300">
+            Tự động xóa nhánh remote <code class="text-emerald-700 dark:text-emerald-400 font-mono">{selectedPR.head.ref}</code> sau khi merge
+          </span>
+        </label>
+      </div>
+
+      <div class="px-6 py-4 bg-zinc-50 dark:bg-zinc-900/80 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-end gap-2.5">
+        <button
+          type="button"
+          onclick={() => (showMergeModal = false)}
+          class="px-4 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-medium cursor-pointer"
+        >
+          Hủy
+        </button>
+        <button
+          type="button"
+          onclick={handleConfirmMerge}
+          disabled={isMerging}
+          class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center gap-2 shadow-md hover:shadow-emerald-500/20 disabled:opacity-50 cursor-pointer"
+        >
+          {#if isMerging}
+            <RefreshCw class="w-3.5 h-3.5 animate-spin" />
+            <span>Đang merge...</span>
+          {:else}
+            <GitMerge class="w-3.5 h-3.5" />
+            <span>Xác nhận Merge</span>
+          {/if}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+

@@ -260,6 +260,10 @@ export interface GitHubPullRequest {
   deletions?: number;
   changed_files?: number;
   draft?: boolean;
+  merged?: boolean;
+  merged_at?: string | null;
+  mergeable?: boolean | null;
+  mergeable_state?: string;
 }
 
 export interface GitHubPRFile {

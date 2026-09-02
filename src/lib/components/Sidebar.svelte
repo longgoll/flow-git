@@ -2,6 +2,7 @@
   import type { BranchInfo, RemoteInfo, RepoSummary, StashInfo, TagInfo, WorktreeInfo } from '../types';
   import {
     GitBranch,
+    GitPullRequest,
     GitFork,
     FolderGit2,
     Tag,
@@ -50,6 +51,7 @@
     onRebaseBranch?: (branch: BranchInfo) => void;
     onCleanMergedBranches?: () => void;
     onDeleteTag?: (tagName: string) => void;
+    onCreatePullRequest?: (branch: BranchInfo) => void;
     onCloseSidebar?: () => void;
     isPushing?: boolean;
   }
@@ -77,6 +79,7 @@
     onRebaseBranch,
     onCleanMergedBranches,
     onDeleteTag,
+    onCreatePullRequest,
     onCloseSidebar,
     isPushing = false,
   }: Props = $props();
@@ -774,6 +777,20 @@
             <span>Fetch & Đồng bộ</span>
           </button>
         {/if}
+      {/if}
+
+      {#if onCreatePullRequest}
+        <button
+          onclick={() => {
+            const b = activeBranchMenu?.branch;
+            activeBranchMenu = null;
+            if (b) onCreatePullRequest(b);
+          }}
+          class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-violet-50 dark:hover:bg-violet-950/60 text-violet-800 dark:text-violet-300 hover:text-violet-950 dark:hover:text-violet-100 transition-colors cursor-pointer text-left font-medium"
+        >
+          <GitPullRequest class="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
+          <span>Tạo Pull Request...</span>
+        </button>
       {/if}
 
       {#if onCreateBranchFrom}

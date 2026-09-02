@@ -24,6 +24,7 @@
   import IdentitySwitcherModal from "./lib/components/IdentitySwitcherModal.svelte";
   import GitPlaybookModal from "./lib/components/GitPlaybookModal.svelte";
   import RepoAlertBanner from "./lib/components/RepoAlertBanner.svelte";
+  import RecentPushBanner from "./lib/components/RecentPushBanner.svelte";
   import ToastContainer from "./lib/components/ToastContainer.svelte";
   import { toast } from "./lib/state/toastState.svelte";
   import { RepoState } from "./lib/state/repoState.svelte";
@@ -167,6 +168,7 @@
   // Create Pull Request state
   let showCreatePRModal = $state<boolean>(false);
   let createPRSourceBranch = $state<string>("");
+  let recentPushedBranch = $state<string | null>(null);
 
   function handleOpenCreatePR(sourceBranch?: string) {
     createPRSourceBranch = sourceBranch || repo.repoSummary?.current_branch || "";
@@ -595,6 +597,7 @@
     );
     repo.statusMessage = res.message;
     if (res.success && branch.shorthand !== "main" && branch.shorthand !== "master") {
+      recentPushedBranch = branch.shorthand;
       toast.success(
         `Đã publish nhánh '${branch.shorthand}'`,
         `Bạn có muốn tạo Pull Request cho nhánh này không?`,
@@ -620,6 +623,7 @@
     );
     repo.statusMessage = res.message;
     if (res.success && branch.shorthand !== "main" && branch.shorthand !== "master") {
+      recentPushedBranch = branch.shorthand;
       toast.success(
         `Đã push nhánh '${branch.shorthand}'`,
         `Bạn có muốn tạo Pull Request vào nhánh chính không?`,
@@ -1147,6 +1151,15 @@
         onSkipRebase={handleSkipRebaseAlert}
         onAbortOperation={handleAbortCurrentOperationAlert}
         onCreateBranchFromDetached={handleCreateBranchFromDetached}
+      />
+      <RecentPushBanner
+        pushedBranch={recentPushedBranch}
+        targetBranch={repo.branches.some((b) => b.shorthand === "main") ? "main" : "master"}
+        onCompareAndPR={(b) => {
+          recentPushedBranch = null;
+          handleOpenCreatePR(b);
+        }}
+        onDismiss={() => (recentPushedBranch = null)}
       />
       {#if viewMode === "graph"}
         {#if layoutMode === "three-column"}
@@ -1762,6 +1775,7 @@
   onClose={() => (showCreatePRModal = false)}
   onSuccess={async () => {
     showCreatePRModal = false;
+    recentPushedBranch = null;
     viewMode = "pr";
     if (repo.currentRepoPath) {
       await loadRepository(repo.currentRepoPath);

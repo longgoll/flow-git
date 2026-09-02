@@ -234,36 +234,27 @@
           </div>
         {/if}
 
-        <!-- Branch Comparison Selector -->
-        <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800/80 flex items-center justify-between gap-3">
-          <!-- Base Branch -->
-          <div class="flex-1 space-y-1">
-            <span class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider block">Base (Đích)</span>
-            <div class="relative">
-              <select
-                bind:value={targetBranch}
-                class="w-full pl-7 pr-3 py-1.5 text-xs font-mono font-medium rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 focus:ring-1 focus:ring-cyan-500 outline-hidden"
-              >
-                {#each branchNames as b}
-                  <option value={b}>{b}</option>
-                {/each}
-              </select>
-              <GitBranch class="w-3.5 h-3.5 text-zinc-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
+        <!-- Visual Branch Flow Indicator: Compare (Nguồn) -> Base (Đích) -->
+        <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800/80 space-y-3">
+          <div class="flex items-center justify-between text-xs text-zinc-500 font-medium">
+            <span class="flex items-center gap-1.5 text-cyan-700 dark:text-cyan-400">
+              <GitBranch class="w-3.5 h-3.5" />
+              <span>Nhánh nguồn (Compare)</span>
+            </span>
+            <span class="text-[11px] text-zinc-400">sẽ được hợp nhất vào</span>
+            <span class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+              <GitBranch class="w-3.5 h-3.5" />
+              <span>Nhánh đích (Base)</span>
+            </span>
           </div>
 
-          <div class="pt-5 text-zinc-400">
-            <ArrowRight class="w-4 h-4" />
-          </div>
-
-          <!-- Compare Branch -->
-          <div class="flex-1 space-y-1">
-            <span class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider block">Compare (Nguồn)</span>
-            <div class="relative">
+          <div class="flex items-center justify-between gap-3">
+            <!-- Compare Branch (Nguồn) -->
+            <div class="flex-1 relative">
               <select
                 bind:value={sourceBranch}
                 onchange={() => initDefaultContent(sourceBranch, targetBranch)}
-                class="w-full pl-7 pr-3 py-1.5 text-xs font-mono font-medium rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 focus:ring-1 focus:ring-cyan-500 outline-hidden"
+                class="w-full pl-8 pr-3 py-2 text-xs font-mono font-bold rounded-lg bg-white dark:bg-zinc-900 border border-cyan-400 dark:border-cyan-600/70 text-cyan-900 dark:text-cyan-200 focus:ring-2 focus:ring-cyan-500/20 outline-hidden shadow-xs"
               >
                 {#each branchNames as b}
                   <option value={b}>{b}</option>
@@ -271,7 +262,36 @@
               </select>
               <GitBranch class="w-3.5 h-3.5 text-cyan-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
+
+            <div class="flex flex-col items-center justify-center px-1 text-zinc-400">
+              <ArrowRight class="w-4 h-4 stroke-[2.5] text-cyan-600 dark:text-cyan-400" />
+            </div>
+
+            <!-- Base Branch (Đích) -->
+            <div class="flex-1 relative">
+              <select
+                bind:value={targetBranch}
+                onchange={() => initDefaultContent(sourceBranch, targetBranch)}
+                class="w-full pl-8 pr-3 py-2 text-xs font-mono font-bold rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/20 outline-hidden shadow-xs"
+              >
+                {#each branchNames as b}
+                  <option value={b}>{b}</option>
+                {/each}
+              </select>
+              <GitBranch class="w-3.5 h-3.5 text-emerald-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
           </div>
+
+          {#if sourceBranch === targetBranch}
+            <div class="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-[11px] flex items-center gap-2">
+              <AlertCircle class="w-3.5 h-3.5 shrink-0" />
+              <span>Nhánh nguồn và đích đang trùng nhau. Vui lòng chọn hai nhánh khác nhau.</span>
+            </div>
+          {:else}
+            <div class="text-[11px] text-zinc-500 dark:text-zinc-400 text-center">
+              Các commit mới trên <strong class="text-cyan-700 dark:text-cyan-300 font-mono">{sourceBranch}</strong> sẽ được gửi yêu cầu tích hợp vào <strong class="text-emerald-700 dark:text-emerald-300 font-mono">{targetBranch}</strong>.
+            </div>
+          {/if}
         </div>
 
         <!-- PR Title -->

@@ -143,7 +143,7 @@
 {#if isOpen}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
   <div
-    class="fixed inset-0 bg-black/80 backdrop-blur-xs z-[100] flex items-center justify-center p-4 animate-in fade-in duration-150"
+    class="fixed inset-0 bg-black/50 dark:bg-black/80 backdrop-blur-xs z-[100] flex items-center justify-center p-4 animate-in fade-in duration-150 select-none"
     role="dialog"
     aria-modal="true"
     tabindex="-1"
@@ -155,19 +155,19 @@
     }}
   >
     <div
-      class="bg-zinc-900 border border-zinc-700/80 rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col font-sans animate-in zoom-in-95 duration-150"
+      class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700/80 rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col font-sans animate-in zoom-in-95 duration-150 text-zinc-900 dark:text-zinc-100"
     >
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/60">
+      <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/60">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-inner">
+          <div class="w-9 h-9 rounded-xl bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shadow-inner">
             <Globe class="w-5 h-5" />
           </div>
           <div>
-            <h2 class="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+            <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               Quản trị Đa Remote (Multi-Remote Hub)
             </h2>
-            <p class="text-xs text-zinc-400 mt-0.5">
+            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
               Quản lý danh sách kho lưu trữ từ xa (origin, upstream, fork)
             </p>
           </div>
@@ -175,7 +175,7 @@
 
         <button
           onclick={onClose}
-          class="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
+          class="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
         >
           <X class="w-4 h-4" />
         </button>
@@ -186,13 +186,13 @@
         <!-- Remotes List -->
         <div class="space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
+            <span class="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
               Danh sách Remotes ({remotes.length})
             </span>
             {#if !showAddForm}
               <button
                 onclick={() => (showAddForm = true)}
-                class="px-2.5 py-1 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-800/60 text-cyan-300 text-xs flex items-center gap-1 cursor-pointer transition-colors"
+                class="px-2.5 py-1 rounded-lg bg-cyan-50 dark:bg-cyan-950/60 hover:bg-cyan-100 dark:hover:bg-cyan-900/80 border border-cyan-200 dark:border-cyan-800/60 text-cyan-700 dark:text-cyan-300 text-xs flex items-center gap-1 cursor-pointer transition-colors"
               >
                 <Plus class="w-3 h-3" />
                 <span>Thêm Remote mới</span>
@@ -202,12 +202,12 @@
 
           <!-- Add Form Card -->
           {#if showAddForm}
-            <div class="p-4 rounded-xl bg-zinc-950 border border-cyan-500/40 space-y-3 animate-in fade-in duration-150">
+            <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-cyan-300 dark:border-cyan-500/40 space-y-3 animate-in fade-in duration-150">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold text-cyan-300">Thêm Remote mới</span>
+                <span class="text-xs font-semibold text-cyan-700 dark:text-cyan-300">Thêm Remote mới</span>
                 <button
                   onclick={() => (showAddForm = false)}
-                  class="text-zinc-500 hover:text-zinc-300 cursor-pointer"
+                  class="text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 cursor-pointer"
                 >
                   <X class="w-3.5 h-3.5" />
                 </button>
@@ -215,23 +215,23 @@
 
               <div class="grid grid-cols-3 gap-3">
                 <div>
-                  <label for="remote-name-input" class="block text-[11px] text-zinc-400 mb-1">Tên Remote</label>
+                  <label for="remote-name-input" class="block text-[11px] text-zinc-600 dark:text-zinc-400 mb-1">Tên Remote</label>
                   <input
                     id="remote-name-input"
                     type="text"
                     bind:value={newRemoteName}
                     placeholder="ví dụ: upstream"
-                    class="w-full px-2.5 py-1.5 text-xs font-mono bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-200 focus:outline-hidden focus:border-cyan-500"
+                    class="w-full px-2.5 py-1.5 text-xs font-mono bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-200 focus:outline-hidden focus:border-cyan-500 select-text"
                   />
                 </div>
                 <div class="col-span-2">
-                  <label for="remote-url-input" class="block text-[11px] text-zinc-400 mb-1">URL (Git HTTPS hoặc SSH)</label>
+                  <label for="remote-url-input" class="block text-[11px] text-zinc-600 dark:text-zinc-400 mb-1">URL (Git HTTPS hoặc SSH)</label>
                   <input
                     id="remote-url-input"
                     type="text"
                     bind:value={newRemoteUrl}
                     placeholder="https://github.com/owner/repo.git"
-                    class="w-full px-2.5 py-1.5 text-xs font-mono bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-200 focus:outline-hidden focus:border-cyan-500"
+                    class="w-full px-2.5 py-1.5 text-xs font-mono bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-200 focus:outline-hidden focus:border-cyan-500 select-text"
                   />
                 </div>
               </div>
@@ -239,7 +239,7 @@
               <div class="flex items-center justify-end gap-2 pt-1">
                 <button
                   onclick={() => (showAddForm = false)}
-                  class="px-3 py-1 text-xs text-zinc-400 hover:text-zinc-200 cursor-pointer"
+                  class="px-3 py-1 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -256,23 +256,23 @@
 
           {#if isLoading}
             <div class="py-8 flex flex-col items-center justify-center text-zinc-500 gap-2">
-              <RefreshCw class="w-5 h-5 animate-spin text-cyan-400" />
+              <RefreshCw class="w-5 h-5 animate-spin text-cyan-600 dark:text-cyan-400" />
               <span class="text-xs">Đang tải danh sách remotes...</span>
             </div>
           {:else if remotes.length === 0}
-            <div class="p-6 rounded-xl bg-zinc-950/60 border border-zinc-800/80 text-center text-zinc-500 text-xs">
+            <div class="p-6 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800/80 text-center text-zinc-500 text-xs">
               Kho lưu trữ này chưa có Remote nào được cấu hình.
             </div>
           {:else}
             {#each remotes as remote (remote.name)}
-              <div class="p-3.5 rounded-xl bg-zinc-950/80 border border-zinc-800 hover:border-zinc-700/80 transition-all flex flex-col gap-2">
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700/80 transition-all flex flex-col gap-2">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
-                    <span class="font-mono text-xs font-bold text-cyan-300 px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-800/50">
+                    <span class="font-mono text-xs font-bold text-cyan-800 dark:text-cyan-300 px-2 py-0.5 rounded bg-cyan-100 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800/50">
                       {remote.name}
                     </span>
                     {#if remote.name === 'origin'}
-                      <span class="text-[10px] text-zinc-400 font-mono">(Mặc định)</span>
+                      <span class="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">(Mặc định)</span>
                     {/if}
                   </div>
 
@@ -281,17 +281,17 @@
                     <button
                       onclick={() => handleFetch(remote.name)}
                       disabled={isFetchingName === remote.name}
-                      class="px-2 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/70 text-zinc-300 text-[11px] flex items-center gap-1 cursor-pointer transition-colors disabled:opacity-50"
+                      class="px-2 py-1 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-700/70 text-zinc-700 dark:text-zinc-300 text-[11px] flex items-center gap-1 cursor-pointer transition-colors disabled:opacity-50 shadow-xs"
                       title="Fetch cập nhật từ remote này"
                     >
-                      <RefreshCw class="w-3 h-3 text-cyan-400 {isFetchingName === remote.name ? 'animate-spin' : ''}" />
+                      <RefreshCw class="w-3 h-3 text-cyan-600 dark:text-cyan-400 {isFetchingName === remote.name ? 'animate-spin' : ''}" />
                       <span>Fetch</span>
                     </button>
 
                     <!-- Edit URL Button -->
                     <button
                       onclick={() => startEdit(remote)}
-                      class="p-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/70 text-zinc-400 hover:text-zinc-200 cursor-pointer transition-colors"
+                      class="p-1 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-700/70 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 cursor-pointer transition-colors shadow-xs"
                       title="Sửa URL remote"
                     >
                       <Edit2 class="w-3 h-3" />
@@ -301,7 +301,7 @@
                     {#if remote.name !== 'origin' || remotes.length > 1}
                       <button
                         onclick={() => (deletingRemoteName = remote.name)}
-                        class="p-1 rounded bg-zinc-900 hover:bg-rose-950/50 border border-zinc-700/70 text-zinc-400 hover:text-rose-400 cursor-pointer transition-colors"
+                        class="p-1 rounded bg-white dark:bg-zinc-900 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-zinc-300 dark:border-zinc-700/70 text-zinc-500 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400 cursor-pointer transition-colors shadow-xs"
                         title="Xóa remote này"
                       >
                         <Trash2 class="w-3 h-3" />
@@ -316,33 +316,33 @@
                     <input
                       type="text"
                       bind:value={editUrl}
-                      class="flex-1 px-2 py-1 text-xs font-mono bg-zinc-900 border border-cyan-500 rounded text-zinc-100 outline-hidden"
+                      class="flex-1 px-2 py-1 text-xs font-mono bg-white dark:bg-zinc-900 border border-cyan-500 rounded text-zinc-900 dark:text-zinc-100 outline-hidden select-text"
                     />
                     <button
                       onclick={() => handleSaveEdit(remote.name)}
                       disabled={isSavingEdit}
-                      class="px-2.5 py-1 rounded bg-emerald-700 hover:bg-emerald-600 text-white text-xs cursor-pointer"
+                      class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs cursor-pointer shadow-xs"
                     >
                       Lưu
                     </button>
                     <button
                       onclick={() => (editingRemoteName = null)}
-                      class="px-2 py-1 text-xs text-zinc-400 hover:text-zinc-200 cursor-pointer"
+                      class="px-2 py-1 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 cursor-pointer"
                     >
                       Hủy
                     </button>
                   </div>
                 {:else}
-                  <div class="space-y-0.5 font-mono text-[11px] text-zinc-400 break-all select-text">
+                  <div class="space-y-0.5 font-mono text-[11px] text-zinc-600 dark:text-zinc-400 break-all select-text">
                     {#if remote.fetch_url}
-                      <div class="flex items-center gap-1 text-zinc-300">
-                        <span class="text-zinc-600 text-[10px]">Fetch:</span>
+                      <div class="flex items-center gap-1 text-zinc-800 dark:text-zinc-300">
+                        <span class="text-zinc-400 dark:text-zinc-600 text-[10px]">Fetch:</span>
                         <span>{remote.fetch_url}</span>
                       </div>
                     {/if}
                     {#if remote.push_url && remote.push_url !== remote.fetch_url}
-                      <div class="flex items-center gap-1 text-zinc-400">
-                        <span class="text-zinc-600 text-[10px]">Push:</span>
+                      <div class="flex items-center gap-1 text-zinc-600 dark:text-zinc-400">
+                        <span class="text-zinc-400 dark:text-zinc-600 text-[10px]">Push:</span>
                         <span>{remote.push_url}</span>
                       </div>
                     {/if}
@@ -351,21 +351,21 @@
 
                 <!-- Delete Confirmation Confirmation -->
                 {#if deletingRemoteName === remote.name}
-                  <div class="mt-2 p-2.5 rounded-lg bg-rose-950/40 border border-rose-800/60 flex items-center justify-between text-xs animate-in fade-in duration-150">
-                    <div class="flex items-center gap-1.5 text-rose-300">
+                  <div class="mt-2 p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 flex items-center justify-between text-xs animate-in fade-in duration-150">
+                    <div class="flex items-center gap-1.5 text-rose-800 dark:text-rose-300">
                       <AlertTriangle class="w-3.5 h-3.5 shrink-0" />
                       <span>Xác nhận xóa remote '{remote.name}'?</span>
                     </div>
                     <div class="flex items-center gap-2">
                       <button
                         onclick={() => (deletingRemoteName = null)}
-                        class="px-2 py-0.5 rounded text-zinc-400 hover:text-zinc-200 text-[11px] cursor-pointer"
+                        class="px-2 py-0.5 rounded text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 text-[11px] cursor-pointer"
                       >
                         Hủy
                       </button>
                       <button
                         onclick={() => handleConfirmDelete(remote.name)}
-                        class="px-2.5 py-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-medium cursor-pointer"
+                        class="px-2.5 py-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-medium cursor-pointer shadow-xs"
                       >
                         Xóa
                       </button>
@@ -379,13 +379,13 @@
       </div>
 
       <!-- Footer -->
-      <div class="px-6 py-3 border-t border-zinc-800 bg-zinc-950/60 flex items-center justify-between">
+      <div class="px-6 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 flex items-center justify-between">
         <span class="text-[11px] text-zinc-500 font-mono">
           Tip: Đa remote giúp bạn push vào fork riêng và pull cập nhật từ upstream của team.
         </span>
         <button
           onclick={onClose}
-          class="px-4 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium cursor-pointer transition-colors"
+          class="px-4 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 text-xs font-medium cursor-pointer transition-colors border border-zinc-200 dark:border-transparent"
         >
           Đóng
         </button>

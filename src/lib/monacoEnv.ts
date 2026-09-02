@@ -62,6 +62,39 @@ export function ensureMonacoInitialized(): typeof monaco {
     },
   });
 
+  // Define FlowGit Custom Light Theme matching zinc-50 / white
+  monaco.editor.defineTheme('flowgit-light', {
+    base: 'vs',
+    inherit: true,
+    rules: [
+      { token: 'comment', foreground: '71717a', fontStyle: 'italic' },
+      { token: 'keyword', foreground: '0891b2' }, // cyan-600
+      { token: 'string', foreground: '059669' }, // emerald-600
+      { token: 'number', foreground: 'd97706' }, // amber-600
+      { token: 'type', foreground: '0284c7' }, // sky-600
+      { token: 'function', foreground: '7c3aed' }, // violet-600
+      { token: 'variable', foreground: '27272a' }, // zinc-800
+      { token: 'identifier', foreground: '18181b' }, // zinc-900
+    ],
+    colors: {
+      'editor.background': '#ffffff',
+      'editor.foreground': '#18181b', // zinc-900
+      'editor.lineHighlightBackground': '#f4f4f580', // zinc-100
+      'editor.selectionBackground': '#bae6fd80', // sky-200
+      'editorLineNumber.foreground': '#a1a1aa', // zinc-400
+      'editorLineNumber.activeForeground': '#0891b2', // cyan-600
+      'editorCursor.foreground': '#0891b2',
+      'editorGutter.background': '#fafafa',
+      'diffEditor.insertedTextBackground': '#10b98120',
+      'diffEditor.removedTextBackground': '#f43f5e20',
+      'diffEditor.insertedLineBackground': '#dcfce760',
+      'diffEditor.removedLineBackground': '#ffe4e660',
+      'scrollbarSlider.background': '#d4d4d880',
+      'scrollbarSlider.hoverBackground': '#a1a1aa90',
+      'scrollbarSlider.activeBackground': '#71717a',
+    },
+  });
+
   initialized = true;
   return monaco;
 }

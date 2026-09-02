@@ -2,6 +2,8 @@
   import { onMount, onDestroy } from 'svelte';
   import type { CommitDetail, CommitNode } from '../types';
   import { getCommitInfo } from '../api/repo';
+  import { themeState } from '../state/themeState.svelte';
+  import { LANE_COLORS_DARK, LANE_COLORS_LIGHT } from '../utils/graphRenderer';
   import {
     Network,
     ZoomIn,
@@ -54,19 +56,6 @@
   const NODE_WIDTH = 150;
   const NODE_HEIGHT = 44;
 
-  const LANE_COLORS = [
-    '#22d3ee', // Cyan
-    '#38bdf8', // Sky
-    '#818cf8', // Indigo
-    '#c084fc', // Purple
-    '#f472b6', // Pink
-    '#fb7185', // Rose
-    '#fb923c', // Orange
-    '#facc15', // Amber
-    '#4ade80', // Emerald
-    '#2dd4bf', // Teal
-  ];
-
   function calculateLayout() {
     nodePositions.clear();
     const idToCommit = new Map<string, CommitNode>();
@@ -96,6 +85,12 @@
     });
   }
 
+  $effect(() => {
+    if (themeState.isDark !== undefined) {
+      requestRedraw();
+    }
+  });
+
   function draw() {
     if (!canvasEl) return;
     const c = canvasEl.getContext('2d');
@@ -104,8 +99,13 @@
     const width = canvasEl.width;
     const height = canvasEl.height;
 
+    const isDark = themeState.isDark;
+    const laneColors = isDark ? LANE_COLORS_DARK : LANE_COLORS_LIGHT;
+
     c.save();
     c.clearRect(0, 0, width, height);
+    c.fillStyle = isDark ? '#09090b' : '#fafafa';
+    c.fillRect(0, 0, width, height);
 
     // Apply 2D camera transform
     c.translate(panX, panY);
@@ -119,7 +119,7 @@
 
     // 1. Draw subtle background grid
     const gridSize = 40;
-    c.strokeStyle = 'rgba(39, 39, 42, 0.4)';
+    c.strokeStyle = isDark ? 'rgba(39, 39, 42, 0.4)' : 'rgba(212, 212, 216, 0.6)';
     c.lineWidth = 0.5 / zoom;
     const startX = Math.floor((-panX / zoom) / gridSize) * gridSize;
     const endX = startX + (width / zoom) + gridSize * 2;
@@ -162,7 +162,7 @@
           }
 
           c.beginPath();
-          c.strokeStyle = LANE_COLORS[commit.lane % LANE_COLORS.length];
+          c.strokeStyle = laneColors[commit.lane % laneColors.length];
           c.lineWidth = isFarOut ? 1.5 : 2;
           c.lineCap = 'round';
 
@@ -189,11 +189,11 @@
 
       const commit = pos.commit;
       const isSelected = selectedCommit?.id === id;
-      const color = LANE_COLORS[commit.lane % LANE_COLORS.length];
+      const color = laneColors[commit.lane % laneColors.length];
 
       // Level of Detail (LOD): If zoomed far out, draw simplified micro-capsule
       if (isFarOut) {
-        c.fillStyle = isSelected ? '#ffffff' : color;
+        c.fillStyle = isSelected ? (isDark ? '#ffffff' : '#09090b') : color;
         c.beginPath();
         c.roundRect(pos.x, pos.y + 10, pos.width, 24, 6);
         c.fill();
@@ -201,8 +201,10 @@
       }
 
       // Detailed card background
-      c.fillStyle = isSelected ? '#18181b' : '#09090b';
-      c.strokeStyle = isSelected ? color : 'rgba(63, 63, 70, 0.8)';
+      c.fillStyle = isSelected
+        ? (isDark ? '#18181b' : '#f4f4f5')
+        : (isDark ? '#09090b' : '#ffffff');
+      c.strokeStyle = isSelected ? color : (isDark ? 'rgba(63, 63, 70, 0.8)' : 'rgba(228, 228, 231, 1)');
       c.lineWidth = isSelected ? 2 : 1;
 
       const r = 8;
@@ -224,14 +226,14 @@
 
       // Branch tags if any
       if (commit.refs && commit.refs.length > 0) {
-        c.fillStyle = '#a1a1aa';
+        c.fillStyle = isDark ? '#a1a1aa' : '#71717a';
         c.font = '9px sans-serif';
         const tag = commit.refs[0].shorthand;
         c.fillText(`⎇ ${tag.slice(0, 10)}`, pos.x + 65, pos.y + 16);
       }
 
       // Summary text (truncated)
-      c.fillStyle = '#e4e4e7';
+      c.fillStyle = isDark ? '#e4e4e7' : '#18181b';
       c.font = '10px sans-serif';
       const summary = commit.summary.length > 18 ? commit.summary.slice(0, 18) + '...' : commit.summary;
       c.fillText(summary, pos.x + 10, pos.y + 32);
@@ -346,7 +348,7 @@
 
 <div
   bind:this={containerEl}
-  class="relative flex-1 w-full h-full min-h-0 bg-zinc-950 overflow-hidden font-sans select-none"
+  class="relative flex-1 w-full h-full min-h-0 bg-zinc-100 dark:bg-zinc-950 overflow-hidden font-sans select-none"
 >
   <!-- Interactive 2D Canvas -->
   <canvas
@@ -361,15 +363,15 @@
 
   <!-- Top Title & Controls Overlay -->
   <div class="absolute top-3 left-4 flex items-center gap-3 pointer-events-auto">
-    <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900/90 border border-zinc-800/80 backdrop-blur-md shadow-xl">
-      <Network class="w-4 h-4 text-teal-400" />
-      <span class="text-xs font-bold text-zinc-200">2D DAG Map View</span>
+    <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800/80 backdrop-blur-md shadow-xl">
+      <Network class="w-4 h-4 text-teal-600 dark:text-teal-400" />
+      <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200">2D DAG Map View</span>
       <span class="text-[10px] font-mono text-zinc-500">({commits.length} nodes)</span>
     </div>
 
     <button
       onclick={onClose}
-      class="p-1.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer shadow-xl backdrop-blur-md"
+      class="p-1.5 rounded-lg bg-white/90 dark:bg-zinc-900/90 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer shadow-xl backdrop-blur-md"
       title="Quay lại đồ thị thông thường"
     >
       <X class="w-4 h-4" />
@@ -377,32 +379,32 @@
   </div>
 
   <!-- Bottom Right: Floating Zoom / Pan Controls -->
-  <div class="absolute bottom-4 right-4 flex items-center gap-1 bg-zinc-900/90 border border-zinc-800/80 rounded-lg p-1 shadow-2xl backdrop-blur-md pointer-events-auto">
+  <div class="absolute bottom-4 right-4 flex items-center gap-1 bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800/80 rounded-lg p-1 shadow-2xl backdrop-blur-md pointer-events-auto">
     <button
       onclick={() => { zoom = Math.min(zoom * 1.2, 2.5); draw(); }}
-      class="p-1.5 rounded hover:bg-zinc-800 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+      class="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
       title="Zoom In"
     >
       <ZoomIn class="w-4 h-4" />
     </button>
 
-    <div class="px-1 text-[11px] font-mono text-zinc-400 min-w-[40px] text-center">
+    <div class="px-1 text-[11px] font-mono text-zinc-600 dark:text-zinc-400 min-w-[40px] text-center">
       {Math.round(zoom * 100)}%
     </div>
 
     <button
       onclick={() => { zoom = Math.max(zoom * 0.8, 0.25); draw(); }}
-      class="p-1.5 rounded hover:bg-zinc-800 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+      class="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
       title="Zoom Out"
     >
       <ZoomOut class="w-4 h-4" />
     </button>
 
-    <div class="w-[1px] h-4 bg-zinc-800 mx-1"></div>
+    <div class="w-[1px] h-4 bg-zinc-200 dark:bg-zinc-800 mx-1"></div>
 
     <button
       onclick={resetView}
-      class="p-1.5 rounded hover:bg-zinc-800 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+      class="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
       title="Reset 100%"
     >
       <RotateCcw class="w-3.5 h-3.5" />
@@ -411,13 +413,13 @@
 
   <!-- Right Side Inspector Overlay (When a node is selected) -->
   {#if selectedCommit}
-    <div class="absolute top-12 right-4 w-80 max-h-[75%] rounded-xl bg-zinc-900/95 border border-zinc-800/90 shadow-2xl backdrop-blur-md flex flex-col overflow-hidden pointer-events-auto z-20">
-      <div class="p-3 border-b border-zinc-800/80 flex items-center justify-between bg-zinc-900/60">
+    <div class="absolute top-12 right-4 w-80 max-h-[75%] rounded-xl bg-white/95 dark:bg-zinc-900/95 border border-zinc-200 dark:border-zinc-800/90 shadow-2xl backdrop-blur-md flex flex-col overflow-hidden pointer-events-auto z-20">
+      <div class="p-3 border-b border-zinc-200 dark:border-zinc-800/80 flex items-center justify-between bg-zinc-50/60 dark:bg-zinc-900/60">
         <div class="flex items-center gap-2">
-          <GitCommit class="w-4 h-4 text-teal-400" />
-          <span class="font-mono text-xs font-bold text-zinc-200">{selectedCommit.short_id}</span>
+          <GitCommit class="w-4 h-4 text-teal-600 dark:text-teal-400" />
+          <span class="font-mono text-xs font-bold text-zinc-900 dark:text-zinc-200">{selectedCommit.short_id}</span>
         </div>
-        <button onclick={() => (selectedCommit = null)} class="text-zinc-500 hover:text-zinc-300">
+        <button onclick={() => (selectedCommit = null)} class="text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 cursor-pointer">
           <X class="w-4 h-4" />
         </button>
       </div>
@@ -425,13 +427,13 @@
       <div class="p-3.5 space-y-3 overflow-y-auto">
         <div>
           <div class="text-[10px] uppercase font-bold text-zinc-500 mb-1">Author</div>
-          <div class="text-xs text-zinc-200 font-medium">{selectedCommit.author_name}</div>
+          <div class="text-xs text-zinc-800 dark:text-zinc-200 font-medium">{selectedCommit.author_name}</div>
           <div class="text-[11px] text-zinc-500 font-mono">&lt;{selectedCommit.author_email}&gt;</div>
         </div>
 
         <div>
           <div class="text-[10px] uppercase font-bold text-zinc-500 mb-1">Message</div>
-          <p class="text-xs text-zinc-200 leading-relaxed bg-zinc-950/60 p-2 rounded border border-zinc-800/60 select-text font-mono">
+          <p class="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed bg-zinc-50 dark:bg-zinc-950/60 p-2 rounded border border-zinc-200 dark:border-zinc-800/60 select-text font-mono">
             {selectedCommit.summary}
           </p>
         </div>
@@ -443,7 +445,7 @@
             </div>
             <div class="space-y-1 max-h-36 overflow-y-auto">
               {#each commitDetail.files_changed as f}
-                <div class="text-[11px] font-mono text-zinc-300 truncate py-0.5 px-1.5 rounded bg-zinc-950/40 border border-zinc-800/40">
+                <div class="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 truncate py-0.5 px-1.5 rounded bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800/40">
                   {f.path}
                 </div>
               {/each}

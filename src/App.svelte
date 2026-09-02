@@ -998,7 +998,7 @@
 </script>
 
 <div
-  class="h-screen w-screen flex flex-col bg-zinc-950 text-zinc-100 overflow-hidden font-sans select-none"
+  class="h-screen w-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 overflow-hidden font-sans select-none"
 >
   <!-- Top Toolbar -->
   <Toolbar
@@ -1103,7 +1103,7 @@
     {/if}
 
     <!-- Center & Right Views -->
-    <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-zinc-950">
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-zinc-50 dark:bg-zinc-950">
       <RepoAlertBanner
         operationState={repoOpState}
         isDetached={repo.repoSummary?.is_detached ?? false}
@@ -1164,7 +1164,7 @@
             {#if !repo.isDetailOpen && repo.selectedCommitId}
               <button
                 onclick={() => (repo.isDetailOpen = true)}
-                class="absolute bottom-3 right-4 px-3 py-1.5 rounded-lg bg-zinc-900/95 hover:bg-zinc-800 border border-zinc-700/70 text-xs font-medium text-zinc-200 hover:text-white shadow-xl flex items-center gap-2 backdrop-blur-md cursor-pointer transition-all hover:scale-105 z-10"
+                class="absolute bottom-3 right-4 px-3 py-1.5 rounded-lg bg-white/95 dark:bg-zinc-900/95 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/70 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-white shadow-xl flex items-center gap-2 backdrop-blur-md cursor-pointer transition-all hover:scale-105 z-10"
                 title="Mở bảng chi tiết commit"
               >
                 <Info class="w-3.5 h-3.5 text-cyan-400" />

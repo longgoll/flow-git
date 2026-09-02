@@ -5,8 +5,8 @@ export const LANE_WIDTH = 20;
 export const GRAPH_LEFT_MARGIN = 24;
 export const NODE_RADIUS = 5;
 
-// Vibrant High-Contrast Lane Color Palette
-export const LANE_COLORS = [
+// Vibrant High-Contrast Lane Color Palette (Dark Theme)
+export const LANE_COLORS_DARK = [
   '#06b6d4', // Cyan
   '#a855f7', // Purple
   '#10b981', // Emerald
@@ -19,9 +19,26 @@ export const LANE_COLORS = [
   '#14b8a6', // Teal
 ];
 
-export function getLaneColor(lane: number): string {
+// Refined High-Contrast Lane Color Palette (Light Theme)
+export const LANE_COLORS_LIGHT = [
+  '#0891b2', // Cyan 600
+  '#9333ea', // Purple 600
+  '#059669', // Emerald 600
+  '#d97706', // Amber 600
+  '#e11d48', // Rose 600
+  '#0284c7', // Sky 600
+  '#65a30d', // Lime 600
+  '#6366f1', // Indigo 500
+  '#db2777', // Pink 600
+  '#0d9488', // Teal 600
+];
+
+export const LANE_COLORS = LANE_COLORS_DARK;
+
+export function getLaneColor(lane: number, isDark = true): string {
   const safeLane = typeof lane === 'number' && !isNaN(lane) ? Math.abs(lane) : 0;
-  return LANE_COLORS[safeLane % LANE_COLORS.length];
+  const palette = isDark ? LANE_COLORS_DARK : LANE_COLORS_LIGHT;
+  return palette[safeLane % palette.length];
 }
 
 export function timeAgo(timestamp: number): string {
@@ -61,6 +78,7 @@ export interface RenderGraphOptions {
   draggedCommit: CommitNode | null;
   hoveredTargetCommit: CommitNode | null;
   simulationResult: ConflictSimulationResult | null;
+  isDark?: boolean;
 }
 
 export function renderCommitGraph(
@@ -79,6 +97,7 @@ export function renderCommitGraph(
     draggedCommit,
     hoveredTargetCommit,
     simulationResult,
+    isDark = true,
   } = options;
 
   const dpr = window.devicePixelRatio || 1;
@@ -86,6 +105,8 @@ export function renderCommitGraph(
   ctx.save();
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = isDark ? '#09090b' : '#ffffff';
+  ctx.fillRect(0, 0, width, height);
 
   const totalCommits = commits.length;
   if (totalCommits === 0) {
@@ -106,24 +127,24 @@ export function renderCommitGraph(
 
     if (isGhostTarget) {
       ctx.fillStyle = simulationResult?.has_conflicts
-        ? 'rgba(244, 63, 94, 0.2)'
-        : 'rgba(6, 182, 212, 0.2)';
+        ? (isDark ? 'rgba(244, 63, 94, 0.2)' : 'rgba(244, 63, 94, 0.15)')
+        : (isDark ? 'rgba(6, 182, 212, 0.2)' : 'rgba(8, 145, 178, 0.15)');
       ctx.fillRect(0, y, width, ROW_HEIGHT);
 
-      ctx.fillStyle = simulationResult?.has_conflicts ? '#f43f5e' : '#06b6d4';
+      ctx.fillStyle = simulationResult?.has_conflicts ? '#f43f5e' : (isDark ? '#06b6d4' : '#0891b2');
       ctx.fillRect(0, y, 4, ROW_HEIGHT);
     } else if (isSelected) {
-      ctx.fillStyle = 'rgba(59, 130, 246, 0.18)';
+      ctx.fillStyle = isDark ? 'rgba(59, 130, 246, 0.18)' : 'rgba(59, 130, 246, 0.12)';
       ctx.fillRect(0, y, width, ROW_HEIGHT);
 
       ctx.fillStyle = '#3b82f6';
       ctx.fillRect(0, y, 3, ROW_HEIGHT);
     } else if (c.id === hoveredCommitId) {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.fillStyle = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.035)';
       ctx.fillRect(0, y, width, ROW_HEIGHT);
     }
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+    ctx.fillStyle = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.05)';
     ctx.fillRect(0, y + ROW_HEIGHT - 1, width, 1);
   }
 
@@ -141,7 +162,7 @@ export function renderCommitGraph(
     const childLane = child.lane || 0;
     const childY = i * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
     const childX = GRAPH_LEFT_MARGIN + childLane * LANE_WIDTH;
-    const childColor = getLaneColor(childLane);
+    const childColor = getLaneColor(childLane, isDark);
 
     if (child.parents && Array.isArray(child.parents)) {
       for (let pIdx = 0; pIdx < child.parents.length; pIdx++) {
@@ -155,7 +176,7 @@ export function renderCommitGraph(
         const parentY = parentIndex * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
         const parentX = GRAPH_LEFT_MARGIN + parentLane * LANE_WIDTH;
 
-        const lineColor = pIdx === 0 ? childColor : getLaneColor(parentLane);
+        const lineColor = pIdx === 0 ? childColor : getLaneColor(parentLane, isDark);
 
         ctx.beginPath();
         ctx.strokeStyle = lineColor;
@@ -190,7 +211,7 @@ export function renderCommitGraph(
       ctx.beginPath();
       ctx.lineWidth = 3;
       ctx.setLineDash([6, 4]);
-      ctx.strokeStyle = simulationResult?.has_conflicts ? '#f43f5e' : '#06b6d4';
+      ctx.strokeStyle = simulationResult?.has_conflicts ? '#f43f5e' : (isDark ? '#06b6d4' : '#0891b2');
 
       const midY = (sY + tY) / 2;
       ctx.moveTo(sX, sY);
@@ -220,7 +241,7 @@ export function renderCommitGraph(
     const centerY = y + ROW_HEIGHT / 2;
     const cLane = c.lane || 0;
     const nodeX = GRAPH_LEFT_MARGIN + cLane * LANE_WIDTH;
-    const laneColor = getLaneColor(cLane);
+    const laneColor = getLaneColor(cLane, isDark);
     const isMerge = Array.isArray(c.parents) && c.parents.length > 1;
     const isHead = Array.isArray(c.refs) && c.refs.some((r) => r && (r.is_head || r.ref_type === 'head'));
     const isSelected = activeSelectedIds.includes(c.id);
@@ -229,29 +250,29 @@ export function renderCommitGraph(
     if (isHead) {
       ctx.beginPath();
       ctx.arc(nodeX, centerY, NODE_RADIUS + 4, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(59, 130, 246, 0.25)';
+      ctx.fillStyle = isDark ? 'rgba(59, 130, 246, 0.25)' : 'rgba(59, 130, 246, 0.18)';
       ctx.fill();
     }
 
     if (isGhostTarget) {
       ctx.beginPath();
       ctx.arc(nodeX, centerY, NODE_RADIUS + 5, 0, Math.PI * 2);
-      ctx.fillStyle = simulationResult?.has_conflicts ? 'rgba(244, 63, 94, 0.4)' : 'rgba(6, 182, 212, 0.4)';
+      ctx.fillStyle = simulationResult?.has_conflicts ? 'rgba(244, 63, 94, 0.4)' : (isDark ? 'rgba(6, 182, 212, 0.4)' : 'rgba(8, 145, 178, 0.35)');
       ctx.fill();
     }
 
     ctx.beginPath();
     ctx.arc(nodeX, centerY, isSelected ? NODE_RADIUS + 1.5 : NODE_RADIUS, 0, Math.PI * 2);
-    ctx.fillStyle = isGhostTarget ? (simulationResult?.has_conflicts ? '#f43f5e' : '#06b6d4') : laneColor;
+    ctx.fillStyle = isGhostTarget ? (simulationResult?.has_conflicts ? '#f43f5e' : (isDark ? '#06b6d4' : '#0891b2')) : laneColor;
     ctx.fill();
     ctx.lineWidth = 1.5;
-    ctx.strokeStyle = isSelected || isGhostTarget ? '#ffffff' : '#09090b';
+    ctx.strokeStyle = isSelected || isGhostTarget ? (isDark ? '#ffffff' : '#09090b') : (isDark ? '#09090b' : '#ffffff');
     ctx.stroke();
 
     if (isMerge) {
       ctx.beginPath();
       ctx.arc(nodeX, centerY, NODE_RADIUS * 0.45, 0, Math.PI * 2);
-      ctx.fillStyle = '#09090b';
+      ctx.fillStyle = isDark ? '#09090b' : '#ffffff';
       ctx.fill();
     }
 
@@ -267,26 +288,26 @@ export function renderCommitGraph(
         const badgeHeight = 20;
         const badgeY = centerY - badgeHeight / 2;
 
-        let bgStyle = 'rgba(39, 39, 42, 0.85)';
-        let textStyle = '#e4e4e7';
-        let borderStyle = 'rgba(255, 255, 255, 0.15)';
+        let bgStyle = isDark ? 'rgba(39, 39, 42, 0.85)' : 'rgba(228, 228, 231, 0.85)';
+        let textStyle = isDark ? '#e4e4e7' : '#27272a';
+        let borderStyle = isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)';
 
         if (r.ref_type === 'head' || r.is_head) {
-          bgStyle = 'rgba(59, 130, 246, 0.22)';
-          textStyle = '#60a5fa';
-          borderStyle = 'rgba(59, 130, 246, 0.4)';
+          bgStyle = isDark ? 'rgba(59, 130, 246, 0.22)' : 'rgba(59, 130, 246, 0.15)';
+          textStyle = isDark ? '#60a5fa' : '#2563eb';
+          borderStyle = isDark ? 'rgba(59, 130, 246, 0.4)' : 'rgba(59, 130, 246, 0.35)';
         } else if (r.ref_type === 'localbranch') {
-          bgStyle = 'rgba(16, 185, 129, 0.2)';
-          textStyle = '#34d399';
-          borderStyle = 'rgba(16, 185, 129, 0.4)';
+          bgStyle = isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.15)';
+          textStyle = isDark ? '#34d399' : '#059669';
+          borderStyle = isDark ? 'rgba(16, 185, 129, 0.4)' : 'rgba(16, 185, 129, 0.35)';
         } else if (r.ref_type === 'remotebranch') {
-          bgStyle = 'rgba(168, 85, 247, 0.2)';
-          textStyle = '#c084fc';
-          borderStyle = 'rgba(168, 85, 247, 0.4)';
+          bgStyle = isDark ? 'rgba(168, 85, 247, 0.2)' : 'rgba(168, 85, 247, 0.15)';
+          textStyle = isDark ? '#c084fc' : '#7c3aed';
+          borderStyle = isDark ? 'rgba(168, 85, 247, 0.4)' : 'rgba(168, 85, 247, 0.35)';
         } else if (r.ref_type === 'tag') {
-          bgStyle = 'rgba(245, 158, 11, 0.2)';
-          textStyle = '#fbbf24';
-          borderStyle = 'rgba(245, 158, 11, 0.4)';
+          bgStyle = isDark ? 'rgba(245, 158, 11, 0.2)' : 'rgba(245, 158, 11, 0.15)';
+          textStyle = isDark ? '#fbbf24' : '#d97706';
+          borderStyle = isDark ? 'rgba(245, 158, 11, 0.4)' : 'rgba(245, 158, 11, 0.35)';
         }
 
         ctx.beginPath();
@@ -313,7 +334,9 @@ export function renderCommitGraph(
 
     // Draw Summary
     ctx.font = isSelected ? '600 13px "Plus Jakarta Sans", sans-serif' : '400 13px "Plus Jakarta Sans", sans-serif';
-    ctx.fillStyle = isSelected ? '#ffffff' : '#f4f4f5';
+    ctx.fillStyle = isSelected
+      ? (isDark ? '#ffffff' : '#09090b')
+      : (isDark ? '#f4f4f5' : '#27272a');
 
     const rightMargin = 220;
     const availableWidth = Math.max(80, width - currentBadgeX - rightMargin);
@@ -329,7 +352,7 @@ export function renderCommitGraph(
     // Draw Author & Timestamp
     const dateStr = timeAgo(c.timestamp || 0);
     ctx.font = '400 12px "Plus Jakarta Sans", sans-serif';
-    ctx.fillStyle = '#a1a1aa';
+    ctx.fillStyle = isDark ? '#a1a1aa' : '#52525b';
     const authorName = c.author_name || 'Unknown';
     const authorWidth = ctx.measureText(authorName).width;
     const dateWidth = ctx.measureText(dateStr).width;

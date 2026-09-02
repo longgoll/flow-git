@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import type * as MonacoType from 'monaco-editor';
   import { ensureMonacoInitialized, getLanguageFromPath } from '../monacoEnv';
+  import { themeState } from '../state/themeState.svelte';
 
   interface Props {
     originalContent: string;
@@ -51,7 +52,7 @@
     if (!diffContainer) return;
 
     diffEditor = monaco.editor.createDiffEditor(diffContainer, {
-      theme: 'flowgit-dark',
+      theme: themeState.isDark ? 'flowgit-dark' : 'flowgit-light',
       readOnly: true,
       originalEditable: false,
       renderSideBySide: viewMode === 'split',
@@ -69,6 +70,13 @@
     });
 
     updateModels();
+  });
+
+  // React to theme changes
+  $effect(() => {
+    if (monaco) {
+      monaco.editor.setTheme(themeState.isDark ? 'flowgit-dark' : 'flowgit-light');
+    }
   });
 
   // Watch for changes in originalContent, modifiedContent, or filePath
@@ -101,6 +109,6 @@
   });
 </script>
 
-<div class="relative w-full h-full min-h-[250px] overflow-hidden bg-zinc-950">
+<div class="relative w-full h-full min-h-[250px] overflow-hidden bg-white dark:bg-zinc-950">
   <div bind:this={diffContainer} class="w-full h-full"></div>
 </div>

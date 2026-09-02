@@ -283,23 +283,23 @@
 
 {#if isOpen}
   <div
-    class="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-start justify-center pt-24 p-4"
+    class="fixed inset-0 z-50 bg-black/40 dark:bg-black/70 backdrop-blur-xs flex items-start justify-center pt-24 p-4 select-none"
     role="dialog"
     tabindex="-1"
     onkeydown={handleKeydown}
   >
-    <div class="w-full max-w-xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[70vh]">
+    <div class="w-full max-w-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[70vh] text-zinc-900 dark:text-zinc-100">
       <!-- Search Box -->
-      <div class="p-3.5 border-b border-zinc-800 bg-zinc-950 flex items-center gap-3">
-        <Search class="w-4 h-4 text-zinc-400 shrink-0 ml-1" />
+      <div class="p-3.5 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 flex items-center gap-3">
+        <Search class="w-4 h-4 text-zinc-400 dark:text-zinc-500 shrink-0 ml-1" />
         <input
           type="text"
           bind:value={query}
           placeholder="Type a command, action, branch, or view..."
-          class="w-full bg-transparent text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none"
+          class="w-full bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none"
         />
 
-        <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-400 border border-zinc-700">
+        <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
           ESC
         </span>
       </div>
@@ -307,7 +307,7 @@
       <!-- Results List -->
       <div class="flex-1 overflow-y-auto p-2 space-y-1">
         {#if filteredItems.length === 0}
-          <div class="p-8 text-center text-xs text-zinc-500">
+          <div class="p-8 text-center text-xs text-zinc-400 dark:text-zinc-500">
             No matching actions or commands found.
           </div>
         {:else}
@@ -315,21 +315,21 @@
             {@const IconComponent = item.icon}
             <button
               onclick={item.action}
-              class="w-full text-left px-3 py-2.5 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer {idx === selectedIndex ? 'bg-cyan-600/20 text-cyan-300 border border-cyan-500/30' : 'text-zinc-300 hover:bg-zinc-800/60'}"
+              class="w-full text-left px-3 py-2.5 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer {idx === selectedIndex ? 'bg-cyan-50 dark:bg-cyan-600/20 text-cyan-800 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/30' : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 border border-transparent'}"
             >
               <div class="flex items-center gap-3 min-w-0">
-                <div class="p-1 rounded-md bg-zinc-800 text-zinc-400 shrink-0">
+                <div class="p-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 shrink-0">
                   <IconComponent class="w-3.5 h-3.5" />
                 </div>
                 <span class="truncate font-medium">{item.title}</span>
               </div>
 
               <div class="flex items-center gap-2 shrink-0 ml-2">
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-800/80 text-zinc-400 border border-zinc-700/50">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/50">
                   {item.category}
                 </span>
                 {#if item.shortcut}
-                  <span class="text-[10px] font-mono text-zinc-500">
+                  <span class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">
                     {item.shortcut}
                   </span>
                 {/if}

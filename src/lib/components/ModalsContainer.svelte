@@ -303,22 +303,22 @@
 
 <!-- Open Repo Modal Dialog -->
 {#if showOpenDialog}
-  <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-xl p-5 shadow-2xl space-y-4">
+  <div class="fixed inset-0 z-50 bg-black/50 dark:bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-2xl space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-bold text-zinc-100 flex items-center gap-2">
-          <GitFork class="w-4 h-4 text-cyan-400" />
+        <h3 class="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <GitFork class="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
           Open Git Repository
         </h3>
         <button
           onclick={onCloseOpenDialog}
-          class="text-zinc-500 hover:text-zinc-300 text-sm cursor-pointer"
+          class="text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 text-sm cursor-pointer"
         >
           ✕
         </button>
       </div>
 
-      <p class="text-xs text-zinc-400">
+      <p class="text-xs text-zinc-600 dark:text-zinc-400">
         Enter absolute directory path to a Git repository on your system:
       </p>
 
@@ -326,13 +326,13 @@
         type="text"
         bind:value={inputRepoPath}
         placeholder="f:/Dev/product/git-tool"
-        class="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs font-mono text-zinc-200 focus:outline-none focus:border-cyan-500"
+        class="w-full bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs font-mono text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-cyan-500"
       />
 
       <div class="flex items-center justify-end gap-2 pt-2">
         <button
           onclick={onCloseOpenDialog}
-          class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 cursor-pointer transition-colors"
+          class="px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-transparent text-xs text-zinc-700 dark:text-zinc-300 cursor-pointer transition-colors"
         >
           Cancel
         </button>

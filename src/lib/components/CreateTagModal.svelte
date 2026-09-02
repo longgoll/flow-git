@@ -39,22 +39,22 @@
 
 {#if isOpen && commit}
   <div
-    class="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-100"
+    class="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-100 select-none"
     role="dialog"
     aria-modal="true"
   >
     <div
-      class="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden text-zinc-200 font-sans"
+      class="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden text-zinc-900 dark:text-zinc-200 font-sans"
     >
       <!-- Header -->
-      <div class="px-5 py-3.5 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/40">
-        <div class="flex items-center gap-2 text-amber-400 font-bold text-sm">
+      <div class="px-5 py-3.5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/40">
+        <div class="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-sm">
           <Tag class="w-4 h-4" />
           <span>Tạo Tag / Release mới</span>
         </div>
         <button
           onclick={onClose}
-          class="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+          class="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
         >
           <X class="w-4 h-4" />
         </button>
@@ -63,42 +63,42 @@
       <!-- Form Content -->
       <form onsubmit={handleSubmit} class="p-5 space-y-4">
         <!-- Target Commit Info -->
-        <div class="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800/80 text-xs space-y-1">
-          <div class="flex items-center justify-between text-zinc-400 text-[11px]">
+        <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800/80 text-xs space-y-1">
+          <div class="flex items-center justify-between text-zinc-500 dark:text-zinc-400 text-[11px]">
             <span>Commit mục tiêu:</span>
-            <span class="font-mono text-cyan-400 font-bold">{commit.short_id}</span>
+            <span class="font-mono text-cyan-600 dark:text-cyan-400 font-bold">{commit.short_id}</span>
           </div>
-          <p class="text-zinc-200 truncate font-medium">{commit.summary}</p>
+          <p class="text-zinc-800 dark:text-zinc-200 truncate font-medium">{commit.summary}</p>
         </div>
 
         <!-- Tag Name Input -->
         <div class="space-y-1.5">
-          <label for="tag-name" class="block text-xs font-semibold text-zinc-300">
-            Tên Tag (Ví dụ: v1.0.0, release-2026.1) <span class="text-rose-400">*</span>
+          <label for="tag-name" class="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+            Tên Tag (Ví dụ: v1.0.0, release-2026.1) <span class="text-rose-500 dark:text-rose-400">*</span>
           </label>
           <input
             id="tag-name"
             type="text"
             bind:value={tagName}
             placeholder="v1.0.0"
-            class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-500 font-mono"
+            class="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-amber-500 font-mono select-text"
             required
           />
         </div>
 
         <!-- Annotated Checkbox -->
-        <label class="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none">
+        <label class="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300 cursor-pointer select-none">
           <input
             type="checkbox"
             bind:checked={isAnnotated}
-            class="rounded border-zinc-700 bg-zinc-950 text-amber-500 focus:ring-amber-500/20"
+            class="rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-amber-500 focus:ring-amber-500/20"
           />
           <span>Annotated Tag (Bao gồm tin nhắn ghi chú phiên bản)</span>
         </label>
 
         {#if isAnnotated}
           <div class="space-y-1.5 animate-in fade-in duration-150">
-            <label for="tag-msg" class="block text-xs font-semibold text-zinc-400">
+            <label for="tag-msg" class="block text-xs font-semibold text-zinc-600 dark:text-zinc-400">
               Ghi chú phát hành (Release Note / Message)
             </label>
             <textarea
@@ -106,7 +106,7 @@
               bind:value={tagMessage}
               placeholder="Release version 1.0.0 with new features..."
               rows="3"
-              class="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-500"
+              class="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-amber-500 select-text"
             ></textarea>
           </div>
         {/if}
@@ -116,7 +116,7 @@
           <button
             type="button"
             onclick={onClose}
-            class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+            class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             Hủy
           </button>

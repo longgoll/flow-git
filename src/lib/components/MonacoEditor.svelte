@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import type * as MonacoType from 'monaco-editor';
   import { ensureMonacoInitialized, getLanguageFromPath } from '../monacoEnv';
+  import { themeState } from '../state/themeState.svelte';
 
   interface Props {
     content: string;
@@ -38,7 +39,7 @@
 
     editorInstance = monaco.editor.create(editorContainer, {
       model: currentModel,
-      theme: 'flowgit-dark',
+      theme: themeState.isDark ? 'flowgit-dark' : 'flowgit-light',
       readOnly,
       fontSize,
       fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace",
@@ -52,6 +53,13 @@
       renderWhitespace: 'selection',
       padding: { top: 8, bottom: 8 },
     });
+  });
+
+  // React to theme changes
+  $effect(() => {
+    if (monaco) {
+      monaco.editor.setTheme(themeState.isDark ? 'flowgit-dark' : 'flowgit-light');
+    }
   });
 
   // React to content or language/filePath changes
@@ -83,6 +91,6 @@
   });
 </script>
 
-<div class="relative w-full h-full min-h-[200px] overflow-hidden bg-zinc-950">
+<div class="relative w-full h-full min-h-[200px] overflow-hidden bg-white dark:bg-zinc-950">
   <div bind:this={editorContainer} class="w-full h-full"></div>
 </div>

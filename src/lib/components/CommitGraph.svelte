@@ -1,12 +1,13 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import type { CommitNode, ConflictSimulationResult } from '../types';
-  import { simulateDragAction } from '../api';
-  import { ROW_HEIGHT, renderCommitGraph } from '../utils/graphRenderer';
-  import DragAvatarTooltip from './graph/DragAvatarTooltip.svelte';
-  import CommitContextMenu from './CommitContextMenu.svelte';
-  import { GitCompare, Copy, X, Layers } from 'lucide-svelte';
-  import { toast } from '../state/toastState.svelte';
+  import { onMount } from "svelte";
+  import type { CommitNode, ConflictSimulationResult } from "../types";
+  import { simulateDragAction } from "../api";
+  import { ROW_HEIGHT, renderCommitGraph } from "../utils/graphRenderer";
+  import DragAvatarTooltip from "./graph/DragAvatarTooltip.svelte";
+  import CommitContextMenu from "./CommitContextMenu.svelte";
+  import { GitCompare, Copy, X, Layers } from "lucide-svelte";
+  import { toast } from "../state/toastState.svelte";
+  import { themeState } from "../state/themeState.svelte";
 
   interface Props {
     commits: CommitNode[];
@@ -22,14 +23,17 @@
     onCreateBranch?: (commit: CommitNode) => void;
     onCreateTag?: (commit: CommitNode) => void;
     onRevertCommit?: (commit: CommitNode) => void;
-    onResetCommit?: (commit: CommitNode, mode: 'soft' | 'mixed' | 'hard') => void;
+    onResetCommit?: (
+      commit: CommitNode,
+      mode: "soft" | "mixed" | "hard",
+    ) => void;
     onSquashCommits?: (commits: CommitNode[]) => void;
     onInteractiveRebase?: (commit: CommitNode) => void;
     onOpenDropAction?: (
       source: CommitNode,
       target: CommitNode,
       simulation: ConflictSimulationResult | null,
-      pos: { x: number; y: number }
+      pos: { x: number; y: number },
     ) => void;
   }
 
@@ -37,7 +41,7 @@
     commits = [],
     selectedCommitId = null,
     selectedCommitIds = [],
-    repoPath = '',
+    repoPath = "",
     hasMore = false,
     isLoadingMore = false,
     onLoadMore,
@@ -85,21 +89,27 @@
   let maxScrollTop = $derived(Math.max(0, totalHeight - containerHeight));
   let scrollThumbHeight = $derived(
     totalHeight > 0
-      ? Math.max(30, Math.min(containerHeight, (containerHeight / totalHeight) * containerHeight))
-      : 0
+      ? Math.max(
+          30,
+          Math.min(
+            containerHeight,
+            (containerHeight / totalHeight) * containerHeight,
+          ),
+        )
+      : 0,
   );
   let scrollThumbTop = $derived(
     maxScrollTop > 0
       ? (scrollTop / maxScrollTop) * (containerHeight - scrollThumbHeight)
-      : 0
+      : 0,
   );
 
   let activeSelectedIds = $derived(
     selectedCommitIds && selectedCommitIds.length > 0
       ? selectedCommitIds
       : selectedCommitId
-      ? [selectedCommitId]
-      : []
+        ? [selectedCommitId]
+        : [],
   );
 
   // Fast OID to index mapping
@@ -129,7 +139,10 @@
     const height = containerHeight;
     const dpr = window.devicePixelRatio || 1;
 
-    if (canvasEl.width !== Math.round(width * dpr) || canvasEl.height !== Math.round(height * dpr)) {
+    if (
+      canvasEl.width !== Math.round(width * dpr) ||
+      canvasEl.height !== Math.round(height * dpr)
+    ) {
       canvasEl.width = Math.round(width * dpr);
       canvasEl.height = Math.round(height * dpr);
     }
@@ -146,12 +159,18 @@
       draggedCommit,
       hoveredTargetCommit,
       simulationResult,
+      isDark: themeState.isDark,
     });
   }
 
+  $effect(() => {
+    // Re-render graph when theme changes
+    scheduleRender();
+  });
+
   onMount(() => {
     if (!canvasEl || !containerEl) return;
-    ctx = canvasEl.getContext('2d', { alpha: true });
+    ctx = canvasEl.getContext("2d", { alpha: true });
 
     const rect = containerEl.getBoundingClientRect();
     containerWidth = rect.width > 0 ? rect.width : 800;
@@ -171,13 +190,13 @@
     });
 
     resizeObserver.observe(containerEl);
-    window.addEventListener('keydown', handleKeydown);
-    window.addEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener("keydown", handleKeydown);
+    window.addEventListener("mouseup", handleGlobalMouseUp);
 
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener('keydown', handleKeydown);
-      window.removeEventListener('mouseup', handleGlobalMouseUp);
+      window.removeEventListener("keydown", handleKeydown);
+      window.removeEventListener("mouseup", handleGlobalMouseUp);
       if (animFrameId !== null) {
         cancelAnimationFrame(animFrameId);
       }
@@ -207,7 +226,10 @@
 
   function handleWheel(e: WheelEvent) {
     e.preventDefault();
-    const newScrollTop = Math.max(0, Math.min(maxScrollTop, scrollTop + e.deltaY));
+    const newScrollTop = Math.max(
+      0,
+      Math.min(maxScrollTop, scrollTop + e.deltaY),
+    );
     if (newScrollTop !== scrollTop) {
       scrollTop = newScrollTop;
       checkTriggerLoadMore(scrollTop);
@@ -234,7 +256,10 @@
     const hoveredIndex = Math.floor(y / ROW_HEIGHT);
 
     if (isMouseDown && draggedCommit && !isDraggingNode) {
-      const dist = Math.hypot(e.clientX - mouseDownPos.x, e.clientY - mouseDownPos.y);
+      const dist = Math.hypot(
+        e.clientX - mouseDownPos.x,
+        e.clientY - mouseDownPos.y,
+      );
       if (dist > 6) {
         isDraggingNode = true;
       }
@@ -243,7 +268,10 @@
     if (isDraggingNode && draggedCommit) {
       dragMousePos = { x: e.clientX, y: e.clientY };
 
-      const target = hoveredIndex >= 0 && hoveredIndex < commits.length ? commits[hoveredIndex] : null;
+      const target =
+        hoveredIndex >= 0 && hoveredIndex < commits.length
+          ? commits[hoveredIndex]
+          : null;
 
       if (target && target.id !== draggedCommit.id) {
         if (hoveredTargetCommit?.id !== target.id) {
@@ -277,7 +305,7 @@
         simulationResult = sim;
         scheduleRender();
       } catch (err) {
-        console.error('Simulation error:', err);
+        console.error("Simulation error:", err);
       } finally {
         isSimulating = false;
       }
@@ -285,7 +313,12 @@
   }
 
   function handleGlobalMouseUp(e: MouseEvent) {
-    if (isDraggingNode && draggedCommit && hoveredTargetCommit && hoveredTargetCommit.id !== draggedCommit.id) {
+    if (
+      isDraggingNode &&
+      draggedCommit &&
+      hoveredTargetCommit &&
+      hoveredTargetCommit.id !== draggedCommit.id
+    ) {
       if (onOpenDropAction) {
         onOpenDropAction(draggedCommit, hoveredTargetCommit, simulationResult, {
           x: e.clientX,
@@ -327,8 +360,15 @@
       }
 
       // Ctrl / Cmd + Click: Toggle thêm/bớt commit vào tập lựa chọn
-      if ((e.ctrlKey || e.metaKey) && selectedCommitId && selectedCommitId !== commit.id) {
-        const currentList = selectedCommitIds && selectedCommitIds.length > 0 ? [...selectedCommitIds] : [selectedCommitId];
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        selectedCommitId &&
+        selectedCommitId !== commit.id
+      ) {
+        const currentList =
+          selectedCommitIds && selectedCommitIds.length > 0
+            ? [...selectedCommitIds]
+            : [selectedCommitId];
         const exists = currentList.indexOf(commit.id);
         if (exists >= 0) {
           currentList.splice(exists, 1);
@@ -343,7 +383,11 @@
       }
 
       // Click thông thường: Chọn 1 commit
-      if (onSelectMultipleCommits && selectedCommitIds && selectedCommitIds.length > 0) {
+      if (
+        onSelectMultipleCommits &&
+        selectedCommitIds &&
+        selectedCommitIds.length > 0
+      ) {
         onSelectMultipleCommits([]);
       }
       onSelectCommit(commit);
@@ -358,19 +402,28 @@
   }
 
   function handleKeydown(e: KeyboardEvent) {
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+    if (
+      e.target instanceof HTMLInputElement ||
+      e.target instanceof HTMLTextAreaElement
+    ) {
       return;
     }
 
-    if (e.key === 'j' || e.key === 'ArrowDown') {
+    if (e.key === "j" || e.key === "ArrowDown") {
       e.preventDefault();
       selectAdjacentCommit(1);
-    } else if (e.key === 'k' || e.key === 'ArrowUp') {
+    } else if (e.key === "k" || e.key === "ArrowUp") {
       e.preventDefault();
       selectAdjacentCommit(-1);
-    } else if ((e.key === 's' || e.key === 'S') && activeSelectedIds.length >= 2 && onSquashCommits) {
+    } else if (
+      (e.key === "s" || e.key === "S") &&
+      activeSelectedIds.length >= 2 &&
+      onSquashCommits
+    ) {
       e.preventDefault();
-      const selectedCommits = commits.filter((c) => activeSelectedIds.includes(c.id));
+      const selectedCommits = commits.filter((c) =>
+        activeSelectedIds.includes(c.id),
+      );
       onSquashCommits(selectedCommits);
     }
   }
@@ -383,7 +436,10 @@
 
     if (clickedIndex >= 0 && clickedIndex < commits.length) {
       const commit = commits[clickedIndex];
-      if (!selectedCommitIds?.includes(commit.id) && selectedCommitId !== commit.id) {
+      if (
+        !selectedCommitIds?.includes(commit.id) &&
+        selectedCommitId !== commit.id
+      ) {
         onSelectCommit(commit);
       }
       contextMenuData = {
@@ -428,18 +484,21 @@
       const trackHeight = containerHeight - scrollThumbHeight;
       if (trackHeight <= 0) return;
       const scrollDelta = (deltaY / trackHeight) * maxScrollTop;
-      scrollTop = Math.max(0, Math.min(maxScrollTop, scrollbarStartScrollTop + scrollDelta));
+      scrollTop = Math.max(
+        0,
+        Math.min(maxScrollTop, scrollbarStartScrollTop + scrollDelta),
+      );
       scheduleRender();
     };
 
     const onMouseUp = () => {
       isDraggingScrollbar = false;
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
     };
 
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
   }
 </script>
 
@@ -456,13 +515,15 @@
   onkeydown={handleKeydown}
   onmousemove={handleMouseMove}
   onmouseleave={handleMouseLeave}
-  class="relative w-full h-full bg-zinc-950 overflow-hidden cursor-pointer focus:outline-none select-none"
+  class="relative w-full h-full bg-white dark:bg-zinc-950 overflow-hidden cursor-pointer focus:outline-none select-none"
 >
   <canvas bind:this={canvasEl} class="w-full h-full block"></canvas>
 
   <!-- Custom Scrollbar -->
   {#if totalHeight > containerHeight}
-    <div class="absolute top-0 right-0 w-2.5 h-full bg-zinc-900/30 border-l border-zinc-800/40 pointer-events-auto">
+    <div
+      class="absolute top-0 right-0 w-2.5 h-full bg-zinc-100/60 dark:bg-zinc-900/30 border-l border-zinc-200/60 dark:border-zinc-800/40 pointer-events-auto"
+    >
       <div
         role="scrollbar"
         aria-orientation="vertical"
@@ -472,7 +533,9 @@
         aria-controls="graph-canvas"
         tabindex="0"
         onmousedown={startScrollbarDrag}
-        class="w-full rounded-full transition-colors cursor-grab active:cursor-grabbing {isDraggingScrollbar ? 'bg-cyan-500/80' : 'bg-zinc-700/60 hover:bg-zinc-600/80'}"
+        class="w-full rounded-full transition-colors cursor-grab active:cursor-grabbing {isDraggingScrollbar
+          ? 'bg-cyan-500/80'
+          : 'bg-zinc-300 dark:bg-zinc-700/60 hover:bg-zinc-400 dark:hover:bg-zinc-600/80'}"
         style="height: {scrollThumbHeight}px; transform: translateY({scrollThumbTop}px);"
       ></div>
     </div>
@@ -491,16 +554,24 @@
 
   <!-- Empty State -->
   {#if commits.length === 0}
-    <div class="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 gap-2 pointer-events-none">
+    <div
+      class="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 gap-2 pointer-events-none"
+    >
       <span class="text-sm">No commits to display.</span>
-      <span class="text-xs text-zinc-600">Open a repository or change your filter settings.</span>
+      <span class="text-xs text-zinc-500"
+        >Open a repository or change your filter settings.</span
+      >
     </div>
   {/if}
 
   <!-- Lazy Loading Indicator -->
   {#if isLoadingMore}
-    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full bg-neutral-900/90 border border-neutral-700 shadow-xl backdrop-blur-md flex items-center gap-2 text-xs text-neutral-300 pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-150">
-      <span class="w-3.5 h-3.5 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin"></span>
+    <div
+      class="absolute bottom-4 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full bg-white/95 dark:bg-neutral-900/90 border border-zinc-200 dark:border-neutral-700 shadow-xl backdrop-blur-md flex items-center gap-2 text-xs text-zinc-700 dark:text-neutral-300 pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-150"
+    >
+      <span
+        class="w-3.5 h-3.5 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin"
+      ></span>
       <span>Đang tải thêm commits...</span>
     </div>
   {/if}
@@ -509,26 +580,30 @@
   {#if activeSelectedIds.length >= 2}
     <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
     <div
-      class="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 bg-zinc-900/95 border border-zinc-700/80 backdrop-blur-md shadow-2xl rounded-2xl px-4 py-2 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-3 duration-150 select-none pointer-events-auto"
+      class="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 bg-white/95 dark:bg-zinc-900/95 border border-zinc-200 dark:border-zinc-700/80 backdrop-blur-md shadow-2xl rounded-2xl px-4 py-2 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-3 duration-150 select-none pointer-events-auto text-zinc-900 dark:text-zinc-100"
       onclick={(e) => e.stopPropagation()}
     >
       <div class="flex items-center gap-2 text-xs font-mono">
-        <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-        <span class="text-zinc-200 font-semibold">{activeSelectedIds.length} commits selected</span>
+        <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
+        <span class="text-zinc-800 dark:text-zinc-200 font-semibold"
+          >{activeSelectedIds.length} commits selected</span
+        >
       </div>
 
-      <div class="h-4 w-px bg-zinc-700"></div>
+      <div class="h-4 w-px bg-zinc-200 dark:bg-zinc-700"></div>
 
       {#if onSquashCommits}
         <button
           onclick={() => {
-            const selectedCommits = commits.filter((c) => activeSelectedIds.includes(c.id));
+            const selectedCommits = commits.filter((c) =>
+              activeSelectedIds.includes(c.id),
+            );
             if (selectedCommits.length >= 2) onSquashCommits(selectedCommits);
           }}
-          class="px-2.5 py-1 rounded-lg text-xs bg-amber-950/60 hover:bg-amber-900 border border-amber-600/50 text-amber-300 font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102"
+          class="px-2.5 py-1 rounded-lg text-xs bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-600/50 text-amber-800 dark:text-amber-300 font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102"
           title="Gộp các commit được chọn thành 1 (S)"
         >
-          <Layers class="w-3.5 h-3.5 text-amber-400" />
+          <Layers class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
           <span>Squash (S)</span>
         </button>
       {/if}
@@ -537,35 +612,43 @@
         <button
           onclick={() => {
             const c1 = commits.find((c) => c.id === activeSelectedIds[0]);
-            const c2 = commits.find((c) => c.id === activeSelectedIds[activeSelectedIds.length - 1]);
+            const c2 = commits.find(
+              (c) => c.id === activeSelectedIds[activeSelectedIds.length - 1],
+            );
             if (c1 && c2) onCompareCommits(c1, c2);
           }}
-          class="px-2.5 py-1 rounded-lg text-xs bg-zinc-800 hover:bg-zinc-700 text-cyan-300 font-medium flex items-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102"
+          class="px-2.5 py-1 rounded-lg text-xs bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-cyan-700 dark:text-cyan-300 font-medium flex items-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102 border border-zinc-200 dark:border-transparent"
           title="So sánh thay đổi giữa 2 đầu commit"
         >
-          <GitCompare class="w-3.5 h-3.5 text-cyan-400" />
+          <GitCompare class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
           <span>Compare Commits</span>
         </button>
       {/if}
 
       <button
         onclick={() => {
-          navigator.clipboard.writeText(activeSelectedIds.join('\n'));
-          toast.success("Copied SHAs", `Đã sao chép ${activeSelectedIds.length} mã commit SHA vào clipboard.`);
+          navigator.clipboard.writeText(activeSelectedIds.join("\n"));
+          toast.success(
+            "Copied SHAs",
+            `Đã sao chép ${activeSelectedIds.length} mã commit SHA vào clipboard.`,
+          );
         }}
-        class="px-2.5 py-1 rounded-lg text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium flex items-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102"
+        class="px-2.5 py-1 rounded-lg text-xs bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-medium flex items-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102 border border-zinc-200 dark:border-transparent"
         title="Sao chép toàn bộ commit hashes"
       >
-        <Copy class="w-3.5 h-3.5 text-zinc-400" />
+        <Copy class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
         <span>Copy SHAs</span>
       </button>
 
       <button
         onclick={() => {
           if (onSelectMultipleCommits) onSelectMultipleCommits([]);
-          else if (selectedCommitId) onSelectCommit(commits.find((c) => c.id === selectedCommitId) || commits[0]);
+          else if (selectedCommitId)
+            onSelectCommit(
+              commits.find((c) => c.id === selectedCommitId) || commits[0],
+            );
         }}
-        class="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+        class="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
         title="Bỏ chọn (Esc)"
       >
         <X class="w-3.5 h-3.5" />
@@ -574,14 +657,28 @@
   {/if}
 
   {#if commits.length === 0}
-    <div class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 select-none pointer-events-none z-10">
-      <div class="p-6 rounded-2xl bg-neutral-900/95 border border-neutral-800 shadow-2xl max-w-md pointer-events-auto backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
-        <div class="w-12 h-12 mx-auto mb-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center shadow-inner">
+    <div
+      class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 select-none pointer-events-none z-10"
+    >
+      <div
+        class="p-6 rounded-2xl bg-white/95 dark:bg-neutral-900/95 border border-zinc-200 dark:border-neutral-800 shadow-2xl max-w-md pointer-events-auto backdrop-blur-md animate-in fade-in zoom-in-95 duration-200"
+      >
+        <div
+          class="w-12 h-12 mx-auto mb-3.5 rounded-xl bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shadow-inner"
+        >
           <Layers class="w-6 h-6" />
         </div>
-        <h3 class="text-sm font-semibold text-neutral-100">Repository mới — Chưa có commit</h3>
-        <p class="text-xs text-neutral-400 mt-2 leading-relaxed">
-          Nhánh hiện tại chưa có commit nào được tạo. Hãy kiểm tra các tệp trong dự án ở bảng <strong class="text-cyan-300 font-medium">Working Tree</strong> bên trái, đưa vào Staged và tạo Commit đầu tiên của bạn!
+        <h3 class="text-sm font-semibold text-zinc-900 dark:text-neutral-100">
+          Repository mới — Chưa có commit
+        </h3>
+        <p
+          class="text-xs text-zinc-500 dark:text-neutral-400 mt-2 leading-relaxed"
+        >
+          Nhánh hiện tại chưa có commit nào được tạo. Hãy kiểm tra các tệp trong
+          dự án ở bảng <strong
+            class="text-cyan-700 dark:text-cyan-300 font-medium"
+            >Working Tree</strong
+          > bên trái, đưa vào Staged và tạo Commit đầu tiên của bạn!
         </p>
       </div>
     </div>
@@ -592,7 +689,9 @@
       x={contextMenuData.x}
       y={contextMenuData.y}
       commit={contextMenuData.commit}
-      selectedCount={activeSelectedIds.length > 1 ? activeSelectedIds.length : 1}
+      selectedCount={activeSelectedIds.length > 1
+        ? activeSelectedIds.length
+        : 1}
       onClose={() => (contextMenuData = null)}
       onCreateBranch={(c) => {
         contextMenuData = null;
@@ -612,7 +711,9 @@
       }}
       onSquash={() => {
         contextMenuData = null;
-        const selectedCommits = commits.filter((c) => activeSelectedIds.includes(c.id));
+        const selectedCommits = commits.filter((c) =>
+          activeSelectedIds.includes(c.id),
+        );
         onSquashCommits?.(selectedCommits);
       }}
       onInteractiveRebase={(c) => {

@@ -1,0 +1,318 @@
+<script lang="ts">
+  import type { CommitNode, RebaseExecutionResult, RebaseTodoItem } from '../types';
+  import { prepareInteractiveRebase, executeInteractiveRebase } from '../api/action';
+  import {
+    GitFork,
+    X,
+    ArrowUp,
+    ArrowDown,
+    Trash2,
+    Check,
+    RefreshCw,
+    AlertTriangle,
+  } from 'lucide-svelte';
+  import { toast } from '../state/toastState.svelte';
+
+  interface Props {
+    isOpen: boolean;
+    repoPath: string;
+    ontoCommit: CommitNode | null;
+    onClose: () => void;
+    onSuccess?: (res: RebaseExecutionResult) => void;
+  }
+
+  let { isOpen = false, repoPath = '', ontoCommit = null, onClose, onSuccess }: Props = $props();
+
+  let todos = $state<RebaseTodoItem[]>([]);
+  let isLoading = $state<boolean>(false);
+  let isExecuting = $state<boolean>(false);
+
+
+  $effect(() => {
+    if (isOpen && repoPath && ontoCommit) {
+      loadTodos();
+    }
+  });
+
+  async function loadTodos() {
+    if (!repoPath || !ontoCommit) return;
+    isLoading = true;
+    try {
+      todos = await prepareInteractiveRebase(repoPath, ontoCommit.id);
+    } catch (err: any) {
+      console.error('Failed to prepare interactive rebase:', err);
+      toast.error('Lỗi nạp danh sách commit rebase', err?.message || err);
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  function moveUp(index: number) {
+    if (index <= 0) return;
+    const next = [...todos];
+    const temp = next[index];
+    next[index] = next[index - 1];
+    next[index - 1] = temp;
+    todos = next;
+  }
+
+  function moveDown(index: number) {
+    if (index >= todos.length - 1) return;
+    const next = [...todos];
+    const temp = next[index];
+    next[index] = next[index + 1];
+    next[index + 1] = temp;
+    todos = next;
+  }
+
+  function setAction(index: number, action: string) {
+    todos = todos.map((item, idx) => {
+      if (idx === index) {
+        return { ...item, action };
+      }
+      return item;
+    });
+  }
+
+  async function handleStartRebase() {
+    if (!repoPath || !ontoCommit) return;
+    isExecuting = true;
+    try {
+      const res = await executeInteractiveRebase(repoPath, ontoCommit.id, todos);
+      if (res.status === 'completed') {
+        toast.success('Interactive Rebase hoàn tất', res.message);
+        onSuccess?.(res);
+        onClose();
+      } else if (res.status === 'conflict') {
+        toast.warning('Xung đột Rebase', res.message);
+        onSuccess?.(res);
+        onClose();
+      }
+    } catch (err: any) {
+      toast.error('Interactive Rebase thất bại', err?.message || err);
+    } finally {
+      isExecuting = false;
+    }
+  }
+
+  const ACTION_CONFIGS: Record<string, { label: string; color: string; desc: string }> = {
+    pick: {
+      label: 'Pick',
+      color: 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60',
+      desc: 'Giữ nguyên commit',
+    },
+    reword: {
+      label: 'Reword',
+      color: 'bg-amber-950/80 text-amber-300 border-amber-700/60',
+      desc: 'Sửa commit message',
+    },
+    squash: {
+      label: 'Squash',
+      color: 'bg-blue-950/80 text-blue-300 border-blue-700/60',
+      desc: 'Gộp vào commit trước',
+    },
+    fixup: {
+      label: 'Fixup',
+      color: 'bg-cyan-950/80 text-cyan-300 border-cyan-700/60',
+      desc: 'Gộp không giữ message',
+    },
+    drop: {
+      label: 'Drop',
+      color: 'bg-rose-950/80 text-rose-300 border-rose-700/60',
+      desc: 'Xóa bỏ commit',
+    },
+  };
+</script>
+
+{#if isOpen && ontoCommit}
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+  <div
+    class="fixed inset-0 bg-black/80 backdrop-blur-xs z-[100] flex items-center justify-center p-4 animate-in fade-in duration-150"
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+    onkeydown={(e) => {
+      if (e.key === 'Escape') onClose();
+    }}
+    onclick={(e) => {
+      if (e.target === e.currentTarget) onClose();
+    }}
+  >
+    <div
+      class="bg-zinc-900 border border-zinc-700/80 rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col font-sans animate-in zoom-in-95 duration-150"
+    >
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/60">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-inner">
+            <GitFork class="w-5 h-5" />
+          </div>
+          <div>
+            <h2 class="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+              Interactive Rebase Timeline (`git rebase -i`)
+            </h2>
+            <p class="text-xs text-zinc-400 mt-0.5">
+              Tái cấu trúc, sắp xếp thứ tự, gộp (squash) hoặc sửa commit lên gốc:
+              <span class="font-mono text-cyan-300 font-bold ml-1">{ontoCommit.short_id}</span>
+              <span class="text-zinc-500 truncate max-w-xs inline-block align-bottom ml-1">({ontoCommit.summary})</span>
+            </p>
+          </div>
+        </div>
+
+        <button
+          onclick={onClose}
+          class="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
+        >
+          <X class="w-4 h-4" />
+        </button>
+      </div>
+
+      <!-- Action Legend / Quick Info -->
+      <div class="px-6 py-2.5 bg-zinc-950/40 border-b border-zinc-800/80 flex items-center justify-between text-xs text-zinc-400 font-mono">
+        <div class="flex items-center gap-2">
+          <span>Thao tác:</span>
+          <span class="px-1.5 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 text-[10px]">Pick: Giữ</span>
+          <span class="px-1.5 py-0.5 rounded bg-amber-950/60 text-amber-400 border border-amber-800/50 text-[10px]">Reword: Sửa lời</span>
+          <span class="px-1.5 py-0.5 rounded bg-blue-950/60 text-blue-400 border border-blue-800/50 text-[10px]">Squash: Gộp</span>
+          <span class="px-1.5 py-0.5 rounded bg-cyan-950/60 text-cyan-400 border border-cyan-800/50 text-[10px]">Fixup: Nuốt</span>
+          <span class="px-1.5 py-0.5 rounded bg-rose-950/60 text-rose-400 border border-rose-800/50 text-[10px]">Drop: Xóa</span>
+        </div>
+        <span class="text-zinc-500 font-mono text-[11px]">{todos.length} commits</span>
+      </div>
+
+      <!-- Timeline Commits List -->
+      <div class="p-6 max-h-[500px] overflow-y-auto space-y-2.5">
+        {#if isLoading}
+          <div class="py-12 flex flex-col items-center justify-center text-zinc-500 gap-2">
+            <RefreshCw class="w-6 h-6 animate-spin text-amber-400" />
+            <span class="text-xs font-mono">Đang chuẩn bị danh sách todo timeline...</span>
+          </div>
+        {:else if todos.length === 0}
+          <div class="py-12 text-center text-zinc-500 text-xs font-mono">
+            Không tìm thấy commit nào giữa HEAD và commit đích được chọn.
+          </div>
+        {:else}
+          <div class="space-y-2 font-mono">
+            {#each todos as item, index (item.commit_id)}
+              <div
+                class="p-3 rounded-xl border transition-all flex items-center justify-between gap-3 {item.action === 'drop' ? 'bg-rose-950/20 border-rose-900/40 opacity-60' : 'bg-zinc-950/80 border-zinc-800 hover:border-zinc-700'}"
+              >
+                <!-- Left: Reorder & Action Picker -->
+                <div class="flex items-center gap-2 shrink-0">
+                  <!-- Move up/down -->
+                  <div class="flex flex-col gap-0.5">
+                    <button
+                      onclick={() => moveUp(index)}
+                      disabled={index === 0}
+                      class="p-1 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white disabled:opacity-20 cursor-pointer disabled:cursor-default transition-colors"
+                      title="Chuyển lên trước (Áp dụng sớm hơn)"
+                    >
+                      <ArrowUp class="w-3 h-3" />
+                    </button>
+                    <button
+                      onclick={() => moveDown(index)}
+                      disabled={index === todos.length - 1}
+                      class="p-1 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white disabled:opacity-20 cursor-pointer disabled:cursor-default transition-colors"
+                      title="Chuyển xuống sau (Áp dụng trễ hơn)"
+                    >
+                      <ArrowDown class="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  <!-- Action Dropdown / Select -->
+                  <select
+                    value={item.action}
+                    onchange={(e) => setAction(index, e.currentTarget.value)}
+                    class="px-2 py-1.5 rounded-lg text-xs font-bold border transition-colors outline-hidden cursor-pointer {ACTION_CONFIGS[item.action]?.color || 'bg-zinc-900 text-zinc-300 border-zinc-700'}"
+                  >
+                    <option value="pick">pick (Giữ)</option>
+                    <option value="reword">reword (Sửa text)</option>
+                    <option value="squash">squash (Gộp + msg)</option>
+                    <option value="fixup">fixup (Gộp gọn)</option>
+                    <option value="drop">drop (Xóa)</option>
+                  </select>
+                </div>
+
+                <!-- Center: Commit Short SHA & Summary -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-cyan-400">
+                      {item.short_id}
+                    </span>
+                    <span class="text-[11px] text-zinc-500">
+                      {item.author}
+                    </span>
+                  </div>
+
+                  {#if item.action === 'reword'}
+                    <input
+                      type="text"
+                      bind:value={item.summary}
+                      class="mt-1 w-full px-2 py-1 text-xs font-sans bg-zinc-900 border border-amber-500 rounded text-zinc-100 outline-hidden"
+                      placeholder="Nhập commit message mới..."
+                    />
+                  {:else}
+                    <p class="text-xs text-zinc-300 font-sans truncate mt-0.5 {item.action === 'drop' ? 'line-through text-zinc-600' : ''}">
+                      {item.summary}
+                    </p>
+                  {/if}
+                </div>
+
+                <!-- Right: Drop Quick Action -->
+                <div class="shrink-0">
+                  {#if item.action !== 'drop'}
+                    <button
+                      onclick={() => setAction(index, 'drop')}
+                      class="p-1.5 rounded-lg text-zinc-600 hover:text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
+                      title="Đánh dấu xóa commit này (Drop)"
+                    >
+                      <Trash2 class="w-3.5 h-3.5" />
+                    </button>
+                  {:else}
+                    <button
+                      onclick={() => setAction(index, 'pick')}
+                      class="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-400 hover:bg-emerald-950/30 transition-colors cursor-pointer"
+                      title="Khôi phục commit (Pick)"
+                    >
+                      <Check class="w-3.5 h-3.5" />
+                    </button>
+                  {/if}
+                </div>
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </div>
+
+      <!-- Footer -->
+      <div class="px-6 py-4 border-t border-zinc-800 bg-zinc-950/60 flex items-center justify-between">
+        <div class="flex items-center gap-1.5 text-xs text-zinc-500 font-mono">
+          <AlertTriangle class="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span>Nếu có xung đột, FlowGit sẽ tự động kích hoạt Conflict Resolver.</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button
+            onclick={onClose}
+            class="px-4 py-2 rounded-xl text-zinc-400 hover:text-zinc-200 text-xs font-medium cursor-pointer transition-colors"
+          >
+            Hủy
+          </button>
+          <button
+            onclick={handleStartRebase}
+            disabled={isExecuting || todos.length === 0}
+            class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-zinc-950 text-xs font-bold flex items-center gap-2 cursor-pointer shadow-lg transition-all disabled:opacity-50"
+          >
+            {#if isExecuting}
+              <RefreshCw class="w-4 h-4 animate-spin" />
+              <span>Đang Rebase...</span>
+            {:else}
+              <GitFork class="w-4 h-4" />
+              <span>Bắt đầu Rebase ({todos.filter(t => t.action !== 'drop').length} commits)</span>
+            {/if}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{/if}

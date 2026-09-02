@@ -1,0 +1,81 @@
+# ĐỒ THỊ ĐỘNG HỌC & BẢN ĐỒ CÂY PHÂN NHÁNH (LIVING GRAPH & DAG ENGINE)
+> **Hiệu năng:** Khóa cứng 60 FPS với > 100,000 Commits  
+> **Công nghệ:** HTML5 `OffscreenCanvas` + Dedicated Web Worker + Bezier Splines 2D
+
+---
+
+## 📊 1. LIVING COMMIT GRAPH (ĐỒ THỊ ĐỘNG HỌC TRỰC QUAN)
+
+Living Commit Graph là trái tim của FlowGit, nơi mọi nhánh, commit, tag và mối quan hệ cha-con (parent-child) được mô phỏng sinh động theo thời gian thực.
+
+```
+● [main] feat: tích hợp thanh toán tự động ────────────────────────────┐
+│                                                                      │
+│   ● [feature/auth] feat(auth): thêm hỗ trợ GitHub OAuth Device Flow  │
+│  /│                                                                  │
+│ ● │ fix(token): sửa lỗi làm mới JWT token khi hết hạn                │
+│ │/                                                                   │
+● ┴ [v1.2.0] chore: phát hành phiên bản v1.2.0                         │
+```
+
+### 1.1. Kiến trúc OffscreenCanvas + Web Worker
+- **Vấn đề của các Git Client cũ:**  
+  Các phần mềm truyền thống (như SourceTree hoặc GitKraken đời đầu) thường vẽ DOM nodes hoặc SVG trực tiếp trên main-thread. Khi repository có trên 5,000 commits, việc cuộn chuột gây giật lag nghiêm trọng, tụt khung hình xuống dưới 15 FPS.
+- **Giải pháp của FlowGit:**
+  - Chuyển toàn bộ canvas sang chế độ **`OffscreenCanvas`** và gửi sang **`graphWorker.ts`**.
+  - Worker tính toán tọa độ $X, Y$ của từng node commit và vẽ các đường cong **Cubic Bezier Splines** mượt mà.
+  - Áp dụng kỹ thuật **Virtual Viewport Clipping**: Chỉ render các node và đường nối nằm trong khung nhìn hiển thị hiện tại của màn hình cộng thêm một vùng đệm (buffer) 200px.
+
+### 1.2. Thuật toán Nén Làn Tự Động (Topological Lane Compaction)
+- Được tính toán song song tại backend Rust bằng thư viện đa luồng `rayon` (`src-tauri/src/git/history.rs`).
+- Khi một nhánh đã kết thúc hoặc được merge vào nhánh khác, chỉ số lane của nó lập tức được thu hồi và tái sử dụng cho các nhánh mới xuất hiện tiếp theo.
+- Nhờ đó, đồ thị luôn giữ được bề ngang thanh thoát gọn gàng, không bị phình to sang phải làm mất diện tích đọc commit message.
+
+### 1.3. Các huy hiệu trực quan (Visual Badges & Indicators)
+- **Huy hiệu Ahead / Behind (`↑ 2  ↓ 5`):** Hiển thị ngay trên nhãn nhánh, thông báo số lượng commit mà nhánh local đang dẫn trước hoặc tụt hậu so với nhánh upstream trên remote.
+- **Avatar Tác giả:** Tự động nhận diện avatar hoặc vẽ avatar chữ cái đầu với màu sắc định danh riêng cho từng lập trình viên.
+- **Tag Pills & Branch Pills:** Phân biệt rõ ràng giữa nhánh Local (màu xanh lam), nhánh Remote (màu tím), HEAD hiện tại (viền sáng) và Release Tags (màu vàng kim).
+
+---
+
+## 🗺️ 2. DAG CANVAS MAP (BẢN ĐỒ TỔNG QUAN TOPOLOGY)
+
+Component: `src/lib/components/DagCanvasMap.svelte`
+
+Đối với các dự án lớn có hàng chục nhánh song song đang phát triển, FlowGit cung cấp chế độ **DAG Mini-Map**:
+- Thu nhỏ toàn bộ cấu trúc phân nhánh của kho lưu trữ thành một bản đồ chim bay (Bird's Eye Overview).
+- Cho phép người dùng di chuột hoặc kéo khung nhìn để nhảy nhanh đến các mốc thời gian cách đây nhiều tháng mà không cần cuộn trang thủ công.
+- Màu sắc của các nhánh được đồng bộ 1:1 với đồ thị chính.
+
+---
+
+## 🎯 3. FOCUS VIEW (CHẾ ĐỘ TẬP TRUNG NHÁNH)
+
+Component: `src/lib/components/FocusView.svelte`
+
+Khi cần tập trung sâu vào một tính năng mà không bị xao nhãng bởi các nhánh khác của đồng nghiệp:
+- Người dùng bấm chuột phải vào một nhánh và chọn **"Focus This Branch"** (hoặc chuyển tab Focus trên thanh Toolbar).
+- Giao diện chuyển sang chế độ Focus View:
+  - Ẩn toàn bộ các commit ngoại lai không liên quan.
+  - Chỉ làm nổi bật con đường tiến hóa từ nhánh gốc (`main`) đến đỉnh nhánh hiện tại.
+  - Hiển thị danh sách các tệp bị thay đổi tổng hợp của toàn bộ chuỗi commit trong nhánh đó.
+
+---
+
+## 📚 4. STACKED COMMITS FLOW (QUẢN LÝ CHUỖI PULL REQUEST)
+
+Component: `src/lib/components/StackedCommitsFlow.svelte`
+
+Theo tiêu chuẩn công nghệ hiện đại tại các công ty lớn (Google / Meta Stacked Diffs):
+- Cho phép lập trình viên chia một tính năng lớn thành nhiều commit nhỏ, mạch lạc kế tiếp nhau trước khi đẩy lên remote.
+- FlowGit nhận diện các commit chưa được push (`get_unpushed_stacked_commits`) và hiển thị thành một chuỗi thẻ trực quan:
+  - Cho phép **kéo thả thay đổi thứ tự** (`reorder_stacked_commits`).
+  - Gợi ý tách hoặc gộp (squash) các bước trung gian trước khi nộp PR.
+
+---
+
+## 👻 5. GHOST PREVIEW KHI KÉO - THẢ (DRAG & DROP)
+
+- Khi người dùng giữ chuột vào một node commit hoặc nhãn nhánh và kéo đi:
+  - Cây đồ thị lập tức xuất hiện các **đường nét đứt mờ (Ghost lines)** mô phỏng hình dạng tương lai nếu thả vào vị trí đó.
+  - Phía sau hậu trường, Rust backend chạy kiểm tra Dry-run in-memory: nếu có nguy cơ xung đột, viền node mục tiêu sẽ đổi sang **màu cam phát sáng** kèm thông báo cảnh báo tức thì.

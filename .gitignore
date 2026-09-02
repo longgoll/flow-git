@@ -1,0 +1,63 @@
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE & Editor Files
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# Environment & Secret Files
+.env
+.env.*
+!.env.example
+*.pem
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Node / Vite / Svelte Frontend
+node_modules/
+dist/
+dist-ssr/
+build/
+.svelte-kit/
+.turbo/
+.vite/
+*.tsbuildinfo
+
+# Rust & Tauri Builds
+target/
+src-tauri/target/
+src-tauri/gen/
+**/*.rs.bk
+
+# Local SQLite & Temporary Cache Files
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+tmp/
+temp/
+scratch/

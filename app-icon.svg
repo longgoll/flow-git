@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="50%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#8b5cf6" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="#09090b" />
+  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="url(#grad)" stroke-width="8" opacity="0.6" />
+  <!-- Git Tree Branches -->
+  <g filter="url(#glow)">
+    <!-- Main branch line -->
+    <line x1="160" y1="120" x2="160" y2="392" stroke="#06b6d4" stroke-width="24" stroke-linecap="round" />
+    <!-- Feature branch bezier -->
+    <path d="M 160 300 C 160 220, 352 280, 352 180" fill="none" stroke="#a855f7" stroke-width="24" stroke-linecap="round" />
+    <!-- Nodes -->
+    <circle cx="160" cy="140" r="28" fill="#06b6d4" stroke="#ffffff" stroke-width="8" />
+    <circle cx="160" cy="300" r="24" fill="#06b6d4" stroke="#ffffff" stroke-width="6" />
+    <circle cx="160" cy="380" r="24" fill="#06b6d4" stroke="#ffffff" stroke-width="6" />
+    <circle cx="352" cy="180" r="28" fill="#a855f7" stroke="#ffffff" stroke-width="8" />
+  </g>
+</svg>

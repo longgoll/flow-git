@@ -1,0 +1,120 @@
+import * as monaco from 'monaco-editor';
+import editorWorker from 'monaco-editor/editor/editor.worker?worker';
+import jsonWorker from 'monaco-editor/language/json/json.worker?worker';
+import cssWorker from 'monaco-editor/language/css/css.worker?worker';
+import htmlWorker from 'monaco-editor/language/html/html.worker?worker';
+import tsWorker from 'monaco-editor/language/typescript/ts.worker?worker';
+
+// Configure Monaco Environment for Vite
+let initialized = false;
+
+export function ensureMonacoInitialized(): typeof monaco {
+  if (initialized) return monaco;
+
+  self.MonacoEnvironment = {
+    getWorker(_: unknown, label: string) {
+      if (label === 'json') {
+        return new jsonWorker();
+      }
+      if (label === 'css' || label === 'scss' || label === 'less') {
+        return new cssWorker();
+      }
+      if (label === 'html' || label === 'handlebars' || label === 'razor') {
+        return new htmlWorker();
+      }
+      if (label === 'typescript' || label === 'javascript') {
+        return new tsWorker();
+      }
+      return new editorWorker();
+    },
+  };
+
+  // Define FlowGit Custom Dark Theme matching zinc-950
+  monaco.editor.defineTheme('flowgit-dark', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'comment', foreground: '71717a', fontStyle: 'italic' },
+      { token: 'keyword', foreground: '22d3ee' },
+      { token: 'string', foreground: '34d399' },
+      { token: 'number', foreground: 'fbbf24' },
+      { token: 'type', foreground: '38bdf8' },
+      { token: 'function', foreground: 'a78bfa' },
+      { token: 'variable', foreground: 'e4e4e7' },
+      { token: 'identifier', foreground: 'f4f4f5' },
+    ],
+    colors: {
+      'editor.background': '#09090b', // zinc-950
+      'editor.foreground': '#e4e4e7', // zinc-200
+      'editor.lineHighlightBackground': '#18181b80', // zinc-900 / 50%
+      'editor.selectionBackground': '#0e749060', // cyan-700 / 40%
+      'editorLineNumber.foreground': '#52525b', // zinc-600
+      'editorLineNumber.activeForeground': '#22d3ee', // cyan-400
+      'editorCursor.foreground': '#22d3ee',
+      'editorGutter.background': '#09090b',
+      'diffEditor.insertedTextBackground': '#10b98125', // emerald-500 / 15%
+      'diffEditor.removedTextBackground': '#f43f5e25', // rose-500 / 15%
+      'diffEditor.insertedLineBackground': '#064e3b30',
+      'diffEditor.removedLineBackground': '#88133730',
+      'scrollbarSlider.background': '#27272a80',
+      'scrollbarSlider.hoverBackground': '#3f3f4690',
+      'scrollbarSlider.activeBackground': '#52525b',
+    },
+  });
+
+  initialized = true;
+  return monaco;
+}
+
+export function getLanguageFromPath(filePath: string): string {
+  const clean = filePath.toLowerCase().trim();
+  const ext = clean.split('.').pop() || '';
+
+  const extMap: Record<string, string> = {
+    ts: 'typescript',
+    tsx: 'typescript',
+    js: 'javascript',
+    jsx: 'javascript',
+    mjs: 'javascript',
+    cjs: 'javascript',
+    rs: 'rust',
+    py: 'python',
+    json: 'json',
+    jsonc: 'json',
+    html: 'html',
+    htm: 'html',
+    svelte: 'html',
+    vue: 'html',
+    css: 'css',
+    scss: 'scss',
+    sass: 'scss',
+    less: 'less',
+    md: 'markdown',
+    markdown: 'markdown',
+    toml: 'ini',
+    yaml: 'yaml',
+    yml: 'yaml',
+    sh: 'shell',
+    bash: 'shell',
+    zsh: 'shell',
+    ps1: 'powershell',
+    go: 'go',
+    c: 'c',
+    h: 'c',
+    cpp: 'cpp',
+    hpp: 'cpp',
+    cc: 'cpp',
+    cs: 'csharp',
+    java: 'java',
+    kt: 'kotlin',
+    sql: 'sql',
+    xml: 'xml',
+    svg: 'xml',
+    dockerfile: 'dockerfile',
+    gitignore: 'ini',
+    gitattributes: 'ini',
+    env: 'ini',
+  };
+
+  return extMap[ext] || 'plaintext';
+}

@@ -150,9 +150,9 @@
 
 <svelte:window onclick={handleWindowClick} />
 
-<header class="h-12 border-b border-zinc-800/60 bg-zinc-950/90 backdrop-blur-md px-2 sm:px-3 flex items-center justify-between select-none z-30 shrink-0 gap-1 sm:gap-2">
+<header class="h-12 border-b border-zinc-800/60 bg-zinc-950/90 backdrop-blur-md px-2 sm:px-3 flex items-center justify-between select-none z-30 shrink-0 gap-1 sm:gap-2 w-full max-w-full overflow-hidden">
   <!-- Left: Sidebar Toggle, App Logo & Unified Repo/Branch Breadcrumb -->
-  <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0">
+  <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink">
     <!-- Sidebar Toggle Button -->
     {#if onToggleSidebar}
       <button
@@ -177,10 +177,10 @@
     </div>
 
     <!-- Unified Repo & Branch Breadcrumb -->
-    <div class="flex items-center bg-zinc-900/90 hover:bg-zinc-850/90 border border-zinc-800/80 rounded-lg p-0.5 transition-all max-w-[140px] sm:max-w-[190px] lg:max-w-[240px] shrink-0 group">
+    <div class="flex items-center bg-zinc-900/90 hover:bg-zinc-850/90 border border-zinc-800/80 rounded-lg p-0.5 transition-all max-w-[140px] sm:max-w-[190px] lg:max-w-[240px] min-w-0 shrink group">
       <button
         onclick={onOpenRepo}
-        class="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-md hover:bg-zinc-800/60 text-xs font-medium text-zinc-200 hover:text-white transition-colors cursor-pointer truncate"
+        class="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-md hover:bg-zinc-800/60 text-xs font-medium text-zinc-200 hover:text-white transition-colors cursor-pointer min-w-0 truncate"
         title={repoSummary ? `Repository: ${repoSummary.name} (${repoSummary.path})` : 'Open Git Repository'}
       >
         <FolderOpen class="w-3.5 h-3.5 text-cyan-400 shrink-0 group-hover:text-cyan-300" />
@@ -190,7 +190,7 @@
       </button>
       {#if repoSummary?.current_branch}
         <span class="text-zinc-600 text-xs select-none">/</span>
-        <div class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-950/40 border border-emerald-800/40 text-emerald-300 text-[11px] font-medium font-mono shrink-0" title="Current Branch: {repoSummary.current_branch}">
+        <div class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-950/40 border border-emerald-800/40 text-emerald-300 text-[11px] font-medium font-mono min-w-0 shrink" title="Current Branch: {repoSummary.current_branch}">
           <GitBranch class="w-3 h-3 shrink-0" />
           <span class="truncate max-w-[50px] sm:max-w-[70px] md:max-w-[90px]">{repoSummary.current_branch}</span>
         </div>
@@ -201,7 +201,7 @@
     <div class="flex items-center bg-zinc-900/90 border border-zinc-800/80 rounded-lg p-0.5 shrink-0 shadow-inner">
       <button
         onclick={() => onChangeViewMode('graph')}
-        class="px-2 py-1 sm:px-2.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer {viewMode === 'graph' ? 'bg-cyan-600 text-white shadow-sm font-semibold' : 'text-zinc-400 hover:text-zinc-200'}"
+        class="px-2 py-1 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer {viewMode === 'graph' ? 'bg-cyan-600 text-white shadow-sm font-semibold' : 'text-zinc-400 hover:text-zinc-200'}"
         title="Commit History Graph"
       >
         <GitGraph class="w-3.5 h-3.5 shrink-0" />
@@ -213,7 +213,7 @@
         title="Focus / Linear View (Cô lập nhánh hiện tại)"
       >
         <Crosshair class="w-3.5 h-3.5 text-amber-400 shrink-0" />
-        <span class="hidden 2xl:inline">Focus</span>
+        <span class="{viewMode === 'focus' ? 'inline' : 'hidden'} text-[11px]">Focus</span>
       </button>
       <button
         onclick={() => onChangeViewMode('stacked')}
@@ -221,7 +221,7 @@
         title="Stacked Commits Flow (Reorder & Squash)"
       >
         <Box class="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-        <span class="hidden 2xl:inline">Stacked</span>
+        <span class="{viewMode === 'stacked' ? 'inline' : 'hidden'} text-[11px]">Stacked</span>
       </button>
       <button
         onclick={() => onChangeViewMode('dag')}
@@ -229,15 +229,15 @@
         title="2D Interactive DAG Map (Figma-style Canvas)"
       >
         <Network class="w-3.5 h-3.5 text-teal-400 shrink-0" />
-        <span class="hidden 2xl:inline">DAG Map</span>
+        <span class="{viewMode === 'dag' ? 'inline' : 'hidden'} text-[11px]">DAG Map</span>
       </button>
       <button
         onclick={() => onChangeViewMode('changes')}
-        class="px-2 py-1 sm:px-2.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer {viewMode === 'changes' ? 'bg-cyan-600 text-white shadow-sm font-semibold' : 'text-zinc-400 hover:text-zinc-200'}"
+        class="px-2 py-1 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer {viewMode === 'changes' ? 'bg-cyan-600 text-white shadow-sm font-semibold' : 'text-zinc-400 hover:text-zinc-200'}"
         title="Working Tree Changes"
       >
         <Layers class="w-3.5 h-3.5 shrink-0" />
-        <span class="hidden 2xl:inline">Changes</span>
+        <span class="{viewMode === 'changes' ? 'inline' : 'hidden 2xl:inline'} text-[11px]">Changes</span>
         {#if dirtyFilesCount > 0 || stagedFilesCount > 0}
           <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {stagedFilesCount > 0 ? 'bg-emerald-500 text-zinc-950 font-bold' : 'bg-amber-500 text-zinc-950 font-bold'}">
             {stagedFilesCount > 0 ? `${stagedFilesCount}S` : dirtyFilesCount}
@@ -246,24 +246,24 @@
       </button>
       <button
         onclick={() => onChangeViewMode('files')}
-        class="px-2 py-1 sm:px-2.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer {viewMode === 'files' ? 'bg-blue-600 text-white shadow-sm font-semibold' : 'text-zinc-400 hover:text-zinc-200'}"
+        class="px-1.5 sm:px-2 py-1 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer {viewMode === 'files' ? 'bg-blue-600 text-white shadow-sm font-semibold' : 'text-zinc-400 hover:text-zinc-200'}"
         title="Repository Files & Code Viewer (Monaco VS Code Engine)"
       >
         <FileCode class="w-3.5 h-3.5 {viewMode === 'files' ? 'text-white' : 'text-blue-400'} shrink-0" />
-        <span class="hidden 2xl:inline">Files</span>
+        <span class="{viewMode === 'files' ? 'inline' : 'hidden'} text-[11px]">Files</span>
       </button>
       <button
         onclick={() => onChangeViewMode('pr')}
-        class="px-2 py-1 sm:px-2.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer {viewMode === 'pr' ? 'bg-violet-600 text-white shadow-sm font-semibold' : 'text-zinc-400 hover:text-zinc-200'}"
+        class="px-1.5 sm:px-2 py-1 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer {viewMode === 'pr' ? 'bg-violet-600 text-white shadow-sm font-semibold' : 'text-zinc-400 hover:text-zinc-200'}"
         title="Pull Requests (Cloud Code Review - GitHub)"
       >
         <GitPullRequest class="w-3.5 h-3.5 {viewMode === 'pr' ? 'text-white' : 'text-violet-400'} shrink-0" />
-        <span class="hidden 2xl:inline">Pull Requests</span>
+        <span class="{viewMode === 'pr' ? 'inline' : 'hidden'} text-[11px]">PRs</span>
       </button>
       {#if viewMode === 'compare'}
         <button
           onclick={() => onChangeViewMode('compare')}
-          class="px-2 py-1 sm:px-2.5 rounded-md flex items-center gap-1.5 text-xs font-medium bg-purple-600 text-white shadow-sm shrink-0"
+          class="px-2 py-1 rounded-md flex items-center gap-1.5 text-xs font-medium bg-purple-600 text-white shadow-sm shrink-0"
         >
           <GitCompare class="w-3.5 h-3.5 shrink-0" />
           <span class="hidden sm:inline">Compare</span>
@@ -272,7 +272,7 @@
       {#if viewMode === 'conflict' || conflictedFilesCount > 0}
         <button
           onclick={() => onChangeViewMode('conflict')}
-          class="px-2 py-1 sm:px-2.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer shrink-0 {viewMode === 'conflict' ? 'bg-rose-600 text-white shadow-sm' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse'}"
+          class="px-2 py-1 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer shrink-0 {viewMode === 'conflict' ? 'bg-rose-600 text-white shadow-sm' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse'}"
         >
           <Split class="w-3.5 h-3.5 shrink-0" />
           <span class="hidden sm:inline">Conflicts</span>
@@ -290,19 +290,19 @@
   <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 min-w-0 justify-end">
     {#if viewMode === 'graph'}
       <!-- Commit Search Filter (Compact, expands smoothly on focus) -->
-      <div class="relative min-w-[70px] w-24 sm:w-28 md:w-36 lg:w-40 focus-within:!w-52 transition-all duration-150 shrink">
-        <Search class="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-2 pointer-events-none" />
+      <div class="relative min-w-[60px] w-20 sm:w-28 md:w-32 lg:w-36 focus-within:!w-48 transition-all duration-150 shrink-0">
+        <Search class="w-3.5 h-3.5 text-zinc-500 absolute left-2 top-2 pointer-events-none" />
         <input
           type="text"
           placeholder="Filter..."
           value={searchQuery}
           oninput={handleInput}
-          class="w-full bg-zinc-900/70 hover:bg-zinc-900 focus:bg-zinc-900 border border-zinc-800/80 focus:border-cyan-500/60 rounded-md pl-8 pr-7 py-1 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/30 transition-all font-mono"
+          class="w-full bg-zinc-900/70 hover:bg-zinc-900 focus:bg-zinc-900 border border-zinc-800/80 focus:border-cyan-500/60 rounded-md pl-7 pr-6 py-1 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/30 transition-all font-mono"
         />
         {#if searchQuery}
           <button
             onclick={() => { searchQuery = ''; onSearchChange(''); }}
-            class="absolute right-1.5 top-1.5 p-0.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 cursor-pointer"
+            class="absolute right-1 top-1 p-0.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 cursor-pointer"
             title="Clear filter"
           >
             <X class="w-3 h-3" />
@@ -310,27 +310,25 @@
         {/if}
       </div>
 
-      <!-- Smart Filter Toggles: Compact icons with active glow -->
+      <!-- Smart Filter Toggles: Compact icon buttons with active glow -->
       <div class="flex items-center bg-zinc-900/80 border border-zinc-800/80 rounded-md p-0.5 shrink-0">
         {#if onToggleHideMerges}
           <button
             onclick={onToggleHideMerges}
-            class="p-1 sm:px-1.5 py-1 rounded text-xs font-medium flex items-center gap-1 transition-all cursor-pointer {filterHideMerges ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-xs' : 'text-zinc-400 hover:text-zinc-200 border border-transparent'}"
-            title={filterHideMerges ? 'Đang ẩn merge commits (Bấm để hiện)' : 'Bấm để ẩn merge commits'}
+            class="p-1 rounded text-xs font-medium flex items-center transition-all cursor-pointer {filterHideMerges ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-xs' : 'text-zinc-400 hover:text-zinc-200 border border-transparent'}"
+            title={filterHideMerges ? 'Đang ẩn merge commits (Bấm để hiện)' : 'Bấm để ẩn merge commits (No Merges)'}
           >
             <GitMerge class="w-3.5 h-3.5" />
-            <span class="hidden 2xl:inline text-[11px]">No Merges</span>
           </button>
         {/if}
 
         {#if onToggleMyCommits}
           <button
             onclick={onToggleMyCommits}
-            class="p-1 sm:px-1.5 py-1 rounded text-xs font-medium flex items-center gap-1 transition-all cursor-pointer {filterMyCommits ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 shadow-xs' : 'text-zinc-400 hover:text-zinc-200 border border-transparent'}"
-            title={filterMyCommits ? 'Đang lọc commit của tôi (Bấm để hiện tất cả)' : 'Bấm để chỉ hiện commit của tôi'}
+            class="p-1 rounded text-xs font-medium flex items-center transition-all cursor-pointer {filterMyCommits ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 shadow-xs' : 'text-zinc-400 hover:text-zinc-200 border border-transparent'}"
+            title={filterMyCommits ? 'Đang lọc commit của tôi (Bấm để hiện tất cả)' : 'Bấm để chỉ hiện commit của tôi (My Commits)'}
           >
             <UserCheck class="w-3.5 h-3.5" />
-            <span class="hidden 2xl:inline text-[11px]">My Commits</span>
           </button>
         {/if}
       </div>
@@ -358,11 +356,11 @@
       <div class="h-4 w-px bg-zinc-800 mx-0.5 hidden xl:block shrink-0"></div>
     {/if}
 
-    <!-- Command Palette Quick Button (Available in status bar and ... menu) -->
+    <!-- Command Palette Quick Button -->
     {#if onOpenPalette}
       <button
         onclick={onOpenPalette}
-        class="hidden 2xl:flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-900/80 hover:bg-zinc-850 border border-zinc-800 text-zinc-400 hover:text-zinc-200 text-xs transition-all cursor-pointer group shadow-xs shrink-0"
+        class="hidden 2xl:flex items-center gap-1 px-1.5 py-1 rounded-md bg-zinc-900/80 hover:bg-zinc-850 border border-zinc-800 text-zinc-400 hover:text-zinc-200 text-xs transition-all cursor-pointer group shadow-xs shrink-0"
         title="Command Palette (Ctrl+K)"
       >
         <Command class="w-3.5 h-3.5 text-zinc-400 group-hover:text-cyan-400 transition-colors" />
@@ -375,11 +373,11 @@
       <button
         onclick={onSmartSync}
         disabled={isSyncing}
-        class="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-md bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-xs text-zinc-300 hover:text-cyan-300 transition-all cursor-pointer group disabled:opacity-50 shrink-0"
+        class="flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-xs text-zinc-300 hover:text-cyan-300 transition-all cursor-pointer group disabled:opacity-50 shrink-0"
         title="1-Click Smart Sync (Fetch & Fast-Forward)"
       >
         <CloudDownload class="w-3.5 h-3.5 text-cyan-400 group-hover:scale-105 transition-transform {isSyncing ? 'animate-bounce' : ''}" />
-        <span class="text-[11px] hidden 2xl:inline">{isSyncing ? 'Syncing...' : 'Sync'}</span>
+        <span class="text-[11px] hidden xl:inline">{isSyncing ? 'Syncing...' : 'Sync'}</span>
       </button>
     {/if}
 
@@ -389,17 +387,17 @@
         <button
           onclick={() => onPublishBranch ? onPublishBranch(currentBranch) : onPush?.()}
           disabled={isPushing}
-          class="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-md bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-600/50 text-xs text-cyan-300 hover:text-white transition-all cursor-pointer group shadow-sm disabled:opacity-50 shrink-0"
-          title={`Publish nhánh hiện tại (${currentBranch.shorthand}) lên remote origin (git push -u origin ${currentBranch.shorthand})`}
+          class="flex items-center gap-1 px-2 py-1 rounded-md bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-600/50 text-xs text-cyan-300 hover:text-white transition-all cursor-pointer group shadow-sm disabled:opacity-50 shrink-0"
+          title={`Publish nhánh hiện tại (${currentBranch.shorthand}) lên remote origin`}
         >
           <CloudUpload class="w-3.5 h-3.5 text-cyan-400 group-hover:scale-110 transition-transform {isPushing ? 'animate-bounce' : ''}" />
-          <span class="text-[11px] font-semibold hidden 2xl:inline">{isPushing ? 'Publishing...' : `Publish ${currentBranch.shorthand}`}</span>
+          <span class="text-[11px] font-semibold hidden xl:inline">{isPushing ? 'Publishing...' : 'Publish'}</span>
         </button>
       {:else}
         <button
           onclick={onPush}
           disabled={isPushing || (currentBranch && currentBranch.ahead_count === 0)}
-          class="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-md border text-xs transition-all {currentBranch && currentBranch.ahead_count > 0
+          class="flex items-center gap-1 px-2 py-1 rounded-md border text-xs transition-all {currentBranch && currentBranch.ahead_count > 0
             ? 'bg-emerald-950/80 hover:bg-emerald-900 border-emerald-600/50 text-emerald-300 hover:text-white cursor-pointer shadow-xs'
             : 'bg-zinc-900/50 border-zinc-800/60 text-zinc-500 cursor-not-allowed opacity-40'} disabled:opacity-40 shrink-0"
           title={currentBranch && currentBranch.ahead_count > 0
@@ -407,7 +405,7 @@
             : 'Đã đồng bộ mới nhất với remote (Không có commit mới để push)'}
         >
           <Upload class="w-3.5 h-3.5 {currentBranch && currentBranch.ahead_count > 0 ? 'text-emerald-400 group-hover:scale-105' : 'text-zinc-500'} transition-transform {isPushing ? 'animate-bounce' : ''}" />
-          <span class="text-[11px] hidden 2xl:inline">{isPushing ? 'Pushing...' : 'Push'}</span>
+          <span class="text-[11px] hidden xl:inline">{isPushing ? 'Pushing...' : 'Push'}</span>
           {#if currentBranch && currentBranch.ahead_count > 0}
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-emerald-500 text-zinc-950 font-bold">
               {currentBranch.ahead_count}
@@ -421,7 +419,7 @@
     {#if remotesCount === 0 && onPublishRepo}
       <button
         onclick={onPublishRepo}
-        class="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-md bg-indigo-950/70 hover:bg-indigo-900 border border-indigo-500/40 text-xs text-indigo-200 hover:text-white transition-all cursor-pointer shadow-xs group shrink-0"
+        class="flex items-center gap-1 px-2 py-1 rounded-md bg-indigo-950/70 hover:bg-indigo-900 border border-indigo-500/40 text-xs text-indigo-200 hover:text-white transition-all cursor-pointer shadow-xs group shrink-0"
         title="Xuất bản repository lên GitHub (chọn Công khai hoặc Riêng tư)"
       >
         <CloudUpload class="w-3.5 h-3.5 text-indigo-400 group-hover:scale-110 transition-transform" />
@@ -445,7 +443,7 @@
     {#if onOpenAI}
       <button
         onclick={onOpenAI}
-        class="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-md bg-purple-950/40 hover:bg-purple-900/50 border border-purple-600/30 text-xs text-purple-200 hover:text-white transition-all cursor-pointer group shadow-sm shrink-0"
+        class="flex items-center gap-1 px-2 py-1 rounded-md bg-purple-950/40 hover:bg-purple-900/50 border border-purple-600/30 text-xs text-purple-200 hover:text-white transition-all cursor-pointer group shadow-sm shrink-0"
         title="Local AI Assistant"
       >
         <Sparkles class="w-3.5 h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
@@ -455,9 +453,9 @@
 
     <!-- Quick Hotfix 1-Chạm (Smart Stash & Switch) -->
     {#if activeHotfixBranch}
-      <div class="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-md bg-amber-950/80 border border-amber-500/60 text-amber-300 text-xs shadow-xs shrink-0 animate-pulse">
-        <Flame class="w-3.5 h-3.5 text-amber-400" />
-        <span class="font-medium text-[11px] max-w-[85px] sm:max-w-[120px] truncate">Hotfix: {activeHotfixBranch}</span>
+      <div class="flex items-center gap-1 px-2 py-1 rounded-md bg-amber-950/80 border border-amber-500/60 text-amber-300 text-xs shadow-xs shrink-0 animate-pulse">
+        <Flame class="w-3.5 h-3.5 text-amber-400 shrink-0" />
+        <span class="font-medium text-[11px] max-w-[70px] sm:max-w-[100px] truncate">Hotfix: {activeHotfixBranch}</span>
         {#if onRestoreHotfixStash}
           <button
             onclick={onRestoreHotfixStash}
@@ -471,11 +469,35 @@
     {:else if onOpenQuickHotfix}
       <button
         onclick={onOpenQuickHotfix}
-        class="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-md bg-amber-950/40 hover:bg-amber-900/60 border border-amber-600/40 text-xs text-amber-300 hover:text-white transition-all cursor-pointer group shadow-sm shrink-0"
+        class="flex items-center gap-1 px-2 py-1 rounded-md bg-amber-950/40 hover:bg-amber-900/60 border border-amber-600/40 text-xs text-amber-300 hover:text-white transition-all cursor-pointer group shadow-sm shrink-0"
         title="Quick Hotfix 1-Chạm (Smart Stash & Switch sang nhánh sửa lỗi khẩn cấp)"
       >
         <Flame class="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
-        <span class="font-medium text-[11px] hidden 2xl:inline">Quick Hotfix</span>
+        <span class="font-medium text-[11px] hidden 2xl:inline">Hotfix</span>
+      </button>
+    {/if}
+
+    <!-- Playbook / User Guide Button (Shown on xl+) -->
+    {#if onOpenGuide}
+      <button
+        onclick={onOpenGuide}
+        class="hidden xl:flex items-center gap-1 px-2 py-1 rounded-md bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-700/50 text-cyan-300 hover:text-cyan-100 transition-all cursor-pointer group shrink-0 shadow-xs"
+        title="Sổ tay Hướng dẫn & Playbook thực chiến (F1 / Ctrl+/)"
+      >
+        <BookOpen class="w-3.5 h-3.5 text-cyan-400" />
+        <span class="text-xs font-semibold hidden 2xl:inline">Playbook</span>
+      </button>
+    {/if}
+
+    <!-- Emergency Rescue Kit Button (Shown on 2xl+) -->
+    {#if onOpenPlaybook}
+      <button
+        onclick={onOpenPlaybook}
+        class="hidden 2xl:flex items-center gap-1 px-2 py-1 rounded-md bg-amber-950/40 hover:bg-amber-900/60 border border-amber-700/50 text-amber-300 hover:text-amber-100 transition-all cursor-pointer group shrink-0 shadow-xs"
+        title="Cứu hộ Khẩn cấp & Gỡ kẹt Git (Emergency Kit)"
+      >
+        <LifeBuoy class="w-3.5 h-3.5 text-amber-400" />
+        <span class="text-xs font-semibold">Cứu hộ</span>
       </button>
     {/if}
 
@@ -636,30 +658,6 @@
         </div>
       {/if}
     </div>
-
-    <!-- Playbook / User Guide Button (Shown on xl+) -->
-    {#if onOpenGuide}
-      <button
-        onclick={onOpenGuide}
-        class="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-700/50 text-cyan-300 hover:text-cyan-100 transition-all cursor-pointer group shrink-0 shadow-xs"
-        title="Sổ tay Hướng dẫn & Kịch bản thực chiến (F1 / Ctrl+/)"
-      >
-        <BookOpen class="w-3.5 h-3.5 text-cyan-400" />
-        <span class="text-xs font-semibold hidden 2xl:inline">Playbook</span>
-      </button>
-    {/if}
-
-    <!-- Emergency Rescue Kit Button (Shown on 2xl+) -->
-    {#if onOpenPlaybook}
-      <button
-        onclick={onOpenPlaybook}
-        class="hidden 2xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-950/40 hover:bg-amber-900/60 border border-amber-700/50 text-amber-300 hover:text-amber-100 transition-all cursor-pointer group shrink-0 shadow-xs"
-        title="Cứu hộ Khẩn cấp & Gỡ kẹt Git (Emergency Kit)"
-      >
-        <LifeBuoy class="w-3.5 h-3.5 text-amber-400" />
-        <span class="text-xs font-semibold">Cứu hộ</span>
-      </button>
-    {/if}
 
     <!-- Account / Login Button -->
     {#if onOpenAuth}

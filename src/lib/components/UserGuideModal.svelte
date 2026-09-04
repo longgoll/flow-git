@@ -16,7 +16,12 @@
     Keyboard,
     Lightbulb,
     Play,
-    Rewind
+    Rewind,
+    GitMerge,
+    Flame,
+    FileEdit,
+    CloudDownload,
+    ShieldAlert
   } from 'lucide-svelte';
 
   interface Props {
@@ -78,6 +83,182 @@
       proTips: [
         'Mọi thao tác Rebase đều được tự động lưu vào SQLite Action Log phục vụ hoàn tác Ctrl + Z.',
         'Trước khi Rebase, hãy đảm bảo bạn đã commit hoặc stash hết các thay đổi dở dang trong Working Tree.',
+      ],
+    },
+    {
+      id: 'undo-merge-rebase-force',
+      category: 'recipes',
+      title: 'Lỡ Merge rối nhánh, muốn quay lại Rebase duỗi thẳng & Force Push',
+      subtitle: 'Quy trình 3 bước 100% bằng chuột: Reset Hard, Kéo-Thả Rebase và Force Push',
+      badge: 'Kinh điển Thực chiến',
+      icon: GitMerge,
+      problem:
+        'Bạn lỡ merge nhánh tính năng vào main (ở terminal hoặc app), đồ thị bị đan chéo rối rắm. Bạn muốn hủy merge để duỗi thẳng lịch sử bằng Rebase và đồng bộ lên remote.',
+      solution:
+        'Thực hiện 3 thao tác chuột trực quan: Chuột phải commit trước merge chọn Reset Hard ➔ Kéo thả nhánh Rebase onto main ➔ Bấm nút màu cam Force Push (--force-with-lease) ở Sidebar.',
+      steps: [
+        {
+          title: 'Bước 1: Hủy commit Merge (Reset Hard)',
+          desc: 'Nhấp chuột phải vào commit của main ngay trước lần merge trên đồ thị Canvas ➔ Chọn "Reset current branch to here" ➔ Chọn "Hard". Commit merge biến mất lập tức.',
+          tip: 'Không lo mất code: FlowGit tự lưu snapshot vào Thùng rác SQLite 48h.',
+        },
+        {
+          title: 'Bước 2: Rebase duỗi thẳng đồ thị',
+          desc: 'Checkout sang nhánh dev ➔ Nhấp giữ chuột kéo nhánh dev thả đè lên đỉnh của main trên Canvas ➔ Chọn "Rebase dev onto main". Các commit được xếp nối tiếp thẳng hàng.',
+        },
+        {
+          title: 'Bước 3: Force Push an toàn bằng chuột (Không gõ lệnh)',
+          desc: 'Tại cột Sidebar bên trái (mục Local Branches), rê chuột vào nhánh vừa rebase ➔ Bấm menu 3 chấm (hoặc chuột phải) ➔ Bấm nút màu cam "Force Push (--force-with-lease)".',
+          tip: 'Cờ --force-with-lease tự động bảo vệ: nếu remote bất ngờ có commit mới của người khác, app sẽ tự chặn lại không ghi đè mất code.',
+        },
+      ],
+      proTips: [
+        'Nếu nhánh dev có nhiều commit vụn vặt, bạn có thể bấm S để Squash hoặc chọn Interactive Rebase trước khi đưa vào main.',
+      ],
+    },
+    {
+      id: 'wrong-branch-main-commit',
+      category: 'recipes',
+      title: 'Lỡ commit nhầm vào nhánh main thay vì tạo nhánh mới',
+      subtitle: 'Di chuyển commit sang nhánh mới và trả lại main sạch sẽ chỉ sau 2 click',
+      badge: 'Hay gặp nhất',
+      icon: Flame,
+      problem:
+        'Bạn đang code tính năng mới nhưng quên tạo nhánh, đã lỡ bấm commit 2-3 commit thẳng vào nhánh main local (chưa push).',
+      solution:
+        'Tạo nhánh mới ngay tại commit đỉnh hiện tại, sau đó Reset Hard nhánh main về vị trí trước khi bạn commit nhầm.',
+      steps: [
+        {
+          title: 'Bước 1: Gắn commit vào nhánh mới',
+          desc: 'Nhấp chuột phải vào commit đỉnh hiện tại trên Canvas ➔ Chọn "Create Branch Here" ➔ Đặt tên là feature/my-task. Toàn bộ commit tính năng đã nằm an toàn trên nhánh mới.',
+        },
+        {
+          title: 'Bước 2: Đưa main về vị trí sạch',
+          desc: 'Nhấp chuột phải vào commit cũ của main (trước khi commit nhầm) ➔ Chọn "Reset Current Branch (main) to Here" ➔ Chọn chế độ Hard.',
+          tip: 'Nhánh main lập tức sạch sẽ trở lại, trong khi nhánh feature/my-task vẫn giữ trọn vẹn mọi thay đổi.',
+        },
+      ],
+    },
+    {
+      id: 'cherry-pick-drag-drop',
+      category: 'recipes',
+      title: 'Gắp riêng commit fix bug từ nhánh đồng nghiệp về nhánh mình (Cherry-pick)',
+      subtitle: 'Kéo thả nốt commit trực tiếp trên Living Graph sang nhánh hiện tại trong 1 giây',
+      badge: 'Kéo - Thả 1s',
+      icon: GitFork,
+      problem:
+        'Đồng nghiệp có 1 commit fix bug cực hay trên nhánh của họ, bạn muốn lấy riêng đúng commit đó về nhánh mình mà không muốn merge cả nhánh của họ.',
+      solution:
+        'Living Commit Graph hỗ trợ Drag & Drop node commit: chỉ cần gắp nốt commit của đồng nghiệp thả vào nhánh hiện tại và chọn Cherry-pick.',
+      steps: [
+        {
+          title: 'Bước 1: Định vị commit trên Canvas',
+          desc: 'Đảm bảo bạn đang đứng ở nhánh của mình. Tìm nốt commit cần lấy của đồng nghiệp trên đồ thị Living Commit Graph.',
+        },
+        {
+          title: 'Bước 2: Kéo và thả đè (Drag & Drop)',
+          desc: 'Nhấp giữ chuột vào commit đó, kéo và thả đè vào nốt commit đỉnh của nhánh bạn đang đứng.',
+        },
+        {
+          title: 'Bước 3: Chọn Cherry-pick commit',
+          desc: 'Menu thả hành động hiện ra ➔ Bấm nút "Cherry-pick commit". Toàn bộ nội dung và tác giả commit được gộp vào nhánh của bạn ngay lập tức.',
+        },
+      ],
+    },
+    {
+      id: 'amend-forgotten-files',
+      category: 'recipes',
+      title: 'Viết sai commit message hoặc quên lưu 1 file vừa sửa (Amend Commit)',
+      subtitle: 'Ghi đè trực tiếp vào commit đỉnh gần nhất mà không sinh commit rác',
+      badge: 'Sạch lịch sử',
+      icon: FileEdit,
+      problem:
+        'Bạn vừa bấm commit xong mới nhận ra viết sai chính tả message, hoặc phát hiện quên chưa stage 1 file quan trọng vừa sửa.',
+      solution:
+        'Sử dụng chế độ Amend Commit để gộp file bỏ quên hoặc sửa lại commit message mà không tạo thêm commit rác trong lịch sử.',
+      steps: [
+        {
+          title: 'Bước 1: Đưa file bỏ quên vào Staged',
+          desc: 'Trong mục Unstaged Changes ở Working Tree, bấm dấu + cạnh file bỏ quên để đưa vào Staged.',
+        },
+        {
+          title: 'Bước 2: Kích hoạt Amend Commit',
+          desc: 'Tại bảng Commit Box bên phải, đánh dấu vào ô checkbox "Amend Commit". Message cũ sẽ tự động hiển thị để bạn chỉnh sửa lại.',
+        },
+        {
+          title: 'Bước 3: Bấm Commit (Amend)',
+          desc: 'Bấm nút "Commit (Amend)". Thay đổi mới sẽ được hòa nhập vào commit đỉnh gần nhất.',
+        },
+      ],
+    },
+    {
+      id: 'abort-conflict-safely',
+      category: 'recipes',
+      title: 'Đang giải quyết xung đột (Conflict) mà thấy bị rối, muốn hủy làm lại từ đầu',
+      subtitle: 'Quay về nguyên trạng sạch sẽ ban đầu chỉ với 1 nút bấm Abort',
+      badge: 'Bảo hiểm No-Fear',
+      icon: AlertTriangle,
+      problem:
+        'Trong quá trình Merge hoặc Rebase, xảy ra xung đột ở nhiều file. Bạn bấm sửa nhưng càng sửa càng rối và muốn hủy bỏ toàn bộ để bắt đầu lại từ đầu.',
+      solution:
+        'Thanh RepoAlertBanner và màn hình ConflictResolver luôn có sẵn nút màu đỏ Abort để hoàn tác tức thì mọi trạng thái dở dang.',
+      steps: [
+        {
+          title: 'Bước 1: Bấm nút Abort',
+          desc: 'Nhìn lên thanh cảnh báo đầu trang RepoAlertBanner hoặc góc trên cửa sổ ConflictResolver ➔ Bấm nút màu đỏ "Hủy bỏ Merge (Abort)" hoặc "Hủy bỏ Rebase (Abort)".',
+        },
+        {
+          title: 'Bước 2: Kiểm tra kết quả',
+          desc: 'Trạng thái repository lập tức quay trở về nguyên trạng ban đầu sạch sẽ, không có bất kỳ file nào bị hỏng hay lưu vết dở dang.',
+        },
+      ],
+    },
+    {
+      id: 'diverged-smart-sync',
+      category: 'recipes',
+      title: 'Vừa có commit local mới, remote cũng vừa có commit mới (Diverged Sync)',
+      subtitle: 'Đồng bộ nhánh phân kỳ mượt mà với 1-Click Smart Sync',
+      badge: 'Đồng bộ thông minh',
+      icon: CloudDownload,
+      problem:
+        'Nhánh của bạn rơi vào tình trạng phân kỳ (1 Ahead, 1 Behind): Bạn vừa commit thêm ở máy, đồng nghiệp cũng vừa push lên remote.',
+      solution:
+        'Nút 1-Click Smart Sync trên Toolbar tự động phân tích độ lệch, chạy giả lập xung đột trong RAM và đồng bộ an toàn.',
+      steps: [
+        {
+          title: 'Bước 1: Bấm nút Sync trên Toolbar',
+          desc: 'Nhấp chuột vào nút "Sync" (CloudDownload) trên thanh công cụ Toolbar.',
+        },
+        {
+          title: 'Bước 2: FlowGit tự động xử lý',
+          desc: 'Nếu không đụng hàng: App tự động fetch và fast-forward mượt mà. Nếu có xung đột: App cảnh báo trước file đụng độ để bạn chủ động resolve.',
+        },
+      ],
+    },
+    {
+      id: 'purge-heavy-files-nuke',
+      category: 'recipes',
+      title: 'Lỡ commit file nặng (>100MB) bị GitHub từ chối Push (Nuke History)',
+      subtitle: 'Bóc tách và xóa triệt để file nặng khỏi toàn bộ lịch sử commit',
+      badge: 'Cứu nguy GitHub',
+      icon: ShieldAlert,
+      problem:
+        'Bạn lỡ commit file zip hoặc database nặng >100MB. Dù đã tạo commit sau để xóa file, GitHub vẫn chặn Push vì file nặng còn nằm trong commit cũ.',
+      solution:
+        'Tính năng Nuke History / Large Files Manager tự động quét và bóc tách vĩnh viễn tệp nặng ra khỏi toàn bộ lịch sử commit.',
+      steps: [
+        {
+          title: 'Bước 1: Mở Large Files Manager / Nuke History',
+          desc: 'Vào menu Tools trên Toolbar ➔ Chọn "Nuke History / Large Files". App sẽ tự quét và liệt kê các file vượt ngưỡng dung lượng.',
+        },
+        {
+          title: 'Bước 2: Bấm Purge File',
+          desc: 'Chọn file nặng và bấm "Purge File from History". FlowGit viết lại lịch sử commit loại bỏ hoàn toàn tệp nặng.',
+        },
+        {
+          title: 'Bước 3: Force Push lên GitHub',
+          desc: 'Bấm nút Force Push trên Sidebar để cập nhật kho lưu trữ sạch sẽ lên remote.',
+        },
       ],
     },
     {

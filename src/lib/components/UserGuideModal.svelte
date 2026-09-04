@@ -330,20 +330,21 @@
         'Git Worktree cho phép checkout nhiều nhánh ra các thư mục khác nhau trên cùng một Git repository, dùng chung toàn bộ object database mà không tốn dung lượng.',
       steps: [
         {
-          title: 'Bước 1: Mở Worktree Manager',
-          desc: 'Bấm vào biểu tượng cặp tài liệu "Worktrees" trên thanh Sidebar hoặc Toolbar.',
+          title: 'Cách 1: Nút "Quick Hotfix" siêu tốc (Khuyên dùng)',
+          desc: 'Bấm nút icon ngọn lửa "Quick Hotfix" trên Toolbar ➔ FlowGit tự động tạo thư mục độc lập trỏ vào main. Mở VS Code thứ 2 sửa và commit.',
+          tip: 'Thư mục chính đang code dở nguyên vẹn 100%, không cần stash hay lo đụng độ file.',
         },
         {
-          title: 'Bước 2: Tạo Worktree mới',
-          desc: 'Nhập tên thư mục (ví dụ: `hotfix-login`), chọn nhánh mục tiêu hoặc tạo nhánh mới, rồi chọn đường dẫn thư mục.',
+          title: 'Cách 2: Mở Worktree Manager chuyên sâu',
+          desc: 'Bấm vào biểu tượng cặp tài liệu "Worktrees" trên Sidebar hoặc Toolbar để quản lý, tạo thêm nhánh hoặc mở folder bất kỳ.',
         },
         {
-          title: 'Bước 3: Mở VS Code độc lập',
-          desc: 'Mỗi worktree là một folder riêng biệt. Bạn có thể mở 2 cửa sổ VS Code làm việc song song cùng lúc mà không sợ đụng độ file hay node_modules.',
+          title: 'Bước 3: Dọn dẹp sau khi xong việc',
+          desc: 'Sau khi merge hotfix, bạn chỉ cần bấm xóa worktree tạm thời đó. Mọi commit và lịch sử đã được lưu an toàn trong repo chính.',
         },
       ],
       proTips: [
-        'Khi fix xong hotfix, bạn chỉ cần xóa worktree đó đi, mã nguồn và commit đã được lưu trong repo chính.',
+        'FlowGit hỗ trợ khôi phục stash nhanh cho hotfix chỉ với 1 click.',
       ],
     },
     {
@@ -487,17 +488,17 @@
       badge: 'Quyền năng tối thượng',
       icon: Rewind,
       problem:
-        'Bạn muốn đưa HEAD về một commit trước đó: có lúc muốn giữ nguyên code đang sửa ở Staged, có lúc muốn bỏ sạch để làm lại từ đầu.',
+        'Bạn muốn đưa HEAD về một commit trước đó: có lúc muốn giữ nguyên code đang sửa ở Staged, có lúc muốn đưa về Working Tree hoặc xóa bỏ.',
       solution:
         'Menu chuột phải trên Commit cung cấp 3 chế độ rõ ràng:\n• Soft: Đưa HEAD về commit cũ, giữ nguyên toàn bộ thay đổi ở Staged.\n• Mixed: Đưa HEAD về commit cũ, đưa thay đổi về Unstaged (Working Tree).\n• Hard: Đưa HEAD về commit cũ và xóa bỏ code dở dang (được Time Machine lưu lại).',
       steps: [
         {
           title: 'Bước 1: Chuột phải vào commit muốn quay về',
-          desc: 'Click chuột phải vào commit mốc trên đồ thị ➔ Rê chuột vào mục "Reset HEAD về commit này".',
+          desc: 'Click chuột phải vào commit mốc trên đồ thị Canvas ➔ Rê chuột vào mục "Reset current branch to here".',
         },
         {
           title: 'Bước 2: Chọn chế độ phù hợp',
-          desc: 'Chọn "Soft Reset", "Mixed Reset" hoặc "Hard Reset".',
+          desc: 'Chọn "Soft", "Mixed" hoặc "Hard".',
           tip: 'Nếu lỡ tay chọn nhầm Hard Reset, chỉ cần nhấn Ctrl + Z để quay lại vị trí cũ trong 0.1 giây!',
         },
       ],
@@ -512,15 +513,15 @@
       problem:
         'Sau nhiều tháng phát triển, danh sách Local Branches tích tụ hàng chục nhánh tính năng cũ đã merge vào main, gây rối rắm và khó tìm kiếm.',
       solution:
-        'Nút "Clean Merged Branches" trên Sidebar tự động quét toàn bộ nhánh local, phát hiện những nhánh nào đã gộp hoàn toàn vào main và cho phép bạn chọn xóa hàng loạt an toàn.',
+        'Nút "Clean Merged Branches" trên đầu mục Local Branches tự động quét toàn bộ nhánh local, phát hiện những nhánh nào đã gộp hoàn toàn vào main và cho phép bạn chọn xóa hàng loạt an toàn.',
       steps: [
         {
-          title: 'Bước 1: Bấm biểu tượng thùng rác ở mục Local Branches',
-          desc: 'Rê chuột vào tiêu đề "Local Branches" trên thanh Sidebar ➔ Bấm vào icon Thùng rác.',
+          title: 'Bước 1: Bấm biểu tượng dọn dẹp ở mục Local Branches',
+          desc: 'Rê chuột vào thanh tiêu đề "Local Branches" trên thanh Sidebar ➔ Bấm vào icon chiếc chổi "Clean Merged Branches".',
         },
         {
           title: 'Bước 2: Xem danh sách nhánh rác và bấm Xóa',
-          desc: 'App hiển thị danh sách các nhánh an toàn có thể xóa. Bấm nút "Xóa nhánh đã chọn" để làm sạch toàn bộ kho lưu trữ.',
+          desc: 'App hiển thị modal danh sách các nhánh an toàn có thể xóa. Bấm nút "Delete Selected" để làm sạch toàn bộ kho lưu trữ.',
         },
       ],
     },
@@ -535,11 +536,68 @@
       steps: [
         {
           title: 'Stage Hunk',
-          desc: 'Rê chuột vào góc trên của từng khối code thay đổi ➔ Bấm "Stage Hunk".',
+          desc: 'Rê chuột vào góc trên của từng khối code thay đổi trong Diff Viewer ➔ Bấm "Stage Hunk".',
         },
         {
           title: 'Discard Hunk an toàn',
           desc: 'Bấm "Discard Hunk" để loại bỏ thay đổi của khối đó (vẫn được lưu vào Thùng rác 48h).',
+        },
+      ],
+    },
+    {
+      id: 'ai-assistant',
+      category: 'features',
+      title: 'Local AI Assistant (Ollama & Offline LLM)',
+      subtitle: 'Tự động tạo Commit Message chuẩn Conventional và giải thích xung đột',
+      icon: Lightbulb,
+      problem: 'Viết commit message chuẩn mất thời gian, và khi gặp xung đột (conflict) phức tạp rất khó hiểu code của cả 2 bên.',
+      solution: 'Tích hợp AI cục bộ riêng tư 100%: Tự động đọc diff để sinh commit message súc tích chỉ sau 1 click, hoặc bấm icon AI để giải thích nguyên nhân conflict.',
+      steps: [
+        {
+          title: 'Sinh Commit Message tự động',
+          desc: 'Tại bảng Commit Box, bấm icon tia sáng ✨ "AI Generate" để tự động sinh commit message theo chuẩn Conventional Commits.',
+        },
+        {
+          title: 'Giải thích và gợi ý giải quyết Conflict',
+          desc: 'Trong bộ giải quyết xung đột ConflictResolver, bấm nút "AI Explain" để AI phân tích logic đè code và gợi ý cách gộp tối ưu.',
+        },
+      ],
+    },
+    {
+      id: 'pr-reviewer',
+      category: 'features',
+      title: 'Offline Pull Request Reviewer & Diff-First',
+      subtitle: 'Đánh giá toàn diện sự khác biệt giữa 2 nhánh trước khi mở PR',
+      icon: CheckCircle2,
+      problem: 'Thường phải push code lên GitHub mới xem được tổng quan diff của toàn bộ PR, dễ sót file rác hoặc debug log.',
+      solution: 'Tab PR Reviewer cho phép đối chiếu 2 nhánh bất kỳ: hiển thị toàn bộ commit đóng góp, danh sách file thay đổi kèm số dòng + / - và diff 2 cột.',
+      steps: [
+        {
+          title: 'Mở PR Reviewer',
+          desc: 'Chuyển sang tab "PR Reviewer" trên thanh điều hướng hoặc qua Command Palette.',
+        },
+        {
+          title: 'Chọn Base và Compare Branch',
+          desc: 'Chọn nhánh Base (ví dụ: main) và nhánh Compare (ví dụ: feature/xxx) để duyệt toàn bộ diff tổng thể offline.',
+        },
+      ],
+    },
+    {
+      id: 'safety-engine',
+      category: 'features',
+      title: 'No-Fear Safety Engine (SQLite 48h & Time Machine)',
+      subtitle: 'Bảo vệ mã nguồn tuyệt đối: Thùng rác uncommitted và Time Machine Ctrl+Z',
+      icon: ShieldCheck,
+      problem: 'Các thao tác Git nguy hiểm như Discard, Reset Hard, Rebase dễ làm mất code vĩnh viễn.',
+      solution: 'FlowGit lưu snapshot mọi file discard vào SQLite trong 48 giờ, đồng thời ghi lại toàn bộ con trỏ HEAD vào Action Log để bấm Ctrl+Z quay lại quá khứ bất cứ lúc nào.',
+      steps: [
+        {
+          title: 'Trash Inspector 48h',
+          desc: 'Bấm huy hiệu "Trash (48h)" dưới thanh trạng thái để xem lại và khôi phục các file lỡ tay discard.',
+        },
+        {
+          title: 'Time Machine Drawer',
+          desc: 'Bấm icon đồng hồ quay ngược trên Toolbar để xem toàn bộ lịch sử thao tác và quay ngược thời gian an toàn.',
         },
       ],
     },
@@ -548,12 +606,15 @@
   const shortcuts = [
     { key: 'Ctrl + K', desc: 'Mở Command Palette tìm kiếm lệnh nhanh' },
     { key: 'Ctrl + Z', desc: 'Undo - Hoàn tác hành động Git vừa thực hiện (Time Machine)' },
-    { key: 'Ctrl + Shift + Z', desc: 'Redo - Làm lại hành động vừa hoàn tác' },
+    { key: 'Ctrl + Shift + Z / Ctrl + Y', desc: 'Redo - Làm lại hành động vừa hoàn tác' },
     { key: 'F1 / Ctrl + /', desc: 'Mở Sổ tay Hướng dẫn & Kịch bản thực chiến (Playbook)' },
-    { key: 'Space', desc: 'Xem nhanh Diff của file hoặc commit đang chọn' },
+    { key: 'Ctrl + B', desc: 'Đóng / Mở thanh điều hướng Sidebar bên trái' },
+    { key: 'Ctrl + 1', desc: 'Chuyển nhanh sang chế độ Commit Graph' },
+    { key: 'Ctrl + 2', desc: 'Chuyển nhanh sang chế độ Working Tree & Changes' },
+    { key: 'Ctrl + Enter', desc: 'Commit ngay lập tức trong bảng soạn thảo Commit' },
+    { key: 'Space', desc: 'Stage / Unstage nhanh file đang chọn trong Working Tree' },
     { key: 'S', desc: 'Squash - Gộp các commit đang chọn thành 1 commit duy nhất' },
     { key: 'Right Click', desc: 'Mở Context Menu trên commit (Revert, Reset, Tag, Branch, SHA)' },
-    { key: 'C', desc: 'Checkout nhanh sang nhánh đang chọn' },
     { key: 'Escape', desc: 'Đóng modal / popup hiện tại' },
   ];
 

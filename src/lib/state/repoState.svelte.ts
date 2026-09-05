@@ -45,8 +45,19 @@ export class RepoState {
   isDetailMaximized = $state<boolean>(false);
 
   statusMessage = $state<string>('Ready');
-  recentRepos = $state<string[]>([]);
-  showWelcomeScreen = $state<boolean>(true);
+  recentRepos = $state<string[]>(
+    (() => {
+      try {
+        const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('flowgit_recent_repos') : null;
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch {}
+      return [];
+    })()
+  );
+  showWelcomeScreen = $state<boolean>(false);
 
   // Smart Filters
   filterHideMerges = $state<boolean>(false);

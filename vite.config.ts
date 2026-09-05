@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
-import path from 'path';
+import { fileURLToPath, URL } from 'node:url';
 
 const host = process.env.TAURI_DEV_HOST;
 
@@ -13,7 +13,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      $lib: path.resolve(__dirname, './src/lib')
+      $lib: fileURLToPath(new URL('./src/lib', import.meta.url))
     }
   },
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
@@ -33,8 +33,8 @@ export default defineConfig({
         }
       : undefined,
     watch: {
-      // 3. tell vite to ignore watching `src-tauri`
-      ignored: ['**/src-tauri/**'],
+      // 3. tell vite to ignore watching `src-tauri`, `.git`, and database files
+      ignored: ['**/src-tauri/**', '**/.git/**', '**/*.db', '**/*.db-*'],
     },
   },
 });

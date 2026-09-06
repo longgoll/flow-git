@@ -343,8 +343,10 @@
       }
 
       // Tự động kiểm tra bản cập nhật mới ngầm sau 3 giây khi mở ứng dụng
+      // Sau đó tiếp tục kiểm tra định kỳ mỗi 4 giờ
       setTimeout(() => {
         updateState.checkForUpdates(false).catch(() => {});
+        updateState.startPeriodicCheck();
       }, 3000);
     } catch (e) {
       console.error("onMount failed gracefully:", e);
@@ -357,6 +359,7 @@
   onDestroy(() => {
     if (unlistenWatcher) unlistenWatcher();
     window.removeEventListener("keydown", handleGlobalKeydown);
+    updateState.stopPeriodicCheck();
   });
 
   function handleGlobalKeydown(e: KeyboardEvent) {

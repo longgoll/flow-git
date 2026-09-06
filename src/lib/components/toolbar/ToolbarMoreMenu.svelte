@@ -153,7 +153,7 @@
         </button>
       {/if}
 
-      <!-- Auto-Updater Item -->
+      <!-- Auto-Updater Section -->
       <button
         onclick={async () => {
           onCloseToolsMenu();
@@ -165,17 +165,35 @@
         <div class="flex items-center gap-2">
           {#if updateState.isChecking}
             <RefreshCw class="w-3.5 h-3.5 text-emerald-500 animate-spin" />
+          {:else if updateState.updateAvailable}
+            <Sparkles class="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
           {:else}
             <Sparkles class="w-3.5 h-3.5 text-emerald-500" />
           {/if}
           <span>{updateState.isChecking ? localeState.t('updater.checking') : localeState.t('updater.checkForUpdates')}</span>
         </div>
         {#if updateState.updateAvailable}
-          <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono">
-            {localeState.t('updater.updateBadge')}
-          </span>
+          <!-- Hiển thị version cũ → mới -->
+          <div class="flex items-center gap-1">
+            <span class="font-mono text-[10px] text-zinc-400 dark:text-zinc-500">v{APP_VERSION}</span>
+            <span class="text-zinc-400">→</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono">
+              v{updateState.updateInfo?.version}
+            </span>
+          </div>
+        {:else}
+          <span class="font-mono text-[10px] text-zinc-400 dark:text-zinc-500">v{APP_VERSION}</span>
         {/if}
       </button>
+      {#if updateState.updateAvailable}
+        <button
+          onclick={() => { onCloseToolsMenu(); updateState.openModal(); }}
+          class="w-full flex items-center justify-center gap-1.5 mx-0 px-2.5 py-1.5 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold text-[11px] transition-all cursor-pointer"
+        >
+          <Sparkles class="w-3 h-3" />
+          <span>{localeState.t('updater.viewDetails')}</span>
+        </button>
+      {/if}
 
       <div class="my-1 border-t border-zinc-200 dark:border-zinc-800"></div>
 
@@ -290,6 +308,12 @@
             </button>
           {/each}
         </div>
+      </div>
+
+      <!-- Footer: version hiện tại -->
+      <div class="px-2.5 pt-1.5 pb-0.5 flex items-center justify-between">
+        <span class="text-[10px] text-zinc-400 dark:text-zinc-600">FlowGit</span>
+        <span class="font-mono text-[10px] text-zinc-400 dark:text-zinc-600">v{APP_VERSION}</span>
       </div>
     </div>
   {/if}

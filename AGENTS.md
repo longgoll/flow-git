@@ -75,3 +75,19 @@ Tài liệu này chứa các quy tắc bắt buộc và ngữ cảnh chung dành
    - Khi thêm tính năng mới hoặc chỉnh sửa giao diện, bắt buộc khai báo và đồng bộ đồng thời cả 2 từ điển:
      + `src/lib/i18n/locales/vi.ts` (chuẩn Tiếng Việt tự nhiên, chính xác, thân thiện với lập trình viên).
      + `src/lib/i18n/locales/en.ts` (chuẩn Tiếng Anh quốc tế chuẩn Git client).
+
+8. **Quản lý Phiên bản – Single Source of Truth (Version Management):**
+   - **Nguồn sự thật duy nhất** cho version là `package.json` → trường `"version"`.
+   - **Nghiêm cấm** hardcode version string (ví dụ `"0.1.0"`, `"v0.2.0"`) ở bất kỳ file nào khác ngoài `package.json`.
+   - Cơ chế tự động: `tauri.conf.json` đặt `"version": "../package.json"` (Tauri v2 native); frontend Svelte dùng global `APP_VERSION` (inject bởi `vite.config.ts`); website dùng GitHub API live.
+   - Khi cần hiển thị version trong **Svelte component**, dùng trực tiếp `APP_VERSION` (không cần import):
+     ```svelte
+     <span>v{APP_VERSION}</span>
+     ```
+   - Khi phát hành phiên bản mới, **bắt buộc** dùng script đồng bộ thay vì sửa tay từng file:
+     ```bash
+     npm run bump <version>   # ví dụ: npm run bump 0.2.0
+     ```
+     Script này sync `package.json` + `Cargo.toml` cùng lúc và in lệnh git tag tiếp theo.
+   - Xem chi tiết đầy đủ tại: [`docs/guides/version-management.md`](./docs/guides/version-management.md)
+

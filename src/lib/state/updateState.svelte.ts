@@ -23,6 +23,8 @@ export class UpdateState {
   lastChecked = $state<Date | null>(null);
 
   private currentUpdate: Update | null = null;
+  private periodicCheckInterval: ReturnType<typeof setInterval> | null = null;
+  private readonly PERIODIC_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 giờ
 
   async checkForUpdates(manual: boolean = false): Promise<boolean> {
     if (this.isChecking || this.isDownloading) return false;
@@ -74,16 +76,33 @@ export class UpdateState {
       const errMsg = err?.message || String(err);
       this.errorMessage = errMsg;
 
+      // Phân biệt lỗi "chưa có release" với lỗi mạng thực sự.
+      // Tauri updater trả về message này khi latest.json không tồn tại (404).
+      const isNoReleaseYet =
+        errMsg.includes('Could not fetch a valid release JSON') ||
+        errMsg.includes('No releases') ||
+        errMsg.includes('404');
+
       if (manual) {
-        toast.warning(
-          localeState.t('updater.checkFailedTitle'),
-          localeState.t('updater.checkFailedMsg', { error: errMsg })
-        );
+        if (isNoReleaseYet) {
+          // Chưa có release → coi như đang dùng bản mới nhất
+          toast.success(
+            localeState.t('updater.upToDateTitle'),
+            localeState.t('updater.upToDateMsg')
+          );
+        } else {
+          // Lỗi mạng thực sự → mới cảnh báo
+          toast.warning(
+            localeState.t('updater.checkFailedTitle'),
+            localeState.t('updater.checkFailedMsg', { error: errMsg })
+          );
+        }
       }
       return false;
     } finally {
       this.isChecking = false;
     }
+
   }
 
   async downloadAndInstall(): Promise<void> {
@@ -144,6 +163,28 @@ export class UpdateState {
 
   openModal(): void {
     this.showModal = true;
+  }
+
+  /**
+   * Bắt đầu kiểm tra cập nhật định kỳ mỗi 4 giờ (silent, không toast).
+   * Nên gọi sau khi app mount xong.
+   */
+  startPeriodicCheck(): void {
+    this.stopPeriodicCheck(); // clear interval cũ nếu có
+    this.periodicCheckInterval = setInterval(() => {
+      this.checkForUpdates(false).catch(() => {});
+    }, this.PERIODIC_INTERVAL_MS);
+  }
+
+  /**
+   * Dừng kiểm tra định kỳ và giải phóng interval.
+   * Nên gọi trong onDestroy để tránh memory leak.
+   */
+  stopPeriodicCheck(): void {
+    if (this.periodicCheckInterval !== null) {
+      clearInterval(this.periodicCheckInterval);
+      this.periodicCheckInterval = null;
+    }
   }
 }
 

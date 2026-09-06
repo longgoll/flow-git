@@ -16,11 +16,19 @@ jobs:
         include:
           - platform: 'windows-latest'
             args: ''
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin'
+          - platform: 'macos-13'
+            args: '--target x86_64-apple-darwin'
+          - platform: 'ubuntu-22.04'
+            args: ''
 
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Cần toàn bộ lịch sử để tạo release notes
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -31,8 +39,40 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install dependencies
+      - name: Add macOS Rust targets
+        if: startsWith(matrix.platform, 'macos')
+        run: |
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - name: Install Linux system dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Install Node dependencies
         run: npm ci
+
+      - name: Generate Release Notes
+        id: release_notes
+        shell: bash
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            echo "Không có tag trước – lấy 20 commit gần nhất."
+            NOTES=$(git log --pretty=format:"- %s (%h)" -20)
+          else
+            echo "Tag trước: $PREV_TAG"
+            NOTES=$(git log --pretty=format:"- %s (%h)" "${PREV_TAG}..HEAD")
+          fi
+          # Escape ký tự đặc biệt cho GitHub Output
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Build & Publish Release
         uses: tauri-apps/tauri-action@v0
@@ -43,7 +83,7 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: 'FlowGit v__VERSION__'
-          releaseBody: 'Xem chi tiết các thay đổi trong phiên bản này tại Commit History.'
+          releaseBody: ${{ steps.release_notes.outputs.notes }}
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}

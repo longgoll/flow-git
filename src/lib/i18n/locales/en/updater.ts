@@ -1,9 +1,11 @@
 export const updater = {
   modalTitle: "FlowGit Update",
   currentVersion: "Current Version",
+  currentVersionLabel: "App Version",
   releaseDate: "Release Date",
   whatsNew: "What's New in this Release",
   noReleaseNotes: "No detailed release notes provided.",
+  noReleaseYet: "No releases published yet",
   downloading: "Downloading update package...",
   errorOccurred: "An error occurred during update",
   later: "Later",

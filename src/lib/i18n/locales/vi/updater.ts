@@ -1,9 +1,11 @@
 export const updater = {
   modalTitle: "Cập nhật FlowGit",
   currentVersion: "Phiên bản hiện tại",
+  currentVersionLabel: "Phương bản ứng dụng",
   releaseDate: "Ngày phát hành",
   whatsNew: "Điểm mới trong bản cập nhật",
   noReleaseNotes: "Không có ghi chú phát hành chi tiết.",
+  noReleaseYet: "Chưa có bản phát hành nào",
   downloading: "Đang tải bản cài...",
   errorOccurred: "Đã xảy ra lỗi khi cập nhật",
   later: "Để sau",

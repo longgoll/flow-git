@@ -21,6 +21,7 @@
   import { getFileBlame } from '../api/diff';
   import MonacoEditor from './MonacoEditor.svelte';
   import MonacoDiffEditor from './MonacoDiffEditor.svelte';
+  import MarkdownViewer from './MarkdownViewer.svelte';
   import FileHistoryModal from './FileHistoryModal.svelte';
   import RefPickerModal from './explorer/RefPickerModal.svelte';
   import {
@@ -34,6 +35,7 @@
     ChevronRight,
     ChevronDown,
     Copy,
+    Check,
     WrapText,
     Map as MapIcon,
     RefreshCw,
@@ -49,6 +51,7 @@
     Code,
     Edit3,
     Eye,
+    BookOpen,
     GitCompare,
     Save,
     MoreVertical,
@@ -142,6 +145,28 @@
   let wordWrap = $state<'on' | 'off'>('on');
   let minimap = $state<boolean>(true);
 
+  // Markdown View state
+  let isMarkdownFile = $derived(
+    !!selectedFilePath && (selectedFilePath.endsWith('.md') || selectedFilePath.endsWith('.markdown'))
+  );
+  let markdownViewMode = $state<'rich' | 'raw'>('rich');
+
+  // Inline Blame state (GitLens ghost text)
+  let showInlineBlame = $state<boolean>(true);
+
+  // Preferred external editor
+  let preferredEditor = $state<'cursor' | 'antigravity' | 'code' | 'zed' | 'default'>('code');
+  let currentEditorMeta = $derived(getEditorMeta(preferredEditor));
+
+  onMount(() => {
+    try {
+      const saved = localStorage.getItem('flowgit_preferred_editor');
+      if (saved && ['cursor', 'antigravity', 'code', 'zed', 'default'].includes(saved)) {
+        preferredEditor = saved as any;
+      }
+    } catch {}
+  });
+
   // Path segments for breadcrumbs
   let pathSegments = $derived(selectedFilePath ? selectedFilePath.split('/') : []);
 
@@ -230,7 +255,7 @@
         await loadHeadDiffContent(filePath);
       }
 
-      if (showBlame && !res.is_binary) {
+      if (!res.is_binary) {
         await loadBlame(filePath);
       }
     } catch (err) {
@@ -287,8 +312,11 @@
     try {
       blameHunks = await getFileBlame(repoPath, filePath);
     } catch (err: any) {
-      console.error('Failed to load blame:', err);
-      toast.error(localeState.t('explorer.repository.blameError'), err?.message || err);
+      blameHunks = [];
+      if (showBlame) {
+        console.warn('Failed to load blame:', err);
+        toast.warning(localeState.t('explorer.repository.blameError'), err?.message || err);
+      }
     } finally {
       isBlameLoading = false;
     }
@@ -366,15 +394,51 @@
     toast.info(localeState.t('explorer.repository.copiedContentToast'), localeState.t('explorer.repository.copiedContentMsg'));
   }
 
+  async function handleBreadcrumbClick(index: number) {
+    if (!selectedFilePath) return;
+    explorerTab = 'tree';
+    const subSegments = pathSegments.slice(0, index + 1);
+    let current = '';
+    const next = new Set(expandedDirs);
+    for (const seg of subSegments) {
+      current = current ? `${current}/${seg}` : seg;
+      next.add(current);
+      if (!directoryEntries[current]) {
+        await loadDirectory(current);
+      }
+    }
+    expandedDirs = next;
+  }
+
+  function getEditorMeta(editor: string) {
+    switch (editor) {
+      case 'cursor':
+        return { name: 'Cursor', icon: Sparkles, color: 'text-indigo-500' };
+      case 'antigravity':
+        return { name: 'Antigravity', icon: Code, color: 'text-cyan-500' };
+      case 'zed':
+        return { name: 'Zed', icon: ExternalLink, color: 'text-emerald-500' };
+      case 'default':
+        return { name: 'App', icon: FileText, color: 'text-zinc-500' };
+      case 'code':
+      default:
+        return { name: 'VS Code', icon: Code, color: 'text-blue-500' };
+    }
+  }
+
   async function handleOpenInEditor(editor: 'cursor' | 'antigravity' | 'code' | 'zed' | 'default') {
     if (!selectedFilePath || !repoPath) return;
     showEditorDropdown = false;
+    preferredEditor = editor;
+    try {
+      localStorage.setItem('flowgit_preferred_editor', editor);
+    } catch {}
     const fullPath = `${repoPath}/${selectedFilePath}`.replace(/\\/g, '/');
     try {
       await openInExternalEditor(fullPath, editor);
       toast.success(
         localeState.t('explorer.repository.launchEditorSuccess'),
-        localeState.t('explorer.repository.launchEditorSuccessMsg', { editor: editor === 'antigravity' ? 'Antigravity IDE' : editor.toUpperCase() })
+        localeState.t('explorer.repository.launchEditorSuccessMsg', { editor: getEditorMeta(editor).name })
       );
     } catch (err: any) {
       console.error(`Failed to open in ${editor}:`, err);
@@ -744,10 +808,21 @@
               {/if}
               {#if idx === pathSegments.length - 1}
                 <span class="font-bold text-zinc-900 dark:text-zinc-100 truncate">{segment}</span>
+                <button
+                  onclick={() => copyPath(false)}
+                  class="p-0.5 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
+                  title={localeState.t('explorer.repository.copyPath')}
+                >
+                  <Copy class="w-3 h-3" />
+                </button>
               {:else}
-                <span class="text-zinc-500 hover:text-cyan-600 dark:hover:text-cyan-400 cursor-pointer transition-colors truncate">
+                <button
+                  onclick={() => handleBreadcrumbClick(idx)}
+                  class="text-zinc-500 hover:text-cyan-600 dark:hover:text-cyan-400 hover:underline cursor-pointer transition-colors truncate"
+                  title={localeState.t('explorer.repository.clickToOpenFolder', { dir: segment })}
+                >
                   {segment}
-                </span>
+                </button>
               {/if}
             {/each}
           </div>
@@ -790,6 +865,28 @@
 
         <!-- Editor Toolbar Actions -->
         <div class="flex items-center gap-1.5 shrink-0">
+          <!-- Markdown View Switcher (Rich Preview vs Raw Source) -->
+          {#if isMarkdownFile && editorMode === 'preview'}
+            <div class="flex items-center bg-purple-100/70 dark:bg-purple-950/50 p-0.5 rounded-lg border border-purple-200/80 dark:border-purple-800/50 text-[11px]">
+              <button
+                onclick={() => (markdownViewMode = 'rich')}
+                class="px-2 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-all {markdownViewMode === 'rich' ? 'bg-white dark:bg-zinc-900 text-purple-700 dark:text-purple-300 font-semibold shadow-xs' : 'text-purple-600/70 dark:text-purple-400/70 hover:text-purple-900 dark:hover:text-purple-200'}"
+                title={localeState.t('explorer.repository.toggleMarkdownMode')}
+              >
+                <BookOpen class="w-3 h-3" />
+                <span class="hidden md:inline">{localeState.t('explorer.repository.richPreview')}</span>
+              </button>
+              <button
+                onclick={() => (markdownViewMode = 'raw')}
+                class="px-2 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-all {markdownViewMode === 'raw' ? 'bg-white dark:bg-zinc-900 text-purple-700 dark:text-purple-300 font-semibold shadow-xs' : 'text-purple-600/70 dark:text-purple-400/70 hover:text-purple-900 dark:hover:text-purple-200'}"
+                title={localeState.t('explorer.repository.toggleMarkdownMode')}
+              >
+                <Code class="w-3 h-3" />
+                <span class="hidden md:inline">{localeState.t('explorer.repository.rawSource')}</span>
+              </button>
+            </div>
+          {/if}
+
           <!-- View Modes: Preview | Edit | Diff -->
           <div class="flex items-center bg-zinc-200/60 dark:bg-zinc-800/60 p-0.5 rounded-lg text-[11px] font-medium">
             <button
@@ -874,16 +971,22 @@
 
           <div class="h-4 w-px bg-zinc-200 dark:bg-zinc-800"></div>
 
-          <!-- Open in External IDE Menu (Cursor, Antigravity, VS Code, Zed, Default) -->
-          <div class="relative">
+          <!-- Quick 1-Click IDE Split Button (VS Code, Cursor, Antigravity, Zed, Default) -->
+          <div class="relative flex items-center rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs">
+            <button
+              onclick={() => handleOpenInEditor(preferredEditor)}
+              class="px-2 py-1 rounded-l-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-[11px] flex items-center gap-1.5 cursor-pointer transition-colors font-medium border-r border-zinc-200 dark:border-zinc-800"
+              title={localeState.t('explorer.repository.quickOpenIde', { editor: currentEditorMeta.name })}
+            >
+              <currentEditorMeta.icon class="w-3 h-3 {currentEditorMeta.color}" />
+              <span class="hidden lg:inline">{currentEditorMeta.name}</span>
+            </button>
             <button
               onclick={() => (showEditorDropdown = !showEditorDropdown)}
-              class="px-2 py-1 rounded-lg bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 text-[11px] flex items-center gap-1 cursor-pointer transition-colors"
+              class="px-1 py-1 rounded-r-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 cursor-pointer transition-colors"
               title={localeState.t('explorer.repository.openIdeTooltip')}
             >
-              <Code class="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
-              <span class="hidden lg:inline font-medium">{localeState.t('explorer.repository.openIde')}</span>
-              <ChevronDown class="w-2.5 h-2.5 text-zinc-400" />
+              <ChevronDown class="w-2.5 h-2.5" />
             </button>
 
             {#if showEditorDropdown}
@@ -896,39 +999,64 @@
               <div class="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl p-1 w-52 text-xs font-sans">
                 <button
                   onclick={() => handleOpenInEditor('cursor')}
-                  class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
+                  class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-between cursor-pointer"
                 >
-                  <Sparkles class="w-3.5 h-3.5 text-indigo-500" />
-                  <span>{localeState.t('explorer.repository.openCursor')}</span>
+                  <div class="flex items-center gap-2">
+                    <Sparkles class="w-3.5 h-3.5 text-indigo-500" />
+                    <span>{localeState.t('explorer.repository.openCursor')}</span>
+                  </div>
+                  {#if preferredEditor === 'cursor'}
+                    <Check class="w-3.5 h-3.5 text-cyan-500" />
+                  {/if}
                 </button>
                 <button
                   onclick={() => handleOpenInEditor('antigravity')}
-                  class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
+                  class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-between cursor-pointer"
                 >
-                  <Code class="w-3.5 h-3.5 text-cyan-500" />
-                  <span>{localeState.t('explorer.repository.openAntigravity')}</span>
+                  <div class="flex items-center gap-2">
+                    <Code class="w-3.5 h-3.5 text-cyan-500" />
+                    <span>{localeState.t('explorer.repository.openAntigravity')}</span>
+                  </div>
+                  {#if preferredEditor === 'antigravity'}
+                    <Check class="w-3.5 h-3.5 text-cyan-500" />
+                  {/if}
                 </button>
                 <button
                   onclick={() => handleOpenInEditor('code')}
-                  class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
+                  class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-between cursor-pointer"
                 >
-                  <ExternalLink class="w-3.5 h-3.5 text-blue-500" />
-                  <span>{localeState.t('explorer.repository.openVsCode')}</span>
+                  <div class="flex items-center gap-2">
+                    <ExternalLink class="w-3.5 h-3.5 text-blue-500" />
+                    <span>{localeState.t('explorer.repository.openVsCode')}</span>
+                  </div>
+                  {#if preferredEditor === 'code'}
+                    <Check class="w-3.5 h-3.5 text-cyan-500" />
+                  {/if}
                 </button>
                 <button
                   onclick={() => handleOpenInEditor('zed')}
-                  class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
+                  class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-between cursor-pointer"
                 >
-                  <ExternalLink class="w-3.5 h-3.5 text-emerald-500" />
-                  <span>{localeState.t('explorer.repository.openZed')}</span>
+                  <div class="flex items-center gap-2">
+                    <ExternalLink class="w-3.5 h-3.5 text-emerald-500" />
+                    <span>{localeState.t('explorer.repository.openZed')}</span>
+                  </div>
+                  {#if preferredEditor === 'zed'}
+                    <Check class="w-3.5 h-3.5 text-cyan-500" />
+                  {/if}
                 </button>
                 <div class="my-1 border-t border-zinc-200 dark:border-zinc-800"></div>
                 <button
                   onclick={() => handleOpenInEditor('default')}
-                  class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
+                  class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-between cursor-pointer"
                 >
-                  <FileText class="w-3.5 h-3.5 text-zinc-500" />
-                  <span>{localeState.t('explorer.repository.openDefault')}</span>
+                  <div class="flex items-center gap-2">
+                    <FileText class="w-3.5 h-3.5 text-zinc-500" />
+                    <span>{localeState.t('explorer.repository.openDefault')}</span>
+                  </div>
+                  {#if preferredEditor === 'default'}
+                    <Check class="w-3.5 h-3.5 text-cyan-500" />
+                  {/if}
                 </button>
                 <button
                   onclick={() => { showEditorDropdown = false; handleRevealInExplorer(); }}
@@ -1081,6 +1209,13 @@
               />
             </div>
           {/if}
+        {:else if isMarkdownFile && editorMode === 'preview' && markdownViewMode === 'rich'}
+          <!-- Rich Markdown Viewer Mode -->
+          <div class="w-full h-full overflow-y-auto px-6 py-8 md:px-12 md:py-10 bg-white dark:bg-zinc-950">
+            <div class="max-w-4xl mx-auto">
+              <MarkdownViewer content={fileContent} />
+            </div>
+          </div>
         {:else}
           <!-- Standard Monaco Editor (Preview or Quick Edit) -->
           <div class="w-full h-full flex overflow-hidden">
@@ -1146,6 +1281,8 @@
                 {wordWrap}
                 {minimap}
                 {targetLine}
+                {blameHunks}
+                showInlineBlame={showInlineBlame || showBlame}
                 onChange={(val) => (fileContent = val)}
                 onSave={handleSave}
               />

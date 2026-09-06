@@ -107,6 +107,13 @@ export const explorer = {
     launchEditorSuccessMsg: "Đang khởi chạy {editor}",
     launchEditorError: "Lỗi khởi chạy editor",
     openFolderError: "Lỗi mở thư mục",
+    richPreview: "Xem trực quan",
+    rawSource: "Mã nguồn thô",
+    toggleMarkdownMode: "Chuyển giữa xem trực quan và sửa mã nguồn Markdown",
+    inlineBlame: "Inline Blame",
+    toggleInlineBlame: "Bật/Tắt chú thích tác giả GitLens trên dòng code",
+    quickOpenIde: "Mở trong {editor}",
+    clickToOpenFolder: "Nhấp để duyệt thư mục {dir}",
   },
   refPicker: {
     title: "Chọn Mốc Tham Chiếu (Git Ref)",

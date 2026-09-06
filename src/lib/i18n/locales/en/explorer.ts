@@ -109,6 +109,13 @@ export const explorer: typeof viExplorer = {
     launchEditorSuccessMsg: "Launching {editor}",
     launchEditorError: "Failed to launch editor",
     openFolderError: "Failed to open directory",
+    richPreview: "Rich Preview",
+    rawSource: "Raw Source",
+    toggleMarkdownMode: "Toggle between rich preview and raw source code",
+    inlineBlame: "Inline Blame",
+    toggleInlineBlame: "Toggle GitLens author annotation on current line",
+    quickOpenIde: "Open in {editor}",
+    clickToOpenFolder: "Click to reveal directory {dir}",
   },
   refPicker: {
     title: "Select Reference (Git Ref)",

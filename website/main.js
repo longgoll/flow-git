@@ -73,6 +73,36 @@ const translations = {
     ctaDesc: "Tải ngay FlowGit cho Windows hoàn toàn miễn phí hoặc khám phá mã nguồn mở trên GitHub.",
     ctaBtn: "Tải Bản Cài Đặt (.exe)",
     
+    // Showcase Tabs & Captions
+    tabLivingGraph: "Living Graph & Monaco Diff",
+    tabSplitDiff: "Split Diff Editor",
+    tabConflicts: "3-Way Conflict Resolver",
+    tabSafeTrash: "Safe Discard (48h Trash)",
+    tabTimeMachine: "Time Machine (Ctrl+Z)",
+    tabPalette: "Command Palette (Ctrl+K)",
+    windowLiveBadge: "● Ảnh chụp ứng dụng thực tế",
+    captionHero: "✨ Đồ thị Living Commit Graph vẽ bằng OffscreenCanvas 60 FPS kết hợp Monaco Diff Editor tích hợp.",
+    captionDiff: "⚡ Monaco Diff Editor hỗ trợ chế độ Split 2 cột trực quan, syntax highlighting chuẩn VS Code.",
+    captionConflicts: "⚔️ 3-Way Conflict Resolver trực quan với AI Auto-Merge, Take Ours / Theirs và xem kết quả tức thì.",
+    captionTrash: "🛡️ Safe Discard 48h Trash Inspector: Cứu lại mã nguồn đã lỡ xóa chỉ với 1-Click Restore.",
+    captionTimeMachine: "⏪ Cỗ máy thời gian Time Machine: Hoàn tác (Undo) và làm lại (Redo) mọi hành động Git qua Ctrl+Z.",
+    captionPalette: "⌘ Siêu bảng lệnh Command Palette (Ctrl+K): Tìm kiếm lệnh, chuyển nhánh, mở công cụ tức thì.",
+
+    // Visual Deep Dives
+    tagConflictVisual: "⚔️ Trực Quan Hóa Xung Đột",
+    titleConflictVisual: "Trình Giải Quyết Xung Đột 3 Khung Hình Chuẩn Monaco",
+    descConflictVisual: "Không còn phải đoán mò giữa hàng đống dấu <<<<<<< HEAD trong terminal. FlowGit chia tách trực quan nhánh Hiện tại (Ours), nhánh Nhập vào (Theirs) và khung Kết quả cuối cùng với sự hỗ trợ của AI Auto-Merge.",
+    itemConflict1: "✓ Chọn nhanh 1-Click \"Take All Ours\" hoặc \"Take All Theirs\"",
+    itemConflict2: "✓ Highlight cú pháp chuyên nghiệp thừa hưởng từ VS Code (Monaco Editor)",
+    itemConflict3: "✓ AI tự động đọc hiểu ngữ cảnh và hợp nhất code an toàn",
+
+    tagSafeVisual: "🛡️ An Toàn Tuyệt Đối",
+    titleSafeVisual: "Thùng Rác Safe Discard 48h & Time Machine (Ctrl+Z)",
+    descSafeVisual: "Thao tác Git không còn là nỗi sợ mất code. Mọi tệp hoặc đoạn mã bạn bấm Discard đều được bí mật snapshot vào SQLite cục bộ trong 48 giờ. Bạn có thể xem trước diff và phục hồi tức thì.",
+    itemSafe1: "✓ Lưu trữ SQLite tự dọn dẹp sau 48h mà không ngốn dung lượng ổ đĩa",
+    itemSafe2: "✓ Hoàn tác Time Machine bằng phím tắt toàn năng Ctrl + Z",
+    itemSafe3: "✓ Xem trước diff của từng snapshot trước khi bấm Phục Hồi",
+
     // Footer
     footerCopy: "© 2026 FlowGit. Phát hành theo giấy phép mã nguồn mở MIT."
   },
@@ -149,6 +179,36 @@ const translations = {
     ctaTitle: "Ready to Upgrade Your Git Workflow?",
     ctaDesc: "Download FlowGit for Windows free of charge or inspect the source code on GitHub.",
     ctaBtn: "Download Setup (.exe)",
+
+    // Showcase Tabs & Captions
+    tabLivingGraph: "Living Graph & Monaco Diff",
+    tabSplitDiff: "Split Diff Editor",
+    tabConflicts: "3-Way Conflict Resolver",
+    tabSafeTrash: "Safe Discard (48h Trash)",
+    tabTimeMachine: "Time Machine (Ctrl+Z)",
+    tabPalette: "Command Palette (Ctrl+K)",
+    windowLiveBadge: "● Real App Screenshot",
+    captionHero: "✨ Living Commit Graph rendered via 60 FPS OffscreenCanvas paired with embedded Monaco Diff.",
+    captionDiff: "⚡ Side-by-side Monaco Split Diff with full VS Code syntax highlighting and hunk staging.",
+    captionConflicts: "⚔️ 3-Way Conflict Resolver with AI Auto-Merge, Take Ours / Theirs, and real-time output preview.",
+    captionTrash: "🛡️ Safe Discard 48h Trash Inspector: 1-Click Restore for any accidentally discarded code.",
+    captionTimeMachine: "⏪ Time Machine undo & redo engine: seamlessly reverse any destructive action via Ctrl+Z.",
+    captionPalette: "⌘ Supercharged Command Palette (Ctrl+K): lightning-fast actions, branch jump & tools.",
+
+    // Visual Deep Dives
+    tagConflictVisual: "⚔️ Visual Conflict Resolution",
+    titleConflictVisual: "Monaco-Grade 3-Way Conflict Resolver",
+    descConflictVisual: "No more deciphering cryptic <<<<<<< HEAD markers in terminal. FlowGit clearly separates Ours, Incoming Theirs, and the Monaco Result buffer with AI Auto-Merge.",
+    itemConflict1: "✓ One-click 'Take All Ours' or 'Take All Theirs'",
+    itemConflict2: "✓ VS Code-level syntax highlighting & chunk hunk navigation",
+    itemConflict3: "✓ AI auto-merge intelligently resolves complex semantic conflicts",
+
+    tagSafeVisual: "🛡️ Bulletproof Safety",
+    titleSafeVisual: "48-Hour Safe Discard Trash & Time Machine (Ctrl+Z)",
+    descSafeVisual: "Git with zero fear. Every uncommitted discard is transparently snapshotted into local SQLite for 48 hours. Preview the full diff and restore anytime.",
+    itemSafe1: "✓ Lightweight local SQLite storage with auto-cleanup after 48h",
+    itemSafe2: "✓ Omnipresent Time Machine undo across dangerous Git operations via Ctrl+Z",
+    itemSafe3: "✓ Real-time diff inspector before 1-Click Restore",
     
     // Footer
     footerCopy: "© 2026 FlowGit. Released under the MIT Open Source License."
@@ -156,6 +216,73 @@ const translations = {
 };
 
 let currentLang = 'vi';
+let activeShotKey = 'hero';
+
+const showcaseShots = {
+  hero: {
+    src: 'assets/flowgit_hero.png',
+    title: 'FlowGit — Living Commit Graph & Monaco Diff (main)',
+    captionKey: 'captionHero',
+  },
+  diff: {
+    src: 'assets/flowgit_diff_split.png',
+    title: 'FlowGit — Side-by-Side Monaco Diff Viewer (feature/living-graph)',
+    captionKey: 'captionDiff',
+  },
+  conflicts: {
+    src: 'assets/flowgit_conflicts.png',
+    title: 'FlowGit — 3-Way Visual Conflict Resolver (AI Auto-Merge)',
+    captionKey: 'captionConflicts',
+  },
+  trash: {
+    src: 'assets/flowgit_trash.png',
+    title: 'FlowGit — Safe Discard 48h Trash Inspector (SQLite Snapshot)',
+    captionKey: 'captionTrash',
+  },
+  timemachine: {
+    src: 'assets/flowgit_timemachine.png',
+    title: 'FlowGit — Time Machine Undo / Redo Engine (Ctrl + Z)',
+    captionKey: 'captionTimeMachine',
+  },
+  palette: {
+    src: 'assets/flowgit_palette.png',
+    title: 'FlowGit — Command Palette & Quick Navigation (Ctrl + K)',
+    captionKey: 'captionPalette',
+  },
+};
+
+function updateShowcaseView(shotKey) {
+  const shot = showcaseShots[shotKey];
+  if (!shot) return;
+  activeShotKey = shotKey;
+
+  const img = document.getElementById('showcase-img');
+  const titleEl = document.getElementById('window-title-text');
+  const captionEl = document.getElementById('image-caption-text');
+
+  // Update tabs active state
+  document.querySelectorAll('.showcase-tab').forEach((tab) => {
+    tab.classList.toggle('active', tab.getAttribute('data-shot') === shotKey);
+  });
+
+  if (img) {
+    img.classList.add('fading');
+    setTimeout(() => {
+      img.src = shot.src;
+      img.alt = shot.title;
+      img.onload = () => img.classList.remove('fading');
+    }, 150);
+  }
+
+  if (titleEl) titleEl.textContent = shot.title;
+  if (captionEl) {
+    captionEl.setAttribute('data-i18n', shot.captionKey);
+    const dict = translations[currentLang];
+    if (dict && dict[shot.captionKey]) {
+      captionEl.textContent = dict[shot.captionKey];
+    }
+  }
+}
 
 function setLanguage(lang) {
   currentLang = lang;
@@ -173,6 +300,41 @@ function setLanguage(lang) {
   const langBtn = document.getElementById('lang-toggle-btn');
   if (langBtn) {
     langBtn.textContent = lang === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English';
+  }
+
+  // Also refresh current showcase caption
+  const shot = showcaseShots[activeShotKey];
+  if (shot) {
+    const captionEl = document.getElementById('image-caption-text');
+    if (captionEl && dict[shot.captionKey]) {
+      captionEl.textContent = dict[shot.captionKey];
+    }
+  }
+}
+
+function setupShowcaseTabs() {
+  const tabs = document.querySelectorAll('.showcase-tab');
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const shotKey = tab.getAttribute('data-shot');
+      if (shotKey) {
+        updateShowcaseView(shotKey);
+      }
+    });
+  });
+
+  // Keyboard navigation between tabs with arrow keys
+  const tablist = document.querySelector('.showcase-tabs');
+  if (tablist) {
+    const keys = Object.keys(showcaseShots);
+    tablist.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        let idx = keys.indexOf(activeShotKey);
+        if (e.key === 'ArrowRight') idx = (idx + 1) % keys.length;
+        if (e.key === 'ArrowLeft') idx = (idx - 1 + keys.length) % keys.length;
+        updateShowcaseView(keys[idx]);
+      }
+    });
   }
 }
 
@@ -200,7 +362,6 @@ async function fetchLatestRelease() {
     if (downloadBtn) downloadBtn.href = downloadUrl;
     if (ctaBtn) ctaBtn.href = downloadUrl;
   } catch (e) {
-    // Graceful fallback to GitHub Releases page
     if (downloadBtn) downloadBtn.href = defaultDownloadUrl;
     if (ctaBtn) ctaBtn.href = defaultDownloadUrl;
   }
@@ -209,6 +370,9 @@ async function fetchLatestRelease() {
 document.addEventListener('DOMContentLoaded', () => {
   // Init default language
   setLanguage('vi');
+
+  // Setup interactive real app showcase
+  setupShowcaseTabs();
 
   // Toggle button listener
   const langBtn = document.getElementById('lang-toggle-btn');

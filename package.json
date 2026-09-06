@@ -29,6 +29,7 @@
     "@tailwindcss/vite": "^4.0.9",
     "@tauri-apps/cli": "^2.2.7",
     "@types/node": "^26.4.1",
+    "playwright-core": "^1.63.0",
     "svelte": "^5.20.2",
     "svelte-check": "^4.1.4",
     "tailwindcss": "^4.0.9",

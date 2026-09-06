@@ -86,99 +86,59 @@
         </span>
       </div>
 
-      <!-- App Interface Mockup Preview -->
-      <div class="mockup-container">
-        <div class="app-window">
+      <!-- Real App Interface Showcase with Interactive Tabs -->
+      <div class="showcase-container">
+        <!-- Showcase Navigation Tabs -->
+        <div class="showcase-tabs" role="tablist">
+          <button class="showcase-tab active" data-shot="hero" data-i18n="tabLivingGraph">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>
+            <span>Living Graph & Monaco Diff</span>
+          </button>
+          <button class="showcase-tab" data-shot="diff" data-i18n="tabSplitDiff">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+            <span>Split Diff Editor</span>
+          </button>
+          <button class="showcase-tab" data-shot="conflicts" data-i18n="tabConflicts">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 3 5 5-5 5"/><path d="M21 8H10a4 4 0 0 0-4 4v9"/><circle cx="6" cy="20" r="2"/></svg>
+            <span>3-Way Conflict Resolver</span>
+          </button>
+          <button class="showcase-tab" data-shot="trash" data-i18n="tabSafeTrash">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Safe Discard (48h Trash)</span>
+          </button>
+          <button class="showcase-tab" data-shot="timemachine" data-i18n="tabTimeMachine">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 8 14"/><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/></svg>
+            <span>Time Machine (Ctrl+Z)</span>
+          </button>
+          <button class="showcase-tab" data-shot="palette" data-i18n="tabPalette">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>Command Palette (Ctrl+K)</span>
+          </button>
+        </div>
+
+        <!-- App Window Frame with Real Screenshot -->
+        <div class="app-window real-window">
           <div class="window-header">
             <div class="window-dots">
               <span class="dot red"></span>
               <span class="dot yellow"></span>
               <span class="dot green"></span>
             </div>
-            <span class="window-title">FlowGit — flow-git (main)</span>
+            <div class="window-title" id="window-title-text">FlowGit — Next-Gen Rust Git Client (main)</div>
+            <div class="window-badge" data-i18n="windowLiveBadge">● Ảnh chụp ứng dụng thực tế</div>
           </div>
 
-          <div class="window-body">
-            <!-- Sidebar -->
-            <div class="mock-sidebar">
-              <div class="sidebar-title">Branches</div>
-              <div class="branch-item active">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
-                <span>main</span>
-              </div>
-              <div class="branch-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
-                <span>feature/canvas-graph</span>
-              </div>
-              <div class="branch-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
-                <span>fix/reflog-undo</span>
-              </div>
-
-              <div class="sidebar-title" style="margin-top: 12px;">Safety Net</div>
-              <div class="branch-item" style="color: #10b981;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span>Safe Trash (48h)</span>
-              </div>
-            </div>
-
-            <!-- Content -->
-            <div class="mock-content">
-              <div class="mock-graph-view">
-                <!-- Commit 1 -->
-                <div class="mock-commit-row selected">
-                  <div class="mock-graph-node">
-                    <span class="node-dot" style="background: #06b6d4;"></span>
-                  </div>
-                  <span class="node-hash">a8f9c1e</span>
-                  <span class="node-msg">feat: integrate ed25519 auto-updater via GitHub releases</span>
-                  <span class="node-badge badge-cyan">HEAD -> main</span>
-                </div>
-                <!-- Commit 2 -->
-                <div class="mock-commit-row">
-                  <div class="mock-graph-node">
-                    <span class="node-dot" style="background: #a855f7;"></span>
-                  </div>
-                  <span class="node-hash">3b2d109</span>
-                  <span class="node-msg">perf: offscreencanvas rendering locked at 60fps</span>
-                  <span class="node-badge badge-purple">origin/main</span>
-                </div>
-                <!-- Commit 3 -->
-                <div class="mock-commit-row">
-                  <div class="mock-graph-node">
-                    <span class="node-dot" style="background: #10b981;"></span>
-                  </div>
-                  <span class="node-hash">7c44e90</span>
-                  <span class="node-msg">feat(safety): 48h sqlite snapshot for uncommitted discards</span>
-                  <span class="node-badge badge-emerald">safe-engine</span>
-                </div>
-                <!-- Commit 4 -->
-                <div class="mock-commit-row">
-                  <div class="mock-graph-node">
-                    <span class="node-dot" style="background: #3b82f6;"></span>
-                  </div>
-                  <span class="node-hash">e015d88</span>
-                  <span class="node-msg">chore: add full bilingual vi/en locale system</span>
-                </div>
-                <!-- Commit 5 -->
-                <div class="mock-commit-row">
-                  <div class="mock-graph-node">
-                    <span class="node-dot" style="background: #06b6d4;"></span>
-                  </div>
-                  <span class="node-hash">120fa7c</span>
-                  <span class="node-msg">init: bootstrap Tauri v2 + Svelte 5 runes architecture</span>
-                </div>
-              </div>
-
-              <!-- Status bar -->
-              <div class="mock-statusbar">
-                <span>Working tree clean • 14,820 commits</span>
-                <span style="display: flex; align-items: center; gap: 8px;">
-                  <span style="color: #10b981;">● Trash: Protected</span>
-                  <span>Ctrl+K Palette</span>
-                  <span>Ctrl+Z Undo</span>
-                </span>
-              </div>
+          <div class="window-image-wrapper">
+            <img 
+              id="showcase-img" 
+              src="assets/flowgit_hero.png" 
+              alt="Giao diện thật FlowGit" 
+              loading="eager"
+              decoding="async"
+              class="showcase-image active"
+            >
+            <div class="image-caption" id="image-caption-text" data-i18n="captionHero">
+              ✨ Đồ thị Living Commit Graph vẽ bằng OffscreenCanvas 60 FPS kết hợp Monaco Diff Editor tích hợp.
             </div>
           </div>
         </div>
@@ -279,6 +239,47 @@
           <div class="feature-icon-wrapper">🔄</div>
           <h3 data-i18n="f8Title">Tự Động Cập Nhật 0 Đồng (Zero-VPS)</h3>
           <p data-i18n="f8Desc">Tích hợp công nghệ cập nhật ngầm Tauri v2 ký số bằng mật mã Ed25519, phân phối qua GitHub Releases an toàn tuyệt đối và miễn phí trọn đời.</p>
+        </div>
+      </div>
+
+      <!-- Real App Visual Deep Dives -->
+      <div class="visual-deep-dives">
+        <!-- Deep Dive 1: 3-Way Conflicts -->
+        <div class="deep-dive-card">
+          <div class="deep-dive-info">
+            <span class="deep-dive-tag" data-i18n="tagConflictVisual">⚔️ Trực Quan Hóa Xung Đột</span>
+            <h3 data-i18n="titleConflictVisual">Trình Giải Quyết Xung Đột 3 Khung Hình Chuẩn Monaco</h3>
+            <p data-i18n="descConflictVisual">
+              Không còn phải đoán mò giữa hàng đống dấu <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> trong terminal. FlowGit chia tách trực quan nhánh Hiện tại (Ours), nhánh Nhập vào (Theirs) và khung Kết quả cuối cùng với sự hỗ trợ của AI Auto-Merge.
+            </p>
+            <ul class="deep-dive-list">
+              <li data-i18n="itemConflict1">✓ Chọn nhanh 1-Click "Take All Ours" hoặc "Take All Theirs"</li>
+              <li data-i18n="itemConflict2">✓ Highlight cú pháp chuyên nghiệp thừa hưởng từ VS Code (Monaco Editor)</li>
+              <li data-i18n="itemConflict3">✓ AI tự động đọc hiểu ngữ cảnh và hợp nhất code an toàn</li>
+            </ul>
+          </div>
+          <div class="deep-dive-media">
+            <img src="assets/flowgit_conflicts.png" alt="3-Way Conflict Resolver FlowGit" loading="lazy">
+          </div>
+        </div>
+
+        <!-- Deep Dive 2: Safe Discard 48h -->
+        <div class="deep-dive-card reverse">
+          <div class="deep-dive-info">
+            <span class="deep-dive-tag green" data-i18n="tagSafeVisual">🛡️ An Toàn Tuyệt Đối</span>
+            <h3 data-i18n="titleSafeVisual">Thùng Rác Safe Discard 48h & Time Machine (Ctrl+Z)</h3>
+            <p data-i18n="descSafeVisual">
+              Thao tác Git không còn là nỗi sợ mất code. Mọi tệp hoặc đoạn mã bạn bấm Discard đều được bí mật snapshot vào SQLite cục bộ trong 48 giờ. Bạn có thể xem trước diff và phục hồi tức thì.
+            </p>
+            <ul class="deep-dive-list">
+              <li data-i18n="itemSafe1">✓ Lưu trữ SQLite tự dọn dẹp sau 48h mà không ngốn dung lượng ổ đĩa</li>
+              <li data-i18n="itemSafe2">✓ Hoàn tác Time Machine bằng phím tắt toàn năng <code>Ctrl + Z</code></li>
+              <li data-i18n="itemSafe3">✓ Xem trước diff của từng snapshot trước khi bấm Phục Hồi</li>
+            </ul>
+          </div>
+          <div class="deep-dive-media">
+            <img src="assets/flowgit_trash.png" alt="Safe Discard Trash Inspector FlowGit" loading="lazy">
+          </div>
         </div>
       </div>
     </div>

@@ -73,6 +73,7 @@ export function createGitActions(ctx: GitActionContext) {
     tabState,
     modalState,
     setViewMode,
+    getComparisonResult,
     setComparisonResult,
     setIsComparisonLoading,
     setRecentPushedBranch,
@@ -523,6 +524,30 @@ export function createGitActions(ctx: GitActionContext) {
     }
   }
 
+  async function swapComparison() {
+    if (!repo.currentRepoPath) return;
+    const current = getComparisonResult();
+    if (!current) return;
+    const oldBase = current.base_id;
+    const oldTarget = current.target_id;
+    setIsComparisonLoading(true);
+    repo.statusMessage = `Comparing ${oldTarget.slice(0, 7)} .. ${oldBase.slice(0, 7)}...`;
+    try {
+      const res = await compareTwoCommits(
+        repo.currentRepoPath,
+        oldTarget,
+        oldBase
+      );
+      setComparisonResult(res);
+      repo.selectedCommitIds = [oldTarget, oldBase];
+      repo.statusMessage = `Comparison ready: ${res.files_changed.length} files changed`;
+    } catch (e: any) {
+      repo.statusMessage = `Comparison failed: ${e?.message || e}`;
+    } finally {
+      setIsComparisonLoading(false);
+    }
+  }
+
   async function undo() {
     repo.statusMessage = 'Time Machine: Undoing last action...';
     try {
@@ -837,6 +862,7 @@ export function createGitActions(ctx: GitActionContext) {
     deleteBranch: deleteBranchAction,
     confirmDeleteBranch,
     compareCommits,
+    swapComparison,
     undo,
     redo,
     openAI,

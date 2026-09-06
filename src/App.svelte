@@ -581,6 +581,7 @@
         {loadRepository}
         {refreshWorkingTreeAndDiff}
         handleCompareCommits={actions.compareCommits}
+        handleSwapComparison={actions.swapComparison}
         handleCherryPickCommit={actions.cherryPickCommit}
         handleRevertCommit={actions.revertCommit}
         handleResetToCommit={actions.resetToCommit}

@@ -48,6 +48,7 @@
     loadRepository: (path: string) => Promise<void>;
     refreshWorkingTreeAndDiff: () => Promise<void>;
     handleCompareCommits: (c1: CommitNode, c2: CommitNode) => void;
+    handleSwapComparison?: () => void;
     handleCherryPickCommit: (c: CommitNode) => Promise<void>;
     handleRevertCommit: (c: CommitNode) => Promise<void>;
     handleResetToCommit: (c: CommitNode, mode: 'soft' | 'mixed' | 'hard') => Promise<void>;
@@ -79,6 +80,7 @@
     loadRepository,
     refreshWorkingTreeAndDiff,
     handleCompareCommits,
+    handleSwapComparison,
     handleCherryPickCommit,
     handleRevertCommit,
     handleResetToCommit,
@@ -371,6 +373,7 @@
     comparison={comparisonResult}
     isLoading={isComparisonLoading}
     repoPath={repo.currentRepoPath}
+    onSwap={handleSwapComparison}
     onClose={() => onChangeViewMode('graph')}
   />
 {:else if viewMode === 'conflict'}

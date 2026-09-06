@@ -1502,12 +1502,24 @@
         <RepositoryExplorer
           repoPath={repo.currentRepoPath}
           commits={repo.visibleCommits}
+          branches={repo.branches}
+          tags={repo.tags}
+          workingTreeStatus={wt.workingTreeStatus}
           initialFilePath={explorerInitialFilePath}
-          onSelectCommit={(commitId) => {
+          onSelectCommit={(commitId: string) => {
             repo.selectedCommitId = commitId;
             viewMode = "graph";
           }}
-          onNukeFile={(p) => {
+          onStageFile={async (p: string) => {
+            await wt.stageFile(repo.currentRepoPath, p, () => loadRepository(repo.currentRepoPath));
+          }}
+          onUnstageFile={async (p: string) => {
+            await wt.unstageFile(repo.currentRepoPath, p, () => loadRepository(repo.currentRepoPath));
+          }}
+          onDiscardFile={async (p: string) => {
+            await wt.discardFile(repo.currentRepoPath, p, () => loadRepository(repo.currentRepoPath));
+          }}
+          onNukeFile={(p: string) => {
             nukeTargetFilePath = p;
             showNukeModal = true;
           }}

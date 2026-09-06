@@ -22,6 +22,10 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `get_file_content` | `path: String, file_path: String, commit_id: Option<String>` | `FileContentResponse` | Đọc nội dung tệp (hỗ trợ tự nhận diện mã hóa UTF-8 hoặc cờ báo tệp nhị phân). |
 | `get_remote_url` | `path: String, remote_name: Option<String>` | `Option<String>` | Lấy URL remote của repository (mặc định lấy remote `origin`). |
 | `nuke_file_from_history` | `path: String, target_file_path: String` | `bool` | Xóa vĩnh viễn một tệp (chứa mật khẩu, secret) khỏi toàn bộ lịch sử commit của repo. |
+| `save_file_content` | `path: String, file_path: String, content: String` | `()` | Lưu nội dung tệp chỉnh sửa trực tiếp từ Monaco Editor xuống đĩa an toàn. |
+| `grep_repository_content` | `path: String, query: String, case_sensitive: Option<bool>, max_results: Option<usize>` | `Vec<FileGrepMatch>` | Tìm kiếm toàn văn (Grep / Find in files) bằng Rust Rayon đa luồng tốc độ cao. |
+| `open_in_external_editor` | `full_path: String, editor: Option<String>` | `()` | Mở tệp bằng trình soạn thảo mã nguồn ngoại vi (Cursor, Antigravity, VS Code, Zed hoặc Default). |
+| `reveal_in_file_manager` | `full_path: String` | `()` | Mở File Explorer trên hệ điều hành và highlight chính xác tệp được chọn. |
 | `get_focus_branch_info` | `path: String, branch_name: Option<String>, base_branch: Option<String>` | `FocusBranchResult` | Lấy thông tin các commit đặc thù thuộc về nhánh Focus so với Base branch (hỗ trợ chọn Base branch tùy chỉnh). |
 | `get_unpushed_stacked_commits` | `path: String` | `Vec<StackedCommitItem>` | Lấy chuỗi các commit chưa được push lên remote để quản lý Stacked Commits / Stacked PRs. |
 | `reorder_stacked_commits` | `path: String, new_order_ids: Vec<String>` | `bool` | Sắp xếp lại thứ tự của các commit trong chuỗi Stacked Commits bằng bộ Reorder Sequencer. |

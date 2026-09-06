@@ -4,6 +4,7 @@ import type {
   CommitNode,
   ComparisonResult,
   FileContentResponse,
+  FileGrepMatch,
   FocusBranchResult,
   GitCredentials,
   PaginatedCommitHistory,
@@ -214,6 +215,53 @@ export async function nukeFileFromHistory(
     });
   }
   return `Mock: Deleted ${filePath} from history`;
+}
+
+export async function saveFileContent(
+  path: string,
+  filePath: string,
+  content: string
+): Promise<void> {
+  if (isTauri) {
+    await invoke<void>('save_file_content', { path, filePath, content });
+  }
+}
+
+export async function grepRepositoryContent(
+  path: string,
+  query: string,
+  caseSensitive?: boolean,
+  maxResults?: number
+): Promise<FileGrepMatch[]> {
+  if (isTauri) {
+    return await invoke<FileGrepMatch[]>('grep_repository_content', {
+      path,
+      query,
+      caseSensitive: caseSensitive ?? false,
+      maxResults: maxResults ?? 200,
+    });
+  }
+  return [];
+}
+
+export async function openInExternalEditor(
+  fullPath: string,
+  editor?: string
+): Promise<void> {
+  if (isTauri) {
+    await invoke<void>('open_in_external_editor', {
+      fullPath,
+      editor: editor || null,
+    });
+  }
+}
+
+export async function revealInFileManager(
+  fullPath: string
+): Promise<void> {
+  if (isTauri) {
+    await invoke<void>('reveal_in_file_manager', { fullPath });
+  }
 }
 
 

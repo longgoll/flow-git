@@ -179,3 +179,230 @@ pub fn get_file_content(
         })
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileGrepMatch {
+    pub file_path: String,
+    pub line_number: usize,
+    pub line_content: String,
+}
+
+pub fn save_file_content(
+    repo: &Repository,
+    file_path: &str,
+    content: &str,
+) -> AppResult<()> {
+    let clean_path = file_path.trim_matches(&['/', '\\'][..]);
+    let workdir = repo.workdir().ok_or_else(|| AppError::Internal("No workdir in bare repo".into()))?;
+    let full_path = workdir.join(clean_path);
+
+    if let Some(parent) = full_path.parent() {
+        if !parent.exists() {
+            std::fs::create_dir_all(parent).map_err(|e| AppError::Internal(e.to_string()))?;
+        }
+    }
+
+    std::fs::write(&full_path, content.as_bytes()).map_err(|e| AppError::Internal(e.to_string()))?;
+    Ok(())
+}
+
+pub fn grep_repository_content(
+    repo: &Repository,
+    query: &str,
+    case_sensitive: bool,
+    max_results: usize,
+) -> AppResult<Vec<FileGrepMatch>> {
+    let workdir = repo.workdir().ok_or_else(|| AppError::Internal("No workdir in bare repo".into()))?;
+    if query.trim().is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let query_str = if case_sensitive {
+        query.to_string()
+    } else {
+        query.to_lowercase()
+    };
+
+    let mut files_to_search = Vec::new();
+    collect_search_files(workdir, workdir, &mut files_to_search, 1500);
+
+    use rayon::prelude::*;
+    let results: Vec<FileGrepMatch> = files_to_search
+        .into_par_iter()
+        .flat_map(|rel_path| {
+            let full_path = workdir.join(&rel_path);
+            let mut matches = Vec::new();
+            if let Ok(bytes) = std::fs::read(&full_path) {
+                let check_len = bytes.len().min(512);
+                if !bytes[..check_len].contains(&0) {
+                    if let Ok(content) = std::str::from_utf8(&bytes) {
+                        for (idx, line) in content.lines().enumerate() {
+                            let matches_line = if case_sensitive {
+                                line.contains(&query_str)
+                            } else {
+                                line.to_lowercase().contains(&query_str)
+                            };
+                            if matches_line {
+                                matches.push(FileGrepMatch {
+                                    file_path: rel_path.clone(),
+                                    line_number: idx + 1,
+                                    line_content: line.trim_end().chars().take(200).collect(),
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            matches
+        })
+        .collect();
+
+    let mut truncated = results;
+    if truncated.len() > max_results {
+        truncated.truncate(max_results);
+    }
+    Ok(truncated)
+}
+
+fn collect_search_files(
+    root: &std::path::Path,
+    dir: &std::path::Path,
+    files: &mut Vec<String>,
+    max_files: usize,
+) {
+    if files.len() >= max_files {
+        return;
+    }
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            if files.len() >= max_files {
+                return;
+            }
+            let path = entry.path();
+            let name = entry.file_name().to_string_lossy().to_string();
+            if name == ".git"
+                || name == "node_modules"
+                || name == "target"
+                || name == "dist"
+                || name == ".svelte-kit"
+                || name == "build"
+            {
+                continue;
+            }
+            if path.is_dir() {
+                collect_search_files(root, &path, files, max_files);
+            } else if path.is_file() {
+                if let Ok(rel) = path.strip_prefix(root) {
+                    let rel_str = rel.to_string_lossy().replace('\\', "/");
+                    files.push(rel_str);
+                }
+            }
+        }
+    }
+}
+
+pub fn open_file_in_editor(full_path: &str, editor: Option<&str>) -> AppResult<()> {
+    let p = std::path::Path::new(full_path);
+    if !p.exists() {
+        return Err(AppError::NotFound(format!("File does not exist: {}", full_path)));
+    }
+
+    let target_editor = editor.unwrap_or("default");
+    match target_editor {
+        "cursor" => {
+            #[cfg(target_os = "windows")]
+            {
+                let _ = std::process::Command::new("cmd")
+                    .args(["/c", "cursor", full_path])
+                    .spawn();
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                let _ = std::process::Command::new("cursor").arg(full_path).spawn();
+            }
+            Ok(())
+        }
+        "code" => {
+            #[cfg(target_os = "windows")]
+            {
+                let _ = std::process::Command::new("cmd")
+                    .args(["/c", "code", full_path])
+                    .spawn();
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                let _ = std::process::Command::new("code").arg(full_path).spawn();
+            }
+            Ok(())
+        }
+        "antigravity" | "agy" => {
+            #[cfg(target_os = "windows")]
+            {
+                let _ = std::process::Command::new("cmd")
+                    .args(["/c", "agy", full_path])
+                    .spawn();
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                let _ = std::process::Command::new("agy").arg(full_path).spawn();
+            }
+            Ok(())
+        }
+        "zed" => {
+            #[cfg(target_os = "windows")]
+            {
+                let _ = std::process::Command::new("cmd")
+                    .args(["/c", "zed", full_path])
+                    .spawn();
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                let _ = std::process::Command::new("zed").arg(full_path).spawn();
+            }
+            Ok(())
+        }
+        _ => {
+            #[cfg(target_os = "windows")]
+            {
+                let _ = std::process::Command::new("cmd")
+                    .args(["/c", "start", "", full_path])
+                    .spawn();
+            }
+            #[cfg(target_os = "macos")]
+            {
+                let _ = std::process::Command::new("open").arg(full_path).spawn();
+            }
+            #[cfg(target_os = "linux")]
+            {
+                let _ = std::process::Command::new("xdg-open").arg(full_path).spawn();
+            }
+            Ok(())
+        }
+    }
+}
+
+pub fn reveal_in_file_manager(full_path: &str) -> AppResult<()> {
+    let p = std::path::Path::new(full_path);
+    if !p.exists() {
+        return Err(AppError::NotFound(format!("File does not exist: {}", full_path)));
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        let _ = std::process::Command::new("explorer")
+            .args(["/select,", full_path])
+            .spawn();
+        Ok(())
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let _ = std::process::Command::new("open").args(["-R", full_path]).spawn();
+        Ok(())
+    }
+    #[cfg(target_os = "linux")]
+    {
+        let parent = p.parent().unwrap_or(p);
+        let _ = std::process::Command::new("xdg-open").arg(parent).spawn();
+        Ok(())
+    }
+}

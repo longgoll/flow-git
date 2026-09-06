@@ -233,6 +233,12 @@ export interface FileContentResponse {
   size_bytes: number;
 }
 
+export interface FileGrepMatch {
+  file_path: string;
+  line_number: number;
+  line_content: string;
+}
+
 export interface TrashSnapshotItem {
   id: number;
   repo_path: string;

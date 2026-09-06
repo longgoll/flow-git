@@ -11,8 +11,9 @@ use commands::{
     // Repo & Commits
     clone_repository, compare_two_commits, get_commit_history, get_commit_info,
     get_file_content, get_focus_branch_info, get_paginated_commit_history,
-    get_remote_url, get_tree_entries, get_unpushed_stacked_commits, init_repository,
-    nuke_file_from_history, open_repository, reorder_stacked_commits,
+    get_remote_url, get_tree_entries, get_unpushed_stacked_commits, grep_repository_content,
+    init_repository, nuke_file_from_history, open_in_external_editor, open_repository,
+    reorder_stacked_commits, reveal_in_file_manager, save_file_content,
     // Branches, Tags, Stashes, Sync
     delete_branch, delete_merged_branches, get_branches, get_merged_branches, get_stashes,
     get_tags, rename_branch, smart_sync, stash_apply, stash_drop, stash_pop, stash_save,
@@ -87,6 +88,10 @@ pub fn run() {
             get_file_content,
             get_remote_url,
             nuke_file_from_history,
+            save_file_content,
+            grep_repository_content,
+            open_in_external_editor,
+            reveal_in_file_manager,
             // Branches, Stashes & Tags
             get_branches,
             create_branch,

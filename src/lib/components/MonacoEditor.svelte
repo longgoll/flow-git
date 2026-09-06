@@ -12,6 +12,9 @@
     fontSize?: number;
     wordWrap?: 'on' | 'off';
     minimap?: boolean;
+    targetLine?: number | null;
+    onChange?: (newContent: string) => void;
+    onSave?: () => void;
   }
 
   let {
@@ -22,6 +25,9 @@
     fontSize = 12,
     wordWrap = 'on',
     minimap = true,
+    targetLine = null,
+    onChange,
+    onSave,
   }: Props = $props();
 
   let editorContainer: HTMLDivElement | null = $state(null);
@@ -53,6 +59,23 @@
       renderWhitespace: 'selection',
       padding: { top: 8, bottom: 8 },
     });
+
+    editorInstance.onDidChangeModelContent(() => {
+      if (editorInstance && currentModel) {
+        const val = currentModel.getValue();
+        onChange?.(val);
+      }
+    });
+
+    // Bind Ctrl+S / Cmd+S
+    editorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+      onSave?.();
+    });
+
+    if (targetLine && targetLine > 0) {
+      editorInstance.revealLineInCenter(targetLine);
+      editorInstance.setPosition({ lineNumber: targetLine, column: 1 });
+    }
   });
 
   // React to theme changes
@@ -82,6 +105,13 @@
         minimap: { enabled: minimap },
         readOnly,
       });
+    }
+  });
+
+  $effect(() => {
+    if (editorInstance && targetLine && targetLine > 0) {
+      editorInstance.revealLineInCenter(targetLine);
+      editorInstance.setPosition({ lineNumber: targetLine, column: 1 });
     }
   });
 

@@ -8,7 +8,15 @@ use crate::git::{
     history::{get_commit_detail, get_paginated_commit_history as git_get_paginated_history, get_topological_history, PaginatedCommitHistory},
     repo::{clone_repository as git_clone_repo, get_repo_summary, init_repository as git_init_repo, open_repository as git_open_repo},
     stacked::{get_unpushed_commits as git_get_unpushed_commits, reorder_stacked_commits as git_reorder_stacked_commits, StackedCommitItem},
-    tree::{get_file_content as git_get_file_content, get_tree_entries as git_get_tree_entries},
+    tree::{
+        get_file_content as git_get_file_content,
+        get_tree_entries as git_get_tree_entries,
+        grep_repository_content as git_grep_repository_content,
+        open_file_in_editor as git_open_file_in_editor,
+        reveal_in_file_manager as git_reveal_in_file_manager,
+        save_file_content as git_save_file_content,
+        FileGrepMatch,
+    },
     CommitDetail, CommitNode, FileContentResponse, RepoSummary, TreeEntryItem,
 };
 
@@ -239,6 +247,63 @@ pub async fn nuke_file_from_history(
 ) -> AppResult<String> {
     tokio::task::spawn_blocking(move || {
         crate::git::commit_ops::nuke_file_from_history(&path, &file_path)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn save_file_content(
+    path: String,
+    file_path: String,
+    content: String,
+) -> AppResult<()> {
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        git_save_file_content(&repo, &file_path, &content)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn grep_repository_content(
+    path: String,
+    query: String,
+    case_sensitive: Option<bool>,
+    max_results: Option<usize>,
+) -> AppResult<Vec<FileGrepMatch>> {
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        git_grep_repository_content(
+            &repo,
+            &query,
+            case_sensitive.unwrap_or(false),
+            max_results.unwrap_or(200),
+        )
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn open_in_external_editor(
+    full_path: String,
+    editor: Option<String>,
+) -> AppResult<()> {
+    tokio::task::spawn_blocking(move || {
+        git_open_file_in_editor(&full_path, editor.as_deref())
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn reveal_in_file_manager(
+    full_path: String,
+) -> AppResult<()> {
+    tokio::task::spawn_blocking(move || {
+        git_reveal_in_file_manager(&full_path)
     })
     .await
     .map_err(|e| AppError::Internal(e.to_string()))?

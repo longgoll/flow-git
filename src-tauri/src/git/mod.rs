@@ -39,7 +39,7 @@ pub use lfs::{LfsFileInfo, LfsLockInfo, LfsSummary};
 pub use rebase::RebaseExecutionResult;
 pub use remote_ops::RemoteInfo;
 pub use submodule::SubmoduleInfo;
-pub use tree::{FileContentResponse, TreeEntryItem};
+pub use tree::{FileContentResponse, FileGrepMatch, TreeEntryItem};
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -71,6 +71,8 @@ pub struct CommitNode {
     pub timestamp: i64,
     pub lane: usize,
     pub refs: Vec<RefInfo>,
+    #[serde(default)]
+    pub is_trunk: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

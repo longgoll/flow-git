@@ -1,12 +1,12 @@
 # KIẾN TRÚC TỔNG THỂ HỆ THỐNG FLOWGIT (SYSTEM ARCHITECTURE)
 > **Kiến trúc:** Tauri v2 Native Bridge + Svelte 5 Runes SPA + Rust Core Engine  
-> **Cập nhật:** Chuẩn công nghệ 2026
+> **Cập nhật:** Chuẩn công nghệ 2026 – Tối ưu hóa Monorepo & Concurrency
 
 ---
 
 ## 🏗️ 1. SƠ ĐỒ KHỐI TỔNG THỂ (HIGH-LEVEL ARCHITECTURE)
 
-Hệ thống FlowGit được thiết kế theo mô hình tách biệt nghiêm ngặt giữa tầng giao diện hiển thị (Presentation Layer), tầng tính toán đa luồng (Worker Layer) và tầng xử lý nghiệp vụ bản địa (Native Backend Core):
+Hệ thống FlowGit được thiết kế theo mô hình tách biệt nghiêm ngặt giữa tầng giao diện hiển thị (Presentation Layer), tầng tính toán đồ họa đa luồng (Worker Layer), tầng API mạng (GitHub Client) và tầng xử lý nghiệp vụ bản địa (Native Backend Core):
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
@@ -17,13 +17,22 @@ Hệ thống FlowGit được thiết kế theo mô hình tách biệt nghiêm n
 │  │ ├── 3-Column Split Layout       │   │ ├── Bezier Curves Spline Rendering (60 FPS) │ │
 │  │ ├── Sidebar & Repository Tree   │   │ ├── Multi-Lane Topological Routing           │ │
 │  │ ├── Monaco Diff & Code Editors  │◄──┼─ Matrix Coordinate Mapping (Screen <-> Graph)│ │
-│  │ ├── Modals & Conflict Resolvers │   │ └── Virtual Viewport Caching                 │ │
-│  │ └── Svelte 5 State Stores       │   └──────────────────────────────────────────────┘ │
+│  │ ├── PR Reviewer & Explorer Hub  │   │ └── Virtual Viewport Caching                 │ │
+│  │ └── Svelte 5 Rune State Stores  │   └──────────────────────────────────────────────┘ │
+│  │     (Repo, WorkingTree, Safety) │                                                    │
 │  └────────────────┬────────────────┘                                                    │
+│                   │ REST API (HTTPS)                                                    │
+│                   ▼                                                                     │
+│  ┌─────────────────────────────────────────────────────────┐                            │
+│  │ GITHUB CLIENT LAYER (src/lib/api/githubApi.ts)          │                            │
+│  │ ├── Octokit-less Native Fetch Engine                    │                            │
+│  │ ├── Pull Request Review, Checks & Comments Management   │                            │
+│  │ └── Instant Push Detection & One-Click Publishing       │                            │
+│  └─────────────────────────────────────────────────────────┘                            │
 └───────────────────┼─────────────────────────────────────────────────────────────────────┘
                     │ Tauri v2 IPC Channel (Scoped Capability Permissions, Zero-Copy JSON)
 ┌───────────────────┴─────────────────────────────────────────────────────────────────────┐
-│ BACKEND CORE (Rust Native Engine)                                                       │
+│ BACKEND CORE (Rust Native Engine - 70+ IPC Commands)                                    │
 │                                                                                         │
 │  ┌───────────────────────────────┐  ┌─────────────────────────────────────────────────┐ │
 │  │ TAURI IPC DISPATCHER LAYER    │  │ PARALLEL WORKERS & EVENT RUNTIME                │ │
@@ -38,6 +47,7 @@ Hệ thống FlowGit được thiết kế theo mô hình tách biệt nghiêm n
 │  │ ├── Monorepo Chunked Revwalk (500 commits / chunk, lazy pagination)                │ │
 │  │ ├── In-Memory Simulation Engine (Dry-Run Conflict Check via `git2::Index`)         │ │
 │  │ ├── Submodules Inspector (`.gitmodules`) & Git LFS Pointer Parser                  │ │
+│  │ ├── Stacked Commits Sequencer & History Nuker Engine                               │ │
 │  │ └── Interactive Rebase Sequencer (`git2::Repository::rebase_init`)                │ │
 │  └───────────────────────────────┬────────────────────────────────────────────────────┘ │
 │                                  ▼                                                      │
@@ -55,23 +65,31 @@ Hệ thống FlowGit được thiết kế theo mô hình tách biệt nghiêm n
 ## 🎨 2. KIẾN TRÚC FRONTEND (SVELTE 5 RUNES)
 
 ### 2.1. Quản lý trạng thái bằng Svelte 5 Runes
-Khác với các ứng dụng Svelte 4 trước đây dùng writable stores và cú pháp reactivity cũ (`$:`, `let:`), FlowGit áp dụng **100% Svelte 5 Runes** dạng Class-based Reactive Stores:
+FlowGit áp dụng **100% Svelte 5 Runes** dạng Class-based Reactive Stores trong thư mục `src/lib/state/`:
 
 1. **`RepoState` (`src/lib/state/repoState.svelte.ts`):**
    - Quản lý danh sách commit, branches, tags, stashes, HEAD pointer và tiến trình phân trang (`hasMoreCommits`, `isLoadingHistory`).
    - Sử dụng **`$state.raw<CommitNode[]>`** để lưu trữ danh sách hàng chục nghìn commits. Bằng cách này, Svelte 5 không tạo Proxy cho từng thuộc tính của commit node, giúp tiết kiệm hơn 80% bộ nhớ RAM và triệt tiêu độ trễ khi duyệt cây.
 2. **`WorkingTreeState` (`src/lib/state/workingTreeState.svelte.ts`):**
-   - Lưu trữ danh sách file đã thay đổi (`dirtyFiles`), trạng thái staged/unstaged, tiến trình theo dõi file realtime và cấu hình bỏ qua file (`.gitignore`).
+   - Lưu trữ danh sách file đã thay đổi (`dirtyFiles`), trạng thái staged/unstaged, tệp đang chọn xem diff và cấu hình bỏ qua file (`.gitignore`).
 3. **`RemoteState` (`src/lib/state/remoteState.svelte.ts`):**
-   - Quản lý các Remote URL (`origin`, `upstream`), danh sách tài khoản đã xác thực (GitHub, GitLab), và trạng thái token.
+   - Quản lý các Remote URL (`origin`, `upstream`), danh sách tài khoản đã xác thực (GitHub, GitLab) và chỉ số chênh lệch Ahead/Behind.
 4. **`GitSafetyState` (`src/lib/state/gitSafetyState.svelte.ts`):**
    - Điều khiển ngăn kéo **Time Machine Drawer (`Ctrl + Z`)** và danh mục các bản lưu trữ trong **Safe Recycle Bin (Trash Inspector)**.
-5. **`ToastState` (`src/lib/state/toastState.svelte.ts`):**
+5. **`ThemeState` (`src/lib/state/themeState.svelte.ts`):**
+   - Quản lý Dark/Light mode, màu nhấn (accent color) và tích hợp đồng bộ theme với Monaco Editor.
+6. **`ToastState` (`src/lib/state/toastState.svelte.ts`):**
    - Hệ thống thông báo toast toàn cục hỗ trợ hiển thị lỗi có thể copy, cảnh báo conflict và tiến trình đồng bộ.
 
-### 2.2. Kiến trúc Render Đồ thị Phân lập (Worker + Canvas)
+### 2.2. Trình soạn thảo Monaco Editor & Monaco Diff Editor
+- Tích hợp phiên bản tối ưu của **Monaco Editor** cho các chức năng:
+  - `MonacoDiffEditor.svelte`: So sánh diff giữa working tree và index, hoặc giữa 2 commit bất kỳ (`ComparisonViewer`), hỗ trợ chế độ Split/Unified.
+  - `MonacoEditor.svelte`: Xem trước mã nguồn trong `RepositoryExplorer`, tích hợp cột Gutter hiển thị Git Blame realtime.
+
+### 2.3. Kiến trúc Render Đồ thị Phân lập (Worker + Canvas)
+- Chi tiết xem tại tài liệu kiến trúc chuyên sâu: [`docs/architecture/offscreen-canvas-graph.md`](./offscreen-canvas-graph.md).
 - Toàn bộ thuật toán tính toán tọa độ $X, Y$, tính toán đường cong Bezier Cubic Spline và lệnh vẽ Canvas được đưa vào **`src/lib/workers/graphWorker.ts`**.
-- Giao tiếp giữa Main UI và Worker chỉ truyền các cấu trúc dữ liệu phẳng qua kênh `postMessage`, bảo đảm UI main-thread luôn phản hồi người dùng ở tốc độ **60 FPS** ổn định ngay cả khi đang cuộn qua 100,000 commits.
+- Đảm bảo UI main-thread luôn phản hồi người dùng ở tốc độ **60 FPS** ổn định ngay cả khi đang cuộn qua 100,000 commits.
 
 ---
 
@@ -79,8 +97,8 @@ Khác với các ứng dụng Svelte 4 trước đây dùng writable stores và 
 
 ### 3.1. Phân tầng Module Backend
 Cấu trúc mã nguồn Rust trong thư mục `src-tauri/src/` được chia thành các phân khu rõ ràng:
-- **`commands/`:** Điểm tiếp nhận và điều phối các yêu cầu IPC từ Frontend. Tất cả các command đều trả về kiểu `Result<T, AppError>`, nghiêm cấm sử dụng `unwrap()` hoặc `expect()` để bảo đảm ứng dụng không bao giờ bị crash đột ngột.
-- **`git/`:** Thư viện logic Git tương tác trực tiếp với `git2-rs`. Bao gồm các thuật toán tính toán lịch sử, đồ thị lane đa luồng, mô phỏng Dry-run, xử lý conflict, rebase, blame và quản lý LFS.
+- **`commands/`:** Điểm tiếp nhận và điều phối hơn 70 IPC commands từ Frontend. Tất cả các command đều trả về kiểu `Result<T, AppError>`, nghiêm cấm sử dụng `unwrap()` hoặc `expect()` để bảo đảm ứng dụng không bao giờ bị crash đột ngột.
+- **`git/`:** Thư viện logic Git tương tác trực tiếp với `git2-rs`. Bao gồm các thuật toán tính toán lịch sử, đồ thị lane đa luồng, mô phỏng Dry-run, xử lý conflict, rebase, blame, stacked commits và quản lý LFS.
 - **`storage/`:** Tầng cơ sở dữ liệu SQLite bản địa (`rusqlite`), phụ trách lưu trữ Trash 48h (`trash.rs`), nhật ký hành động (`action_log.rs`) và thông tin tài khoản (`accounts.rs`).
 - **`watcher/`:** Lớp giám sát tập tin (`notify`) chạy ngầm, gửi sự kiện `repo-changed` lên Frontend khi có bất kỳ thay đổi nào trong working tree hoặc thư mục `.git/`.
 

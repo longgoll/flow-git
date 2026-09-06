@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { CommitNode, ConflictSimulationResult } from "../types";
+  import type { CommitNode, ConflictSimulationResult, GraphViewMode, GraphEdge } from "../types";
   import { simulateDragAction } from "../api";
   import { ROW_HEIGHT, renderCommitGraph } from "../utils/graphRenderer";
   import DragAvatarTooltip from "./graph/DragAvatarTooltip.svelte";
   import CommitContextMenu from "./CommitContextMenu.svelte";
-  import { GitCompare, Copy, X, Layers } from "lucide-svelte";
+  import { GitCompare, Copy, X, Layers, Globe, Sparkles, Eye } from "lucide-svelte";
   import { toast } from "../state/toastState.svelte";
   import { themeState } from "../state/themeState.svelte";
 
@@ -85,7 +85,80 @@
   let isSimulating = $state(false);
   let simulationDebounceTimer: any = null;
 
-  let totalHeight = $derived(commits.length * ROW_HEIGHT);
+  let viewMode = $state<GraphViewMode>('micro');
+  let autoCapsule = $state(true);
+  let expandedCapsuleIds = $state<Set<string>>(new Set());
+  let lockedLane = $state<number | null>(null);
+
+  // Derive displayCommits by applying Macro View filtering and Semantic Capsule collapsing
+  let displayCommits = $derived.by(() => {
+    if (commits.length === 0) return [];
+    if (viewMode === 'micro' && !autoCapsule) return commits;
+
+    const result: CommitNode[] = [];
+    const n = commits.length;
+    let i = 0;
+
+    while (i < n) {
+      const c = commits[i];
+      const isMerge = Array.isArray(c.parents) && c.parents.length > 1;
+      const hasRefs = Array.isArray(c.refs) && c.refs.length > 0;
+      const isRoot = !c.parents || c.parents.length === 0;
+
+      // In Macro mode: group non-milestone commits
+      // In Micro mode: group linear runs of >= 3 commits on non-trunk lanes (> 0)
+      const isMilestone = hasRefs || isMerge || isRoot || c.lane === 0;
+      const eligibleForRun = viewMode === 'macro' ? !isMilestone : (!isMilestone && c.lane > 0);
+
+      if (eligibleForRun) {
+        const run: CommitNode[] = [c];
+        let j = i + 1;
+        while (j < n) {
+          const nextC = commits[j];
+          const nextEligible = viewMode === 'macro'
+            ? (!nextC.refs?.length && nextC.parents?.length <= 1 && nextC.parents?.length > 0)
+            : (!nextC.refs?.length && nextC.parents?.length <= 1 && nextC.parents?.length > 0 && nextC.lane === c.lane);
+          if (nextEligible) {
+            run.push(nextC);
+            j++;
+          } else {
+            break;
+          }
+        }
+
+        const capsuleId = `capsule-${c.id}`;
+        const minThreshold = viewMode === 'macro' ? 2 : 3;
+
+        if (run.length >= minThreshold && !expandedCapsuleIds.has(capsuleId)) {
+          const lastInRun = run[run.length - 1];
+          result.push({
+            id: capsuleId,
+            short_id: `+${run.length}`,
+            parents: lastInRun.parents || [],
+            author_name: `${run.length} commits grouped`,
+            author_email: '',
+            summary: c.summary,
+            timestamp: c.timestamp,
+            lane: c.lane,
+            refs: [],
+            is_trunk: c.is_trunk,
+            is_capsule: true,
+            capsule_count: run.length,
+            collapsed_ids: run.map((r) => r.id),
+          });
+          i = j;
+          continue;
+        }
+      }
+
+      result.push(c);
+      i++;
+    }
+
+    return result;
+  });
+
+  let totalHeight = $derived(displayCommits.length * ROW_HEIGHT);
   let maxScrollTop = $derived(Math.max(0, totalHeight - containerHeight));
   let scrollThumbHeight = $derived(
     totalHeight > 0
@@ -112,15 +185,43 @@
         : [],
   );
 
-  // Fast OID to index mapping
+  // Fast OID to index mapping of displayCommits
   let commitIndexMap = $derived.by(() => {
     const map = new Map<string, number>();
-    for (let i = 0; i < commits.length; i++) {
-      if (commits[i]?.id) {
-        map.set(commits[i].id, i);
+    for (let i = 0; i < displayCommits.length; i++) {
+      if (displayCommits[i]?.id) {
+        map.set(displayCommits[i].id, i);
       }
     }
     return map;
+  });
+
+  // Precalculate continuous graph edges for Pass-through viewport intersection
+  let graphEdges = $derived.by<GraphEdge[]>(() => {
+    const list: GraphEdge[] = [];
+    for (let cIdx = 0; cIdx < displayCommits.length; cIdx++) {
+      const child = displayCommits[cIdx];
+      if (!child || !Array.isArray(child.parents)) continue;
+
+      for (let pIdx = 0; pIdx < child.parents.length; pIdx++) {
+        const parentId = child.parents[pIdx];
+        const parentIndex = commitIndexMap.get(parentId);
+        if (parentIndex === undefined) continue;
+
+        const parent = displayCommits[parentIndex];
+        if (!parent) continue;
+
+        list.push({
+          childIndex: cIdx,
+          parentIndex,
+          childLane: child.lane || 0,
+          parentLane: parent.lane || 0,
+          isTrunk: !!(child.is_trunk && parent.is_trunk),
+          isFirstParent: pIdx === 0,
+        });
+      }
+    }
+    return list;
   });
 
   let animFrameId: number | null = null;
@@ -148,7 +249,7 @@
     }
 
     renderCommitGraph(ctx, {
-      commits,
+      commits: displayCommits,
       commitIndexMap,
       activeSelectedIds,
       hoveredCommitId,
@@ -160,6 +261,9 @@
       hoveredTargetCommit,
       simulationResult,
       isDark: themeState.isDark,
+      lockedLane,
+      viewMode,
+      edges: graphEdges,
     });
   }
 
@@ -243,10 +347,12 @@
     const y = e.clientY - rect.top + scrollTop;
     const clickedIndex = Math.floor(y / ROW_HEIGHT);
 
-    if (clickedIndex >= 0 && clickedIndex < commits.length) {
+    if (clickedIndex >= 0 && clickedIndex < displayCommits.length) {
+      const commit = displayCommits[clickedIndex];
+      if (commit.is_capsule) return;
       isMouseDown = true;
       mouseDownPos = { x: e.clientX, y: e.clientY };
-      draggedCommit = commits[clickedIndex];
+      draggedCommit = commit;
     }
   }
 
@@ -269,11 +375,11 @@
       dragMousePos = { x: e.clientX, y: e.clientY };
 
       const target =
-        hoveredIndex >= 0 && hoveredIndex < commits.length
-          ? commits[hoveredIndex]
+        hoveredIndex >= 0 && hoveredIndex < displayCommits.length
+          ? displayCommits[hoveredIndex]
           : null;
 
-      if (target && target.id !== draggedCommit.id) {
+      if (target && !target.is_capsule && target.id !== draggedCommit.id) {
         if (hoveredTargetCommit?.id !== target.id) {
           hoveredTargetCommit = target;
           triggerDryRunSimulation(draggedCommit.id, target.id);
@@ -286,8 +392,8 @@
       return;
     }
 
-    if (hoveredIndex >= 0 && hoveredIndex < commits.length) {
-      const hoveredCommit = commits[hoveredIndex];
+    if (hoveredIndex >= 0 && hoveredIndex < displayCommits.length) {
+      const hoveredCommit = displayCommits[hoveredIndex];
       if (hoveredCommitId !== hoveredCommit.id) {
         hoveredCommitId = hoveredCommit.id;
         scheduleRender();
@@ -341,8 +447,22 @@
     const y = e.clientY - rect.top + scrollTop;
     const clickedIndex = Math.floor(y / ROW_HEIGHT);
 
-    if (clickedIndex >= 0 && clickedIndex < commits.length) {
-      const commit = commits[clickedIndex];
+    if (clickedIndex >= 0 && clickedIndex < displayCommits.length) {
+      const commit = displayCommits[clickedIndex];
+
+      // If clicked on capsule node: toggle expansion
+      if (commit.is_capsule) {
+        if (expandedCapsuleIds.has(commit.id)) {
+          expandedCapsuleIds.delete(commit.id);
+          toast.info("Collapsed", `Đã thu gọn nhóm ${commit.capsule_count || 3} commits.`);
+        } else {
+          expandedCapsuleIds.add(commit.id);
+          toast.info("Expanded", `Đã mở rộng ${commit.capsule_count || 3} commits chi tiết.`);
+        }
+        expandedCapsuleIds = new Set(expandedCapsuleIds);
+        scheduleRender();
+        return;
+      }
 
       // Shift + Click: Chọn một dải commit (Range selection)
       if (e.shiftKey && selectedCommitId && selectedCommitId !== commit.id) {
@@ -350,7 +470,10 @@
         if (lastIndex !== undefined) {
           const start = Math.min(lastIndex, clickedIndex);
           const end = Math.max(lastIndex, clickedIndex);
-          const rangeIds = commits.slice(start, end + 1).map((c) => c.id);
+          const rangeIds = displayCommits
+            .slice(start, end + 1)
+            .filter((c) => !c.is_capsule)
+            .map((c) => c.id);
           if (onSelectMultipleCommits) {
             onSelectMultipleCommits(rangeIds);
             scheduleRender();
@@ -415,16 +538,70 @@
     } else if (e.key === "k" || e.key === "ArrowUp") {
       e.preventDefault();
       selectAdjacentCommit(-1);
+    } else if (e.key === "m" || e.key === "M") {
+      e.preventDefault();
+      viewMode = viewMode === "micro" ? "macro" : "micro";
+      toast.info("Chế độ xem", `Đã chuyển sang ${viewMode === "macro" ? "Macro Map (PR View)" : "Micro DAG"}.`);
+      scheduleRender();
+    } else if (e.key === "c" || e.key === "C") {
+      e.preventDefault();
+      autoCapsule = !autoCapsule;
+      toast.info("Semantic Capsules", `Đã ${autoCapsule ? "BẬT" : "TẮT"} chế độ gom nhóm commit.`);
+      scheduleRender();
+    } else if (e.key === "f" || e.key === "F") {
+      e.preventDefault();
+      if (selectedCommitId) {
+        const curr = displayCommits.find((c) => c.id === selectedCommitId);
+        if (curr) {
+          if (lockedLane === curr.lane) {
+            lockedLane = null;
+            toast.info("Focus Unlocked", "Đã bỏ khóa tiêu điểm nhánh.");
+          } else {
+            lockedLane = curr.lane;
+            toast.success("Focus Locked", `Đã khóa tiêu điểm vào Lane ${curr.lane}.`);
+          }
+          scheduleRender();
+        }
+      }
+    } else if (e.key === "[" || e.key === "]") {
+      e.preventDefault();
+      jumpToNextMilestone(e.key === "]" ? 1 : -1);
     } else if (
       (e.key === "s" || e.key === "S") &&
       activeSelectedIds.length >= 2 &&
       onSquashCommits
     ) {
       e.preventDefault();
-      const selectedCommits = commits.filter((c) =>
+      const selectedCommits = displayCommits.filter((c) =>
         activeSelectedIds.includes(c.id),
       );
       onSquashCommits(selectedCommits);
+    }
+  }
+
+  function jumpToNextMilestone(offset: number) {
+    if (displayCommits.length === 0) return;
+    const currentIndex = displayCommits.findIndex((c) => c.id === selectedCommitId);
+    let idx = currentIndex === -1 ? (offset > 0 ? 0 : displayCommits.length - 1) : currentIndex + offset;
+
+    while (idx >= 0 && idx < displayCommits.length) {
+      const c = displayCommits[idx];
+      const isMilestone =
+        !c.is_capsule &&
+        ((c.refs && c.refs.length > 0) ||
+          (c.parents && c.parents.length > 1) ||
+          !c.parents ||
+          c.parents.length === 0);
+      if (isMilestone) {
+        onSelectCommit(c);
+        const itemTop = idx * ROW_HEIGHT;
+        scrollTop = Math.max(0, Math.min(maxScrollTop, itemTop - containerHeight / 2));
+        scheduleRender();
+        const label = c.refs?.[0]?.shorthand || c.short_id;
+        toast.info("Milestone Jump", `${label}: ${c.summary}`);
+        return;
+      }
+      idx += offset;
     }
   }
 
@@ -434,8 +611,9 @@
     const y = e.clientY - rect.top + scrollTop;
     const clickedIndex = Math.floor(y / ROW_HEIGHT);
 
-    if (clickedIndex >= 0 && clickedIndex < commits.length) {
-      const commit = commits[clickedIndex];
+    if (clickedIndex >= 0 && clickedIndex < displayCommits.length) {
+      const commit = displayCommits[clickedIndex];
+      if (commit.is_capsule) return;
       if (
         !selectedCommitIds?.includes(commit.id) &&
         selectedCommitId !== commit.id
@@ -451,14 +629,17 @@
   }
 
   function selectAdjacentCommit(offset: number) {
-    if (commits.length === 0) return;
-    const currentIndex = commits.findIndex((c) => c.id === selectedCommitId);
+    if (displayCommits.length === 0) return;
+    const currentIndex = displayCommits.findIndex((c) => c.id === selectedCommitId);
     let nextIndex = currentIndex + offset;
     if (currentIndex === -1) {
       nextIndex = 0;
     }
-    if (nextIndex >= 0 && nextIndex < commits.length) {
-      const targetCommit = commits[nextIndex];
+    while (nextIndex >= 0 && nextIndex < displayCommits.length && displayCommits[nextIndex].is_capsule) {
+      nextIndex += offset > 0 ? 1 : -1;
+    }
+    if (nextIndex >= 0 && nextIndex < displayCommits.length) {
+      const targetCommit = displayCommits[nextIndex];
       onSelectCommit(targetCommit);
 
       const itemTop = nextIndex * ROW_HEIGHT;
@@ -502,22 +683,92 @@
   }
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions, a11y_no_noninteractive_tabindex -->
-<div
-  bind:this={containerEl}
-  role="region"
-  aria-label="Interactive Living Commit Graph"
-  tabindex="0"
-  onwheel={handleWheel}
-  onmousedown={handleMouseDown}
-  onclick={handleClick}
-  oncontextmenu={handleContextMenu}
-  onkeydown={handleKeydown}
-  onmousemove={handleMouseMove}
-  onmouseleave={handleMouseLeave}
-  class="relative w-full h-full bg-white dark:bg-zinc-950 overflow-hidden cursor-pointer focus:outline-none select-none"
->
-  <canvas bind:this={canvasEl} class="w-full h-full block"></canvas>
+<div class="flex flex-col w-full h-full bg-white dark:bg-zinc-950 overflow-hidden select-none">
+  <!-- Graph Control Sub-Header -->
+  <div class="h-9 px-3.5 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/70 dark:bg-zinc-900/40 flex items-center justify-between shrink-0 text-xs select-none">
+    <!-- Left: Status & Commit Count -->
+    <div class="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
+      <span class="font-semibold text-zinc-700 dark:text-zinc-200 text-xs">Commit Graph</span>
+      <span class="text-zinc-300 dark:text-zinc-700">•</span>
+      <span class="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">{displayCommits.length} commits</span>
+      {#if lockedLane !== null}
+        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 text-[11px] font-medium border border-indigo-200 dark:border-indigo-800/80 shadow-xs">
+          <Eye class="w-3 h-3 text-indigo-500 animate-pulse" />
+          <span>Lane {lockedLane}</span>
+          <button
+            onclick={() => {
+              lockedLane = null;
+              scheduleRender();
+            }}
+            class="p-0.5 rounded hover:bg-indigo-200/60 dark:hover:bg-indigo-800/60 transition-colors cursor-pointer"
+            title="Bỏ khóa tiêu điểm"
+          >
+            <X class="w-2.5 h-2.5" />
+          </button>
+        </span>
+      {/if}
+    </div>
+
+    <!-- Right: View Modes & Capsules -->
+    <div class="flex items-center gap-2">
+      <div class="flex items-center p-0.5 rounded-md bg-zinc-200/60 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 text-xs">
+        <button
+          onclick={() => {
+            viewMode = 'micro';
+            scheduleRender();
+          }}
+          class="px-2 py-0.5 rounded text-[11px] transition-all flex items-center gap-1.5 cursor-pointer {viewMode === 'micro' ? 'bg-white dark:bg-zinc-900 text-cyan-600 dark:text-cyan-400 font-semibold shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+          title="Micro DAG View: Xem chi tiết toàn bộ các commit"
+        >
+          <GitCompare class="w-3 h-3" />
+          <span>Micro DAG</span>
+        </button>
+
+        <button
+          onclick={() => {
+            viewMode = 'macro';
+            scheduleRender();
+          }}
+          class="px-2 py-0.5 rounded text-[11px] transition-all flex items-center gap-1.5 cursor-pointer {viewMode === 'macro' ? 'bg-white dark:bg-zinc-900 text-cyan-600 dark:text-cyan-400 font-semibold shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+          title="Macro Map View: Ẩn commit lẻ, chỉ hiển thị PR, Merge commits, Tags và Head"
+        >
+          <Globe class="w-3 h-3" />
+          <span>Macro Map</span>
+        </button>
+      </div>
+
+      <!-- Semantic Capsules Toggle -->
+      <button
+        onclick={() => {
+          autoCapsule = !autoCapsule;
+          scheduleRender();
+        }}
+        class="px-2 py-0.5 rounded-md border text-[11px] flex items-center gap-1.5 shadow-xs transition-all cursor-pointer {autoCapsule ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700/60 text-emerald-700 dark:text-emerald-300 font-semibold' : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500'}"
+        title="Tự động nén các chuỗi commit phụ thành viên nang [+N commits]"
+      >
+        <Sparkles class="w-3 h-3 {autoCapsule ? 'text-emerald-500' : 'text-zinc-400'}" />
+        <span>Capsules {autoCapsule ? 'ON' : 'OFF'}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Canvas Container -->
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions, a11y_no_noninteractive_tabindex -->
+  <div
+    bind:this={containerEl}
+    role="region"
+    aria-label="Interactive Living Commit Graph"
+    tabindex="0"
+    onwheel={handleWheel}
+    onmousedown={handleMouseDown}
+    onclick={handleClick}
+    oncontextmenu={handleContextMenu}
+    onkeydown={handleKeydown}
+    onmousemove={handleMouseMove}
+    onmouseleave={handleMouseLeave}
+    class="relative flex-1 w-full h-full bg-white dark:bg-zinc-950 overflow-hidden cursor-pointer focus:outline-none select-none"
+  >
+    <canvas bind:this={canvasEl} class="w-full h-full block"></canvas>
 
   <!-- Custom Scrollbar -->
   {#if totalHeight > containerHeight}
@@ -692,6 +943,17 @@
       selectedCount={activeSelectedIds.length > 1
         ? activeSelectedIds.length
         : 1}
+      isLockedFocus={lockedLane === contextMenuData.commit.lane}
+      onToggleLockFocus={(lane) => {
+        if (lockedLane === lane) {
+          lockedLane = null;
+          toast.info("Focus Unlocked", "Đã bỏ khóa tiêu điểm nhánh.");
+        } else {
+          lockedLane = lane;
+          toast.success("Focus Locked", `Đã khóa tiêu điểm vào Lane ${lane}.`);
+        }
+        scheduleRender();
+      }}
       onClose={() => (contextMenuData = null)}
       onCreateBranch={(c) => {
         contextMenuData = null;
@@ -732,4 +994,5 @@
       }}
     />
   {/if}
+  </div>
 </div>

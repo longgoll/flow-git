@@ -117,6 +117,7 @@ pub fn compare_commits(
                     timestamp: commit.time().seconds(),
                     lane: 0,
                     refs: Vec::new(),
+                    is_trunk: false,
                 });
             }
         }

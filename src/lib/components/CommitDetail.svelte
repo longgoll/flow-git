@@ -49,6 +49,25 @@
   function formatDate(timestamp: number): string {
     return new Date(timestamp * 1000).toLocaleString();
   }
+  let summary = $derived(commitDetail?.message?.split('\n')[0] || '');
+  let description = $derived(
+    commitDetail?.message
+      ? commitDetail.message.split('\n').slice(1).join('\n').trim()
+      : ''
+  );
+
+  function getStatusStyle(status: string) {
+    switch (status.toLowerCase()) {
+      case 'added':
+        return 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800/80';
+      case 'deleted':
+        return 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-800/80';
+      case 'renamed':
+        return 'text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 border-purple-200 dark:border-purple-800/80';
+      default:
+        return 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800/80';
+    }
+  }
 </script>
 
 <div class="h-full bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800/80 flex flex-col font-sans overflow-hidden text-zinc-900 dark:text-zinc-100 select-none">
@@ -64,7 +83,7 @@
         <!-- Hash pill -->
         <button
           onclick={copyHash}
-          class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white font-mono text-[11px] transition-colors cursor-pointer group"
+          class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white font-mono text-[11px] transition-colors cursor-pointer group shadow-xs"
           title="Click to copy full commit SHA"
         >
           <GitCommit class="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
@@ -137,14 +156,21 @@
     <div class="flex-1 grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-zinc-200 dark:divide-zinc-800/60 overflow-hidden">
       <!-- Commit Message -->
       <div class="p-3.5 overflow-y-auto bg-zinc-50/50 dark:bg-zinc-950">
-        <h4 class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Commit Message</h4>
-        <pre class="text-xs text-zinc-800 dark:text-zinc-200 font-mono whitespace-pre-wrap leading-relaxed select-text font-normal">{commitDetail.message}</pre>
+        <h4 class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-2">Commit Message</h4>
+        <div class="text-sm font-medium text-zinc-900 dark:text-zinc-100 leading-snug select-text">
+          {summary}
+        </div>
+        {#if description}
+          <div class="mt-2 text-xs text-zinc-600 dark:text-zinc-400 font-sans whitespace-pre-wrap leading-relaxed select-text border-t border-zinc-200/60 dark:border-zinc-800/60 pt-2">
+            {description}
+          </div>
+        {/if}
       </div>
 
       <!-- Changed Files -->
       <div class="p-3.5 overflow-y-auto flex flex-col bg-zinc-50/50 dark:bg-zinc-950">
         <div class="flex items-center justify-between mb-2 shrink-0">
-          <h4 class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+          <h4 class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
             Files Changed ({commitDetail.files_changed.length})
           </h4>
         </div>
@@ -166,16 +192,16 @@
                 {:else}
                   <FileEdit class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
                 {/if}
-                <span class="text-zinc-700 dark:text-zinc-300 group-hover:text-cyan-700 dark:group-hover:text-cyan-300 transition-colors truncate text-[11px]">{file.path}</span>
+                <span class="text-zinc-700 dark:text-zinc-300 group-hover:text-cyan-700 dark:group-hover:text-cyan-300 transition-colors truncate text-xs">{file.path}</span>
               </div>
 
-              <span class="text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-900">
+              <span class="text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded border {getStatusStyle(file.status)}">
                 {file.status}
               </span>
             </button>
           {/each}
           {#if commitDetail.files_changed.length === 0}
-            <div class="text-[11px] text-zinc-400 dark:text-zinc-600 italic">No file changes detected</div>
+            <div class="text-xs text-zinc-400 dark:text-zinc-600 italic">No file changes detected</div>
           {/if}
         </div>
       </div>

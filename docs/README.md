@@ -1,7 +1,7 @@
 # FLOWGIT - TÀI LIỆU TOÀN DIỆN DỰ ÁN (PROJECT DOCUMENTATION HUB)
 > **Phiên bản:** 2026 Next-Gen State-of-the-Art Edition  
 > **Kiến trúc:** Tauri v2 (Rust) + Svelte 5 (Runes) + Tailwind CSS v4 + Bits UI / Monaco Editor  
-> **Cập nhật:** Tháng 09/2026 (Đã hoàn thiện 100% Phase 1 đến Phase 6)
+> **Cập nhật:** Chuẩn công nghệ 2026 – Hoàn thiện 100% tất cả các phân hệ và công cụ nâng cao
 
 ---
 
@@ -9,9 +9,9 @@
 
 **FlowGit** (Next-Gen Git Client) là ứng dụng quản lý mã nguồn Git cao cấp, đa nền tảng, được xây dựng với mục tiêu:
 > **"Visual First – Zero Terminal Friction – No-Fear Git"**  
-> *(Ưu tiên trực quan – Triệt tiêu gánh nặng gõ lệnh dòng lệnh – An toàn tuyệt đối không sợ mất mã nguồn)*
+> *(Ưu tiên trực quan – Triệt tiêu gánh nặng dòng lệnh – An toàn tuyệt đối không sợ mất mã nguồn)*
 
-Khác với các công cụ Git truyền thống thường chỉ là lớp vỏ bọc thô sơ của dòng lệnh, FlowGit biến các thao tác phức tạp (Interactive Rebase, 3-Way Conflict, Bisect, Worktrees, Cherry-pick, LFS, Submodules) thành trải nghiệm kéo-thả và tương tác 1-chạm trực quan, được bảo vệ bằng lớp an toàn **Safe Discard 48h** và **Time-Travel Undo (`Ctrl + Z`)**.
+Khác với các công cụ Git truyền thống thường chỉ là lớp vỏ bọc thô sơ của dòng lệnh hoặc gây giật lag khi mở dự án lớn, FlowGit biến các thao tác phức tạp (Interactive Rebase, 3-Way Conflict, Bisect, Worktrees, GitHub PR Review, Stacked Commits, LFS, Submodules) thành trải nghiệm kéo-thả và tương tác 1-chạm trực quan, được bảo vệ bằng lớp an toàn **Safe Discard 48h**, **Time-Travel Undo (`Ctrl + Z`)**, và đồ thị động học **OffscreenCanvas Web Worker khóa cứng 60 FPS**.
 
 ---
 
@@ -28,21 +28,25 @@ docs/
 │   ├── overview.md                     # Kiến trúc tổng thể Tauri v2 + Svelte 5 + Rust git2-rs
 │   ├── offscreen-canvas-graph.md       # Đồ thị động học OffscreenCanvas Worker 60 FPS & Lane Compaction
 │   ├── safety-engine.md                # Động cơ an toàn: Safe Discard 48h (SQLite) & Time Machine
-│   └── ipc-api-reference.md            # Danh mục 60+ Tauri IPC Commands & Data Structs
+│   └── ipc-api-reference.md            # Danh mục 70+ Tauri v2 IPC Commands & Data Types
 │
 ├── features/                           # TÍNH NĂNG CHI TIẾT
 │   ├── commit-graph-and-dag.md         # Living Commit Graph, DAG Mini-Map, Focus View, Ghost Preview
-│   ├── working-tree-and-diff.md        # Working Tree, Split/Unified Diff, Staging Hunk/Line, Monaco Editor
+│   ├── working-tree-and-diff.md        # Working Tree, Split/Unified Diff, Staging Hunk/Line, Monaco Diff Editor
 │   ├── branches-and-remotes.md         # Nhánh, Multi-Remotes, Smart Sync, Tags, Clean Merged Branches
 │   ├── rebase-and-history-ops.md       # Interactive Rebase Timeline, Drag-and-Drop, Squash, Revert, Reset
 │   ├── conflict-and-bisect.md          # 3-Way Merge Conflict Resolver (4-Pane) & Visual Bisect Wizard
-│   ├── advanced-tools.md               # Git Worktrees, Git LFS, Submodules Hub, Explorer & Blame
-│   ├── auth-and-identity.md            # GitHub OAuth Device Flow, PAT, SSH Key & Git Identity Switcher
-│   ├── edge-cases-and-guards.md        # Repo In-Progress Banner, Detached HEAD, Heavy Files, Index Lock
-│   └── ai-assistant.md                 # Trợ lý AI Cục bộ (Ollama/Local LLM): Conventional Commits & Conflict
+│   ├── github-and-pull-requests.md     # GitHub Workspace: PR Reviewer, Create PR, Recent Push Banner, Publish Repo
+│   ├── repo-explorer-and-file-tools.md # Repository File Tree Explorer, 2-Commit Comparison, Blame, History Nuker
+│   ├── stacked-commits-and-hotfix.md   # Chuỗi Stacked Commits, Kéo thả đổi thứ tự commit & Quick Hotfix 1-chạm
+│   ├── advanced-tools.md               # Git Worktrees, Git LFS Manager & Submodules Hub
+│   ├── auth-and-identity.md            # GitHub OAuth Device Flow, PAT, Multi-Account & Git Identity Switcher
+│   ├── edge-cases-and-guards.md        # Index Lock Resolver, Windows File Locks, Heavy Files & Detached HEAD
+│   ├── onboarding-and-playbook.md      # Interactive In-App User Guide (F1), Git Playbook & Pre-Commit Guard
+│   └── ai-assistant.md                 # Trợ lý AI Cục bộ (Ollama/Local LLM): Conventional Commits & Conflict Solver
 │
 ├── playbook/                           # SỔ TAY THỰC CHIẾN
-│   └── real-world-recipes.md           # Các kịch bản cứu hộ & quy trình làm việc chuẩn trong team
+│   └── real-world-recipes.md           # Các kịch bản cứu hộ khẩn cấp & quy trình làm việc chuẩn trong team
 │
 └── guides/                             # HƯỚNG DẪN DÀNH CHO DEV & USER
     ├── user-manual.md                  # Hướng dẫn sử dụng & Bảng tra cứu phím tắt toàn năng
@@ -56,15 +60,21 @@ docs/
 | Nghiệp vụ Git | Dòng lệnh truyền thống (CLI) | Trải nghiệm trực quan trên FlowGit |
 | :--- | :--- | :--- |
 | **Đồng bộ nhánh với remote** | `git fetch origin`<br>`git checkout main`<br>`git pull`<br>`git checkout feat`<br>`git rebase main` | **1 Click "Smart Sync"**: Tự động fetch và rebase ngầm không cần chuyển checkout, hiển thị badge `↑ 2 ↓ 5`. |
-| **Gộp 100 commits thành 1 (Squash)** | `git rebase -i HEAD~100`<br>Mở Vim sửa 99 dòng thành `squash`<br>Xử lý conflict thủ công... | **Bôi đen các node ➔ Phím `S`**: Hộp thoại tự động tổng hợp danh sách message, gộp trong 1 giây. |
+| **Review Pull Request GitHub** | Mở trình duyệt, chuyển qua lại các tab hoặc dùng CLI `gh pr checkout` | **Pull Request Reviewer tích hợp**: Xem danh sách PR, diff Monaco, bình luận, kiểm tra CI/CD và merge 1-chạm. |
+| **Gộp nhiều commits thành 1 (Squash)** | `git rebase -i HEAD~N`<br>Mở Vim sửa các dòng thành `squash`... | **Bôi đen các node ➔ Phím `S`**: Hộp thoại tự động tổng hợp danh sách message, gộp trong 1 giây. |
 | **Interactive Rebase** | `git rebase -i <base>` gõ lệnh dạng văn bản | **Interactive Rebase Modal**: Timeline kéo thả đổi thứ tự commit, nút bấm trực quan `Pick`, `Reword`, `Drop`, `Squash`, `Fixup`. |
+| **Sắp xếp chuỗi Commit chưa push** | `git rebase -i @{u}` phức tạp | **Stacked Commits Flow**: Kéo thả hoán đổi vị trí commit hoặc bấm mũi tên Lên/Xuống và lưu an toàn. |
 | **Cherry-pick commit** | `git log` tìm SHA, `git checkout target`, `git cherry-pick <SHA>` | **Kéo thả node commit** thả thẳng vào đỉnh nhánh đích với Ghost Preview mô phỏng trước. |
 | **Stage từng khối code (Hunk/Line)** | `git add -p` trả lời từng prompt terminal `y/n/s/e` | **Click dòng/khối trên Monaco Diff** ➔ Phím `Space` hoặc bấm "Stage Hunk/Line". |
 | **Giải quyết xung đột (Conflict)** | Mở file có dấu `<<<<<<<`, `=======`, `>>>>>>>` sửa tay | **Conflict Resolver 4 Khung hình**: Ours, Base, Theirs, Result với nút nhận 1-click từng khối. |
 | **Tìm commit gây lỗi (Bisect)** | `git bisect start`, `git bisect bad`, `git bisect good` gõ lặp lại | **Visual Bisect Wizard**: Tự động chia đôi đồ thị, dẫn dắt test từng node với 2 nút "Pass" / "Fail". |
-| **Chữa cháy bug gấp (Hotfix)** | `git stash`, chuyển nhánh, sửa bug, quay lại `git stash pop` dính conflict | **Git Worktrees Manager**: Mở thư mục làm việc song song để sửa lỗi độc lập, không chạm vào code dở. |
+| **Duyệt cây file tại commit cũ** | `git checkout <sha>` làm bẩn working tree | **Repository Explorer**: Duyệt cây file tại bất kỳ commit nào mà không cần checkout, tích hợp Monaco Editor. |
+| **So sánh 2 commit/nhánh bất kỳ** | `git diff <commitA>..<commitB>` trên terminal | **Comparison Viewer**: Xem danh sách file thay đổi và Monaco Diff Split/Unified trực quan. |
+| **Xóa vĩnh viễn file nhạy cảm (.env)** | Gõ lệnh nguy hiểm `git filter-branch` hoặc BFG | **History Nuker (Nuke File)**: 1 Click quét đệ quy và tẩy xóa vĩnh viễn file nhạy cảm khỏi toàn bộ lịch sử. |
+| **Chữa cháy bug gấp (Hotfix)** | `git stash`, chuyển nhánh, sửa bug, quay lại `git stash pop` dính conflict | **Quick Hotfix / Git Worktrees**: Mở thư mục làm việc song song để sửa lỗi độc lập, không chạm vào code dở. |
 | **Lỡ tay Discard mất code** | Mất vĩnh viễn không thể cứu | **Safe Discard Engine 48h**: Mở **Trash Inspector** bấm "Restore" phục hồi 100% code. |
 | **Thao tác sai lầm (Reset/Rebase nhầm)** | Tra cứu `git reflog` thủ công phức tạp | **Bấm `Ctrl + Z`**: Hoàn tác tức thì trạng thái nhánh về trước đó nhờ SQLite Action Log. |
+| **Kẹt file `.git/index.lock`** | Tìm PID tiến trình, gõ `rm -f .git/index.lock` | **Git Playbook Modal**: 1 Click kiểm tra và xóa file khóa giải phóng repository an toàn. |
 
 ---
 
@@ -72,13 +82,15 @@ docs/
 
 ### Frontend:
 - **Framework:** Svelte 5 SPA (100% Runes: `$state`, `$state.raw`, `$derived`, `$effect`, `$props`).
-- **Styling:** Tailwind CSS v4 (`@tailwindcss/vite`, CSS variables, Dark Mode mặc định).
+- **Reactive State Management:** Class-based Stores (`RepoState`, `WorkingTreeState`, `RemoteState`, `GitSafetyState`, `ThemeState`, `ToastState`).
+- **Styling:** Tailwind CSS v4 (`@tailwindcss/vite`, CSS variables, Dark/Light Mode).
 - **UI Primitives:** Bits UI, Lucide Svelte, Canvas 2D API.
 - **Code Editor:** Monaco Editor & Monaco Diff Editor (Full Language Syntax Highlight).
-- **Concurrency:** Web Worker + `OffscreenCanvas` cách ly hoàn toàn việc render đồ thị khỏi UI main-thread.
+- **Concurrency & Rendering:** Web Worker + `OffscreenCanvas` cách ly hoàn toàn việc render đồ thị khỏi UI main-thread (60 FPS Locked).
+- **GitHub Integration:** Octokit-less REST API Client (`src/lib/api/githubApi.ts`).
 
 ### Backend:
-- **Framework:** Tauri v2 (Capability Scoped Permissions, IPC commands).
+- **Framework:** Tauri v2 (Capability Scoped Permissions, 70+ IPC commands).
 - **Core Git:** `git2` (libgit2 C bindings an toàn và tối ưu bộ nhớ).
 - **Đa luồng:** `rayon` (tính toán topological lane và graph routing đa nhân CPU).
 - **Async Runtime:** `tokio` (xử lý bất đồng bộ các tác vụ I/O nặng).
@@ -88,13 +100,25 @@ docs/
 
 ---
 
-## 🔗 LIÊN KẾT NHANH ĐẾN CÁC TÀI LIỆU CHÍNH
-- 📄 [main.md](./main.md): Toàn văn tài liệu đặc tả kỹ thuật và kế hoạch 6 Phase.
-- 🏗️ [architecture/overview.md](./architecture/overview.md): Kiến trúc luồng dữ liệu Backend-Frontend.
-- 🔌 [architecture/ipc-api-reference.md](./architecture/ipc-api-reference.md): Bảng tra cứu 60+ Tauri IPC Commands.
+## 🔗 DANH MỤC LIÊN KẾT ĐẾN CÁC TÀI LIỆU CHUYÊN SÂU
+- 📄 [main.md](./main.md): Toàn văn đặc tả kỹ thuật và triết lý thiết kế UI/UX tổng thể.
+- 🏗️ [architecture/overview.md](./architecture/overview.md): Kiến trúc tổng thể và luồng dữ liệu hệ thống.
+- 🎨 [architecture/offscreen-canvas-graph.md](./architecture/offscreen-canvas-graph.md): Đồ thị động học OffscreenCanvas Worker 60 FPS & Lane Compaction.
+- 🔌 [architecture/ipc-api-reference.md](./architecture/ipc-api-reference.md): Bảng tra cứu 70+ Tauri v2 IPC Commands.
 - 🛡️ [architecture/safety-engine.md](./architecture/safety-engine.md): Cơ chế Safe Discard & Time-Travel `Ctrl+Z`.
-- 📊 [features/commit-graph-and-dag.md](./features/commit-graph-and-dag.md): Đồ thị Living Graph 60 FPS & DAG Mini-Map.
+- 📊 [features/commit-graph-and-dag.md](./features/commit-graph-and-dag.md): Đồ thị Living Graph & DAG Mini-Map.
+- 🔍 [features/working-tree-and-diff.md](./features/working-tree-and-diff.md): Working Tree, Monaco Diff & Staging từng dòng.
+- 🌿 [features/branches-and-remotes.md](./features/branches-and-remotes.md): Nhánh, Multi-Remotes, Smart Sync & Clean Merged Branches.
 - 🔀 [features/rebase-and-history-ops.md](./features/rebase-and-history-ops.md): Interactive Rebase, Kéo-Thả, Squash.
 - ⚔️ [features/conflict-and-bisect.md](./features/conflict-and-bisect.md): Bộ giải quyết Conflict 4-Pane & Bisect Wizard.
-- 📖 [playbook/real-world-recipes.md](./playbook/real-world-recipes.md): Sổ tay giải cứu các tình huống thực chiến.
+- 🐙 [features/github-and-pull-requests.md](./features/github-and-pull-requests.md): GitHub PR Hub, Reviewer, Checks & Publish Repo.
+- 📂 [features/repo-explorer-and-file-tools.md](./features/repo-explorer-and-file-tools.md): Repository Explorer, Blame, Comparison & History Nuker.
+- 🥞 [features/stacked-commits-and-hotfix.md](./features/stacked-commits-and-hotfix.md): Chuỗi Stacked Commits & Quy trình Quick Hotfix.
+- 🌲 [features/advanced-tools.md](./features/advanced-tools.md): Git Worktrees, Git LFS & Submodules Hub.
+- 🔑 [features/auth-and-identity.md](./features/auth-and-identity.md): GitHub OAuth Device Flow, PAT & Identity Switcher.
+- 🚨 [features/edge-cases-and-guards.md](./features/edge-cases-and-guards.md): Index Lock, Heavy Files & Windows File Locks.
+- 📖 [features/onboarding-and-playbook.md](./features/onboarding-and-playbook.md): Interactive User Guide (F1), Git Playbook & Pre-Commit Guard.
+- 🤖 [features/ai-assistant.md](./features/ai-assistant.md): Trợ lý AI Cục bộ sinh Commit Message & giải thích Conflict.
+- 🚑 [playbook/real-world-recipes.md](./playbook/real-world-recipes.md): Sổ tay giải cứu các tình huống thực chiến.
 - ⌨️ [guides/user-manual.md](./guides/user-manual.md): Sổ tay người dùng và phím tắt toàn tập.
+- 🛠️ [guides/development.md](./guides/development.md): Hướng dẫn thiết lập môi trường, Build và Đóng gói.

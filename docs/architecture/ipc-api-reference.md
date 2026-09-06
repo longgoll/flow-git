@@ -1,6 +1,7 @@
 # DANH MỤC TAURI V2 IPC COMMANDS & DATA TYPES (API REFERENCE)
 > **Phiên bản Backend:** Rust 2024 / Tauri v2 Native Bridge  
-> **Tổng số Commands:** 65+ Commands có Scoped Capability Permissions
+> **Tổng số Commands:** 70+ Commands có Scoped Capability Permissions  
+> **Cập nhật:** Chuẩn công nghệ 2026 – Đã đồng bộ 100% với `src-tauri/src/lib.rs`
 
 Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rust) đều được chuẩn hóa theo mẫu `invoke<T>(command_name, payload)` và trả về kiểu `Result<T, AppError>`. Dưới đây là bảng tra cứu chi tiết phân theo từng phân khu chức năng.
 
@@ -8,7 +9,7 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 
 ## 📂 1. REPOSITORY & HISTORY COMMANDS
 
-| Tên Command (Rust & Frontend) | Tham số đầu vào (Payload) | Kiểu dữ liệu trả về | Mô tả chi tiết |
+| Tên Command | Tham số đầu vào (Payload) | Kiểu dữ liệu trả về | Mô tả chi tiết |
 | :--- | :--- | :--- | :--- |
 | `open_repository` | `path: String` | `RepoSummary` | Mở kho lưu trữ cục bộ, kiểm tra tính hợp lệ và trả về thống kê tổng quan (HEAD, branch, số file bẩn). |
 | `init_repository` | `path: String, bare: bool` | `RepoSummary` | Khởi tạo kho lưu trữ Git mới tại đường dẫn chỉ định (hỗ trợ cả chuẩn Bare repository). |
@@ -17,12 +18,13 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `get_paginated_commit_history` | `path: String, skip: usize, limit: usize` | `PaginatedCommitHistory` | Phân trang commit history cho các Monorepo siêu lớn (> 100k commits), hỗ trợ tải lười khi cuộn. |
 | `get_commit_info` | `path: String, commit_id: String` | `CommitDetail` | Lấy đầy đủ thông tin chi tiết của 1 commit (tác giả, committer, message, danh sách file thay đổi). |
 | `compare_two_commits` | `path: String, base_id: String, target_id: String` | `ComparisonResult` | So sánh sự khác biệt (commits và files changed) giữa 2 mốc bất kỳ để phục vụ review PR offline. |
-| `get_tree_entries` | `path: String, commit_id: Option<String>, tree_path: Option<String>` | `Vec<TreeEntryItem>` | Duyệt cây thư mục và file tại commit chỉ định hoặc tại HEAD. |
+| `get_tree_entries` | `path: String, commit_id: Option<String>, tree_path: Option<String>` | `Vec<TreeEntryItem>` | Duyệt cây thư mục và file tại commit chỉ định hoặc tại HEAD (phục vụ Repository Explorer). |
 | `get_file_content` | `path: String, file_path: String, commit_id: Option<String>` | `FileContentResponse` | Đọc nội dung tệp (hỗ trợ tự nhận diện mã hóa UTF-8 hoặc cờ báo tệp nhị phân). |
+| `get_remote_url` | `path: String, remote_name: Option<String>` | `Option<String>` | Lấy URL remote của repository (mặc định lấy remote `origin`). |
 | `nuke_file_from_history` | `path: String, target_file_path: String` | `bool` | Xóa vĩnh viễn một tệp (chứa mật khẩu, secret) khỏi toàn bộ lịch sử commit của repo. |
 | `get_focus_branch_info` | `path: String, branch_name: String` | `FocusBranchInfo` | Lấy thông tin các commit đặc thù chỉ thuộc về nhánh đang được Focus so với nhánh cơ sở. |
-| `get_unpushed_stacked_commits` | `path: String` | `Vec<CommitNode>` | Lấy chuỗi các commit chưa được push lên remote để quản lý Stacked Pull Requests. |
-| `reorder_stacked_commits` | `path: String, new_order_ids: Vec<String>` | `bool` | Sắp xếp lại thứ tự của các commit trong chuỗi Stacked Commits. |
+| `get_unpushed_stacked_commits` | `path: String` | `Vec<StackedCommitItem>` | Lấy chuỗi các commit chưa được push lên remote để quản lý Stacked Commits / Stacked PRs. |
+| `reorder_stacked_commits` | `path: String, new_order_ids: Vec<String>` | `bool` | Sắp xếp lại thứ tự của các commit trong chuỗi Stacked Commits bằng bộ Reorder Sequencer. |
 
 ---
 
@@ -32,7 +34,7 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | :--- | :--- | :--- | :--- |
 | `get_branches` | `path: String` | `Vec<BranchInfo>` | Liệt kê toàn bộ nhánh Local & Remote kèm chỉ số Ahead/Behind so với upstream. |
 | `create_branch` | `path: String, branch_name: String, target_commit: Option<String>` | `BranchInfo` | Tạo nhánh mới tại vị trí commit chỉ định (hoặc tại HEAD hiện tại). |
-| `rename_branch` | `path: String, old_name: String, new_name: String` | `bool` | Đổi tên nhánh an toàn. |
+| `rename_branch` | `path: String, old_name: String, new_name: String` | `bool` | Đổi tên nhánh an toàn và đồng bộ tham chiếu. |
 | `checkout_branch` | `path: String, branch_name: String` | `bool` | Chuyển đổi nhánh làm việc. Tự động kiểm tra file bẩn trước khi switch. |
 | `delete_branch` | `path: String, branch_name: String, force: bool` | `bool` | Xóa nhánh local (có cờ ép buộc xóa nếu nhánh chưa được merge). |
 | `get_merged_branches` | `path: String, target_branch: Option<String>` | `Vec<String>` | Quét danh sách các nhánh local đã được gộp hoàn chỉnh vào nhánh chính. |
@@ -74,7 +76,19 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 
 ---
 
-## ⚡ 4. ACTIONS, SAFETY ENGINE & INTERACTIVE REBASE COMMANDS
+## 🌐 4. REMOTE MANAGEMENT COMMANDS
+
+| Tên Command | Tham số đầu vào | Kiểu dữ liệu trả về | Mô tả chi tiết |
+| :--- | :--- | :--- | :--- |
+| `get_remotes` | `path: String` | `Vec<RemoteInfo>` | Liệt kê toàn bộ các máy chủ Remote (`origin`, `upstream`) kèm URL fetch và URL push. |
+| `add_remote` | `path: String, name: String, url: String` | `bool` | Thêm một Remote mới vào kho lưu trữ. |
+| `remove_remote` | `path: String, name: String` | `bool` | Xóa bỏ cấu hình một Remote không còn dùng. |
+| `set_remote_url` | `path: String, name: String, url: String` | `bool` | Thay đổi đường dẫn URL kết nối của Remote. |
+| `fetch_remote` | `path: String, remote_name: Option<String>` | `bool` | Tải về các nhánh và commit mới từ Remote về máy tính. |
+
+---
+
+## ⚡ 5. ACTIONS, SAFETY ENGINE & INTERACTIVE REBASE COMMANDS
 
 | Tên Command | Tham số đầu vào | Kiểu dữ liệu trả về | Mô tả chi tiết |
 | :--- | :--- | :--- | :--- |
@@ -85,6 +99,11 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `execute_rebase_branch` | `path: String, upstream_id: String` | `RebaseExecutionResult`| Rebase nhánh hiện tại lên trên một mốc commit/nhánh khác. |
 | `prepare_interactive_rebase` | `path: String, base_id: String` | `Vec<RebaseTodoItem>` | Lấy danh sách commit từ base để hiển thị lên Timeline Interactive Rebase. |
 | `execute_interactive_rebase` | `path: String, base_id: String, todos: Vec<RebaseTodoItem>` | `RebaseExecutionResult` | Thực thi chuỗi thao tác Rebase trực quan (Pick, Reword, Drop, Squash, Fixup). |
+| `continue_rebase_branch`| `path: String` | `RebaseExecutionResult` | Tiếp tục tiến trình Rebase sau khi đã giải quyết xong conflict. |
+| `check_is_rebasing` | `path: String` | `bool` | Kiểm tra nhanh xem kho lưu trữ có đang trong trạng thái rebase dở dang hay không. |
+| `get_repo_operation_state` | `path: String` | `RepoOperationState` | Kiểm tra chi tiết trạng thái repo đang bị kẹt (Rebase, Merge, Cherry-Pick, Bisect). |
+| `skip_rebase_step` | `path: String` | `RebaseExecutionResult` | Bỏ qua commit hiện tại đang bị conflict và tiếp tục rebase. |
+| `abort_current_operation` | `path: String` | `bool` | Hủy bỏ khẩn cấp tiến trình Rebase/Merge/Cherry-pick và đưa repo về trạng thái sạch sẽ. |
 | `revert_commit` | `path: String, commit_id: String` | `String` | Tạo commit đảo ngược an toàn mà không làm mất lịch sử cũ. |
 | `reset_to_commit` | `path: String, commit_id: String, mode: String` | `bool` | Đưa HEAD về một commit quá khứ theo 3 chế độ: `soft`, `mixed`, hoặc `hard`. |
 | `squash_commits` | `path: String, commit_ids: Vec<String>, message: String` | `String` | Gộp chuỗi nhiều commit liên tiếp thành 1 commit duy nhất trong 1 giây. |
@@ -92,20 +111,17 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `undo_action` | `repo_path: String` | `bool` | **Time Machine Undo (`Ctrl + Z`)**: Hoàn tác hành động gần nhất qua `git reflog`. |
 | `redo_action` | `repo_path: String` | `bool` | **Time Machine Redo (`Ctrl + Shift + Z`)**: Làm lại hành động vừa hoàn tác. |
 | `time_travel_to` | `repo_path: String, action_id: i64` | `bool` | Nhảy vọt dòng thời gian về đúng trạng thái tại một mốc thao tác bất kỳ trong quá khứ. |
-| `get_repo_operation_state` | `path: String` | `RepoOperationState` | Kiểm tra xem repo có đang bị kẹt giữa chừng (Rebase, Merge, Cherry-Pick, Bisect) hay không. |
-| `continue_rebase_branch`| `path: String` | `RebaseExecutionResult` | Tiếp tục tiến trình Rebase sau khi đã giải quyết xong conflict. |
-| `skip_rebase_step` | `path: String` | `RebaseExecutionResult` | Bỏ qua commit hiện tại đang bị conflict và tiếp tục rebase. |
-| `abort_current_operation` | `path: String` | `bool` | Hủy bỏ khẩn cấp tiến trình Rebase/Merge/Cherry-pick và đưa repo về trạng thái sạch sẽ. |
 
 ---
 
-## ⚔️ 5. CONFLICT RESOLUTION & BISECT COMMANDS
+## ⚔️ 6. CONFLICT RESOLUTION & BISECT COMMANDS
 
 | Tên Command | Tham số đầu vào | Kiểu dữ liệu trả về | Mô tả chi tiết |
 | :--- | :--- | :--- | :--- |
 | `get_conflicted_files` | `path: String` | `Vec<String>` | Danh sách đường dẫn các file đang bị xung đột cần xử lý. |
 | `get_conflict_details` | `path: String, file_path: String` | `ConflictFileDetail` | Tách chi tiết 4 khung hình: Ours, Base, Theirs, và các Chunks đánh dấu xung đột. |
 | `resolve_conflict_file` | `path: String, file_path: String, resolved_content: String` | `bool` | Ghi đè nội dung đã giải quyết hoàn chỉnh vào file và tự động Stage vào Index. |
+| `abort_merge_or_rebase`| `path: String` | `bool` | Hủy bỏ tiến trình Merge hoặc Rebase khi phát sinh xung đột không mong muốn. |
 | `start_bisect` | `path: String, bad_id: String, good_id: String` | `BisectStatus` | Khởi động trình dò vết lỗi Bisect Wizard giữa commit bị lỗi và commit hoạt động tốt. |
 | `bisect_step` | `path: String, is_good: bool` | `BisectStatus` | Báo cáo kết quả kiểm tra tại node hiện tại (`Pass` hoặc `Fail`) để hệ thống chia đôi tiếp. |
 | `abort_bisect` | `path: String` | `bool` | Hủy bỏ chế độ Bisect và đưa HEAD trở về vị trí ban đầu. |
@@ -113,7 +129,7 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 
 ---
 
-## 🏢 6. WORKTREES, LFS, SUBMODULES & AUTH COMMANDS
+## 🏢 7. WORKTREES, LFS & SUBMODULES COMMANDS
 
 | Tên Command | Tham số đầu vào | Kiểu dữ liệu trả về | Mô tả chi tiết |
 | :--- | :--- | :--- | :--- |
@@ -127,17 +143,30 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `lock_lfs_file` | `path: String, file_path: String` | `bool` | Khóa tệp nhị phân lớn trên LFS server để đồng nghiệp không thể ghi đè. |
 | `unlock_lfs_file` | `path: String, file_path: String, force: bool` | `bool` | Mở khóa tệp LFS. |
 | `pull_lfs_files` | `path: String` | `bool` | Tải về toàn bộ payload nhị phân thực tế của các tệp LFS. |
+
+---
+
+## 🔑 8. AUTH, IDENTITY & MULTI-ACCOUNT COMMANDS
+
+| Tên Command | Tham số đầu vào | Kiểu dữ liệu trả về | Mô tả chi tiết |
+| :--- | :--- | :--- | :--- |
 | `start_github_device_login`| Không | `DeviceCodeResponse` | Khởi tạo quy trình GitHub OAuth Device Code Flow (hiển thị User Code & Verification URI). |
 | `check_github_device_login`| `device_code: String` | `DevicePollResult` | Thăm dò (Poll) trạng thái đăng nhập thiết bị từ máy chủ GitHub OAuth. |
 | `verify_token_and_get_profile`| `provider: String, token: String` | `AccountProfile` | Xác thực Personal Access Token (PAT) và tải avatar, username, email người dùng. |
 | `save_account_auth` | `profile: AccountProfile` | `bool` | Lưu thông tin tài khoản vào kho bảo mật SQLite. |
+| `get_active_account` | Không | `Option<AccountProfile>` | Lấy tài khoản đang được kích hoạt làm mặc định cho các hoạt động remote. |
 | `list_accounts` | Không | `Vec<AccountProfile>` | Liệt kê các tài khoản đã kết nối. |
+| `delete_account` | `id: String` | `bool` | Xóa tài khoản đã lưu khỏi kho bảo mật. |
+| `execute_remote_with_auth` | `command: String, args: Vec<String>` | `RemoteExecutionResult` | Thực thi lệnh Git Remote có tiêm thông tin xác thực token tự động. |
 | `get_current_repo_identity`| `path: String` | `CurrentRepoIdentity` | Lấy danh tính Git hiện tại (`user.name`, `user.email`) phân biệt rõ Local vs Global. |
 | `set_repo_identity` | `path: String, name: String, email: String, is_global: bool` | `bool` | Cập nhật thông tin tác giả commit cho riêng repository hoặc toàn máy tính. |
+| `list_identity_profiles`| Không | `Vec<IdentityProfile>` | Liệt kê các hồ sơ danh tính có sẵn (Công việc, Cá nhân, Open-source). |
+| `save_identity_profile` | `profile: IdentityProfile` | `bool` | Lưu một hồ sơ danh tính mới vào danh mục chuyển đổi nhanh. |
+| `delete_identity_profile`| `id: String` | `bool` | Xóa hồ sơ danh tính. |
 
 ---
 
-## 🛡️ 7. EDGE CASES & SAFETY GUARDS COMMANDS
+## 🛡️ 9. EDGE CASES & SAFETY GUARDS COMMANDS
 
 | Tên Command | Tham số đầu vào | Kiểu dữ liệu trả về | Mô tả chi tiết |
 | :--- | :--- | :--- | :--- |

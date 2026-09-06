@@ -272,7 +272,7 @@
                 e.preventDefault();
                 activeBranchMenu = { branch, x: Math.min(e.clientX, window.innerWidth - 220), y: Math.min(e.clientY, window.innerHeight - 260) };
               }}
-              class="w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs transition-colors group {branch.is_head ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-100 font-semibold border border-zinc-300 dark:border-zinc-700/60 shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-zinc-200'}"
+              class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all group {branch.is_head ? 'bg-cyan-50 dark:bg-cyan-950/50 text-cyan-950 dark:text-cyan-200 font-semibold border border-cyan-200/90 dark:border-cyan-800/60 shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-950 dark:hover:text-zinc-200'}"
             >
               {#if editingBranchName === branch.shorthand}
                 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->

@@ -1,5 +1,6 @@
 # HƯỚNG DẪN PHÁT TRIỂN & ĐÓNG GÓI ỨNG DỤNG (DEVELOPMENT & BUILD GUIDE)
-> **Dành cho AI Agents & Lập trình viên:** Thiết lập môi trường, kiểm thử và đóng gói FlowGit
+> **Dành cho AI Agents & Lập trình viên:** Thiết lập môi trường, kiểm thử và đóng gói FlowGit  
+> **Cập nhật:** Chuẩn công nghệ 2026 – Tauri v2 Native Bridge & Svelte 5 Runes
 
 ---
 
@@ -68,21 +69,31 @@ Sau khi hoàn tất, Tauri v2 sẽ sinh ra các bộ cài đặt tối ưu hóa 
 ```
 git-tool/
 ├── .agents/skills/             # Các AI Skills hướng dẫn code (Tauri-Rust, Svelte 5 Canvas, Safety Engine)
-├── docs/                       # Toàn bộ hệ thống tài liệu đặc tả, kiến trúc, tính năng và playbook
-├── src/                        # Frontend Svelte 5 SPA
-│   ├── app.css                 # Cấu hình Tailwind CSS v4
-│   ├── App.svelte              # Component gốc tích hợp 3-Column Layout và Modals
+├── docs/                       # Toàn bộ hệ thống 20+ tài liệu đặc tả, kiến trúc, tính năng và playbook
+├── src/                        # Frontend Svelte 5 SPA (100% Runes)
+│   ├── app.css                 # Cấu hình Tailwind CSS v4 (@tailwindcss/vite)
+│   ├── App.svelte              # Component gốc tích hợp 3-Column Layout và Modals Container
 │   └── lib/
-│       ├── api/                # Các hàm Wrapper gọi Tauri IPC invoke()
-│       ├── components/         # 40+ UI Components (Graph, Diff, Modals, Blame, Bisect, v.v.)
-│       ├── state/              # Class-based Svelte 5 Runes Stores (Repo, WT, Remote, Safety)
-│       └── workers/            # graphWorker.ts (OffscreenCanvas rendering 60 FPS)
-└── src-tauri/                  # Backend Rust Core
-    ├── Cargo.toml              # Khai báo crate dependencies (git2, tokio, rayon, notify, rusqlite)
-    ├── tauri.conf.json         # Cấu hình Scoped Capability Permissions của Tauri v2
+│       ├── api/                # Các hàm Wrapper gọi Tauri IPC invoke() & GitHub API Client (githubApi.ts)
+│       ├── components/         # 50+ UI Components (Graph, Diff, Modals, PR Reviewer, Blame, Bisect, Explorer)
+│       ├── state/              # Class-based Svelte 5 Runes Stores (RepoState, WorkingTreeState, RemoteState, SafetyState)
+│       ├── utils/              # Graph renderers, spline calculators & formatters
+│       └── workers/            # graphWorker.ts (OffscreenCanvas rendering 60 FPS độc lập)
+└── src-tauri/                  # Backend Rust Core (Tauri v2 Native Bridge)
+    ├── Cargo.toml              # Khai báo crate: git2, tokio, rayon, notify, rusqlite, serde
     └── src/
-        ├── commands/           # 65+ IPC Command Handlers phân theo domain
-        ├── git/                # Core Git operations & Dry-run simulation algorithms
-        ├── storage/            # SQLite tables: Trash snapshots 48h, Action journal, Accounts
-        └── watcher/            # Realtime debounced file watcher
+        ├── lib.rs              # Đăng ký 70+ Tauri IPC Command Handlers
+        ├── commands/           # Điều phối IPC handlers phân theo module chức năng
+        ├── git/                # libgit2 engine: history, lane compaction, simulation, blame, LFS, submodules
+        ├── storage/            # SQLite local persistence: trash 48h, action journal, accounts
+        └── watcher/            # Realtime debounced file watcher (notify crate)
 ```
+
+---
+
+## 🧭 6. QUY TẮC PHÁT TRIỂN DÀNH CHO AI AGENTS & LẬP TRÌNH VIÊN
+
+1. **Tuân thủ Svelte 5 Runes:** Không dùng cú pháp Svelte 4 cũ (`export let`, `let:`, `$:`) mà bắt buộc dùng Svelte 5 Runes (`$state`, `$state.raw`, `$derived`, `$effect`, `$props`).
+2. **Hiệu năng Dữ liệu Lớn:** Bắt buộc dùng `$state.raw` cho mảng dữ liệu Commit History để triệt tiêu chi phí Proxy overhead trên hàng chục nghìn objects.
+3. **An toàn Rust:** Không dùng `unwrap()` hay `expect()` trong runtime handler; luôn dùng `Result<T, AppError>`.
+4. **Khóa cứng 60 FPS:** Mọi tác vụ vẽ đồ thị canvas bắt buộc chuyển quyền điều khiển sang `OffscreenCanvas` và `graphWorker.ts`, không can thiệp DOM trực tiếp trên Main Thread.

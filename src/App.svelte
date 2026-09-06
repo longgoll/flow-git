@@ -86,6 +86,34 @@
   let layoutMode = $state<LayoutMode>("horizontal");
   let showGuideModal = $state<boolean>(false);
 
+  // Commit Detail Resizable Splitter state
+  let detailPanelHeight = $state<number>(280);
+  let isResizingDetail = $state<boolean>(false);
+  let resizeStartY = 0;
+  let resizeStartHeight = 0;
+
+  function handleStartResizeDetail(e: MouseEvent) {
+    isResizingDetail = true;
+    resizeStartY = e.clientY;
+    resizeStartHeight = detailPanelHeight;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!isResizingDetail) return;
+      const deltaY = resizeStartY - moveEvent.clientY; // Kéo lên trên thì tăng chiều cao
+      const newH = Math.max(140, Math.min(window.innerHeight * 0.75, resizeStartHeight + deltaY));
+      detailPanelHeight = newH;
+    };
+
+    const onMouseUp = () => {
+      isResizingDetail = false;
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  }
+
   // Phase 3: Drag & Drop DropActionModal state
   let showDropActionModal = $state<boolean>(false);
   let dropSourceCommit = $state<CommitNode | null>(null);
@@ -1220,10 +1248,22 @@
           </div>
 
           {#if repo.isDetailOpen}
+            <!-- Resizable Splitter Bar -->
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions, a11y_no_noninteractive_tabindex -->
             <div
-              class="{repo.isDetailMaximized
-                ? 'h-[65%]'
-                : 'h-60'} shrink-0 transition-all duration-200"
+              role="separator"
+              aria-orientation="horizontal"
+              tabindex="-1"
+              onmousedown={handleStartResizeDetail}
+              class="h-1.5 w-full bg-zinc-200/80 dark:bg-zinc-800/80 hover:bg-cyan-500 active:bg-cyan-600 cursor-row-resize transition-colors flex items-center justify-center shrink-0 group relative z-10 select-none {isResizingDetail ? 'bg-cyan-500!' : ''}"
+              title="Kéo chuột để điều chỉnh độ cao panel chi tiết"
+            >
+              <div class="w-10 h-0.5 rounded-full bg-zinc-400 dark:bg-zinc-600 group-hover:bg-white transition-colors"></div>
+            </div>
+
+            <div
+              style={repo.isDetailMaximized ? 'height: 70%;' : `height: ${detailPanelHeight}px;`}
+              class="shrink-0 transition-[height] duration-75 overflow-hidden"
             >
               <CommitDetail
                 commitDetail={repo.commitDetail}

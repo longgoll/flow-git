@@ -7,6 +7,17 @@ export interface RefInfo {
   is_head: boolean;
 }
 
+export type GraphViewMode = 'micro' | 'macro';
+
+export interface GraphEdge {
+  childIndex: number;
+  parentIndex: number;
+  childLane: number;
+  parentLane: number;
+  isTrunk: boolean;
+  isFirstParent: boolean;
+}
+
 export interface CommitNode {
   id: string;
   short_id: string;
@@ -17,6 +28,12 @@ export interface CommitNode {
   timestamp: number;
   lane: number;
   refs: RefInfo[];
+  is_trunk?: boolean;
+  is_capsule?: boolean;
+  capsule_count?: number;
+  collapsed_ids?: string[];
+  is_ghost?: boolean;
+  rebase_target_sha?: string;
 }
 
 export interface BranchInfo {

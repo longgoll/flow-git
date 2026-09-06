@@ -33,23 +33,44 @@ Kỹ năng này cung cấp các nguyên tắc, chuẩn mực thiết kế và m�
 ```
 src-tauri/src/
 ├── git/
-│   ├── mod.rs             # Re-export và abstractions chung
-│   ├── repo.rs            # Mở, kiểm tra repo, HEAD, status
-│   ├── history.rs         # Commit log, topological ordering, lane compaction
+│   ├── mod.rs             # Re-export và abstractions Git chung
+│   ├── repo.rs            # Mở, kiểm tra repo, HEAD, clone, init
+│   ├── history.rs         # Commit log, topological ordering, lane compaction đa luồng
 │   ├── diff.rs            # Line diff, hunk diff, intra-line diffing
-│   ├── branches.rs        # Local/remote branch ops, ahead/behind counting
+│   ├── branches.rs        # Local/remote branch ops, ahead/behind counting, tags, stashes
 │   ├── safety.rs          # Safe discard (stash cache 48h), reflog time-travel
 │   ├── simulation.rs      # Dry-run in-memory conflict & ghost preview
-│   └── worktree.rs        # Git worktree manager
+│   ├── conflict.rs        # 3-Way merge conflict resolver & chunk parsing
+│   ├── bisect.rs          # Visual Git Bisect engine
+│   ├── stacked.rs         # Stacked commits analysis & reorder sequencer
+│   ├── tree.rs            # Cây tệp tin tree entries & file content reader
+│   ├── blame.rs           # Git Blame & file history follower
+│   ├── lfs.rs             # Git LFS parser, pointers, and file locks
+│   ├── submodule.rs       # Git Submodules inspector & sync
+│   └── worktree.rs        # Git worktrees manager
 ├── commands/
+│   ├── mod.rs             # Re-export AppState và toàn bộ 70+ commands
+│   ├── repo.rs            # IPC cho repo history, commit info, compare, nuke
+│   ├── branch.rs          # IPC cho branches, tags, stashes, smart_sync
+│   ├── diff.rs            # IPC cho status, diff, hunk staging, safe discard
+│   ├── remote.rs          # IPC cho remotes management & fetch
+│   ├── action.rs          # IPC cho commit, rebase, cherry-pick, merge, undo/redo
+│   ├── conflict.rs        # IPC cho conflict details & resolution
+│   ├── bisect.rs          # IPC cho visual bisect steps
+│   ├── worktree.rs        # IPC cho worktrees
+│   ├── advanced.rs        # IPC cho submodules & LFS
+│   ├── auth.rs            # IPC cho GitHub Device flow, PAT, account store, identity
+│   ├── edge_cases.rs      # IPC cho index.lock, file locks, heavy files scan
+│   └── state.rs           # AppState definition
+├── storage/
 │   ├── mod.rs
-│   ├── repo_commands.rs   # Tauri IPC #[tauri::command] cho repo/graph
-│   ├── diff_commands.rs   # IPC cho diff/staging/discard
-│   └── action_commands.rs # IPC cho rebase, merge, cherry-pick, undo
+│   ├── trash.rs           # SQLite database lưu trữ Trash Snapshots 48h
+│   ├── action_log.rs      # SQLite database lưu trữ Action Undo/Redo Journal
+│   └── accounts.rs        # SQLite database lưu trữ Connected Accounts & Tokens
 ├── watcher/
-│   └── mod.rs             # File system watcher sử dụng `notify`
+│   └── mod.rs             # Realtime debounced file watcher (`notify` crate)
 ├── error.rs               # Định nghĩa AppError với thiserror
-└── main.rs / lib.rs       # Entrypoint Tauri v2 application setup
+└── lib.rs                 # Tauri v2 application setup & invoke_handler![...]
 ```
 
 ---

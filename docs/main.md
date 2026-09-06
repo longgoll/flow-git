@@ -126,16 +126,21 @@ Mục tiêu tối thượng của sản phẩm là: **Biến mọi thao tác Git
 Hệ thống tài liệu của FlowGit đã được chuẩn hóa và phân tách thành các chuyên đề chi tiết:
 - 📖 **Tổng quan & Mục lục:** [`docs/README.md`](./README.md)
 - 🏗️ **Kiến trúc hệ thống:** [`docs/architecture/overview.md`](./architecture/overview.md)
-- 🔌 **Tra cứu 65+ IPC Commands:** [`docs/architecture/ipc-api-reference.md`](./architecture/ipc-api-reference.md)
+- 🎨 **Đồ thị OffscreenCanvas 60 FPS:** [`docs/architecture/offscreen-canvas-graph.md`](./architecture/offscreen-canvas-graph.md)
+- 🔌 **Tra cứu 70+ IPC Commands:** [`docs/architecture/ipc-api-reference.md`](./architecture/ipc-api-reference.md)
 - 🛡️ **Động cơ No-Fear Git (Safe Discard & Undo):** [`docs/architecture/safety-engine.md`](./architecture/safety-engine.md)
 - 📊 **Living Graph 60 FPS & DAG Mini-Map:** [`docs/features/commit-graph-and-dag.md`](./features/commit-graph-and-dag.md)
 - 🌲 **Working Tree, Diff & Staging:** [`docs/features/working-tree-and-diff.md`](./features/working-tree-and-diff.md)
 - 🌿 **Nhánh, Đa Remotes & Smart Sync:** [`docs/features/branches-and-remotes.md`](./features/branches-and-remotes.md)
 - 🔀 **Interactive Rebase & Squash:** [`docs/features/rebase-and-history-ops.md`](./features/rebase-and-history-ops.md)
 - ⚔️ **Conflict Resolver & Bisect Wizard:** [`docs/features/conflict-and-bisect.md`](./features/conflict-and-bisect.md)
+- 🐙 **GitHub PR Hub, Reviewer & Publish:** [`docs/features/github-and-pull-requests.md`](./features/github-and-pull-requests.md)
+- 📂 **Repository Explorer & File Tools:** [`docs/features/repo-explorer-and-file-tools.md`](./features/repo-explorer-and-file-tools.md)
+- 🥞 **Stacked Commits & Quick Hotfix:** [`docs/features/stacked-commits-and-hotfix.md`](./features/stacked-commits-and-hotfix.md)
 - 🏢 **Worktrees, LFS & Submodules:** [`docs/features/advanced-tools.md`](./features/advanced-tools.md)
 - 🔐 **Xác thực GitHub OAuth, SSH & Identity:** [`docs/features/auth-and-identity.md`](./features/auth-and-identity.md)
 - 🚨 **Tình huống biên & Bộ cảnh báo an toàn:** [`docs/features/edge-cases-and-guards.md`](./features/edge-cases-and-guards.md)
+- 📖 **User Guide (F1), Git Playbook & Pre-Commit Guard:** [`docs/features/onboarding-and-playbook.md`](./features/onboarding-and-playbook.md)
 - 🤖 **Trợ lý AI Cục bộ (Ollama / Local LLM):** [`docs/features/ai-assistant.md`](./features/ai-assistant.md)
 - 🆘 **FlowGit Playbook (Kịch bản giải cứu thực chiến):** [`docs/playbook/real-world-recipes.md`](./playbook/real-world-recipes.md)
 - ⌨️ **Sổ tay người dùng & Phím tắt:** [`docs/guides/user-manual.md`](./guides/user-manual.md)
@@ -176,11 +181,11 @@ Hệ thống tài liệu của FlowGit đã được chuẩn hóa và phân tác
 - [x] **Interactive SSH Passphrase & HTTPS Auth Modal**: Bắt tín hiệu yêu cầu credential khi Push/Pull/Fetch, mở modal nhập passphrase / PAT trực quan.
 - [x] **Monorepo Infinite Lazy-Loading Virtualization**: Phân trang commit history (`skip` / `limit`), tải lười khi cuộn đồ thị cho repo > 100,000 commits.
 
-### 💎 Phase 6: Advanced Team Git Operations & Living Playbook (Hoàn thiện 100% Thực chiến)
-- [x] **Commit Context Menu (Menu chuột phải trên Đồ thị)**: Tích hợp nhanh tạo nhánh, tạo tag, so sánh, copy SHA, revert và reset.
-- [x] **Revert Commit An toàn (`git revert`)**: Tạo commit đảo ngược tức thì mà không viết lại lịch sử, chuẩn mực cho nhánh chung remote/main.
-- [x] **Reset HEAD to Commit**: Cung cấp 3 chế độ Soft (giữ Staged), Mixed (giữ Unstaged), Hard (xóa sạch code) kèm bảo hiểm hoàn tác `Ctrl + Z`.
-- [x] **Squash Commits (Gộp commit)**: Bôi đen nhiều commit liên tiếp ➔ Phím `S` ➔ Hộp thoại tổng hợp message và gộp trong 1 giây.
-- [x] **Quản lý Git Tags**: Tạo Release Tag (Lightweight & Annotated) tại commit bất kỳ, xóa Tag trực tiếp trên Sidebar.
-- [x] **Dọn dẹp Nhánh đã Merge (Clean Merged Branches)**: 1-click tự động quét và xóa hàng loạt các nhánh local đã được gộp trọn vẹn vào `main`.
-- [x] **FlowGit Playbook & Real-World Recipes (Sổ tay Thực chiến In-App)**: Tích hợp sẵn cẩm nang giải quyết các tình huống thực tế cho team (Rebase, Undo Ctrl+Z, Safe Discard, Worktrees, Bisect, Revert, Squash, v.v.), mở nhanh bằng `F1` hoặc `Ctrl + /`.
+### 💎 Phase 6: GitHub Integration, File Tools, Stacked Commits & In-App Guide (Hoàn thiện 100% Thực chiến)
+- [x] **GitHub Pull Request Reviewer & Creator (`PullRequestReviewer.svelte`, `CreatePullRequestModal.svelte`)**: Xem PRs, Monaco Diff, bình luận, CI/CD checks và merge 1-chạm.
+- [x] **Recent Push Banner & Publish Repo Modal**: Nhận diện tức thì sau push để mở PR và xuất bản repo mới lên GitHub.
+- [x] **Repository Explorer & Interactive Blame**: Duyệt cây file không cần checkout, Monaco code preview, blame gutter và file history timeline.
+- [x] **Comparison Viewer & History Nuker**: So sánh 2 mốc bất kỳ và tẩy xóa vĩnh viễn file bí mật khỏi toàn bộ lịch sử Git DAG.
+- [x] **Stacked Commits Flow & Quick Hotfix**: Kéo thả sắp xếp chuỗi commit chưa push và tạo nhánh hotfix độc lập từ `main`.
+- [x] **Interactive User Guide (`F1` / `?`) & In-App Git Playbook**: Bách khoa toàn thư hướng dẫn và bộ giải cứu sự cố Git tại chỗ (index.lock, wrong branch, heavy files).
+- [x] **Pre-Commit Safety Guard & Repo Alert Banner**: Tự động chặn commit lộ secret và thanh điều khiển rebase/merge/bisect dở dang.

@@ -15,26 +15,23 @@ Tài liệu này chứa các quy tắc bắt buộc và ngữ cảnh chung dành
 
 ## 🛠️ TECH STACK TIÊN TIẾN NHẤT 2026 (OFFICIAL 2026 STACK)
 1. **Frontend:**
-   - **Framework:** Svelte 5 SPA (Vite) sử dụng 100% Runes (`$state`, `$derived`, `$effect`, `$props`).
+   - **Framework:** Svelte 5 SPA (Vite) sử dụng 100% Runes (`$state`, `$state.raw`, `$derived`, `$effect`, `$props`).
+   - **Quản lý Trạng thái:** Class-based Reactive Stores trong `src/lib/state/` (`RepoState`, `WorkingTreeState`, `RemoteState`, `GitSafetyState`, `ThemeState`, `ToastState`).
    - **Hiệu năng Dữ liệu Lớn:** Bắt buộc dùng `$state.raw` cho mảng dữ liệu Commit History hàng chục nghìn nodes để triệt tiêu chi phí Proxy overhead.
-   - **Styling:** **Tailwind CSS v4** (sử dụng `@tailwindcss/vite`, CSS-first configuration, zero-runtime).
-   - **UI Primitives:** **shadcn-svelte** (dựa trên **Bits UI**) cho các component Dialog, Dropdown, Tooltip, Command Palette tiêu chuẩn cao.
-   - **Rendering Engine:** **`OffscreenCanvas` + Web Worker** chuyên biệt cho Living Commit Graph, cách ly hoàn toàn việc vẽ đồ thị khỏi UI main-thread.
+   - **Styling & UI Primitives:** Tailwind CSS v4 (`@tailwindcss/vite`), Bits UI / Lucide Svelte.
+   - **Code & Diff Viewing:** Monaco Editor & Monaco Diff Editor cho mọi trải nghiệm xem code, diff và blame.
+   - **Rendering Engine:** `OffscreenCanvas` + Web Worker chuyên biệt (`graphWorker.ts`), cách ly hoàn toàn việc vẽ đồ thị khỏi UI main-thread.
+   - **GitHub Integration:** Octokit-less REST API Client (`src/lib/api/githubApi.ts`) siêu nhẹ, zero-dependency.
 2. **Backend:**
-   - **Framework:** Tauri v2 (IPC Capability Permissions scoped, Zero-copy serialization).
+   - **Framework:** Tauri v2 (IPC Capability Permissions scoped, Zero-copy serialization, 70+ commands).
    - **Language:** Rust (Edition 2021/2024).
-   - **Crates Cốt lõi:** `git2` (libgit2), `rayon` (tính toán lane đa luồng), `tokio` (async tasks), `notify` (file system watcher), `rusqlite` (lưu trữ Trash Snapshot 48h & Action Undo history), `serde` / `serde_json`, `thiserror`.
-   - **Local AI:** Tương thích chuẩn API cục bộ (Ollama / Local LLM) cho tính năng sinh commit message và giải thích conflict.
+   - **Crates Cốt lõi:** `git2` (libgit2 C-bindings), `rayon` (tính toán lane đa luồng), `tokio` (async network/IO), `notify` (realtime file watcher), `rusqlite` (SQLite lưu trữ Trash 48h, Action Undo Log, Account Auth), `serde`, `thiserror`.
+   - **Local AI:** Tương thích chuẩn API cục bộ (Ollama / Local LLM) cho sinh commit message và giải thích conflict.
 
 ---
 
-## 📁 CẤU TRÚC KHO LƯU TRỮ (REPOSITORY LAYOUT)
-- `docs/`: Toàn bộ hệ thống tài liệu kiến trúc, tính năng và hướng dẫn:
-  - [`docs/README.md`](./docs/README.md): Tổng quan sitemap và đối chiếu CLI vs GUI.
-  - [`docs/main.md`](./docs/main.md): Đặc tả kỹ thuật và triết lý thiết kế hoàn chỉnh.
-  - [`docs/architecture/`](./docs/architecture/): Kiến trúc hệ thống, IPC API reference và Safety Engine.
-  - [`docs/features/`](./docs/features/): Tài liệu chi tiết từng tính năng đã hoàn thiện.
-  - [`docs/playbook/real-world-recipes.md`](./docs/playbook/real-world-recipes.md): Sổ tay thực chiến cứu hộ Git.
+## 📁 HỆ THỐNG TÀI LIỆU & SKILLS
+- `docs/README.md`: Trung tâm điều hướng sitemap toàn bộ 22 tài liệu kiến trúc, tính năng và hướng dẫn chi tiết.
 - `.agents/skills/`: Kỹ năng chuyên biệt cho AI khi code:
   - [`tauri-rust-git`](./.agents/skills/tauri-rust-git/SKILL.md): Quy chuẩn Rust backend, IPC, `git2-rs`, concurrency `rayon`, `rusqlite`.
   - [`svelte5-canvas-graph`](./.agents/skills/svelte5-canvas-graph/SKILL.md): Svelte 5 Runes, `$state.raw`, OffscreenCanvas Web Worker, Bezier Splines.
@@ -42,8 +39,30 @@ Tài liệu này chứa các quy tắc bắt buộc và ngữ cảnh chung dành
 
 ---
 
-## ⚡ NGUYÊN TẮC KHI VIẾT CODE
-1. **Trước khi thực hiện tính năng mới:** Đọc tài liệu tương ứng trong `docs/` và kích hoạt skill phù hợp trong `.agents/skills/`.
-2. **Không dùng `unwrap()` hay `expect()` trong Rust runtime:** Luôn dùng `Result<T, AppError>` và xử lý lỗi lịch thiệp.
-3. **Frontend Svelte 5:** Tuyệt đối không dùng cú pháp Svelte 4 cũ (`export let`, `let:`, `$:`) mà bắt buộc dùng Svelte 5 Runes. Đối với danh sách commits > 1,000 items, dùng `$state.raw`.
-4. **Kiểm thử:** Mọi logic xử lý Git hoặc tính toán đồ thị phải đi kèm Unit Test rõ ràng.
+## ⚡ NGUYÊN TẮC VÀNG KHI VIẾT CODE (GOLDEN CODING RULES)
+
+1. **Quy trình Khép kín khi Thêm IPC Command Mới (Full-Loop IPC):**
+   Mọi command mới ở Backend Rust phải hoàn tất đủ 5 bước nhất quán:
+   - Viết logic trả về `Result<T, AppError>` trong `src-tauri/src/commands/<module>.rs`.
+   - Re-export trong `src-tauri/src/commands/mod.rs`.
+   - Đăng ký vào `generate_handler![...]` tại `src-tauri/src/lib.rs`.
+   - Khai báo TypeScript types tương ứng trong `src/lib/types.ts`.
+   - Viết wrapper function gọi `invoke()` trong `src/lib/api/<module>.ts`.
+
+2. **Tuân thủ Svelte 5 Runes & State Architecture:**
+   - Tuyệt đối không dùng cú pháp Svelte 4 cũ (`export let`, `let:`, `$:`, writable store cũ).
+   - Khi chia sẻ state toàn cục, sử dụng hoặc mở rộng các State classes trong `src/lib/state/`.
+   - Mảng commit history lớn bắt buộc dùng `$state.raw<CommitNode[]>`.
+
+3. **An toàn Tuyệt đối trong Rust (No Panic):**
+   - Nghiêm cấm sử dụng `unwrap()` hoặc `expect()` trong runtime command handlers. Luôn ánh xạ lỗi thành `AppError` và trả về `Result<T, AppError>`.
+
+4. **Thao tác Git Bản địa qua `git2-rs`:**
+   - Luôn sử dụng thư viện `git2` (libgit2 C-bindings). Không tùy tiện spawn `std::process::Command::new("git")` ra terminal bên ngoài nhằm bảo đảm tốc độ và không phụ thuộc Git CLI trên máy người dùng.
+
+5. **Chuẩn hiển thị Mã nguồn & Diff:**
+   - Mọi khu vực xem nội dung tệp, so sánh diff hoặc soi blame phải sử dụng `MonacoEditor.svelte` hoặc `MonacoDiffEditor.svelte`.
+
+6. **Đồng bộ Tài liệu khi Thay đổi Code:**
+   - Khi thêm mới hoặc thay đổi bất kỳ IPC command nào, bắt buộc cập nhật danh mục trong [`docs/architecture/ipc-api-reference.md`](./docs/architecture/ipc-api-reference.md).
+   - Khi hoàn thành hoặc mở rộng tính năng, cập nhật tài liệu tương ứng trong `docs/features/`.

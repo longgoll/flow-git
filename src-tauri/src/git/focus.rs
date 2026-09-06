@@ -132,6 +132,7 @@ pub fn get_focus_branch_info(
             timestamp: author.when().seconds(),
             lane: 0, // In Focus View, all commits are strictly linear on lane 0
             refs,
+            is_trunk: false,
         });
 
         // Limit to prevent runaway history
@@ -164,6 +165,7 @@ pub fn get_focus_branch_info(
                     ref_type: RefType::RemoteBranch,
                     is_head: false,
                 }],
+                is_trunk: true,
             });
         }
     }

@@ -118,39 +118,74 @@ pub fn get_topological_history(
         }
     }
 
-    // 4. Multi-lane Topological Routing & Compaction
-    let mut active_lanes: Vec<Option<Oid>> = Vec::new();
-    let mut result: Vec<CommitNode> = Vec::with_capacity(raw_commits.len());
+    // 4. Identify Trunk Tip and Lineage (main -> master -> develop -> remotes -> HEAD -> first commit)
+    let trunk_tip = repo.find_branch("main", git2::BranchType::Local).ok()
+        .or_else(|| repo.find_branch("master", git2::BranchType::Local).ok())
+        .or_else(|| repo.find_branch("develop", git2::BranchType::Local).ok())
+        .or_else(|| repo.find_branch("origin/main", git2::BranchType::Remote).ok())
+        .or_else(|| repo.find_branch("origin/master", git2::BranchType::Remote).ok())
+        .or_else(|| repo.find_branch("origin/develop", git2::BranchType::Remote).ok())
+        .or_else(|| repo.find_branch("main", git2::BranchType::Remote).ok())
+        .or_else(|| repo.find_branch("master", git2::BranchType::Remote).ok())
+        .and_then(|b| b.get().target())
+        .or(head_oid)
+        .or_else(|| raw_commits.first().map(|c| c.0));
 
-    for (oid, parents, author_name, author_email, summary, timestamp) in raw_commits {
-        // Find if this commit is already expected in an active lane
-        let mut assigned_lane = None;
-        for (i, lane_oid) in active_lanes.iter().enumerate() {
-            if *lane_oid == Some(oid) {
-                assigned_lane = Some(i);
+    let mut trunk_commits: std::collections::HashSet<Oid> = std::collections::HashSet::new();
+    if let Some(mut curr_oid) = trunk_tip {
+        while let Ok(commit) = repo.find_commit(curr_oid) {
+            trunk_commits.insert(curr_oid);
+            if commit.parent_count() > 0 {
+                if let Ok(first_parent) = commit.parent_id(0) {
+                    curr_oid = first_parent;
+                } else {
+                    break;
+                }
+            } else {
                 break;
             }
         }
+    }
 
-        let lane_index = match assigned_lane {
-            Some(idx) => idx,
-            None => {
-                // Find first free lane or allocate new one
-                let free_idx = active_lanes.iter().position(|l| l.is_none());
-                match free_idx {
-                    Some(idx) => {
-                        active_lanes[idx] = Some(oid);
-                        idx
-                    }
-                    None => {
-                        active_lanes.push(Some(oid));
-                        active_lanes.len() - 1
+    // 5. Multi-lane Topological Routing with Metro Backbone (Lane 0 dedicated to Trunk)
+    let mut active_lanes: Vec<Option<Oid>> = vec![None]; // Lane 0 reserved for trunk
+    let mut result: Vec<CommitNode> = Vec::with_capacity(raw_commits.len());
+
+    for (oid, parents, author_name, author_email, summary, timestamp) in raw_commits {
+        let is_trunk = trunk_commits.contains(&oid);
+
+        let lane_index = if is_trunk {
+            0
+        } else {
+            // Find if this commit is already expected in an active lane (skip lane 0)
+            let mut assigned_lane = None;
+            for (i, lane_oid) in active_lanes.iter().enumerate().skip(1) {
+                if *lane_oid == Some(oid) {
+                    assigned_lane = Some(i);
+                    break;
+                }
+            }
+
+            match assigned_lane {
+                Some(idx) => idx,
+                None => {
+                    // Find first free lane starting from index 1
+                    let free_idx = active_lanes.iter().enumerate().skip(1).find(|(_, l)| l.is_none()).map(|(i, _)| i);
+                    match free_idx {
+                        Some(idx) => {
+                            active_lanes[idx] = Some(oid);
+                            idx
+                        }
+                        None => {
+                            active_lanes.push(Some(oid));
+                            active_lanes.len() - 1
+                        }
                     }
                 }
             }
         };
 
-        // Clear any other lanes that were also waiting for this commit (merge joins)
+        // Clear any other lanes that were waiting for this commit (merge joins)
         for (i, lane_oid) in active_lanes.iter_mut().enumerate() {
             if i != lane_index && *lane_oid == Some(oid) {
                 *lane_oid = None;
@@ -158,30 +193,55 @@ pub fn get_topological_history(
         }
 
         // Update active lanes with parents
-        if parents.is_empty() {
-            // Root commit: free this lane
-            active_lanes[lane_index] = None;
-        } else {
-            // Primary parent continues in current lane
-            let p1 = parents[0];
-            active_lanes[lane_index] = Some(p1);
+        if is_trunk {
+            if parents.is_empty() {
+                active_lanes[0] = None;
+            } else {
+                // First parent of trunk stays in lane 0
+                active_lanes[0] = Some(parents[0]);
 
-            // Secondary parents (merge sources)
-            for &p_sec in &parents[1..] {
-                // If not already in another lane, allocate a new lane for it
-                let already_tracked = active_lanes.iter().any(|&l| l == Some(p_sec));
-                if !already_tracked {
-                    let free_slot = active_lanes.iter().position(|l| l.is_none());
-                    match free_slot {
-                        Some(s) => active_lanes[s] = Some(p_sec),
-                        None => active_lanes.push(Some(p_sec)),
+                // Secondary parents of trunk (merges into trunk) branch out to lane >= 1
+                for &p_sec in &parents[1..] {
+                    let already_tracked = active_lanes.iter().skip(1).any(|&l| l == Some(p_sec));
+                    if !already_tracked {
+                        let free_slot = active_lanes.iter().enumerate().skip(1).find(|(_, l)| l.is_none()).map(|(i, _)| i);
+                        match free_slot {
+                            Some(s) => active_lanes[s] = Some(p_sec),
+                            None => active_lanes.push(Some(p_sec)),
+                        }
+                    }
+                }
+            }
+        } else {
+            // Non-trunk commit
+            if parents.is_empty() {
+                active_lanes[lane_index] = None;
+            } else {
+                let p1 = parents[0];
+                if trunk_commits.contains(&p1) {
+                    // Forked from trunk: branch lane terminates here (joins trunk backbone)
+                    active_lanes[lane_index] = None;
+                } else {
+                    active_lanes[lane_index] = Some(p1);
+                }
+
+                for &p_sec in &parents[1..] {
+                    if !trunk_commits.contains(&p_sec) {
+                        let already_tracked = active_lanes.iter().skip(1).any(|&l| l == Some(p_sec));
+                        if !already_tracked {
+                            let free_slot = active_lanes.iter().enumerate().skip(1).find(|(_, l)| l.is_none()).map(|(i, _)| i);
+                            match free_slot {
+                                Some(s) => active_lanes[s] = Some(p_sec),
+                                None => active_lanes.push(Some(p_sec)),
+                            }
+                        }
                     }
                 }
             }
         }
 
-        // Trim trailing None lanes from end of active_lanes (compaction)
-        while active_lanes.last() == Some(&None) {
+        // Trim trailing None lanes from end of active_lanes (compaction, keep at least lane 0)
+        while active_lanes.len() > 1 && active_lanes.last() == Some(&None) {
             active_lanes.pop();
         }
 
@@ -202,6 +262,7 @@ pub fn get_topological_history(
             timestamp,
             lane: lane_index,
             refs,
+            is_trunk,
         });
     }
 

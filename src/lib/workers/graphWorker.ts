@@ -68,6 +68,23 @@ function drawRoundedRect(
   }
 }
 
+function drawHexagon(
+  context: OffscreenCanvasRenderingContext2D,
+  x: number,
+  y: number,
+  r: number
+) {
+  context.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i - Math.PI / 6;
+    const px = x + r * Math.cos(angle);
+    const py = y + r * Math.sin(angle);
+    if (i === 0) context.moveTo(px, py);
+    else context.lineTo(px, py);
+  }
+  context.closePath();
+}
+
 function render() {
   if (!ctx || !canvas) return;
   if (width <= 0 || height <= 0) return;
@@ -120,13 +137,15 @@ function render() {
       ctx.fillRect(0, y + ROW_HEIGHT - 1, width, 1);
     }
 
-    // 2. Draw Branch Splines (Bezier Curves between Parent and Child)
-    ctx.lineWidth = 2.2;
+    // 2. Draw Branch Splines (Bezier Curves with Focus Mode on Hover Dimming)
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
     const splineStartIndex = Math.max(0, startIndex - 20);
     const splineEndIndex = Math.min(totalCommits - 1, endIndex + 20);
+
+    const hoveredCommit = hoveredCommitId ? commits[commitIndexMap.get(hoveredCommitId) ?? -1] : null;
+    const hoveredLane = hoveredCommit ? (hoveredCommit.lane || 0) : null;
 
     for (let i = splineStartIndex; i <= splineEndIndex; i++) {
       const child = commits[i];
@@ -150,6 +169,11 @@ function render() {
 
           const lineColor = pIdx === 0 ? childColor : getLaneColor(parentLane);
 
+          // Focus Dimming
+          const isLineFocused = hoveredCommitId === null || (hoveredLane !== null && (childLane === hoveredLane || parentLane === hoveredLane));
+          ctx.globalAlpha = isLineFocused ? 1.0 : 0.2;
+          ctx.lineWidth = isLineFocused && hoveredCommitId !== null ? 2.8 : 2.2;
+
           ctx.beginPath();
           ctx.strokeStyle = lineColor;
           ctx.setLineDash([]);
@@ -166,6 +190,7 @@ function render() {
         }
       }
     }
+    ctx.globalAlpha = 1.0;
 
     // 3. Draw Ghost Preview Bezier Curves (if actively dragging over a target)
     if (ghostSourceId && ghostTargetId && ghostSourceId !== ghostTargetId) {
@@ -192,10 +217,17 @@ function render() {
         ctx.bezierCurveTo(sX + 30, midY, tX + 30, midY, tX, tY);
         ctx.stroke();
 
-        ctx.beginPath();
-        ctx.arc(tX, tY, NODE_RADIUS + 6, 0, Math.PI * 2);
-        ctx.fillStyle = ghostHasConflict ? 'rgba(244, 63, 94, 0.3)' : 'rgba(6, 182, 212, 0.3)';
-        ctx.fill();
+        if (ghostHasConflict) {
+          // Warning Hub Preview
+          drawHexagon(ctx, tX, tY, NODE_RADIUS + 7);
+          ctx.fillStyle = 'rgba(244, 63, 94, 0.4)';
+          ctx.fill();
+        } else {
+          ctx.beginPath();
+          ctx.arc(tX, tY, NODE_RADIUS + 6, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(6, 182, 212, 0.3)';
+          ctx.fill();
+        }
         ctx.restore();
       }
     }
@@ -220,39 +252,67 @@ function render() {
       const isHead = Array.isArray(c.refs) && c.refs.some((r) => r && (r.is_head || r.ref_type === 'head'));
       const isSelected = selectedCommitIds && selectedCommitIds.includes(c.id);
       const isGhostTarget = ghostTargetId === c.id;
+      const isConflictTarget = isGhostTarget && ghostHasConflict;
 
-      // Head glowing halo
-      if (isHead) {
-        ctx.beginPath();
-        ctx.arc(nodeX, centerY, NODE_RADIUS + 4, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(59, 130, 246, 0.25)';
+      const isNodeFocused = hoveredCommitId === null || (hoveredLane !== null && cLane === hoveredLane) || c.id === hoveredCommitId;
+      ctx.globalAlpha = isNodeFocused ? 1.0 : 0.35;
+
+      if (isConflictTarget) {
+        // Warning Hub: Glowing Hexagon
+        drawHexagon(ctx, nodeX, centerY, NODE_RADIUS + 7);
+        ctx.fillStyle = 'rgba(244, 63, 94, 0.45)';
         ctx.fill();
+
+        drawHexagon(ctx, nodeX, centerY, NODE_RADIUS + 2.5);
+        ctx.fillStyle = '#f43f5e';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        ctx.font = '700 9px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('!', nodeX, centerY);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+      } else {
+        // Head glowing halo
+        if (isHead) {
+          ctx.beginPath();
+          ctx.arc(nodeX, centerY, NODE_RADIUS + 4, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(59, 130, 246, 0.25)';
+          ctx.fill();
+        }
+
+        // Ghost Target Highlight
+        if (isGhostTarget) {
+          ctx.beginPath();
+          ctx.arc(nodeX, centerY, NODE_RADIUS + 5, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(6, 182, 212, 0.4)';
+          ctx.fill();
+        }
+
+        // Node outer circle
+        ctx.beginPath();
+        ctx.arc(nodeX, centerY, isSelected ? NODE_RADIUS + 1.5 : NODE_RADIUS, 0, Math.PI * 2);
+        ctx.fillStyle = isGhostTarget ? '#06b6d4' : laneColor;
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = isSelected || isGhostTarget ? '#ffffff' : '#09090b';
+        ctx.stroke();
+
+        // Inner dot for merge commits
+        if (isMerge) {
+          ctx.beginPath();
+          ctx.arc(nodeX, centerY, NODE_RADIUS * 0.45, 0, Math.PI * 2);
+          ctx.fillStyle = '#09090b';
+          ctx.fill();
+        }
       }
 
-      // Ghost Target Highlight
-      if (isGhostTarget) {
-        ctx.beginPath();
-        ctx.arc(nodeX, centerY, NODE_RADIUS + 5, 0, Math.PI * 2);
-        ctx.fillStyle = ghostHasConflict ? 'rgba(244, 63, 94, 0.4)' : 'rgba(6, 182, 212, 0.4)';
-        ctx.fill();
-      }
-
-      // Node outer circle
-      ctx.beginPath();
-      ctx.arc(nodeX, centerY, isSelected ? NODE_RADIUS + 1.5 : NODE_RADIUS, 0, Math.PI * 2);
-      ctx.fillStyle = isGhostTarget ? (ghostHasConflict ? '#f43f5e' : '#06b6d4') : laneColor;
-      ctx.fill();
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = isSelected || isGhostTarget ? '#ffffff' : '#09090b';
-      ctx.stroke();
-
-      // Inner dot for merge commits
-      if (isMerge) {
-        ctx.beginPath();
-        ctx.arc(nodeX, centerY, NODE_RADIUS * 0.45, 0, Math.PI * 2);
-        ctx.fillStyle = '#09090b';
-        ctx.fill();
-      }
+      ctx.globalAlpha = 1.0;
 
       // Draw Ref Badges / Pills
       let currentBadgeX = textLeftX;

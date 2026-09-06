@@ -1,5 +1,6 @@
-# CÔNG CỤ NÂNG CAO: WORKTREES, GIT LFS, SUBMODULES & EXPLORER
-> **Dành cho Dự án Doanh nghiệp:** Quản lý không gian làm việc song song, tệp đồ họa dung lượng lớn và đa kho mã nguồn phụ
+# CÔNG CỤ NÂNG CAO: WORKTREES, GIT LFS & SUBMODULES HUB
+> **Dành cho Dự án Doanh nghiệp:** Quản lý không gian làm việc song song, tệp đồ họa dung lượng lớn và đa kho mã nguồn phụ  
+> **Lưu ý:** Bộ công cụ Duyệt cây tệp tin, So sánh commit và Soi vết Blame đã được chuyển sang tài liệu chuyên sâu: [`repo-explorer-and-file-tools.md`](./repo-explorer-and-file-tools.md)
 
 ---
 
@@ -17,7 +18,7 @@ Khi bạn đang sửa đổi 20 file cho tính năng `feature/dashboard`, khách
 FlowGit cho phép bạn gắn một nhánh khác vào một thư mục vật lý hoàn toàn riêng biệt trên ổ đĩa (`git worktree add`):
 - **Tạo Worktree 1 chạm:** Bấm vào **"Worktree Manager"** trên thanh Toolbar ➔ Nhập tên nhánh và thư mục đích.
 - **Làm việc độc lập:** Mở thư mục mới sửa lỗi, chạy test và commit độc lập 100%. Thư mục chính đang code dở dang của bạn **không hề bị suy chuyển dù chỉ một byte**.
-- **Quick Hotfix Flow:** Bấm nút "Quick Hotfix" trên thanh công cụ để tự động tạo một hotfix worktree từ `main`, mở ra cửa sổ mới và dọn dẹp sau khi merge xong.
+- **Quick Hotfix Flow:** Bấm nút "Quick Hotfix" trên thanh công cụ để tự động tạo một hotfix worktree từ `main`, mở ra cửa sổ mới và dọn dẹp sau khi merge xong (xem chi tiết tại [`stacked-commits-and-hotfix.md`](./stacked-commits-and-hotfix.md)).
 
 ---
 
@@ -56,21 +57,6 @@ Backend: `src-tauri/src/git/submodule.rs`
 
 ---
 
-## 📂 4. REPOSITORY EXPLORER, INTERACTIVE BLAME & FILE HISTORY
-
-Component: `src/lib/components/RepositoryExplorer.svelte` & `FileHistoryModal.svelte`  
-Backend: `src-tauri/src/git/blame.rs` & `tree.rs`
-
-### 4.1. Duyệt cây tập tin kho lưu trữ (Repository Explorer)
-- Khám phá toàn bộ cấu trúc thư mục của repo tại commit hiện tại hoặc tại bất kỳ commit nào trong quá khứ mà không cần checkout.
-- Tích hợp trình xem trước code Monaco Editor hỗ trợ định dạng cú pháp chuẩn xác.
-
-### 4.2. Soi vết từng dòng code (Interactive Git Blame)
-- Bật công tắc **"Toggle Blame"** trong trình xem file:
-  - Lề trái hiển thị thông tin tác giả đã sửa dòng code đó: Avatar, Tên, Ngày sửa (dạng tương đối `3 tuần trước`) và SHA ngắn.
-  - **Hover chuột vào dòng:** Hiển thị popup chứa toàn bộ commit message giải thích lý do dòng code đó được viết ra.
-  - **Click vào dòng:** Lập tức đưa camera của Living Graph nhảy đến đúng commit đó để xem ngữ cảnh tổng thể.
-
-### 4.3. Dòng thời gian lịch sử tệp (File History Timeline)
-- Nhấp chuột phải vào bất kỳ tệp nào trong Explorer ➔ Chọn **"View File History"**.
-- Mở danh sách dòng thời gian lọc riêng toàn bộ các commit từng can thiệp vào tệp đó (`git log --follow -- <path>`), giúp dễ dàng tìm hiểu quá trình thay đổi của một module logic qua nhiều năm.
+## 🔗 LIÊN KẾT ĐẾN BỘ CÔNG CỤ TỆP LIÊN QUAN
+- 📂 [repo-explorer-and-file-tools.md](./repo-explorer-and-file-tools.md): Trình duyệt cây tệp tin Repository Explorer, Interactive Blame, File History Timeline, và History Nuker xóa tệp nhạy cảm.
+- 🥞 [stacked-commits-and-hotfix.md](./stacked-commits-and-hotfix.md): Chuỗi Stacked Commits và luồng Quick Hotfix.

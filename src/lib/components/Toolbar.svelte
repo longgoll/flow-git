@@ -481,23 +481,23 @@
       </button>
     {/if}
 
-    <!-- Playbook / User Guide Button (Shown on xl+) -->
+    <!-- Playbook / User Guide Button (Cleaned up, accessible via More Menu (...) or F1) -->
     {#if onOpenGuide}
       <button
         onclick={onOpenGuide}
-        class="hidden xl:flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/80 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-all cursor-pointer group shrink-0 shadow-xs"
+        class="hidden 3xl:flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/80 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-all cursor-pointer group shrink-0 shadow-xs"
         title="Sổ tay Hướng dẫn & Playbook thực chiến (F1 / Ctrl+/)"
       >
         <BookOpen class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-200 transition-colors" />
-        <span class="text-xs font-semibold hidden 2xl:inline">Playbook</span>
+        <span class="text-xs font-semibold">Playbook</span>
       </button>
     {/if}
 
-    <!-- Emergency Rescue Kit Button (Shown on 2xl+) -->
+    <!-- Emergency Rescue Kit Button (Cleaned up, accessible via More Menu (...)) -->
     {#if onOpenPlaybook}
       <button
         onclick={onOpenPlaybook}
-        class="hidden 2xl:flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/80 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-all cursor-pointer group shrink-0 shadow-xs"
+        class="hidden 3xl:flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/80 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-all cursor-pointer group shrink-0 shadow-xs"
         title="Cứu hộ Khẩn cấp & Gỡ kẹt Git (Emergency Kit)"
       >
         <LifeBuoy class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-200 transition-colors" />

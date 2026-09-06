@@ -1,4 +1,4 @@
-import type { CommitNode, ConflictSimulationResult } from '../types';
+import type { CommitNode, ConflictSimulationResult, GraphEdge } from '../types';
 
 export const ROW_HEIGHT = 36;
 export const LANE_WIDTH = 20;
@@ -66,6 +66,23 @@ export function drawRoundedRect(
   }
 }
 
+export function drawHexagon(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  r: number
+) {
+  context.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i - Math.PI / 6;
+    const px = x + r * Math.cos(angle);
+    const py = y + r * Math.sin(angle);
+    if (i === 0) context.moveTo(px, py);
+    else context.lineTo(px, py);
+  }
+  context.closePath();
+}
+
 export interface RenderGraphOptions {
   commits: CommitNode[];
   commitIndexMap: Map<string, number>;
@@ -79,6 +96,9 @@ export interface RenderGraphOptions {
   hoveredTargetCommit: CommitNode | null;
   simulationResult: ConflictSimulationResult | null;
   isDark?: boolean;
+  lockedLane?: number | null;
+  viewMode?: 'micro' | 'macro';
+  edges?: GraphEdge[];
 }
 
 export function renderCommitGraph(
@@ -98,7 +118,12 @@ export function renderCommitGraph(
     hoveredTargetCommit,
     simulationResult,
     isDark = true,
+    lockedLane = null,
+    viewMode = 'micro',
+    edges,
   } = options;
+
+  void viewMode; // Explicitly consumed for options compatibility
 
   const dpr = window.devicePixelRatio || 1;
 
@@ -128,10 +153,16 @@ export function renderCommitGraph(
     if (isGhostTarget) {
       ctx.fillStyle = simulationResult?.has_conflicts
         ? (isDark ? 'rgba(244, 63, 94, 0.2)' : 'rgba(244, 63, 94, 0.15)')
-        : (isDark ? 'rgba(6, 182, 212, 0.2)' : 'rgba(8, 145, 178, 0.15)');
+        : simulationResult?.is_fast_forward
+          ? (isDark ? 'rgba(245, 158, 11, 0.22)' : 'rgba(245, 158, 11, 0.16)')
+          : (isDark ? 'rgba(6, 182, 212, 0.2)' : 'rgba(8, 145, 178, 0.15)');
       ctx.fillRect(0, y, width, ROW_HEIGHT);
 
-      ctx.fillStyle = simulationResult?.has_conflicts ? '#f43f5e' : (isDark ? '#06b6d4' : '#0891b2');
+      ctx.fillStyle = simulationResult?.has_conflicts
+        ? '#f43f5e'
+        : simulationResult?.is_fast_forward
+          ? (isDark ? '#fbbf24' : '#d97706')
+          : (isDark ? '#06b6d4' : '#0891b2');
       ctx.fillRect(0, y, 4, ROW_HEIGHT);
     } else if (isSelected) {
       ctx.fillStyle = isDark ? 'rgba(59, 130, 246, 0.18)' : 'rgba(59, 130, 246, 0.12)';
@@ -148,54 +179,111 @@ export function renderCommitGraph(
     ctx.fillRect(0, y + ROW_HEIGHT - 1, width, 1);
   }
 
-  // 2. Bezier Splines
-  ctx.lineWidth = 2.2;
+  // 2. Continuous Bezier Splines with Metro Spine & Edge-Span Viewport Intersection
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  const splineStartIndex = Math.max(0, startIndex - 20);
-  const splineEndIndex = Math.min(totalCommits - 1, endIndex + 20);
+  const hoveredCommit = hoveredCommitId ? commits[commitIndexMap.get(hoveredCommitId) ?? -1] : null;
+  const hoveredLane = hoveredCommit ? (hoveredCommit.lane || 0) : null;
+  const activeFocusLane = lockedLane !== null && lockedLane !== undefined ? lockedLane : hoveredLane;
 
-  for (let i = splineStartIndex; i <= splineEndIndex; i++) {
-    const child = commits[i];
-    if (!child) continue;
-    const childLane = child.lane || 0;
-    const childY = i * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
-    const childX = GRAPH_LEFT_MARGIN + childLane * LANE_WIDTH;
-    const childColor = getLaneColor(childLane, isDark);
+  if (edges && edges.length > 0) {
+    // Pass-through Lines Continuous Rendering: draw any edge intersecting the viewport window
+    for (let eIdx = 0; eIdx < edges.length; eIdx++) {
+      const edge = edges[eIdx];
+      if (edge.childIndex > endIndex + 6 || edge.parentIndex < startIndex - 6) {
+        continue;
+      }
 
-    if (child.parents && Array.isArray(child.parents)) {
-      for (let pIdx = 0; pIdx < child.parents.length; pIdx++) {
-        const parentId = child.parents[pIdx];
-        const parentIndex = commitIndexMap.get(parentId);
-        if (parentIndex === undefined) continue;
+      const childLane = edge.childLane;
+      const parentLane = edge.parentLane;
+      const childY = edge.childIndex * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
+      const childX = GRAPH_LEFT_MARGIN + childLane * LANE_WIDTH;
+      const parentY = edge.parentIndex * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
+      const parentX = GRAPH_LEFT_MARGIN + parentLane * LANE_WIDTH;
 
-        const parent = commits[parentIndex];
-        if (!parent) continue;
-        const parentLane = parent.lane || 0;
-        const parentY = parentIndex * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
-        const parentX = GRAPH_LEFT_MARGIN + parentLane * LANE_WIDTH;
+      const childColor = getLaneColor(childLane, isDark);
+      const isTrunkBackbone = edge.isTrunk || (childLane === 0 && parentLane === 0);
+      const lineColor = isTrunkBackbone
+        ? (isDark ? '#38bdf8' : '#0284c7')
+        : (edge.isFirstParent ? childColor : getLaneColor(parentLane, isDark));
 
-        const lineColor = pIdx === 0 ? childColor : getLaneColor(parentLane, isDark);
+      const isLineFocused = activeFocusLane === null || (childLane === activeFocusLane || parentLane === activeFocusLane);
+      ctx.globalAlpha = isLineFocused ? 1.0 : 0.18;
+      ctx.lineWidth = isTrunkBackbone
+        ? (isLineFocused ? 3.4 : 2.8)
+        : (isLineFocused && activeFocusLane !== null ? 2.8 : 2.2);
 
-        ctx.beginPath();
-        ctx.strokeStyle = lineColor;
-        ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.strokeStyle = lineColor;
+      ctx.setLineDash([]);
 
-        if (childLane === parentLane) {
-          ctx.moveTo(childX, childY);
-          ctx.lineTo(parentX, parentY);
-        } else {
-          const midY = (childY + parentY) / 2;
-          ctx.moveTo(childX, childY);
-          ctx.bezierCurveTo(childX, midY, parentX, midY, parentX, parentY);
+      if (childLane === parentLane) {
+        ctx.moveTo(childX, childY);
+        ctx.lineTo(parentX, parentY);
+      } else {
+        const midY = (childY + parentY) / 2;
+        ctx.moveTo(childX, childY);
+        ctx.bezierCurveTo(childX, midY, parentX, midY, parentX, parentY);
+      }
+      ctx.stroke();
+    }
+  } else {
+    // Fallback: Local window scan
+    const splineStartIndex = Math.max(0, startIndex - 20);
+    const splineEndIndex = Math.min(totalCommits - 1, endIndex + 20);
+
+    for (let i = splineStartIndex; i <= splineEndIndex; i++) {
+      const child = commits[i];
+      if (!child) continue;
+      const childLane = child.lane || 0;
+      const childY = i * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
+      const childX = GRAPH_LEFT_MARGIN + childLane * LANE_WIDTH;
+      const childColor = getLaneColor(childLane, isDark);
+
+      if (child.parents && Array.isArray(child.parents)) {
+        for (let pIdx = 0; pIdx < child.parents.length; pIdx++) {
+          const parentId = child.parents[pIdx];
+          const parentIndex = commitIndexMap.get(parentId);
+          if (parentIndex === undefined) continue;
+
+          const parent = commits[parentIndex];
+          if (!parent) continue;
+          const parentLane = parent.lane || 0;
+          const parentY = parentIndex * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
+          const parentX = GRAPH_LEFT_MARGIN + parentLane * LANE_WIDTH;
+
+          const isTrunkBackbone = childLane === 0 && parentLane === 0;
+          const lineColor = isTrunkBackbone
+            ? (isDark ? '#38bdf8' : '#0284c7')
+            : (pIdx === 0 ? childColor : getLaneColor(parentLane, isDark));
+
+          const isLineFocused = activeFocusLane === null || (childLane === activeFocusLane || parentLane === activeFocusLane);
+          ctx.globalAlpha = isLineFocused ? 1.0 : 0.18;
+          ctx.lineWidth = isTrunkBackbone
+            ? (isLineFocused ? 3.4 : 2.8)
+            : (isLineFocused && activeFocusLane !== null ? 2.8 : 2.2);
+
+          ctx.beginPath();
+          ctx.strokeStyle = lineColor;
+          ctx.setLineDash([]);
+
+          if (childLane === parentLane) {
+            ctx.moveTo(childX, childY);
+            ctx.lineTo(parentX, parentY);
+          } else {
+            const midY = (childY + parentY) / 2;
+            ctx.moveTo(childX, childY);
+            ctx.bezierCurveTo(childX, midY, parentX, midY, parentX, parentY);
+          }
+          ctx.stroke();
         }
-        ctx.stroke();
       }
     }
   }
+  ctx.globalAlpha = 1.0;
 
-  // 3. Ghost Preview Curves
+  // 3. Ghost Preview Curves, Fast-Forward & Warning Hub
   if (isDraggingNode && draggedCommit && hoveredTargetCommit && draggedCommit.id !== hoveredTargetCommit.id) {
     const sIndex = commitIndexMap.get(draggedCommit.id);
     const tIndex = commitIndexMap.get(hoveredTargetCommit.id);
@@ -207,32 +295,115 @@ export function renderCommitGraph(
       const tY = tIndex * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
       const tX = GRAPH_LEFT_MARGIN + (tCommit?.lane || 0) * LANE_WIDTH;
 
+      const midY = (sY + tY) / 2;
+
       ctx.save();
       ctx.beginPath();
-      ctx.lineWidth = 3;
-      ctx.setLineDash([6, 4]);
-      ctx.strokeStyle = simulationResult?.has_conflicts ? '#f43f5e' : (isDark ? '#06b6d4' : '#0891b2');
 
-      const midY = (sY + tY) / 2;
-      ctx.moveTo(sX, sY);
-      ctx.bezierCurveTo(sX + 30, midY, tX + 30, midY, tX, tY);
-      ctx.stroke();
+      if (simulationResult?.has_conflicts) {
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeStyle = '#f43f5e';
+        ctx.moveTo(sX, sY);
+        ctx.bezierCurveTo(sX + 30, midY, tX + 30, midY, tX, tY);
+        ctx.stroke();
 
-      ctx.beginPath();
-      ctx.arc(tX, tY, NODE_RADIUS + 6, 0, Math.PI * 2);
-      ctx.fillStyle = simulationResult?.has_conflicts ? 'rgba(244, 63, 94, 0.35)' : 'rgba(6, 182, 212, 0.35)';
-      ctx.fill();
+        // Stop Indicator at midpoint
+        const midX = (sX + tX) / 2 + 15;
+        ctx.beginPath();
+        ctx.arc(midX, midY, 9, 0, Math.PI * 2);
+        ctx.fillStyle = '#f43f5e';
+        ctx.fill();
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('✕', midX, midY);
+
+        // Warning Hub preview on target (Hexagon with glowing aura)
+        drawHexagon(ctx, tX, tY, NODE_RADIUS + 9);
+        ctx.fillStyle = 'rgba(244, 63, 94, 0.25)';
+        ctx.fill();
+
+        drawHexagon(ctx, tX, tY, NODE_RADIUS + 6);
+        ctx.fillStyle = 'rgba(244, 63, 94, 0.5)';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#f43f5e';
+        ctx.stroke();
+      } else if (simulationResult?.is_fast_forward) {
+        // Fast-Forward Visualizer: Golden glowing straight/spline line + badge
+        ctx.lineWidth = 3;
+        ctx.setLineDash([5, 3]);
+        ctx.strokeStyle = isDark ? '#fbbf24' : '#d97706';
+        ctx.moveTo(sX, sY);
+        ctx.bezierCurveTo(sX + 24, midY, tX + 24, midY, tX, tY);
+        ctx.stroke();
+
+        // Fast-Forward badge at midpoint
+        const midX = (sX + tX) / 2 + 25;
+        const ffText = '⚡ Fast-Forward';
+        ctx.font = '700 10.5px "Plus Jakarta Sans", sans-serif';
+        const ffTextWidth = ctx.measureText(ffText).width;
+        const ffPillWidth = ffTextWidth + 16;
+
+        ctx.beginPath();
+        drawRoundedRect(ctx, midX - ffPillWidth / 2, midY - 10, ffPillWidth, 20, 10);
+        ctx.fillStyle = isDark ? 'rgba(24, 24, 27, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+        ctx.fill();
+        ctx.strokeStyle = isDark ? '#fbbf24' : '#d97706';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.fillStyle = isDark ? '#fbbf24' : '#b45309';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(ffText, midX, midY);
+
+        // Halo ring on target node
+        ctx.beginPath();
+        ctx.arc(tX, tY, NODE_RADIUS + 7, 0, Math.PI * 2);
+        ctx.fillStyle = isDark ? 'rgba(251, 191, 36, 0.35)' : 'rgba(217, 119, 6, 0.25)';
+        ctx.fill();
+      } else {
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeStyle = isDark ? '#06b6d4' : '#0891b2';
+        ctx.moveTo(sX, sY);
+        ctx.bezierCurveTo(sX + 30, midY, tX + 30, midY, tX, tY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(tX, tY, NODE_RADIUS + 6, 0, Math.PI * 2);
+        ctx.fillStyle = isDark ? 'rgba(6, 182, 212, 0.35)' : 'rgba(8, 145, 178, 0.3)';
+        ctx.fill();
+      }
       ctx.restore();
     }
   }
 
   // 4. Nodes and Commit info
   let maxLane = 0;
+  let hasCapsuleInView = false;
+  let maxCapsuleRight = 0;
   for (let i = startIndex; i <= endIndex; i++) {
-    const lane = commits[i]?.lane || 0;
+    const item = commits[i];
+    if (!item) continue;
+    const lane = item.lane || 0;
     if (lane > maxLane) maxLane = lane;
+    if (item.is_capsule) {
+      hasCapsuleInView = true;
+      const nodeX = GRAPH_LEFT_MARGIN + lane * LANE_WIDTH;
+      const capRight = nodeX - 8 + 92;
+      if (capRight > maxCapsuleRight) maxCapsuleRight = capRight;
+    }
   }
-  const textLeftX = GRAPH_LEFT_MARGIN + (maxLane + 1.8) * LANE_WIDTH;
+
+  // Calculate safe text left start: always after the widest lane and after any capsule pill
+  let textLeftX = GRAPH_LEFT_MARGIN + (maxLane + 1.8) * LANE_WIDTH + 10;
+  if (hasCapsuleInView) {
+    textLeftX = Math.max(textLeftX, maxCapsuleRight + 16);
+  }
 
   for (let i = startIndex; i <= endIndex; i++) {
     const c = commits[i];
@@ -246,38 +417,136 @@ export function renderCommitGraph(
     const isHead = Array.isArray(c.refs) && c.refs.some((r) => r && (r.is_head || r.ref_type === 'head'));
     const isSelected = activeSelectedIds.includes(c.id);
     const isGhostTarget = isDraggingNode && hoveredTargetCommit?.id === c.id;
+    const isConflictTarget = isGhostTarget && !!simulationResult?.has_conflicts;
 
-    if (isHead) {
+    // Focus Dimming for node circle if another branch is focused (Locked or Hovered)
+    const isNodeFocused = activeFocusLane === null || cLane === activeFocusLane || c.id === hoveredCommitId;
+    const isGhostNode = !!c.is_ghost;
+    ctx.globalAlpha = isGhostNode ? 0.38 : (isNodeFocused ? 1.0 : 0.25);
+
+    if (c.is_capsule) {
+      // Semantic Capsule Node
+      const capsuleW = 90;
+      const capsuleH = 20;
+      const capX = nodeX - 8;
+      const capY = centerY - capsuleH / 2;
+
+      // Vertical track through capsule
       ctx.beginPath();
-      ctx.arc(nodeX, centerY, NODE_RADIUS + 4, 0, Math.PI * 2);
-      ctx.fillStyle = isDark ? 'rgba(59, 130, 246, 0.25)' : 'rgba(59, 130, 246, 0.18)';
+      ctx.setLineDash([3, 2]);
+      ctx.strokeStyle = laneColor;
+      ctx.lineWidth = 1.5;
+      ctx.moveTo(nodeX, y);
+      ctx.lineTo(nodeX, y + ROW_HEIGHT);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Capsule pill body
+      ctx.beginPath();
+      drawRoundedRect(ctx, capX, capY, capsuleW, capsuleH, 10);
+      ctx.fillStyle = isDark ? 'rgba(39, 39, 42, 0.95)' : 'rgba(244, 244, 245, 0.95)';
       ctx.fill();
+      ctx.lineWidth = isSelected ? 2 : 1;
+      ctx.strokeStyle = isSelected ? '#38bdf8' : (isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)');
+      ctx.stroke();
+
+      // Capsule text inside
+      ctx.font = '600 11px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = isDark ? '#38bdf8' : '#0284c7';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`+${c.capsule_count || 2} commits`, capX + capsuleW / 2, centerY);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+    } else if (isConflictTarget) {
+      // Warning Hub: Glowing Hexagon
+      drawHexagon(ctx, nodeX, centerY, NODE_RADIUS + 7);
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.45)';
+      ctx.fill();
+
+      drawHexagon(ctx, nodeX, centerY, NODE_RADIUS + 2.5);
+      ctx.fillStyle = '#f43f5e';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+
+      // Warning exclamation mark
+      ctx.font = '700 9px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('!', nodeX, centerY);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+    } else {
+      if (isHead) {
+        ctx.beginPath();
+        ctx.arc(nodeX, centerY, NODE_RADIUS + 4, 0, Math.PI * 2);
+        ctx.fillStyle = isDark ? 'rgba(59, 130, 246, 0.25)' : 'rgba(59, 130, 246, 0.18)';
+        ctx.fill();
+      }
+
+      if (isGhostTarget) {
+        ctx.beginPath();
+        ctx.arc(nodeX, centerY, NODE_RADIUS + 5, 0, Math.PI * 2);
+        ctx.fillStyle = isDark ? 'rgba(6, 182, 212, 0.4)' : 'rgba(8, 145, 178, 0.35)';
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.arc(nodeX, centerY, isSelected ? NODE_RADIUS + 1.5 : NODE_RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = isGhostTarget ? (isDark ? '#06b6d4' : '#0891b2') : laneColor;
+      ctx.fill();
+
+      if (isGhostNode) {
+        ctx.setLineDash([3, 2]);
+        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = '#f59e0b';
+      } else {
+        ctx.setLineDash([]);
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = isSelected || isGhostTarget ? (isDark ? '#ffffff' : '#09090b') : (isDark ? '#09090b' : '#ffffff');
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      if (isMerge) {
+        ctx.beginPath();
+        ctx.arc(nodeX, centerY, NODE_RADIUS * 0.45, 0, Math.PI * 2);
+        ctx.fillStyle = isDark ? '#09090b' : '#ffffff';
+        ctx.fill();
+      }
     }
 
-    if (isGhostTarget) {
-      ctx.beginPath();
-      ctx.arc(nodeX, centerY, NODE_RADIUS + 5, 0, Math.PI * 2);
-      ctx.fillStyle = simulationResult?.has_conflicts ? 'rgba(244, 63, 94, 0.4)' : (isDark ? 'rgba(6, 182, 212, 0.4)' : 'rgba(8, 145, 178, 0.35)');
-      ctx.fill();
-    }
-
-    ctx.beginPath();
-    ctx.arc(nodeX, centerY, isSelected ? NODE_RADIUS + 1.5 : NODE_RADIUS, 0, Math.PI * 2);
-    ctx.fillStyle = isGhostTarget ? (simulationResult?.has_conflicts ? '#f43f5e' : (isDark ? '#06b6d4' : '#0891b2')) : laneColor;
-    ctx.fill();
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = isSelected || isGhostTarget ? (isDark ? '#ffffff' : '#09090b') : (isDark ? '#09090b' : '#ffffff');
-    ctx.stroke();
-
-    if (isMerge) {
-      ctx.beginPath();
-      ctx.arc(nodeX, centerY, NODE_RADIUS * 0.45, 0, Math.PI * 2);
-      ctx.fillStyle = isDark ? '#09090b' : '#ffffff';
-      ctx.fill();
-    }
+    // Reset alpha for crisp text readability (unless it's an orphaned ghost node)
+    ctx.globalAlpha = isGhostNode ? 0.45 : 1.0;
 
     // Draw Ref Badges
     let currentBadgeX = textLeftX;
+
+    // Draw Rebase Target Badge if present
+    if (c.rebase_target_sha) {
+      const rebaseLabel = `rebase ➔ ${c.rebase_target_sha.slice(0, 7)}`;
+      ctx.font = '600 11px "JetBrains Mono", monospace';
+      const textW = ctx.measureText(rebaseLabel).width;
+      const bW = textW + 14;
+      const bH = 20;
+      const bY = centerY - bH / 2;
+
+      ctx.beginPath();
+      drawRoundedRect(ctx, currentBadgeX, bY, bW, bH, 4);
+      ctx.fillStyle = isDark ? 'rgba(245, 158, 11, 0.22)' : 'rgba(245, 158, 11, 0.15)';
+      ctx.fill();
+      ctx.strokeStyle = isDark ? 'rgba(245, 158, 11, 0.5)' : 'rgba(245, 158, 11, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = isDark ? '#fbbf24' : '#d97706';
+      ctx.fillText(rebaseLabel, currentBadgeX + 7, centerY + 3.5);
+      currentBadgeX += bW + 6;
+    }
+
     if (c.refs && Array.isArray(c.refs) && c.refs.length > 0) {
       for (const r of c.refs) {
         if (!r || !r.shorthand) continue;
@@ -325,12 +594,14 @@ export function renderCommitGraph(
       }
     }
 
-    // Draw Short Hash
-    const shortId = c.short_id || (c.id ? c.id.slice(0, 7) : '???????');
-    ctx.font = '500 12px "JetBrains Mono", monospace';
-    ctx.fillStyle = '#71717a';
-    ctx.fillText(shortId, currentBadgeX, centerY + 4);
-    currentBadgeX += 65;
+    // Draw Short Hash (Skip for capsule commit because capsule pill already shows the count)
+    if (!c.is_capsule) {
+      const shortId = c.short_id || (c.id ? c.id.slice(0, 7) : '???????');
+      ctx.font = '500 12px "JetBrains Mono", monospace';
+      ctx.fillStyle = isDark ? '#a1a1aa' : '#71717a';
+      ctx.fillText(shortId, currentBadgeX, centerY + 4);
+      currentBadgeX += 65;
+    }
 
     // Draw Summary
     ctx.font = isSelected ? '600 13px "Plus Jakarta Sans", sans-serif' : '400 13px "Plus Jakarta Sans", sans-serif';

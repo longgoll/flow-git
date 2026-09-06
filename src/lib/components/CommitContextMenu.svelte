@@ -10,6 +10,7 @@
     GitCompare,
     Layers,
     GitFork,
+    Eye,
   } from 'lucide-svelte';
 
   interface Props {
@@ -17,6 +18,7 @@
     y: number;
     commit: CommitNode;
     selectedCount?: number;
+    isLockedFocus?: boolean;
     onClose: () => void;
     onCreateBranch: (commit: CommitNode) => void;
     onCreateTag: (commit: CommitNode) => void;
@@ -26,6 +28,7 @@
     onInteractiveRebase?: (commit: CommitNode) => void;
     onCopySha: (sha: string) => void;
     onCompare?: (commit: CommitNode) => void;
+    onToggleLockFocus?: (lane: number) => void;
   }
 
   let {
@@ -33,6 +36,7 @@
     y,
     commit,
     selectedCount = 1,
+    isLockedFocus = false,
     onClose,
     onCreateBranch,
     onCreateTag,
@@ -42,6 +46,7 @@
     onInteractiveRebase,
     onCopySha,
     onCompare,
+    onToggleLockFocus,
   }: Props = $props();
 
   let menuEl: HTMLDivElement;
@@ -150,6 +155,21 @@
       >
         <GitCompare class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
         <span>So sánh với commit hiện tại</span>
+      </button>
+    {/if}
+
+    {#if onToggleLockFocus}
+      <!-- Lock Focus to Branch -->
+      <button
+        onclick={() => {
+          onClose();
+          onToggleLockFocus(commit.lane);
+        }}
+        class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
+        role="menuitem"
+      >
+        <Eye class="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
+        <span>{isLockedFocus ? 'Bỏ khóa tiêu điểm nhánh' : 'Khóa tiêu điểm nhánh này (Focus Lock)'}</span>
       </button>
     {/if}
 

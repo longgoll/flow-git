@@ -18,6 +18,7 @@
     Code2,
     ExternalLink,
   } from 'lucide-svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     commitDetail: CommitDetail | null;
@@ -178,7 +179,7 @@
   {#if isLoading}
     <div class="h-full flex items-center justify-center text-zinc-500 text-xs gap-2">
       <div class="w-4 h-4 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"></div>
-      <span>Loading commit details...</span>
+      <span>{localeState.t('graph.loadingCommitDetails')}</span>
     </div>
   {:else if commitDetail}
     <!-- Detail Header Bar -->
@@ -188,7 +189,7 @@
         <button
           onclick={copyHash}
           class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white font-mono text-[11px] transition-colors cursor-pointer group shadow-xs"
-          title="Click to copy full commit SHA"
+          title={localeState.t('graph.clickToCopySha')}
         >
           <GitCommit class="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
           <span>{commitDetail.short_id}</span>
@@ -201,7 +202,7 @@
 
         {#if commitDetail.parents.length > 0}
           <div class="flex items-center gap-1 text-[11px] text-zinc-500 font-mono">
-            <span>parents:</span>
+            <span>{localeState.t('graph.parents')}:</span>
             {#each commitDetail.parents as parent}
               <button
                 onclick={() => onSelectParent?.(parent)}
@@ -234,7 +235,7 @@
 
         <!-- Total Stats Pill -->
         <div class="flex items-center gap-1.5 text-[11px] font-mono border-l border-zinc-200 dark:border-zinc-800/60 pl-3">
-          <span class="text-zinc-600 dark:text-zinc-400 font-medium">{commitDetail.files_changed.length} files</span>
+          <span class="text-zinc-600 dark:text-zinc-400 font-medium">{localeState.t('graph.filesChanged', { count: commitDetail.files_changed.length })}</span>
           {#if totalAdditions > 0}
             <span class="text-emerald-600 dark:text-emerald-400 font-semibold">+{totalAdditions}</span>
           {/if}
@@ -250,7 +251,7 @@
           <button
             onclick={onToggleMaximize}
             class="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors cursor-pointer"
-            title={isMaximized ? 'Thu nhỏ panel chi tiết' : 'Mở rộng panel chi tiết (xem Diff rộng)'}
+            title={isMaximized ? localeState.t('graph.minimizePanel') : localeState.t('graph.maximizePanel')}
           >
             {#if isMaximized}
               <Minimize2 class="w-3.5 h-3.5" />
@@ -264,7 +265,7 @@
           <button
             onclick={onClose}
             class="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors cursor-pointer"
-            title="Đóng panel chi tiết commit"
+            title={localeState.t('graph.closePanel')}
           >
             <X class="w-3.5 h-3.5" />
           </button>
@@ -277,7 +278,7 @@
       <!-- 1. Commit Message Pane -->
       <div class="w-full md:w-[25%] min-w-[190px] p-3 overflow-y-auto bg-zinc-50/60 dark:bg-zinc-950 shrink-0 flex flex-col">
         <h4 class="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5 shrink-0">
-          Commit Message
+          {localeState.t('graph.commitMessage')}
         </h4>
         <div class="text-xs font-semibold text-zinc-900 dark:text-zinc-100 leading-snug select-text">
           {summary}
@@ -293,7 +294,7 @@
       <div class="w-full md:w-[27%] min-w-[210px] p-2.5 flex flex-col bg-zinc-50/30 dark:bg-zinc-950/60 shrink-0 overflow-hidden">
         <div class="flex items-center justify-between mb-1.5 shrink-0 gap-2">
           <h4 class="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-            Files ({commitDetail.files_changed.length})
+            {localeState.t('graph.changedFiles', { count: commitDetail.files_changed.length })}
           </h4>
 
           <!-- Compact search inside commit files -->
@@ -302,7 +303,7 @@
               <Search class="w-2.5 h-2.5 text-zinc-400 absolute left-1.5 top-1.5 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Filter files..."
+                placeholder={localeState.t('graph.filterFiles')}
                 bind:value={fileSearch}
                 class="w-full pl-4 pr-1.5 py-0.5 text-[10px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded focus:outline-none focus:border-cyan-500 font-mono"
               />
@@ -375,10 +376,10 @@
             <button
               onclick={() => onOpenFileInExplorer(selectedFilePath!)}
               class="w-full flex items-center justify-center gap-1 py-1 text-[10px] text-zinc-500 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded transition-colors cursor-pointer"
-              title="Mở toàn bộ cây thư mục mã nguồn trong Repository Explorer"
+              title={localeState.t('graph.openInExplorerTooltip')}
             >
               <ExternalLink class="w-3 h-3" />
-              <span>Xem trong Explorer</span>
+              <span>{localeState.t('graph.openInExplorer')}</span>
             </button>
           </div>
         {/if}
@@ -396,14 +397,14 @@
         {:else}
           <div class="h-full flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-600 text-xs font-sans gap-2 p-4">
             <Code2 class="w-8 h-8 text-zinc-300 dark:text-zinc-700" />
-            <span>Chọn một tệp từ danh sách bên cạnh để xem Diff trực tiếp</span>
+            <span>{localeState.t('graph.selectFileToViewDiff')}</span>
           </div>
         {/if}
       </div>
     </div>
   {:else}
     <div class="h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600 text-xs font-sans">
-      Select a commit on the graph to inspect its details and changed files
+      {localeState.t('graph.selectCommitToInspect')}
     </div>
   {/if}
 </div>

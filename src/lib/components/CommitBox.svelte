@@ -2,6 +2,7 @@
   import { Sparkles, GitCommitHorizontal, History, ShieldAlert, GitFork } from 'lucide-svelte';
   import PreCommitWarningModal, { type RiskyFileItem } from './PreCommitWarningModal.svelte';
   import type { FileStatusItem } from '../types';
+  import { localeState } from '../state/localeState.svelte';
 
   const PROTECTED_BRANCHES = new Set(['main', 'master', 'production', 'release']);
 
@@ -158,15 +159,15 @@
           <ShieldAlert class="w-4 h-4 shrink-0 mt-0.5 {bypassSafetyShield ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}" />
           <div class="text-[11px] leading-snug">
             <p class="font-semibold flex items-center gap-1.5">
-              <span>Commit Safety Shield</span>
+              <span>{localeState.t('workingTree.commitBox.safetyShieldTitle')}</span>
               <span class="px-1.5 py-0.2 rounded text-[10px] font-mono {bypassSafetyShield ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/40' : 'bg-rose-100 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-700/50'}">
                 {currentBranch}
               </span>
             </p>
             <p class="text-zinc-600 dark:text-zinc-400 mt-0.5">
               {bypassSafetyShield
-                ? 'Bạn đã mở khóa chế độ Bypass. Thao tác commit trực tiếp vào nhánh bảo vệ sẽ được cho phép.'
-                : 'Bạn đang chuẩn bị commit thẳng vào nhánh bảo vệ. Hãy tạo nhánh tính năng để bảo vệ nhánh chính.'}
+                ? localeState.t('workingTree.commitBox.safetyShieldBypassActive')
+                : localeState.t('workingTree.commitBox.safetyShieldWarning')}
             </p>
           </div>
         </div>
@@ -176,10 +177,10 @@
             type="button"
             onclick={() => onCreateBranch(currentBranch)}
             class="px-2.5 py-1 rounded-lg bg-cyan-100 dark:bg-cyan-950/60 hover:bg-cyan-200 dark:hover:bg-cyan-900/80 border border-cyan-300 dark:border-cyan-800/50 hover:border-cyan-400 text-cyan-800 dark:text-cyan-300 text-[11px] font-medium flex items-center gap-1 shrink-0 transition-all cursor-pointer shadow-xs active:scale-98"
-            title="Tạo nhánh Feature từ vị trí commit này"
+            title={localeState.t('workingTree.commitBox.createFeatureBranchTooltip')}
           >
             <GitFork class="w-3 h-3" />
-            <span>Tạo nhánh Feature</span>
+            <span>{localeState.t('workingTree.commitBox.createFeatureBranch')}</span>
           </button>
         {/if}
       </div>
@@ -191,7 +192,7 @@
             bind:checked={bypassSafetyShield}
             class="w-3.5 h-3.5 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-amber-500 focus:ring-0 cursor-pointer"
           />
-          <span>Cho phép commit thẳng (Tôi hiểu rủi ro)</span>
+          <span>{localeState.t('workingTree.commitBox.allowDirectCommit')}</span>
         </label>
       </div>
     </div>
@@ -202,9 +203,9 @@
     <div class="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
       <span class="font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
         <Sparkles class="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
-        Conventional Commits
+        {localeState.t('workingTree.commitBox.conventionalCommits')}
       </span>
-      <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">Ctrl + Enter to commit</span>
+      <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">{localeState.t('workingTree.commitBox.ctrlEnterTip')}</span>
     </div>
 
     <div class="flex flex-wrap gap-1">
@@ -227,13 +228,13 @@
     <div class="flex items-center gap-2">
       <input
         type="text"
-        placeholder="scope (opt)"
+        placeholder={localeState.t('workingTree.commitBox.scopePlaceholder')}
         bind:value={commitScope}
         class="w-24 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700/80 rounded-lg px-2.5 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 font-mono shadow-xs focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 transition-all"
       />
       <input
         type="text"
-        placeholder="Commit summary message..."
+        placeholder={localeState.t('workingTree.commitBox.summaryPlaceholder')}
         bind:value={commitSubject}
         onkeydown={handleKeyDown}
         class="flex-1 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700/80 rounded-lg px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 transition-all font-sans font-medium shadow-xs"
@@ -242,7 +243,7 @@
 
     <!-- Extended Description -->
     <textarea
-      placeholder="Optional extended description (Markdown supported)..."
+      placeholder={localeState.t('workingTree.commitBox.descriptionPlaceholder')}
       bind:value={commitBody}
       onkeydown={handleKeyDown}
       rows={2}
@@ -261,13 +262,13 @@
         />
         <span class="flex items-center gap-1">
           <History class="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
-          Amend
+          {localeState.t('workingTree.commitBox.amend')}
         </span>
       </label>
 
       <label
         class="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-amber-300 cursor-pointer select-none"
-        title="Bỏ qua Git pre-commit hooks (Husky, formatters, linters) khi cần commit khẩn cấp"
+        title={localeState.t('workingTree.commitBox.noVerifyTooltip')}
       >
         <input
           type="checkbox"
@@ -283,14 +284,14 @@
       onclick={() => handleFormSubmit()}
       disabled={isLoading || (!fullMessage.trim()) || (stagedCount === 0 && !isAmend) || (isProtected && !bypassSafetyShield)}
       class="px-4 py-2 rounded-lg font-semibold text-xs flex items-center gap-2 shadow-lg active:scale-98 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed {isProtected && !bypassSafetyShield ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-700' : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-600/20'}"
-      title={isProtected && !bypassSafetyShield ? 'Nhánh bảo vệ: Bật checkbox Cho phép commit hoặc Tạo nhánh Feature' : ''}
+      title={isProtected && !bypassSafetyShield ? localeState.t('workingTree.commitBox.protectedBranchTooltip') : ''}
     >
       {#if isLoading}
         <div class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-        <span>Committing...</span>
+        <span>{localeState.t('workingTree.commitBox.committing')}</span>
       {:else}
         <GitCommitHorizontal class="w-4 h-4" />
-        <span>{isAmend ? 'Amend Commit' : `Commit (${stagedCount} staged)`}</span>
+        <span>{isAmend ? localeState.t('workingTree.commitBox.amendCommit') : localeState.t('workingTree.commitBox.commitWithCount', { count: stagedCount })}</span>
       {/if}
     </button>
   </div>

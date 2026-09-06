@@ -4,6 +4,7 @@
   import MonacoDiffEditor from './MonacoDiffEditor.svelte';
   import { resolveConflictChunkAI, resolveConflictFileAI } from '../api/ai';
   import { toast } from '../state/toastState.svelte';
+  import { localeState } from '../state/localeState.svelte';
   import {
     Split,
     CheckCircle,
@@ -273,10 +274,10 @@
       <div class="min-w-0">
         <div class="flex items-center gap-2">
           <h2 class="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide truncate">
-            Visual Conflict Resolver
+            {localeState.t('workflows.conflictResolver.title')}
           </h2>
           <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-500/30 font-semibold shrink-0">
-            {conflictedFiles.length} tệp còn xung đột
+            {localeState.t('workflows.conflictResolver.filesCount', { count: conflictedFiles.length })}
           </span>
           {#if selectedFile}
             <span class="text-zinc-400 dark:text-zinc-500 text-xs hidden sm:inline">•</span>
@@ -294,26 +295,26 @@
         <button
           onclick={() => (layoutMode = '2way')}
           class="flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer {layoutMode === '2way' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-xs' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
-          title="Xem Diff 2 bên của VS Code (Ours vs Theirs) - Tự động tô màu thay đổi"
+          title="VS Code 2-Way Diff"
         >
           <Columns class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-          <span>VS Code Diff (Ours vs Theirs)</span>
+          <span>{localeState.t('workflows.conflictResolver.layout2way')}</span>
         </button>
         <button
           onclick={() => (layoutMode = '3way')}
           class="flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer {layoutMode === '3way' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-xs' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
-          title="Xem 3 khung Monaco Editor độc lập (Base | Ours | Theirs)"
+          title={localeState.t('workflows.conflictResolver.layout3wayTooltip')}
         >
           <Split class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-          <span>3-Way (+Base)</span>
+          <span>{localeState.t('workflows.conflictResolver.layout3way')}</span>
         </button>
         <button
           onclick={() => (layoutMode = 'chunks')}
           class="flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer {layoutMode === 'chunks' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-xs' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
-          title="Xem danh sách từng đoạn xung đột kèm nút chọn trực tiếp"
+          title={localeState.t('workflows.conflictResolver.layoutChunksTooltip')}
         >
           <Layers class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-          <span>Từng khối ({conflictChunks.length})</span>
+          <span>{localeState.t('workflows.conflictResolver.layoutChunks', { count: conflictChunks.length })}</span>
         </button>
       </div>
     {/if}
@@ -325,14 +326,14 @@
           onclick={handleAiResolveEntireFile}
           disabled={isAiResolving || isLoading}
           class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-medium text-xs shadow-xs transition-all cursor-pointer"
-          title="AI tự động phân tích và ghép code hợp lý cho toàn bộ tệp này"
+          title={localeState.t('workflows.conflictResolver.aiAutoMergeTooltip')}
         >
           {#if isAiResolving}
             <RefreshCw class="w-3.5 h-3.5 animate-spin" />
-            <span>AI Đang xử lý...</span>
+            <span>{localeState.t('workflows.conflictResolver.aiResolving')}</span>
           {:else}
             <Sparkles class="w-3.5 h-3.5 text-amber-300" />
-            <span class="hidden sm:inline">AI Auto-Merge</span>
+            <span class="hidden sm:inline">{localeState.t('workflows.conflictResolver.aiAutoMerge')}</span>
           {/if}
         </button>
       {/if}
@@ -341,10 +342,10 @@
         onclick={handleStage}
         disabled={isLoading || !selectedFile}
         class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 text-white font-medium text-xs shadow-sm transition-all cursor-pointer"
-        title="Đánh dấu đã giải quyết và đưa vào Staging Area (Ctrl+Enter)"
+        title={localeState.t('workflows.conflictResolver.stageFileTooltip')}
       >
         <Save class="w-3.5 h-3.5" />
-        <span>Stage File</span>
+        <span>{localeState.t('workflows.conflictResolver.stageFile')}</span>
         <kbd class="hidden md:inline text-[9px] bg-emerald-700 px-1 py-0.2 rounded font-mono">Ctrl+↵</kbd>
       </button>
 
@@ -353,35 +354,35 @@
           onclick={onContinueRebase}
           disabled={isLoading || conflictedFiles.length > 0}
           class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-medium text-xs shadow-sm transition-all cursor-pointer"
-          title={conflictedFiles.length > 0 ? 'Vui lòng giải quyết hết các file xung đột trước khi tiếp tục rebase' : 'Tiếp tục chu trình rebase'}
+          title={conflictedFiles.length > 0 ? localeState.t('workflows.conflictResolver.continueRebaseDisabledTooltip') : localeState.t('workflows.conflictResolver.continueRebaseTooltip')}
         >
           <Play class="w-3.5 h-3.5 fill-current" />
-          <span>Continue Rebase</span>
+          <span>{localeState.t('workflows.conflictResolver.continueRebase')}</span>
         </button>
       {:else if conflictedFiles.length === 0}
         <button
           onclick={onClose}
           class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-sm transition-all cursor-pointer"
-          title="Đã giải quyết xong mọi xung đột. Nhấn để quay lại làm việc."
+          title={localeState.t('workflows.conflictResolver.finishAndReturnTooltip')}
         >
           <Check class="w-3.5 h-3.5" />
-          <span>Hoàn tất & Quay lại</span>
+          <span>{localeState.t('workflows.conflictResolver.finishAndReturn')}</span>
         </button>
       {/if}
 
       <button
         onclick={onAbortMerge}
         class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-400 text-xs border border-rose-200 dark:border-rose-900/50 transition-colors cursor-pointer"
-        title="Hủy bỏ hoàn toàn thao tác Merge / Rebase đang dở dang"
+        title={localeState.t('workflows.conflictResolver.abortTooltip')}
       >
         <RotateCcw class="w-3.5 h-3.5" />
-        <span class="hidden sm:inline">Abort</span>
+        <span class="hidden sm:inline">{localeState.t('workflows.conflictResolver.abort')}</span>
       </button>
 
       <button
         onclick={onClose}
         class="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors cursor-pointer"
-        title="Đóng cửa sổ giải quyết xung đột"
+        title={localeState.t('workflows.conflictResolver.closeTooltip')}
       >
         <X class="w-4 h-4" />
       </button>
@@ -399,7 +400,7 @@
           <input
             type="text"
             bind:value={searchQuery}
-            placeholder="Lọc tệp xung đột..."
+            placeholder={localeState.t('workflows.conflictResolver.filterPlaceholder')}
             class="w-full pl-8 pr-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-indigo-500 transition-colors font-sans"
           />
         </div>
@@ -411,8 +412,8 @@
           <div class="p-6 text-center text-xs text-emerald-600 dark:text-emerald-400 space-y-3">
             <CheckCircle class="w-10 h-10 mx-auto text-emerald-500 opacity-90 animate-bounce" />
             <div class="space-y-1">
-              <h3 class="font-bold text-sm text-zinc-900 dark:text-zinc-100">Đã giải quyết hết xung đột!</h3>
-              <p class="text-zinc-500 text-[11px]">Tất cả các tệp xung đột đã được đánh dấu an toàn vào Staging Area.</p>
+              <h3 class="font-bold text-sm text-zinc-900 dark:text-zinc-100">{localeState.t('workflows.conflictResolver.allResolvedTitle')}</h3>
+              <p class="text-zinc-500 text-[11px]">{localeState.t('workflows.conflictResolver.allResolvedSubtitle')}</p>
             </div>
             {#if isRebasing && onContinueRebase}
               <button
@@ -420,7 +421,7 @@
                 class="w-full py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md cursor-pointer transition-all flex items-center justify-center gap-1.5"
               >
                 <Play class="w-3.5 h-3.5 fill-current" />
-                <span>Tiếp tục Rebase</span>
+                <span>{localeState.t('workflows.conflictResolver.continueRebase')}</span>
               </button>
             {:else}
               <button
@@ -428,13 +429,13 @@
                 class="w-full py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md cursor-pointer transition-all flex items-center justify-center gap-1.5"
               >
                 <Check class="w-4 h-4" />
-                <span>Hoàn tất & Quay về Biểu đồ Commit</span>
+                <span>{localeState.t('workflows.conflictResolver.returnToGraph')}</span>
               </button>
             {/if}
           </div>
         {:else if filteredFiles.length === 0}
           <div class="p-4 text-center text-xs text-zinc-400">
-            Không tìm thấy tệp phù hợp với "{searchQuery}"
+            {localeState.t('workflows.conflictResolver.noMatching', { query: searchQuery })}
           </div>
         {:else}
           {#each filteredFiles as file}
@@ -474,7 +475,7 @@
       {#if isLoading}
         <div class="flex-1 flex flex-col items-center justify-center gap-2 text-xs text-zinc-500">
           <RefreshCw class="w-6 h-6 animate-spin text-indigo-500" />
-          <span>Đang tải dữ liệu 3-way conflict...</span>
+          <span>{localeState.t('workflows.conflictResolver.loadingConflict')}</span>
         </div>
       {:else if conflictDetail}
         <!-- Top Half: Comparison View (VS Code Monaco Diff Editor) -->
@@ -487,22 +488,22 @@
                 <div class="flex items-center gap-2">
                   <div class="flex items-center gap-1.5 font-bold text-cyan-700 dark:text-cyan-400 text-[11px]">
                     <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
-                    <span>1. Current / Ours (HEAD)</span>
+                    <span>{localeState.t('workflows.conflictResolver.currentOursHeader')}</span>
                   </div>
                   <button
                     onclick={acceptAllOurs}
                     class="px-2 py-0.5 rounded bg-cyan-100 dark:bg-cyan-600/30 hover:bg-cyan-200 dark:hover:bg-cyan-600/50 text-[10px] font-medium text-cyan-800 dark:text-cyan-200 border border-cyan-300 dark:border-cyan-500/40 cursor-pointer"
                   >
-                    Lấy toàn bộ Ours
+                    {localeState.t('workflows.conflictResolver.takeAllOurs')}
                   </button>
                 </div>
 
                 <div class="text-[11px] text-zinc-400 font-mono hidden sm:flex items-center gap-1.5">
-                  <span>VS Code Diff Engine</span>
+                  <span>{localeState.t('workflows.conflictResolver.vsCodeEngine')}</span>
                   <span>•</span>
-                  <span class="text-rose-600 dark:text-rose-400 font-semibold">Đỏ (Ours)</span>
+                  <span class="text-rose-600 dark:text-rose-400 font-semibold">{localeState.t('workflows.conflictResolver.redOurs')}</span>
                   <span>vs</span>
-                  <span class="text-emerald-600 dark:text-emerald-400 font-semibold">Xanh (Theirs)</span>
+                  <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{localeState.t('workflows.conflictResolver.greenTheirs')}</span>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -510,10 +511,10 @@
                     onclick={acceptAllTheirs}
                     class="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-600/30 hover:bg-amber-200 dark:hover:bg-amber-600/50 text-[10px] font-medium text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-500/40 cursor-pointer"
                   >
-                    Lấy toàn bộ Theirs
+                    {localeState.t('workflows.conflictResolver.takeAllTheirs')}
                   </button>
                   <div class="flex items-center gap-1.5 font-bold text-amber-700 dark:text-amber-400 text-[11px]">
-                    <span>2. Incoming / Theirs</span>
+                    <span>{localeState.t('workflows.conflictResolver.incomingTheirsHeader')}</span>
                     <span class="w-2 h-2 rounded-full bg-amber-500"></span>
                   </div>
                 </div>
@@ -537,7 +538,7 @@
               <!-- Base (Ancestor) -->
               <div class="flex flex-col overflow-hidden">
                 <div class="h-8 px-3 bg-zinc-100/90 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-[11px] shrink-0">
-                  <span class="font-bold text-zinc-600 dark:text-zinc-400">1. Base (Ancestor)</span>
+                  <span class="font-bold text-zinc-600 dark:text-zinc-400">{localeState.t('workflows.conflictResolver.baseHeader')}</span>
                 </div>
                 <div class="flex-1 w-full h-full overflow-hidden">
                   <MonacoEditor
@@ -553,12 +554,12 @@
               <!-- Ours (Current HEAD) -->
               <div class="flex flex-col overflow-hidden">
                 <div class="h-8 px-3 bg-cyan-100/60 dark:bg-cyan-950/40 border-b border-cyan-200 dark:border-cyan-800/30 flex items-center justify-between text-[11px] shrink-0">
-                  <span class="font-bold text-cyan-800 dark:text-cyan-300">2. Current / Ours (HEAD)</span>
+                  <span class="font-bold text-cyan-800 dark:text-cyan-300">{localeState.t('workflows.conflictResolver.currentOursHeader')}</span>
                   <button
                     onclick={acceptAllOurs}
                     class="px-2 py-0.5 rounded bg-cyan-100 dark:bg-cyan-600/30 hover:bg-cyan-200 text-[10px] text-cyan-800 dark:text-cyan-200 border border-cyan-300 dark:border-cyan-500/40 cursor-pointer"
                   >
-                    Lấy tất cả
+                    {localeState.t('workflows.conflictResolver.takeAll')}
                   </button>
                 </div>
                 <div class="flex-1 w-full h-full overflow-hidden">
@@ -575,12 +576,12 @@
               <!-- Theirs (Incoming) -->
               <div class="flex flex-col overflow-hidden">
                 <div class="h-8 px-3 bg-amber-100/60 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800/30 flex items-center justify-between text-[11px] shrink-0">
-                  <span class="font-bold text-amber-800 dark:text-amber-300">3. Incoming / Theirs</span>
+                  <span class="font-bold text-amber-800 dark:text-amber-300">{localeState.t('workflows.conflictResolver.incomingTheirsHeader')}</span>
                   <button
                     onclick={acceptAllTheirs}
                     class="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-600/30 hover:bg-amber-200 text-[10px] text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-500/40 cursor-pointer"
                   >
-                    Lấy tất cả
+                    {localeState.t('workflows.conflictResolver.takeAll')}
                   </button>
                 </div>
                 <div class="flex-1 w-full h-full overflow-hidden">
@@ -598,8 +599,8 @@
             <!-- Per-Chunk Inspector View -->
             <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-zinc-50/40 dark:bg-zinc-950/40">
               <div class="text-xs text-zinc-500 flex items-center justify-between">
-                <span>Danh sách các khối xung đột ({conflictChunks.length} khối):</span>
-                <span class="font-mono text-[11px]">Đã giải quyết: {resolvedChunksCount} / {conflictChunks.length}</span>
+                <span>{localeState.t('workflows.conflictResolver.chunksListCount', { count: conflictChunks.length })}</span>
+                <span class="font-mono text-[11px]">{localeState.t('workflows.conflictResolver.chunksResolvedRatio', { resolved: resolvedChunksCount, total: conflictChunks.length })}</span>
               </div>
 
               {#each conflictChunks as chunk, idx}
@@ -608,15 +609,15 @@
                   <!-- Chunk Header -->
                   <div class="px-3 py-2 bg-zinc-100/80 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs">
                     <div class="flex items-center gap-2">
-                      <span class="font-bold text-rose-600 dark:text-rose-400 font-mono">Xung đột #{idx + 1}</span>
+                      <span class="font-bold text-rose-600 dark:text-rose-400 font-mono">{localeState.t('workflows.conflictResolver.chunkTitle', { index: idx + 1 })}</span>
                       {#if currentChoice}
                         <span class="px-1.5 py-0.2 rounded text-[10px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30 flex items-center gap-1">
                           <Check class="w-2.5 h-2.5" />
-                          Đã chọn: {currentChoice}
+                          {localeState.t('workflows.conflictResolver.chunkResolved', { choice: currentChoice })}
                         </span>
                       {:else}
                         <span class="px-1.5 py-0.2 rounded text-[10px] font-medium bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/30">
-                          Mặc định: Ours (HEAD)
+                          {localeState.t('workflows.conflictResolver.chunkDefault')}
                         </span>
                       {/if}
                     </div>
@@ -626,25 +627,25 @@
                         onclick={() => applyChunkChoice(chunk.chunk_index, 'ours')}
                         class="px-2.5 py-1 rounded text-[11px] font-medium cursor-pointer transition-colors {currentChoice === 'ours' || !currentChoice ? 'bg-cyan-600 text-white shadow-xs' : 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-100 dark:hover:bg-cyan-900/60 border border-cyan-200 dark:border-cyan-800/40'}"
                       >
-                        Lấy Ours
+                        {localeState.t('workflows.conflictResolver.takeOurs')}
                       </button>
                       <button
                         onclick={() => applyChunkChoice(chunk.chunk_index, 'theirs')}
                         class="px-2.5 py-1 rounded text-[11px] font-medium cursor-pointer transition-colors {currentChoice === 'theirs' ? 'bg-amber-600 text-white shadow-xs' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800/40'}"
                       >
-                        Lấy Theirs
+                        {localeState.t('workflows.conflictResolver.takeTheirs')}
                       </button>
                       <button
                         onclick={() => applyChunkChoice(chunk.chunk_index, 'both-ours')}
                         class="px-2.5 py-1 rounded text-[11px] font-medium cursor-pointer transition-colors {currentChoice === 'both-ours' ? 'bg-purple-600 text-white shadow-xs' : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-800/40'}"
                       >
-                        Ghép cả 2
+                        {localeState.t('workflows.conflictResolver.takeBoth')}
                       </button>
                       <button
                         onclick={() => handleAiResolveChunk(chunk)}
                         disabled={aiResolvingChunkIdx === chunk.chunk_index}
                         class="px-2.5 py-1 rounded text-[11px] font-medium bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white cursor-pointer transition-all flex items-center gap-1 shadow-xs"
-                        title="AI gợi ý gộp khối này"
+                        title={localeState.t('workflows.conflictResolver.aiChunkTooltip')}
                       >
                         {#if aiResolvingChunkIdx === chunk.chunk_index}
                           <RefreshCw class="w-3 h-3 animate-spin" />
@@ -679,8 +680,8 @@
           <div class="h-9 px-4 bg-zinc-100/90 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs shrink-0 select-none">
             <div class="flex items-center gap-2">
               <Code2 class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span class="font-bold text-emerald-700 dark:text-emerald-400">Result (Final Output)</span>
-              <span class="text-zinc-500 text-[11px] hidden sm:inline">• Monaco Editor (Mã nguồn hợp nhất, chỉnh sửa trực tiếp)</span>
+              <span class="font-bold text-emerald-700 dark:text-emerald-400">{localeState.t('workflows.conflictResolver.resultHeader')}</span>
+              <span class="text-zinc-500 text-[11px] hidden sm:inline">{localeState.t('workflows.conflictResolver.resultSubheader')}</span>
             </div>
 
             <!-- Global Quick Buttons -->
@@ -688,38 +689,38 @@
               <button
                 onclick={acceptAllOurs}
                 class="px-2 py-1 rounded bg-cyan-50 dark:bg-cyan-950/40 hover:bg-cyan-100 dark:hover:bg-cyan-900/50 text-[10px] font-medium text-cyan-800 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800/40 cursor-pointer transition-colors"
-                title="Đặt kết quả toàn bộ theo nhánh Ours"
+                title={localeState.t('workflows.conflictResolver.allOursTooltip')}
               >
-                Tất cả Ours
+                {localeState.t('workflows.conflictResolver.takeAllOurs')}
               </button>
               <button
                 onclick={acceptAllTheirs}
                 class="px-2 py-1 rounded bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-[10px] font-medium text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40 cursor-pointer transition-colors"
-                title="Đặt kết quả toàn bộ theo nhánh Theirs"
+                title={localeState.t('workflows.conflictResolver.allTheirsTooltip')}
               >
-                Tất cả Theirs
+                {localeState.t('workflows.conflictResolver.takeAllTheirs')}
               </button>
               <button
                 onclick={acceptAllBoth}
                 class="px-2 py-1 rounded bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-[10px] font-medium text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/40 cursor-pointer transition-colors"
-                title="Ghép cả 2 nhánh (Ours trước, Theirs sau)"
+                title={localeState.t('workflows.conflictResolver.allBothTooltip')}
               >
-                Ghép cả hai
+                {localeState.t('workflows.conflictResolver.takeAllBoth')}
               </button>
               <button
                 onclick={resetToOurs}
                 class="px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-[10px] text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 cursor-pointer flex items-center gap-1 transition-colors"
-                title="Đặt lại về trạng thái ban đầu"
+                title={localeState.t('workflows.conflictResolver.resetTooltip')}
               >
                 <Undo2 class="w-3 h-3" />
-                <span>Đặt lại</span>
+                <span>{localeState.t('workflows.conflictResolver.resetBtn')}</span>
               </button>
               <button
                 onclick={insertGitConflictMarkers}
                 class="px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-[10px] text-zinc-500 hover:text-rose-600 border border-zinc-200 dark:border-zinc-700 cursor-pointer transition-colors hidden md:inline"
-                title="Chèn lại mốc git <<<<<<< thô nếu muốn xem kiểu cũ"
+                title={localeState.t('workflows.conflictResolver.rawGitMarkersTooltip')}
               >
-                Mốc git thô
+                {localeState.t('workflows.conflictResolver.rawGitMarkers')}
               </button>
             </div>
           </div>
@@ -744,8 +745,8 @@
         <!-- Empty Selection View -->
         <div class="flex-1 flex flex-col items-center justify-center text-zinc-400 text-xs p-6 space-y-2">
           <FileCode class="w-12 h-12 opacity-30 text-zinc-400" />
-          <p class="font-medium">Chọn một tệp từ danh sách bên trái để bắt đầu giải quyết xung đột.</p>
-          <p class="text-[11px] text-zinc-500">Bạn có thể đối chiếu diff của VS Code phía trên, và chỉnh sửa kết quả trực tiếp phía dưới.</p>
+          <p class="font-medium">{localeState.t('workflows.conflictResolver.emptyPrompt')}</p>
+          <p class="text-[11px] text-zinc-500">{localeState.t('workflows.conflictResolver.emptyHint')}</p>
         </div>
       {/if}
     </div>

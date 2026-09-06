@@ -1,4 +1,5 @@
 import type { CommitNode, GraphEdge, GraphViewMode } from '../../types';
+import { localeState } from '../../state/localeState.svelte';
 
 export function deriveDisplayCommits(
   commits: CommitNode[],
@@ -49,7 +50,7 @@ export function deriveDisplayCommits(
           id: capsuleId,
           short_id: `+${run.length}`,
           parents: lastInRun.parents || [],
-          author_name: `${run.length} commits grouped`,
+          author_name: localeState.t('graph.capsules.commitsGrouped', { count: run.length }),
           author_email: '',
           summary: c.summary,
           timestamp: c.timestamp,

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { BranchInfo, TagInfo, ViewMode } from '../types';
+  import { localeState } from '../state/localeState.svelte';
   import {
     BookOpen,
     Search,
@@ -295,7 +296,7 @@
         <input
           type="text"
           bind:value={query}
-          placeholder="Type a command, action, branch, or view..."
+          placeholder={localeState.t('assistant.commandPalette.placeholder')}
           class="w-full bg-transparent text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none"
         />
 
@@ -308,7 +309,7 @@
       <div class="flex-1 overflow-y-auto p-2 space-y-1">
         {#if filteredItems.length === 0}
           <div class="p-8 text-center text-xs text-zinc-400 dark:text-zinc-500">
-            No matching actions or commands found.
+            {localeState.t('assistant.commandPalette.noResults')} "{query}"
           </div>
         {:else}
           {#each filteredItems as item, idx}
@@ -326,7 +327,7 @@
 
               <div class="flex items-center gap-2 shrink-0 ml-2">
                 <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/50">
-                  {item.category}
+                  {localeState.t(`assistant.commandPalette.category${item.category}`)}
                 </span>
                 {#if item.shortcut}
                   <span class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">

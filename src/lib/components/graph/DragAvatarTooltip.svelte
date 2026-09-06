@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { CommitNode, ConflictSimulationResult } from '../../types';
   import { GitCommit, AlertTriangle, CheckCircle2, ArrowRight, Zap } from 'lucide-svelte';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     draggedCommit: CommitNode;
@@ -37,17 +38,17 @@
       {#if simulationResult.has_conflicts}
         <span class="flex items-center gap-1 text-[11px] font-bold text-rose-400 bg-rose-950/60 px-1.5 py-0.5 rounded border border-rose-800/80">
           <AlertTriangle class="w-3 h-3" />
-          {simulationResult.conflict_files.length} conflict(s)
+          {localeState.t('graph.dragTooltip.conflictsCount', { count: simulationResult.conflict_files.length })}
         </span>
       {:else if simulationResult.is_fast_forward}
         <span class="flex items-center gap-1 text-[11px] font-bold text-amber-300 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-700/80">
           <Zap class="w-3 h-3 text-amber-400" />
-          Fast-Forward
+          {localeState.t('graph.dragTooltip.fastForward')}
         </span>
       {:else}
         <span class="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/80">
           <CheckCircle2 class="w-3 h-3" />
-          Clean
+          {localeState.t('graph.dragTooltip.clean')}
         </span>
       {/if}
     {/if}

@@ -13,6 +13,7 @@
     Eye,
     GitPullRequest,
   } from 'lucide-svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     x: number;
@@ -119,7 +120,7 @@
         role="menuitem"
       >
         <Layers class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-        <span>Gộp {selectedCount} commit thành 1 (Squash)</span>
+        <span>{localeState.t('graph.contextMenu.squashCommits', { count: selectedCount })}</span>
       </button>
       <div class="my-1 border-t border-zinc-200 dark:border-zinc-800"></div>
     {/if}
@@ -135,7 +136,7 @@
         role="menuitem"
       >
         <GitBranch class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-        <span>Tạo nhánh mới tại commit này...</span>
+        <span>{localeState.t('graph.contextMenu.createBranch')}</span>
       </button>
     {/if}
 
@@ -150,7 +151,7 @@
         role="menuitem"
       >
         <Tag class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-        <span>Tạo Tag / Release tại đây...</span>
+        <span>{localeState.t('graph.contextMenu.createTag')}</span>
       </button>
     {/if}
 
@@ -165,7 +166,7 @@
         role="menuitem"
       >
         <GitCompare class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-        <span>So sánh với commit hiện tại</span>
+        <span>{localeState.t('graph.contextMenu.compareWithCurrent')}</span>
       </button>
     {/if}
 
@@ -180,7 +181,7 @@
         role="menuitem"
       >
         <Eye class="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
-        <span>{isLockedFocus ? 'Bỏ khóa tiêu điểm nhánh' : 'Khóa tiêu điểm nhánh này (Focus Lock)'}</span>
+        <span>{isLockedFocus ? localeState.t('graph.contextMenu.unlockFocus') : localeState.t('graph.contextMenu.lockFocus')}</span>
       </button>
     {/if}
 
@@ -195,10 +196,10 @@
         }}
         class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-cyan-50 dark:hover:bg-cyan-950/40 text-cyan-800 dark:text-cyan-300 hover:text-cyan-950 dark:hover:text-cyan-100 transition-colors cursor-pointer"
         role="menuitem"
-        title="Áp dụng các thay đổi của commit này vào nhánh hiện tại (git cherry-pick)"
+        title={localeState.t('graph.contextMenu.cherryPickTooltip')}
       >
         <GitPullRequest class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-        <span>Cherry-pick commit này (git cherry-pick)</span>
+        <span>{localeState.t('graph.contextMenu.cherryPick')}</span>
       </button>
     {/if}
 
@@ -211,10 +212,10 @@
         }}
         class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:text-rose-900 dark:hover:text-rose-100 transition-colors cursor-pointer"
         role="menuitem"
-        title="Tạo commit mới đảo ngược lại commit này an toàn"
+        title={localeState.t('graph.contextMenu.revertTooltip')}
       >
         <RotateCcw class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
-        <span>Revert commit này (git revert)</span>
+        <span>{localeState.t('graph.contextMenu.revert')}</span>
       </button>
     {/if}
 
@@ -227,10 +228,10 @@
         }}
         class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:text-amber-950 dark:hover:text-amber-100 transition-colors cursor-pointer"
         role="menuitem"
-        title="Interactive Rebase các commit từ HEAD xuống commit này (git rebase -i)"
+        title={localeState.t('graph.contextMenu.interactiveRebaseTooltip')}
       >
         <GitFork class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-        <span>Rebase tương tác lên đây (git rebase -i)</span>
+        <span>{localeState.t('graph.contextMenu.interactiveRebase')}</span>
       </button>
     {/if}
 
@@ -248,7 +249,7 @@
         >
           <div class="flex items-center gap-2">
             <Rewind class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-            <span>Reset HEAD về commit này</span>
+            <span>{localeState.t('graph.contextMenu.resetHead')}</span>
           </div>
           <span class="text-[10px] text-zinc-400 dark:text-zinc-500">▶</span>
         </button>
@@ -264,8 +265,8 @@
               }}
               class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
             >
-              <div class="font-bold text-emerald-700 dark:text-emerald-300">Soft Reset</div>
-              <div class="text-[10px] text-zinc-500 dark:text-zinc-400">Giữ nguyên thay đổi ở Staged</div>
+              <div class="font-bold text-emerald-700 dark:text-emerald-300">{localeState.t('graph.contextMenu.softResetTitle')}</div>
+              <div class="text-[10px] text-zinc-500 dark:text-zinc-400">{localeState.t('graph.contextMenu.softResetDesc')}</div>
             </button>
 
             <button
@@ -275,8 +276,8 @@
               }}
               class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
             >
-              <div class="font-bold text-cyan-700 dark:text-cyan-300">Mixed Reset (Mặc định)</div>
-              <div class="text-[10px] text-zinc-500 dark:text-zinc-400">Giữ thay đổi ở Working Tree</div>
+              <div class="font-bold text-cyan-700 dark:text-cyan-300">{localeState.t('graph.contextMenu.mixedResetTitle')}</div>
+              <div class="text-[10px] text-zinc-500 dark:text-zinc-400">{localeState.t('graph.contextMenu.mixedResetDesc')}</div>
             </button>
 
             <button
@@ -286,8 +287,8 @@
               }}
               class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:text-rose-950 dark:hover:text-rose-100 transition-colors cursor-pointer"
             >
-              <div class="font-bold text-rose-600 dark:text-rose-400">Hard Reset (Nguy hiểm)</div>
-              <div class="text-[10px] text-rose-600/80 dark:text-rose-300/70">Xóa sạch code về commit này (Undo Ctrl+Z)</div>
+              <div class="font-bold text-rose-600 dark:text-rose-400">{localeState.t('graph.contextMenu.hardResetTitle')}</div>
+              <div class="text-[10px] text-rose-600/80 dark:text-rose-300/70">{localeState.t('graph.contextMenu.hardResetDesc')}</div>
             </button>
           </div>
         {/if}
@@ -306,7 +307,7 @@
       role="menuitem"
     >
       <Copy class="w-3.5 h-3.5 text-zinc-400" />
-      <span>Sao chép SHA ({commit.short_id})</span>
+      <span>{localeState.t('graph.contextMenu.copySha', { shortId: commit.short_id })}</span>
     </button>
   </div>
 </div>

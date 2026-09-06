@@ -1,0 +1,15 @@
+export const timeMachine = {
+  title: "Safe-Flight Time Machine",
+  description: "Hoàn tác tức thì mọi thao tác Git mà không sợ mất code.",
+  undoBtn: "Undo (Ctrl + Z)",
+  redoBtn: "Redo (Ctrl+Shift+Z)",
+  noChanges: "Chưa có thay đổi trạng thái Git nào trong phiên này.",
+  destructiveBadge: "Destructive",
+  moderateBadge: "History Rewrite",
+  safeBadge: "Safe",
+  timeTravelBtn: "Time Travel",
+  secondsAgo: "{count}s trước",
+  minutesAgo: "{count}m trước",
+  hoursAgo: "{count}h trước",
+  daysAgo: "{count}d trước",
+};

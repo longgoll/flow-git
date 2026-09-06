@@ -1,0 +1,22 @@
+import type { submodules as viSubmodules } from '../vi/submodules';
+
+export const submodules: typeof viSubmodules = {
+  title: "Git Submodules Explorer",
+  modulesCount: "{count} modules",
+  description: "Manage and sync nested child repositories",
+  syncConfig: "Sync Config",
+  syncConfigTooltip: "Synchronize URLs in .gitmodules into Git config",
+  updateAll: "Update All (--init --recursive)",
+  closeModal: "Close dialog",
+  scanning: "Scanning submodules list...",
+  emptyTitle: "No Git Submodules",
+  emptyDesc: "This repository currently does not contain any .gitmodules file.",
+  clean: "Clean",
+  modified: "Modified",
+  uninitialized: "Uninitialized",
+  outOfSync: "Out of Sync",
+  update: "Update",
+  remoteUrl: "Remote URL",
+  registeredCommit: "Registered Commit (Index)",
+  diverged: "HEAD: {head} (diverged)",
+};

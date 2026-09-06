@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { localeState } from '../state/localeState.svelte';
   import { toast } from '../state/toastState.svelte';
   import {
     CheckCircle2,
@@ -93,7 +94,7 @@
       <button
         onclick={() => toast.dismiss(item.id)}
         class="shrink-0 p-1 text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60 rounded-md transition-colors cursor-pointer"
-        title="Đóng thông báo"
+        title={localeState.t('common.close')}
       >
         <X class="w-3.5 h-3.5" />
       </button>

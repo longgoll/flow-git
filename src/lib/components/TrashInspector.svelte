@@ -10,6 +10,7 @@
     Search,
     CheckCheck,
   } from 'lucide-svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     isOpen: boolean;
@@ -80,13 +81,13 @@
           </div>
           <div>
             <h2 class="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              Safe Discard Trash Inspector
+              {localeState.t('safety.trash.title')}
               <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/40 text-emerald-800 dark:text-emerald-300 font-semibold">
-                48h Auto-Protected
+                {localeState.t('safety.trash.autoProtectedBadge')}
               </span>
             </h2>
             <p class="text-[11px] text-zinc-500 dark:text-zinc-400">
-              Every discarded file is safely snapshotted in embedded SQLite before deletion.
+              {localeState.t('safety.trash.description')}
             </p>
           </div>
         </div>
@@ -104,18 +105,18 @@
         <!-- Left: List of Snapshots -->
         <div class="w-80 border-r border-zinc-200 dark:border-zinc-800/80 flex flex-col bg-zinc-50/50 dark:bg-zinc-950/50">
           <div class="p-3 border-b border-zinc-200 dark:border-zinc-800/60 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
-            <span class="font-semibold text-zinc-800 dark:text-zinc-300">Snapshots ({snapshots.length})</span>
+            <span class="font-semibold text-zinc-800 dark:text-zinc-300">{localeState.t('safety.trash.snapshotsCount', { count: snapshots.length })}</span>
             {#if snapshots.length > 1 && onRestoreAll}
               <button
                 onclick={onRestoreAll}
                 class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/70 hover:bg-emerald-200 dark:hover:bg-emerald-900 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-[10px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                title="Restore all snapshots in trash"
+                title={localeState.t('safety.trash.restoreAllTooltip')}
               >
                 <CheckCheck class="w-3 h-3" />
-                <span>Restore All</span>
+                <span>{localeState.t('safety.trash.restoreAll')}</span>
               </button>
             {:else}
-              <span class="text-[10px] text-zinc-500 font-mono">Kept for 48h</span>
+              <span class="text-[10px] text-zinc-500 font-mono">{localeState.t('safety.trash.keptFor48h')}</span>
             {/if}
           </div>
 
@@ -127,7 +128,7 @@
                 <input
                   type="text"
                   bind:value={searchQuery}
-                  placeholder="Filter discarded files..."
+                  placeholder={localeState.t('safety.trash.filterPlaceholder')}
                   class="w-full pl-8 pr-2.5 py-1 text-xs rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:outline-hidden focus:border-cyan-500 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 transition-all font-mono"
                 />
               </div>
@@ -137,13 +138,13 @@
           <div class="flex-1 overflow-y-auto p-2 space-y-1">
             {#if isLoading}
               <div class="h-48 flex items-center justify-center text-xs text-zinc-500">
-                Loading snapshots...
+                {localeState.t('safety.trash.loadingSnapshots')}
               </div>
             {:else if filteredSnapshots.length === 0}
               <div class="h-48 flex flex-col items-center justify-center text-zinc-500 gap-2">
                 <FolderArchive class="w-8 h-8 opacity-40" />
                 <span class="text-xs">
-                  {searchQuery ? 'No matching files found' : 'Trash is currently empty'}
+                  {searchQuery ? localeState.t('safety.trash.noMatching') : localeState.t('safety.trash.emptyTrash')}
                 </span>
               </div>
             {:else}
@@ -185,7 +186,7 @@
                 <button
                   onclick={() => onDelete(selectedSnapshot.id)}
                   class="p-1.5 rounded-lg bg-white dark:bg-zinc-900 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 dark:hover:text-rose-400 border border-zinc-300 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs transition-colors cursor-pointer shadow-xs"
-                  title="Permanently remove from trash"
+                  title={localeState.t('safety.trash.deletePermanently')}
                 >
                   <Trash2 class="w-3.5 h-3.5" />
                 </button>
@@ -195,7 +196,7 @@
                   class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 active:scale-98 transition-all cursor-pointer"
                 >
                   <RotateCcw class="w-3.5 h-3.5" />
-                  <span>1-Click Restore</span>
+                  <span>{localeState.t('safety.trash.restoreOneClick')}</span>
                 </button>
               </div>
             </div>
@@ -217,7 +218,7 @@
           {:else}
             <div class="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-2">
               <ShieldCheck class="w-12 h-12 text-emerald-500 opacity-20" />
-              <p class="text-xs text-zinc-500">No snapshot selected</p>
+              <p class="text-xs text-zinc-500">{localeState.t('safety.trash.noSnapshotSelected')}</p>
             </div>
           {/if}
         </div>

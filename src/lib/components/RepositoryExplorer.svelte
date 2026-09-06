@@ -57,6 +57,7 @@
     RotateCcw,
   } from 'lucide-svelte';
   import { toast } from '../state/toastState.svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     repoPath: string;
@@ -500,12 +501,12 @@
         <button
           onclick={() => (isRefPickerOpen = true)}
           class="w-full flex items-center justify-between px-2 py-1.5 rounded-lg bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 hover:border-cyan-500/50 text-left transition-all cursor-pointer shadow-2xs group"
-          title="Bấm để chọn Branch, Tag, hoặc Commit lịch sử"
+          title={localeState.t('explorer.repository.refPickerButtonTooltip')}
         >
           <div class="flex items-center gap-1.5 truncate min-w-0">
             {#if selectedCommitOid === null}
               <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse"></span>
-              <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 truncate">Working Tree (Live)</span>
+              <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 truncate">{localeState.t('explorer.repository.workingTreeLive')}</span>
             {:else}
               <GitCommit class="w-3 h-3 text-indigo-500 shrink-0" />
               <span class="text-xs font-mono font-medium text-indigo-700 dark:text-indigo-400 truncate">{selectedRefLabel}</span>
@@ -521,14 +522,14 @@
             class="flex-1 py-1 rounded-md flex items-center justify-center gap-1 cursor-pointer transition-all {explorerTab === 'tree' ? 'bg-white dark:bg-zinc-800 text-cyan-700 dark:text-cyan-300 font-semibold shadow-xs' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'}"
           >
             <Folder class="w-3 h-3" />
-            <span>Files</span>
+            <span>{localeState.t('explorer.repository.filesTab')}</span>
           </button>
           <button
             onclick={() => (explorerTab = 'search')}
             class="flex-1 py-1 rounded-md flex items-center justify-center gap-1 cursor-pointer transition-all {explorerTab === 'search' ? 'bg-white dark:bg-zinc-800 text-cyan-700 dark:text-cyan-300 font-semibold shadow-xs' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'}"
           >
             <Search class="w-3 h-3" />
-            <span>Find in Repo</span>
+            <span>{localeState.t('explorer.repository.findInRepo')}</span>
           </button>
         </div>
 
@@ -539,7 +540,7 @@
             <input
               type="text"
               bind:value={treeSearchQuery}
-              placeholder="Lọc tên tệp..."
+              placeholder={localeState.t('explorer.repository.filterFileNames')}
               class="w-full bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-lg pl-7 pr-2 py-1 text-xs text-zinc-900 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-cyan-500 font-mono"
             />
           </div>
@@ -554,14 +555,14 @@
                 onkeydown={(e) => {
                   if (e.key === 'Enter') runGrepSearch();
                 }}
-                placeholder="Tìm chuỗi mã nguồn..."
+                placeholder={localeState.t('explorer.repository.findCodePlaceholder')}
                 class="w-full bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-lg pl-7 pr-7 py-1 text-xs text-zinc-900 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-cyan-500 font-mono"
               />
               <button
                 onclick={runGrepSearch}
                 class="absolute right-1.5 top-1 px-1.5 py-0.5 rounded text-[10px] bg-cyan-600 hover:bg-cyan-500 text-white font-medium cursor-pointer"
               >
-                Grep
+                {localeState.t('explorer.repository.grepBtn')}
               </button>
             </div>
             <div class="flex items-center justify-between text-[10px] text-zinc-500 px-1">
@@ -572,10 +573,10 @@
                   onchange={runGrepSearch}
                   class="rounded text-cyan-600 focus:ring-0 w-3 h-3"
                 />
-                <span>Phân biệt hoa/thường</span>
+                <span>{localeState.t('explorer.repository.caseSensitive')}</span>
               </label>
               {#if grepResults.length > 0}
-                <span class="text-cyan-600 dark:text-cyan-400 font-mono">{grepResults.length} kết quả</span>
+                <span class="text-cyan-600 dark:text-cyan-400 font-mono">{localeState.t('explorer.repository.resultsCount', { count: grepResults.length })}</span>
               {/if}
             </div>
           </div>
@@ -588,7 +589,7 @@
           {#if isTreeLoading && !directoryEntries['']}
             <div class="h-32 flex items-center justify-center text-zinc-500 text-xs gap-2">
               <div class="w-4 h-4 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"></div>
-              <span>Đang đọc cấu trúc tệp...</span>
+              <span>{localeState.t('explorer.repository.readingTree')}</span>
             </div>
           {:else}
             {#snippet renderTree(dirPath: string, depth: number)}
@@ -680,11 +681,11 @@
           {#if isGrepSearching}
             <div class="h-32 flex flex-col items-center justify-center text-zinc-500 text-xs gap-2">
               <div class="w-4 h-4 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"></div>
-              <span>Đang quét mã nguồn bằng Rust Rayon...</span>
+              <span>{localeState.t('explorer.repository.grepScanning')}</span>
             </div>
           {:else if grepResults.length === 0}
             <div class="p-6 text-center text-zinc-400 text-xs">
-              {grepQuery ? 'Không tìm thấy kết quả nào' : 'Nhập từ khóa và bấm Enter để tìm kiếm'}
+              {grepQuery ? localeState.t('explorer.repository.noGrepResults') : localeState.t('explorer.repository.grepPrompt')}
             </div>
           {:else}
             <div class="space-y-1">
@@ -713,14 +714,14 @@
     <div
       onmousedown={startDraggingSplitter}
       class="w-1.5 h-full cursor-col-resize hover:bg-cyan-500/40 active:bg-cyan-500 transition-colors z-10 shrink-0 select-none {isDraggingSplitter ? 'bg-cyan-500' : 'bg-transparent'}"
-      title="Kéo để thay đổi độ rộng cột Explorer"
+      title={localeState.t('explorer.repository.dragSplitterTooltip')}
     ></div>
   {:else}
     <!-- Collapsed Toggle Button -->
     <button
       onclick={() => (isTreeCollapsed = false)}
       class="absolute left-2 top-2 z-20 p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-md text-zinc-600 dark:text-zinc-300 hover:text-cyan-600 cursor-pointer"
-      title="Mở rộng cây thư mục (Ctrl + B)"
+      title={localeState.t('explorer.repository.expandTreeTooltip')}
     >
       <PanelLeftOpen class="w-4 h-4" />
     </button>
@@ -781,7 +782,7 @@
 
             {#if hasUnsavedChanges}
               <span class="px-1.5 py-0.2 rounded bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-bold animate-pulse">
-                ● Unsaved
+                {localeState.t('explorer.repository.unsavedBadge')}
               </span>
             {/if}
           </div>
@@ -794,26 +795,26 @@
             <button
               onclick={() => (editorMode = 'preview')}
               class="px-2 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-all {editorMode === 'preview' ? 'bg-white dark:bg-zinc-900 text-cyan-700 dark:text-cyan-300 font-semibold shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-200'}"
-              title="Chế độ chỉ xem (Preview Mode)"
+              title={localeState.t('explorer.repository.previewModeTooltip')}
             >
               <Eye class="w-3 h-3" />
-              <span class="hidden sm:inline">Preview</span>
+              <span class="hidden sm:inline">{localeState.t('explorer.repository.previewMode')}</span>
             </button>
             <button
               onclick={() => (editorMode = 'edit')}
               class="px-2 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-all {editorMode === 'edit' ? 'bg-white dark:bg-zinc-900 text-cyan-700 dark:text-cyan-300 font-semibold shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-200'}"
-              title="Chế độ sửa nhanh tệp trực tiếp (Ctrl + E)"
+              title={localeState.t('explorer.repository.editModeTooltip')}
             >
               <Edit3 class="w-3 h-3" />
-              <span class="hidden sm:inline">Edit</span>
+              <span class="hidden sm:inline">{localeState.t('explorer.repository.editMode')}</span>
             </button>
             <button
               onclick={handleToggleDiffMode}
               class="px-2 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-all {editorMode === 'diff' ? 'bg-white dark:bg-zinc-900 text-cyan-700 dark:text-cyan-300 font-semibold shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-200'}"
-              title="So sánh với commit HEAD hiện tại"
+              title={localeState.t('explorer.repository.diffHeadModeTooltip')}
             >
               <GitCompare class="w-3 h-3" />
-              <span class="hidden sm:inline">Diff vs HEAD</span>
+              <span class="hidden sm:inline">{localeState.t('explorer.repository.diffHeadMode')}</span>
             </button>
           </div>
 
@@ -823,10 +824,10 @@
               onclick={handleSave}
               disabled={isSaving || !hasUnsavedChanges}
               class="px-2.5 py-1 rounded-lg flex items-center gap-1 text-[11px] font-semibold transition-all cursor-pointer {hasUnsavedChanges ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 cursor-not-allowed'}"
-              title="Lưu tệp xuống đĩa (Ctrl + S)"
+              title={localeState.t('explorer.repository.saveTooltip')}
             >
               <Save class="w-3 h-3 {isSaving ? 'animate-spin' : ''}" />
-              <span>Lưu</span>
+              <span>{localeState.t('explorer.repository.saveBtn')}</span>
             </button>
           {/if}
 
@@ -836,7 +837,7 @@
           <button
             onclick={() => (wordWrap = wordWrap === 'on' ? 'off' : 'on')}
             class="px-1.5 py-1 rounded flex items-center gap-1 text-[11px] border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition-colors cursor-pointer {wordWrap === 'on' ? 'text-cyan-700 dark:text-cyan-400 border-cyan-300 dark:border-cyan-800/60 bg-cyan-50 dark:bg-cyan-950/40 font-medium' : 'text-zinc-600 dark:text-zinc-400'}"
-            title="Toggle Word Wrap"
+            title={localeState.t('explorer.repository.toggleWordWrap')}
           >
             <WrapText class="w-3 h-3" />
           </button>
@@ -845,7 +846,7 @@
           <button
             onclick={() => (minimap = !minimap)}
             class="px-1.5 py-1 rounded flex items-center gap-1 text-[11px] border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition-colors cursor-pointer {minimap ? 'text-cyan-700 dark:text-cyan-400 border-cyan-300 dark:border-cyan-800/60 bg-cyan-50 dark:bg-cyan-950/40 font-medium' : 'text-zinc-600 dark:text-zinc-400'}"
-            title="Toggle Minimap"
+            title={localeState.t('explorer.repository.toggleMinimap')}
           >
             <MapIcon class="w-3 h-3" />
           </button>
@@ -855,7 +856,7 @@
             <button
               onclick={toggleBlame}
               class="px-2 py-1 rounded flex items-center gap-1 text-[11px] border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition-colors cursor-pointer {showBlame ? 'text-purple-700 dark:text-purple-400 border-purple-300 dark:border-purple-800/60 bg-purple-50 dark:bg-purple-950/40 font-medium' : 'text-zinc-600 dark:text-zinc-400'}"
-              title="Xem tác giả từng dòng code (Git Blame)"
+              title={localeState.t('explorer.repository.blameTooltip')}
             >
               <UserCheck class="w-3 h-3" />
               <span class="hidden md:inline">Blame</span>
@@ -864,7 +865,7 @@
             <button
               onclick={() => (showFileHistory = true)}
               class="px-2 py-1 rounded flex items-center gap-1 text-[11px] border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition-colors cursor-pointer text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
-              title="Xem danh sách commit thay đổi tệp này (File History)"
+              title={localeState.t('explorer.repository.historyTooltip')}
             >
               <History class="w-3 h-3" />
               <span class="hidden md:inline">History</span>
@@ -878,10 +879,10 @@
             <button
               onclick={() => (showEditorDropdown = !showEditorDropdown)}
               class="px-2 py-1 rounded-lg bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 text-[11px] flex items-center gap-1 cursor-pointer transition-colors"
-              title="Mở tệp trong IDE ngoại vi"
+              title={localeState.t('explorer.repository.openIdeTooltip')}
             >
               <Code class="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
-              <span class="hidden lg:inline font-medium">Mở IDE</span>
+              <span class="hidden lg:inline font-medium">{localeState.t('explorer.repository.openIde')}</span>
               <ChevronDown class="w-2.5 h-2.5 text-zinc-400" />
             </button>
 
@@ -898,28 +899,28 @@
                   class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
                 >
                   <Sparkles class="w-3.5 h-3.5 text-indigo-500" />
-                  <span>Mở bằng Cursor</span>
+                  <span>{localeState.t('explorer.repository.openCursor')}</span>
                 </button>
                 <button
                   onclick={() => handleOpenInEditor('antigravity')}
                   class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
                 >
                   <Code class="w-3.5 h-3.5 text-cyan-500" />
-                  <span>Mở bằng Antigravity</span>
+                  <span>{localeState.t('explorer.repository.openAntigravity')}</span>
                 </button>
                 <button
                   onclick={() => handleOpenInEditor('code')}
                   class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
                 >
                   <ExternalLink class="w-3.5 h-3.5 text-blue-500" />
-                  <span>Mở bằng VS Code</span>
+                  <span>{localeState.t('explorer.repository.openVsCode')}</span>
                 </button>
                 <button
                   onclick={() => handleOpenInEditor('zed')}
                   class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
                 >
                   <ExternalLink class="w-3.5 h-3.5 text-emerald-500" />
-                  <span>Mở bằng Zed</span>
+                  <span>{localeState.t('explorer.repository.openZed')}</span>
                 </button>
                 <div class="my-1 border-t border-zinc-200 dark:border-zinc-800"></div>
                 <button
@@ -927,14 +928,14 @@
                   class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
                 >
                   <FileText class="w-3.5 h-3.5 text-zinc-500" />
-                  <span>Mở bằng App mặc định</span>
+                  <span>{localeState.t('explorer.repository.openDefault')}</span>
                 </button>
                 <button
                   onclick={() => { showEditorDropdown = false; handleRevealInExplorer(); }}
                   class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
                 >
                   <FolderOpen class="w-3.5 h-3.5 text-amber-500" />
-                  <span>Reveal in File Explorer</span>
+                  <span>{localeState.t('explorer.repository.revealFileExplorer')}</span>
                 </button>
               </div>
             {/if}
@@ -945,7 +946,7 @@
             <button
               onclick={() => (showMoreDropdown = !showMoreDropdown)}
               class="p-1 rounded-lg hover:bg-zinc-200/60 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
-              title="Các tùy chọn khác"
+              title={localeState.t('explorer.repository.moreOptions')}
             >
               <MoreVertical class="w-3.5 h-3.5" />
             </button>
@@ -964,21 +965,21 @@
                     class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
                   >
                     <Copy class="w-3.5 h-3.5 text-zinc-500" />
-                    <span>Sao chép đường dẫn tương đối</span>
+                    <span>{localeState.t('explorer.repository.copyRelativePath')}</span>
                   </button>
                   <button
                     onclick={() => { showMoreDropdown = false; copyPath(true); }}
                     class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
                   >
                     <Copy class="w-3.5 h-3.5 text-zinc-500" />
-                    <span>Sao chép đường dẫn tuyệt đối</span>
+                    <span>{localeState.t('explorer.repository.copyAbsolutePath')}</span>
                   </button>
                   <button
                     onclick={() => { showMoreDropdown = false; copyContent(); }}
                     class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
                   >
                     <Copy class="w-3.5 h-3.5 text-cyan-500" />
-                    <span>Sao chép toàn bộ mã nguồn</span>
+                    <span>{localeState.t('explorer.repository.copyAllContent')}</span>
                   </button>
                 </div>
 
@@ -993,7 +994,7 @@
                         class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer text-amber-600 dark:text-amber-400"
                       >
                         <RotateCcw class="w-3.5 h-3.5" />
-                        <span>Unstage tệp này</span>
+                        <span>{localeState.t('explorer.repository.unstageFileAction')}</span>
                       </button>
                     {:else}
                       <button
@@ -1004,7 +1005,7 @@
                         class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer text-emerald-600 dark:text-emerald-400"
                       >
                         <CheckCircle2 class="w-3.5 h-3.5" />
-                        <span>Stage tệp này</span>
+                        <span>{localeState.t('explorer.repository.stageFileAction')}</span>
                       </button>
                     {/if}
 
@@ -1016,7 +1017,7 @@
                       class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer text-rose-600 dark:text-rose-400"
                     >
                       <Trash2 class="w-3.5 h-3.5" />
-                      <span>Safe Discard (Vào thùng rác 48h)</span>
+                      <span>{localeState.t('explorer.repository.safeDiscardAction')}</span>
                     </button>
                   </div>
                 {/if}
@@ -1031,7 +1032,7 @@
                       class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 text-rose-700 dark:text-rose-400 flex items-center gap-2 cursor-pointer"
                     >
                       <Trash2 class="w-3.5 h-3.5 text-rose-600" />
-                      <span>Xóa vĩnh viễn khỏi Git history (Nuke)</span>
+                      <span>{localeState.t('explorer.repository.nukeFileAction')}</span>
                     </button>
                   </div>
                 {/if}
@@ -1046,19 +1047,19 @@
         {#if isContentLoading}
           <div class="h-full flex flex-col items-center justify-center text-zinc-500 gap-2">
             <div class="w-6 h-6 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"></div>
-            <span class="text-xs">Đang tải mã nguồn trong Monaco Editor...</span>
+            <span class="text-xs">{localeState.t('explorer.repository.loadingEditor')}</span>
           </div>
         {:else if isBinary}
           <div class="h-full flex flex-col items-center justify-center text-zinc-500 gap-3 select-none">
             <Binary class="w-12 h-12 text-cyan-600 dark:text-cyan-400 opacity-60" />
             <div class="text-center">
-              <p class="text-sm font-semibold text-zinc-800 dark:text-zinc-300">Tệp nhị phân (Binary File)</p>
-              <p class="text-xs text-zinc-500 dark:text-zinc-600 mt-1">Tệp này không thể hiển thị dưới dạng văn bản thường trong trình xem mã nguồn.</p>
+              <p class="text-sm font-semibold text-zinc-800 dark:text-zinc-300">{localeState.t('explorer.repository.binaryTitle')}</p>
+              <p class="text-xs text-zinc-500 dark:text-zinc-600 mt-1">{localeState.t('explorer.repository.binaryDesc')}</p>
               <button
                 onclick={handleRevealInExplorer}
                 class="mt-4 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-xs font-semibold cursor-pointer transition-colors"
               >
-                Mở trong File Explorer
+                {localeState.t('explorer.repository.revealFileExplorer')}
               </button>
             </div>
           </div>
@@ -1067,7 +1068,7 @@
           {#if isDiffLoading}
             <div class="h-full flex flex-col items-center justify-center text-zinc-500 gap-2">
               <div class="w-6 h-6 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"></div>
-              <span class="text-xs">Đang tính toán Diff vs HEAD...</span>
+              <span class="text-xs">{localeState.t('explorer.repository.calculatingDiffHead')}</span>
             </div>
           {:else}
             <div class="w-full h-full">
@@ -1089,19 +1090,19 @@
                 <div class="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-900/90 border-b border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-600 dark:text-zinc-400 font-semibold flex items-center justify-between">
                   <div class="flex items-center gap-1.5 text-purple-700 dark:text-purple-300">
                     <UserCheck class="w-3.5 h-3.5" />
-                    <span>Git Blame</span>
+                    <span>{localeState.t('explorer.repository.blameTitle')}</span>
                   </div>
-                  <span class="text-[10px] text-zinc-400 dark:text-zinc-500">{blameHunks.length} hunks</span>
+                  <span class="text-[10px] text-zinc-400 dark:text-zinc-500">{localeState.t('explorer.repository.blameHunksCount', { count: blameHunks.length })}</span>
                 </div>
                 <div class="flex-1 overflow-y-auto divide-y divide-zinc-200 dark:divide-zinc-800/50">
                   {#if isBlameLoading}
                     <div class="p-6 flex flex-col items-center justify-center gap-2 text-zinc-500">
                       <RefreshCw class="w-4 h-4 animate-spin text-purple-600 dark:text-purple-400" />
-                      <span class="text-[11px]">Đang tính toán Git Blame...</span>
+                      <span class="text-[11px]">{localeState.t('explorer.repository.blameLoading')}</span>
                     </div>
                   {:else if blameHunks.length === 0}
                     <div class="p-4 text-center text-zinc-400 dark:text-zinc-500 text-[11px]">
-                      Không có thông tin blame cho file này.
+                      {localeState.t('explorer.repository.blameEmpty')}
                     </div>
                   {:else}
                     {#each blameHunks as hunk}
@@ -1116,7 +1117,7 @@
                             {hunk.final_short_id}
                           </span>
                           <span class="text-zinc-500 text-[10px]">
-                            L{hunk.final_start_line} ({hunk.lines_in_hunk} dòng)
+                            {localeState.t('explorer.repository.blameLines', { line: hunk.final_start_line, count: hunk.lines_in_hunk })}
                           </span>
                         </div>
                         <div class="flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
@@ -1128,7 +1129,7 @@
                           </span>
                         </div>
                         <p class="text-[10px] text-zinc-500 truncate mt-0.5 group-hover:text-zinc-800 dark:group-hover:text-zinc-300">
-                          {hunk.summary || '(no commit message)'}
+                          {hunk.summary || localeState.t('explorer.repository.noCommitMsg')}
                         </p>
                       </div>
                     {/each}
@@ -1157,8 +1158,8 @@
       <div class="h-full flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 gap-3 select-none">
         <FolderGit2 class="w-10 h-10 text-zinc-300 dark:text-zinc-700" />
         <div class="text-center space-y-1">
-          <p class="text-xs text-zinc-600 dark:text-zinc-400 font-medium">Chọn một tệp từ cây thư mục để xem mã nguồn</p>
-          <p class="text-[11px] text-zinc-400 dark:text-zinc-600">Động cơ Monaco Editor 60 FPS • Hỗ trợ chỉnh sửa và Git Blame</p>
+          <p class="text-xs text-zinc-600 dark:text-zinc-400 font-medium">{localeState.t('explorer.repository.emptyPrompt')}</p>
+          <p class="text-[11px] text-zinc-400 dark:text-zinc-600">{localeState.t('explorer.repository.emptyEngine')}</p>
         </div>
       </div>
     {/if}
@@ -1204,7 +1205,7 @@
         class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
       >
         <Sparkles class="w-3.5 h-3.5 text-indigo-500" />
-        <span>Mở trong Cursor</span>
+        <span>{localeState.t('explorer.repository.openCursor')}</span>
       </button>
 
       <button
@@ -1217,7 +1218,7 @@
         class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
       >
         <Code class="w-3.5 h-3.5 text-cyan-500" />
-        <span>Mở trong Antigravity</span>
+        <span>{localeState.t('explorer.repository.openAntigravity')}</span>
       </button>
 
       <button
@@ -1230,7 +1231,7 @@
         class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
       >
         <ExternalLink class="w-3.5 h-3.5 text-blue-500" />
-        <span>Mở trong VS Code</span>
+        <span>{localeState.t('explorer.repository.openVsCode')}</span>
       </button>
 
       <button
@@ -1243,7 +1244,7 @@
         class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
       >
         <FolderOpen class="w-3.5 h-3.5 text-amber-500" />
-        <span>Reveal in File Explorer</span>
+        <span>{localeState.t('explorer.repository.revealFileExplorer')}</span>
       </button>
     </div>
 
@@ -1251,13 +1252,13 @@
       <button
         onclick={() => {
           navigator.clipboard.writeText(contextMenu!.path);
-          toast.success("Đã sao chép đường dẫn", contextMenu!.path);
+          toast.success(localeState.t('explorer.repository.copiedPathToast'), contextMenu!.path);
           contextMenu = null;
         }}
         class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer transition-colors"
       >
         <Copy class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-        <span>Sao chép đường dẫn</span>
+        <span>{localeState.t('explorer.repository.copyPath')}</span>
       </button>
 
       <button
@@ -1270,7 +1271,7 @@
         class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer transition-colors"
       >
         <History class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-        <span>Xem lịch sử tệp (File History)</span>
+        <span>{localeState.t('explorer.repository.viewHistory')}</span>
       </button>
 
       <button
@@ -1283,7 +1284,7 @@
         class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer transition-colors"
       >
         <UserCheck class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-        <span>Xem Git Blame</span>
+        <span>{localeState.t('explorer.repository.toggleBlame')}</span>
       </button>
     </div>
 
@@ -1300,7 +1301,7 @@
             class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer text-amber-600 dark:text-amber-400"
           >
             <RotateCcw class="w-3.5 h-3.5" />
-            <span>Unstage tệp</span>
+            <span>{localeState.t('explorer.repository.unstageFileAction')}</span>
           </button>
         {:else}
           <button
@@ -1312,7 +1313,7 @@
             class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer text-emerald-600 dark:text-emerald-400"
           >
             <CheckCircle2 class="w-3.5 h-3.5" />
-            <span>Stage tệp</span>
+            <span>{localeState.t('explorer.repository.stageFileAction')}</span>
           </button>
         {/if}
 
@@ -1325,7 +1326,7 @@
           class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 cursor-pointer text-rose-600 dark:text-rose-400"
         >
           <Trash2 class="w-3.5 h-3.5" />
-          <span>Safe Discard (Thùng rác 48h)</span>
+          <span>{localeState.t('explorer.repository.safeDiscardAction')}</span>
         </button>
       </div>
     {/if}
@@ -1341,7 +1342,7 @@
           class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-950/60 text-rose-700 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-200 flex items-center gap-2 cursor-pointer transition-colors"
         >
           <Trash2 class="w-3.5 h-3.5 text-rose-600 dark:text-rose-500" />
-          <span>Xóa vĩnh viễn khỏi Git history (Nuke)</span>
+          <span>{localeState.t('explorer.repository.nukeFileAction')}</span>
         </button>
       </div>
     {/if}

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { XCircle, X, RefreshCw, AlertCircle } from 'lucide-svelte';
   import type { GitHubPullRequest } from '../../types';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     isOpen: boolean;
@@ -52,7 +53,7 @@
             <XCircle class="w-4 h-4" />
           </div>
           <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            Đóng Pull Request #{selectedPR.number}
+            {localeState.t('pullRequest.reviewer.closeModal.closeTitle', { number: selectedPR.number })}
           </h2>
         </div>
         <button
@@ -80,19 +81,19 @@
         <div class="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-200 text-xs">
           <AlertCircle class="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
           <div class="leading-relaxed text-[11.5px]">
-            Pull Request này sẽ bị đóng lại mà không hợp nhất vào nhánh chính. Bạn hoặc tác giả có thể mở lại bất cứ lúc nào.
+            {localeState.t('pullRequest.reviewer.closeModal.closeWarning')}
           </div>
         </div>
 
         <!-- Optional Comment -->
         <div class="space-y-1.5">
           <label for="close-comment" class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-            Lý do hoặc nhận xét đóng PR (không bắt buộc)
+            {localeState.t('pullRequest.reviewer.closeModal.closeCommentLabel')}
           </label>
           <textarea
             id="close-comment"
             bind:value={closeComment}
-            placeholder="Ví dụ: Đã giải quyết ở PR khác, hoặc tính năng bị hủy bỏ..."
+            placeholder={localeState.t('pullRequest.reviewer.closeModal.closeCommentPlaceholder')}
             rows={3}
             class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-rose-500 resize-none font-sans"
           ></textarea>
@@ -106,7 +107,7 @@
           disabled={isClosing}
           class="px-3.5 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
         >
-          Hủy bỏ
+          {localeState.t('pullRequest.reviewer.closeModal.cancel')}
         </button>
         <button
           type="button"
@@ -116,10 +117,10 @@
         >
           {#if isClosing}
             <RefreshCw class="w-3.5 h-3.5 animate-spin" />
-            <span>Đang đóng PR...</span>
+            <span>{localeState.t('pullRequest.reviewer.closeModal.closing')}</span>
           {:else}
             <XCircle class="w-3.5 h-3.5" />
-            <span>{closeComment.trim() ? 'Đóng với bình luận' : 'Đóng Pull Request'}</span>
+            <span>{closeComment.trim() ? localeState.t('pullRequest.reviewer.closeModal.closeWithComment') : localeState.t('pullRequest.reviewer.closeModal.closePR')}</span>
           {/if}
         </button>
       </div>

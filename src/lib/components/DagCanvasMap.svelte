@@ -12,6 +12,7 @@
     X,
     GitCommit,
   } from 'lucide-svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     commits: CommitNode[];
@@ -365,14 +366,14 @@
   <div class="absolute top-3 left-4 flex items-center gap-3 pointer-events-auto">
     <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/90 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800/80 backdrop-blur-md shadow-xl">
       <Network class="w-4 h-4 text-teal-600 dark:text-teal-400" />
-      <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200">2D DAG Map View</span>
-      <span class="text-[10px] font-mono text-zinc-500">({commits.length} nodes)</span>
+      <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200">{localeState.t('graph.dagMap.title')}</span>
+      <span class="text-[10px] font-mono text-zinc-500">{localeState.t('graph.dagMap.nodesCount', { count: commits.length })}</span>
     </div>
 
     <button
       onclick={onClose}
       class="p-1.5 rounded-lg bg-white/90 dark:bg-zinc-900/90 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer shadow-xl backdrop-blur-md"
-      title="Quay lại đồ thị thông thường"
+      title={localeState.t('graph.dagMap.backToGraph')}
     >
       <X class="w-4 h-4" />
     </button>
@@ -383,7 +384,7 @@
     <button
       onclick={() => { zoom = Math.min(zoom * 1.2, 2.5); draw(); }}
       class="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
-      title="Zoom In"
+      title={localeState.t('graph.dagMap.zoomIn')}
     >
       <ZoomIn class="w-4 h-4" />
     </button>
@@ -395,7 +396,7 @@
     <button
       onclick={() => { zoom = Math.max(zoom * 0.8, 0.25); draw(); }}
       class="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
-      title="Zoom Out"
+      title={localeState.t('graph.dagMap.zoomOut')}
     >
       <ZoomOut class="w-4 h-4" />
     </button>
@@ -405,7 +406,7 @@
     <button
       onclick={resetView}
       class="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
-      title="Reset 100%"
+      title={localeState.t('graph.dagMap.resetZoom')}
     >
       <RotateCcw class="w-3.5 h-3.5" />
     </button>
@@ -426,13 +427,13 @@
 
       <div class="p-3.5 space-y-3 overflow-y-auto">
         <div>
-          <div class="text-[10px] uppercase font-bold text-zinc-500 mb-1">Author</div>
+          <div class="text-[10px] uppercase font-bold text-zinc-500 mb-1">{localeState.t('graph.dagMap.author')}</div>
           <div class="text-xs text-zinc-800 dark:text-zinc-200 font-medium">{selectedCommit.author_name}</div>
           <div class="text-[11px] text-zinc-500 font-mono">&lt;{selectedCommit.author_email}&gt;</div>
         </div>
 
         <div>
-          <div class="text-[10px] uppercase font-bold text-zinc-500 mb-1">Message</div>
+          <div class="text-[10px] uppercase font-bold text-zinc-500 mb-1">{localeState.t('graph.dagMap.message')}</div>
           <p class="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed bg-zinc-50 dark:bg-zinc-950/60 p-2 rounded border border-zinc-200 dark:border-zinc-800/60 select-text font-mono">
             {selectedCommit.summary}
           </p>
@@ -441,7 +442,7 @@
         {#if commitDetail && commitDetail.files_changed.length > 0}
           <div>
             <div class="text-[10px] uppercase font-bold text-zinc-500 mb-1">
-              Changed Files ({commitDetail.files_changed.length})
+              {localeState.t('graph.dagMap.changedFiles', { count: commitDetail.files_changed.length })}
             </div>
             <div class="space-y-1 max-h-36 overflow-y-auto">
               {#each commitDetail.files_changed as f}

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { GitMerge, X, RefreshCw } from 'lucide-svelte';
   import type { GitHubPullRequest } from '../../types';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     isOpen: boolean;
@@ -47,7 +48,7 @@
             <GitMerge class="w-4 h-4" />
           </div>
           <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            Hợp nhất Pull Request #{selectedPR.number}
+            {localeState.t('pullRequest.reviewer.mergeModal.mergeTitle', { number: selectedPR.number })}
           </h2>
         </div>
         <button
@@ -61,31 +62,31 @@
       <div class="p-6 space-y-4 text-xs">
         <!-- Merge Method Selector -->
         <div class="space-y-1.5">
-          <span class="font-semibold text-zinc-700 dark:text-zinc-300 block">Kiểu Merge:</span>
+          <span class="font-semibold text-zinc-700 dark:text-zinc-300 block">{localeState.t('pullRequest.reviewer.mergeModal.mergeTypeLabel')}</span>
           <div class="grid grid-cols-3 gap-2">
             <button
               type="button"
               onclick={() => (mergeMethod = 'merge')}
               class="p-2.5 rounded-xl border text-left cursor-pointer transition-all {mergeMethod === 'merge' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 font-bold' : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800'}"
             >
-              <div class="font-semibold">Create Merge</div>
-              <div class="text-[10px] opacity-75 font-normal">Giữ nguyên lịch sử</div>
+              <div class="font-semibold">{localeState.t('pullRequest.reviewer.mergeModal.createMerge')}</div>
+              <div class="text-[10px] opacity-75 font-normal">{localeState.t('pullRequest.reviewer.mergeModal.createMergeDesc')}</div>
             </button>
             <button
               type="button"
               onclick={() => (mergeMethod = 'squash')}
               class="p-2.5 rounded-xl border text-left cursor-pointer transition-all {mergeMethod === 'squash' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 font-bold' : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800'}"
             >
-              <div class="font-semibold">Squash & Merge</div>
-              <div class="text-[10px] opacity-75 font-normal">Gộp 1 commit</div>
+              <div class="font-semibold">{localeState.t('pullRequest.reviewer.mergeModal.squashMerge')}</div>
+              <div class="text-[10px] opacity-75 font-normal">{localeState.t('pullRequest.reviewer.mergeModal.squashMergeDesc')}</div>
             </button>
             <button
               type="button"
               onclick={() => (mergeMethod = 'rebase')}
               class="p-2.5 rounded-xl border text-left cursor-pointer transition-all {mergeMethod === 'rebase' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 font-bold' : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800'}"
             >
-              <div class="font-semibold">Rebase & Merge</div>
-              <div class="text-[10px] opacity-75 font-normal">Rebase nhánh</div>
+              <div class="font-semibold">{localeState.t('pullRequest.reviewer.mergeModal.rebaseMerge')}</div>
+              <div class="text-[10px] opacity-75 font-normal">{localeState.t('pullRequest.reviewer.mergeModal.rebaseMergeDesc')}</div>
             </button>
           </div>
         </div>
@@ -93,7 +94,7 @@
         <!-- Commit Title & Message -->
         <div class="space-y-1.5">
           <label for="merge-commit-title" class="font-semibold text-zinc-700 dark:text-zinc-300 block">
-            Tiêu đề Commit Merge:
+            {localeState.t('pullRequest.reviewer.mergeModal.commitTitleLabel')}
           </label>
           <input
             id="merge-commit-title"
@@ -105,7 +106,7 @@
 
         <div class="space-y-1.5">
           <label for="merge-commit-msg" class="font-semibold text-zinc-700 dark:text-zinc-300 block">
-            Nội dung Commit Message:
+            {localeState.t('pullRequest.reviewer.mergeModal.commitMsgLabel')}
           </label>
           <textarea
             id="merge-commit-msg"
@@ -123,7 +124,7 @@
             class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900"
           />
           <span class="text-zinc-700 dark:text-zinc-300">
-            Tự động xóa nhánh remote <code class="text-emerald-700 dark:text-emerald-400 font-mono">{selectedPR.head.ref}</code> sau khi merge
+            {localeState.t('pullRequest.reviewer.mergeModal.deleteBranchLabel', { branch: selectedPR.head.ref })}
           </span>
         </label>
       </div>
@@ -134,7 +135,7 @@
           onclick={onClose}
           class="px-4 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-medium cursor-pointer"
         >
-          Hủy
+          {localeState.t('pullRequest.reviewer.mergeModal.cancel')}
         </button>
         <button
           type="button"
@@ -144,10 +145,10 @@
         >
           {#if isMerging}
             <RefreshCw class="w-3.5 h-3.5 animate-spin" />
-            <span>Đang merge...</span>
+            <span>{localeState.t('pullRequest.reviewer.mergeModal.merging')}</span>
           {:else}
             <GitMerge class="w-3.5 h-3.5" />
-            <span>Xác nhận Merge</span>
+            <span>{localeState.t('pullRequest.reviewer.mergeModal.confirmMerge')}</span>
           {/if}
         </button>
       </div>

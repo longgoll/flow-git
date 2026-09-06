@@ -21,6 +21,7 @@
   import { generateAIPRDescription } from '../api/ai';
   import { getActiveAccount } from '../api/auth';
   import { toast } from '../state/toastState.svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     isOpen: boolean;
@@ -147,9 +148,12 @@
       const res = await generateAIPRDescription(sourceBranch, targetBranch, commitSummaries, files);
       title = res.title;
       description = res.description;
-      toast.success('AI đã sinh mô tả PR!', 'Tiêu đề và nội dung markdown đã được cập nhật.');
+      toast.success(
+        localeState.t('pullRequest.create.aiGeneratedSuccess'),
+        localeState.t('pullRequest.create.aiGeneratedSuccessDesc')
+      );
     } catch (err: any) {
-      toast.error('Lỗi sinh mô tả AI', err.message || String(err));
+      toast.error(localeState.t('pullRequest.create.aiGenerateError'), err.message || String(err));
     } finally {
       isGeneratingAI = false;
     }
@@ -172,36 +176,39 @@
   function handleSaveToken() {
     saveGitHubToken(patToken);
     showTokenInput = false;
-    toast.success('Đã lưu Token GitHub', 'Token đã sẵn sàng để tạo Pull Request.');
+    toast.success(
+      localeState.t('pullRequest.create.tokenSavedToast'),
+      localeState.t('pullRequest.create.tokenSavedToastDesc')
+    );
   }
 
   async function handleCreatePR() {
     errorMessage = '';
 
     if (!repoOwner || !repoName) {
-      errorMessage = 'Không xác định được kho lưu trữ GitHub từ Remote URL hiện tại.';
+      errorMessage = localeState.t('pullRequest.create.unrecognizedRepo');
       return;
     }
 
     if (!sourceBranch || !targetBranch) {
-      errorMessage = 'Vui lòng chọn đầy đủ nhánh nguồn (Compare) và nhánh đích (Base).';
+      errorMessage = localeState.t('pullRequest.create.selectBothBranches');
       return;
     }
 
     if (sourceBranch === targetBranch) {
-      errorMessage = 'Nhánh nguồn và nhánh đích không được trùng nhau.';
+      errorMessage = localeState.t('pullRequest.create.sameBranchesNotice');
       return;
     }
 
     if (!title.trim()) {
-      errorMessage = 'Vui lòng nhập tiêu đề cho Pull Request.';
+      errorMessage = localeState.t('pullRequest.create.enterTitlePrompt');
       return;
     }
 
     const currentToken = patToken.trim() || getStoredGitHubToken();
     if (!currentToken) {
       showTokenInput = true;
-      errorMessage = 'Vui lòng cung cấp GitHub Personal Access Token (PAT) để tạo Pull Request.';
+      errorMessage = localeState.t('pullRequest.create.authPrompt');
       return;
     }
 
@@ -219,14 +226,14 @@
       );
 
       toast.success(
-        `Đã tạo Pull Request #${newPR.number}`,
-        `"${newPR.title}" đã được tạo thành công trên GitHub!`
+        localeState.t('pullRequest.create.createdSuccessToast', { number: newPR.number }),
+        localeState.t('pullRequest.create.createdSuccessToastDesc', { title: newPR.title })
       );
       onSuccess(newPR);
       onClose();
     } catch (err: any) {
       errorMessage = err.message || String(err);
-      toast.error('Tạo Pull Request thất bại', errorMessage);
+      toast.error(localeState.t('pullRequest.create.createFailedToast'), errorMessage);
     } finally {
       isSubmitting = false;
     }
@@ -252,7 +259,7 @@
           </div>
           <div>
             <h2 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-              Tạo Pull Request mới
+              {localeState.t('pullRequest.create.title')}
             </h2>
             <p class="text-xs text-zinc-500 font-mono">
               {repoOwner ? `${repoOwner}/${repoName}` : 'GitHub Remote'}
@@ -282,12 +289,12 @@
           <div class="flex items-center justify-between text-xs text-zinc-500 font-medium">
             <span class="flex items-center gap-1.5 text-cyan-700 dark:text-cyan-400">
               <GitBranch class="w-3.5 h-3.5" />
-              <span>Nhánh nguồn (Compare)</span>
+              <span>{localeState.t('pullRequest.create.sourceBranch')}</span>
             </span>
-            <span class="text-[11px] text-zinc-400">sẽ được hợp nhất vào</span>
+            <span class="text-[11px] text-zinc-400">{localeState.t('pullRequest.create.mergeIntoText')}</span>
             <span class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
               <GitBranch class="w-3.5 h-3.5" />
-              <span>Nhánh đích (Base)</span>
+              <span>{localeState.t('pullRequest.create.targetBranch')}</span>
             </span>
           </div>
 
@@ -335,17 +342,17 @@
           {#if isComparing}
             <div class="p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-500 flex items-center justify-center gap-2">
               <Loader2 class="w-3.5 h-3.5 animate-spin text-cyan-500" />
-              <span>Đang kiểm tra độ lệch commits giữa 2 nhánh...</span>
+              <span>{localeState.t('pullRequest.create.comparing')}</span>
             </div>
           {:else if branchComparison}
             {#if branchComparison.total_commits > 0}
               <div class="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between text-xs">
                 <div class="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-medium">
                   <Check class="w-3.5 h-3.5 stroke-[3]" />
-                  <span>Sẵn sàng hợp nhất:</span>
-                  <span class="font-mono font-bold">{branchComparison.total_commits} commits</span>
+                  <span>{localeState.t('pullRequest.create.readyToMerge')}</span>
+                  <span class="font-mono font-bold">{localeState.t('pullRequest.create.commitsCount', { count: branchComparison.total_commits })}</span>
                   <span>•</span>
-                  <span class="font-mono">{branchComparison.files?.length || 0} tệp thay đổi</span>
+                  <span class="font-mono">{localeState.t('pullRequest.create.filesChangedCount', { count: branchComparison.files?.length || 0 })}</span>
                 </div>
                 <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200">
                   {branchComparison.status.toUpperCase()}
@@ -354,17 +361,17 @@
             {:else}
               <div class="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-[11px] flex items-center gap-2">
                 <AlertCircle class="w-3.5 h-3.5 shrink-0" />
-                <span>Nhánh <strong>{sourceBranch}</strong> chưa có commit mới nào so với <strong>{targetBranch}</strong>.</span>
+                <span>{localeState.t('pullRequest.create.noCommitsBetween', { source: sourceBranch, target: targetBranch })}</span>
               </div>
             {/if}
           {:else if sourceBranch === targetBranch}
             <div class="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-[11px] flex items-center gap-2">
               <AlertCircle class="w-3.5 h-3.5 shrink-0" />
-              <span>Nhánh nguồn và đích đang trùng nhau. Vui lòng chọn hai nhánh khác nhau.</span>
+              <span>{localeState.t('pullRequest.create.sameBranchesNotice')}</span>
             </div>
           {:else}
             <div class="text-[11px] text-zinc-500 dark:text-zinc-400 text-center">
-              Các commit mới trên <strong class="text-cyan-700 dark:text-cyan-300 font-mono">{sourceBranch}</strong> sẽ được gửi yêu cầu tích hợp vào <strong class="text-emerald-700 dark:text-emerald-300 font-mono">{targetBranch}</strong>.
+              {localeState.t('pullRequest.create.willBeIntegratedInto', { source: sourceBranch, target: targetBranch })}
             </div>
           {/if}
         </div>
@@ -372,13 +379,13 @@
         <!-- PR Title -->
         <div class="space-y-1.5">
           <label for="pr-title" class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-            Tiêu đề Pull Request <span class="text-rose-500">*</span>
+            {localeState.t('pullRequest.create.titleLabel')} <span class="text-rose-500">*</span>
           </label>
           <input
             id="pr-title"
             type="text"
             bind:value={title}
-            placeholder="e.g. Thêm tính năng xác thực OAuth2..."
+            placeholder={localeState.t('pullRequest.create.titlePlaceholder')}
             class="w-full px-3.5 py-2 text-sm rounded-xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-hidden transition-all"
           />
         </div>
@@ -387,7 +394,7 @@
         <div class="space-y-1.5">
           <div class="flex items-center justify-between">
             <label for="pr-desc" class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-              Mô tả chi tiết (Markdown)
+              {localeState.t('pullRequest.create.descriptionLabel')}
             </label>
             <div class="flex items-center gap-3">
               <button
@@ -395,14 +402,14 @@
                 onclick={handleAIGenerate}
                 disabled={isGeneratingAI}
                 class="text-[11px] text-violet-600 dark:text-violet-400 hover:text-violet-500 flex items-center gap-1 cursor-pointer font-medium disabled:opacity-50"
-                title="Sử dụng FlowGit AI để sinh mô tả PR tự động"
+                title={localeState.t('pullRequest.create.generateWithAITitle')}
               >
                 {#if isGeneratingAI}
                   <Loader2 class="w-3 h-3 animate-spin" />
-                  <span>Đang sinh mô tả...</span>
+                  <span>{localeState.t('pullRequest.create.generatingAI')}</span>
                 {:else}
                   <Sparkles class="w-3 h-3" />
-                  <span>✨ AI viết mô tả</span>
+                  <span>{localeState.t('pullRequest.create.generateWithAI')}</span>
                 {/if}
               </button>
 
@@ -411,7 +418,7 @@
                 onclick={() => initDefaultContent(sourceBranch, targetBranch)}
                 class="text-[11px] text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1 cursor-pointer"
               >
-                Điền mẫu mặc định
+                {localeState.t('pullRequest.create.fillDefault')}
               </button>
             </div>
           </div>
@@ -419,7 +426,7 @@
             id="pr-desc"
             bind:value={description}
             rows="6"
-            placeholder="Mô tả những thay đổi quan trọng, hướng dẫn test..."
+            placeholder={localeState.t('pullRequest.create.descriptionPlaceholder')}
             class="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-hidden transition-all resize-none"
           ></textarea>
         </div>
@@ -432,7 +439,7 @@
             class="w-4 h-4 rounded text-cyan-600 focus:ring-cyan-500 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900"
           />
           <span class="text-xs text-zinc-700 dark:text-zinc-300 font-medium">
-            Tạo dưới dạng Draft PR (Bản nháp - chưa sẵn sàng merge)
+            {localeState.t('pullRequest.create.draftCheckbox')}
           </span>
         </label>
 
@@ -441,10 +448,10 @@
           <div class="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 space-y-2">
             <div class="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-300">
               <Key class="w-4 h-4 text-amber-600" />
-              <span>GitHub Personal Access Token</span>
+              <span>{localeState.t('pullRequest.create.tokenTitle')}</span>
             </div>
             <p class="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
-              Cần token có quyền <code>repo</code> để tạo Pull Request. Token sẽ được lưu cục bộ trên máy bạn.
+              {localeState.t('pullRequest.create.tokenHelp')}
             </p>
             <div class="flex items-center gap-2">
               <input
@@ -458,7 +465,7 @@
                 onclick={handleSaveToken}
                 class="px-3 py-1 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white cursor-pointer"
               >
-                Lưu Token
+                {localeState.t('pullRequest.create.saveToken')}
               </button>
             </div>
           </div>
@@ -473,7 +480,7 @@
           class="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 flex items-center gap-1.5 cursor-pointer"
         >
           <Key class="w-3.5 h-3.5" />
-          <span>{patToken ? 'Cập nhật Token GitHub' : 'Nhập Token GitHub'}</span>
+          <span>{patToken ? localeState.t('pullRequest.create.updateTokenBtn') : localeState.t('pullRequest.create.inputTokenBtn')}</span>
         </button>
 
         <div class="flex items-center gap-2.5">
@@ -483,7 +490,7 @@
             disabled={isSubmitting}
             class="px-4 py-2 text-xs font-medium rounded-xl border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors cursor-pointer"
           >
-            Hủy
+            {localeState.t('pullRequest.create.cancelBtn')}
           </button>
           <button
             type="button"
@@ -493,10 +500,10 @@
           >
             {#if isSubmitting}
               <Loader2 class="w-4 h-4 animate-spin" />
-              <span>Đang tạo PR...</span>
+              <span>{localeState.t('pullRequest.create.creating')}</span>
             {:else}
               <Check class="w-4 h-4" />
-              <span>Tạo Pull Request</span>
+              <span>{localeState.t('pullRequest.create.createBtn')}</span>
             {/if}
           </button>
         </div>

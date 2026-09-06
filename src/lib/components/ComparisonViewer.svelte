@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ComparisonResult, FileChangeInfo } from '../types';
   import { getFileContent } from '../api';
+  import { localeState } from '../state/localeState.svelte';
   import MonacoDiffEditor from './MonacoDiffEditor.svelte';
   import {
     GitCompare,
@@ -127,7 +128,7 @@
       </div>
 
       <div class="flex items-center gap-2 text-xs">
-        <span class="font-bold text-zinc-900 dark:text-zinc-200">Offline PR Comparison</span>
+        <span class="font-bold text-zinc-900 dark:text-zinc-200">{localeState.t('explorer.comparison.title')}</span>
         {#if comparison}
           <div class="flex items-center gap-1.5 font-mono px-2 py-0.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-300 shadow-2xs">
             <span class="text-purple-600 dark:text-purple-400 font-semibold">{comparison.base_id.slice(0, 7)}</span>
@@ -136,7 +137,7 @@
                 type="button"
                 onclick={onSwap}
                 class="p-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors cursor-pointer"
-                title="Đảo chiều so sánh (Swap Base ⇆ Target)"
+                title={localeState.t('explorer.comparison.swapTooltip')}
               >
                 <ArrowLeftRight class="w-3.5 h-3.5" />
               </button>
@@ -151,27 +152,27 @@
             <div class="flex items-center gap-2 ml-2">
               <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 flex items-center gap-1.5">
                 <CheckCircle2 class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>Trùng khớp hoàn toàn (Identical)</span>
+                <span>{localeState.t('explorer.comparison.identicalBadge')}</span>
               </span>
               <span class="text-zinc-400 dark:text-zinc-600">•</span>
-              <span class="text-zinc-600 dark:text-zinc-400 font-medium">0 files changed</span>
+              <span class="text-zinc-600 dark:text-zinc-400 font-medium">{localeState.t('explorer.comparison.filesChangedCount', { count: 0 })}</span>
               <span class="text-zinc-400 dark:text-zinc-600">•</span>
-              <span class="text-zinc-600 dark:text-zinc-400 font-medium">{comparison.commits_between.length} commits</span>
+              <span class="text-zinc-600 dark:text-zinc-400 font-medium">{localeState.t('explorer.comparison.commitsCount', { count: comparison.commits_between.length })}</span>
             </div>
           {:else}
             <div class="flex items-center gap-2 ml-2">
-              <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-0.5">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-0.5">
                 <Plus class="w-3 h-3" />
                 {comparison.total_additions}
               </span>
-              <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 flex items-center gap-0.5">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 flex items-center gap-0.5">
                 <Minus class="w-3 h-3" />
                 {comparison.total_deletions}
               </span>
               <span class="text-zinc-400 dark:text-zinc-500">•</span>
-              <span class="text-zinc-600 dark:text-zinc-400 font-medium">{comparison.files_changed.length} files changed</span>
+              <span class="text-zinc-600 dark:text-zinc-400 font-medium">{localeState.t('explorer.comparison.filesChangedCount', { count: comparison.files_changed.length })}</span>
               <span class="text-zinc-400 dark:text-zinc-500">•</span>
-              <span class="text-zinc-600 dark:text-zinc-400 font-medium">{comparison.commits_between.length} commits</span>
+              <span class="text-zinc-600 dark:text-zinc-400 font-medium">{localeState.t('explorer.comparison.commitsCount', { count: comparison.commits_between.length })}</span>
             </div>
           {/if}
         {/if}
@@ -181,7 +182,7 @@
     <button
       onclick={onClose}
       class="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
-      title="Đóng chế độ So sánh (Esc / Close)"
+      title={localeState.t('explorer.comparison.closeTooltip')}
     >
       <X class="w-4 h-4" />
     </button>
@@ -192,7 +193,7 @@
     {#if isLoading}
       <div class="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-2">
         <div class="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-        <span class="text-xs">Đang tính toán chênh lệch (diff) giữa 2 commit...</span>
+        <span class="text-xs">{localeState.t('explorer.comparison.calculatingDiff')}</span>
       </div>
     {:else if comparison}
       <!-- Left Panel: Changed Files & Commits List -->
@@ -201,12 +202,12 @@
         <div class="p-3 border-b border-zinc-200 dark:border-zinc-800/80">
           <span class="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
             <GitCommit class="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
-            Commits ({comparison.commits_between.length})
+            {localeState.t('explorer.comparison.commitsTitle', { count: comparison.commits_between.length })}
           </span>
           {#if comparison.commits_between.length === 0}
             <div class="py-3 px-2 text-center rounded-lg bg-white/40 dark:bg-zinc-900/40 border border-dashed border-zinc-200 dark:border-zinc-800/80 text-xs text-zinc-400 dark:text-zinc-500">
               <GitCommit class="w-3.5 h-3.5 mx-auto mb-1 opacity-50 text-zinc-400" />
-              <span>0 commit chênh lệch</span>
+              <span>{localeState.t('explorer.comparison.zeroCommits')}</span>
             </div>
           {:else}
             <div class="max-h-36 overflow-y-auto space-y-1 pr-1 font-mono text-xs">
@@ -224,7 +225,7 @@
         <div class="flex-1 flex flex-col overflow-hidden p-3">
           <span class="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 shrink-0">
             <FileText class="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-            Files Changed ({comparison.files_changed.length})
+            {localeState.t('explorer.comparison.filesChangedTitle', { count: comparison.files_changed.length })}
           </span>
 
           {#if comparison.files_changed.length === 0}
@@ -232,9 +233,9 @@
               <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2">
                 <CheckCircle2 class="w-5 h-5" />
               </div>
-              <p class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Không có tệp thay đổi</p>
+              <p class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{localeState.t('explorer.comparison.noFilesChangedTitle')}</p>
               <p class="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1 max-w-[200px] leading-relaxed">
-                Tất cả mã nguồn ở 2 điểm này đều đồng nhất 100%.
+                {localeState.t('explorer.comparison.noFilesChangedDesc')}
               </p>
             </div>
           {:else}
@@ -244,7 +245,7 @@
                 <input
                   type="text"
                   bind:value={fileSearch}
-                  placeholder="Lọc tệp tin..."
+                  placeholder={localeState.t('explorer.comparison.filterPlaceholder')}
                   class="w-full pl-8 pr-2.5 py-1 text-xs rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-cyan-500 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 transition-all"
                 />
               </div>
@@ -275,7 +276,7 @@
               {/each}
               {#if filteredFiles.length === 0 && fileSearch.trim()}
                 <div class="text-center py-4 text-xs text-zinc-400">
-                  Không tìm thấy tệp nào khớp "{fileSearch}"
+                  {localeState.t('explorer.comparison.noMatchingFiles', { query: fileSearch })}
                 </div>
               {/if}
             </div>
@@ -299,10 +300,10 @@
 
               <!-- Title & Subtitle -->
               <h3 class="text-base font-bold text-zinc-900 dark:text-zinc-100 mb-1.5">
-                Mã nguồn hoàn toàn đồng nhất (Identical Trees)
+                {localeState.t('explorer.comparison.identicalTitle')}
               </h3>
               <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-5">
-                Không có sự khác biệt nào giữa commit <code class="px-1.5 py-0.5 rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-mono text-purple-600 dark:text-purple-400 font-semibold">{comparison.base_id.slice(0, 7)}</code> và <code class="px-1.5 py-0.5 rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-mono text-cyan-600 dark:text-cyan-400 font-semibold">{comparison.target_id.slice(0, 7)}</code> (<strong class="text-emerald-600 dark:text-emerald-400">0 tệp thay đổi, +0 -0 dòng</strong>).
+                {localeState.t('explorer.comparison.identicalSummary', { base: comparison.base_id.slice(0, 7), target: comparison.target_id.slice(0, 7) })}
               </p>
 
               <!-- Detailed Explanation Callout -->
@@ -310,19 +311,19 @@
                 <div class="flex items-start gap-2.5">
                   <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 mt-1.5 shrink-0"></span>
                   <div class="text-zinc-600 dark:text-zinc-300">
-                    <strong class="text-zinc-900 dark:text-zinc-100 font-medium">Đã gộp hoàn tất (Merged):</strong> Toàn bộ thay đổi của nhánh này đã nằm trọn trong nhánh kia (ví dụ PR đã được merge thành công).
+                    <strong class="text-zinc-900 dark:text-zinc-100 font-medium">{localeState.t('explorer.comparison.mergedTitle')}</strong> {localeState.t('explorer.comparison.mergedDesc')}
                   </div>
                 </div>
                 <div class="flex items-start gap-2.5">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0"></span>
                   <div class="text-zinc-600 dark:text-zinc-300">
-                    <strong class="text-zinc-900 dark:text-zinc-100 font-medium">Cùng cây thư mục (Same Git Tree):</strong> Cây mã nguồn của hai mốc commit trùng khớp 100%.
+                    <strong class="text-zinc-900 dark:text-zinc-100 font-medium">{localeState.t('explorer.comparison.sameTreeTitle')}</strong> {localeState.t('explorer.comparison.sameTreeDesc')}
                   </div>
                 </div>
                 <div class="flex items-start gap-2.5">
                   <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0"></span>
                   <div class="text-zinc-500 dark:text-zinc-400 text-[11px]">
-                    <em>Mẹo:</em> Để xem các file mà nhánh đã sửa đổi trước khi merge, hãy so sánh với commit cha (trước thời điểm merge) hoặc click chọn trực tiếp commit đó trên Graph.
+                    <em>{localeState.t('explorer.comparison.tipLabel')}</em> {localeState.t('explorer.comparison.tipDesc')}
                   </div>
                 </div>
               </div>
@@ -333,10 +334,10 @@
                   <button
                     onclick={onSwap}
                     class="px-3.5 py-2 rounded-xl text-xs font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700/80 transition-all flex items-center gap-2 cursor-pointer shadow-xs"
-                    title="Đổi chiều Base ⇆ Target"
+                    title={localeState.t('explorer.comparison.swapTooltip')}
                   >
                     <ArrowLeftRight class="w-3.5 h-3.5 text-zinc-500" />
-                    <span>Đảo chiều so sánh</span>
+                    <span>{localeState.t('explorer.comparison.swapButton')}</span>
                   </button>
                 {/if}
                 <button
@@ -344,7 +345,7 @@
                   class="px-4 py-2 rounded-xl text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition-all flex items-center gap-1.5 cursor-pointer shadow-md shadow-cyan-600/20"
                 >
                   <Undo2 class="w-3.5 h-3.5" />
-                  <span>Quay lại Đồ thị Commit</span>
+                  <span>{localeState.t('explorer.comparison.returnToGraph')}</span>
                 </button>
               </div>
             </div>
@@ -377,7 +378,7 @@
                 title="Unified View"
               >
                 <AlignJustify class="w-3 h-3" />
-                <span>Unified</span>
+                <span>{localeState.t('explorer.comparison.unifiedMode')}</span>
               </button>
               <button
                 onclick={() => (viewMode = 'split')}
@@ -385,7 +386,7 @@
                 title="Side-by-Side Split View"
               >
                 <Columns2 class="w-3 h-3" />
-                <span>Split</span>
+                <span>{localeState.t('explorer.comparison.splitMode')}</span>
               </button>
             </div>
           </div>
@@ -395,7 +396,7 @@
             {#if isFileDiffLoading}
               <div class="h-full flex flex-col items-center justify-center text-zinc-500 gap-2">
                 <div class="w-6 h-6 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"></div>
-                <span class="text-xs">Đang tải nội dung tệp vào Monaco Diff Editor...</span>
+                <span class="text-xs">{localeState.t('explorer.comparison.loadingDiff')}</span>
               </div>
             {:else}
               <MonacoDiffEditor
@@ -409,7 +410,7 @@
         {:else}
           <div class="flex-1 flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 text-xs gap-2">
             <FileText class="w-8 h-8 text-zinc-300 dark:text-zinc-700 stroke-1" />
-            <span>Chọn một tệp từ danh sách bên trái để xem diff chi tiết.</span>
+            <span>{localeState.t('explorer.comparison.selectFilePrompt')}</span>
           </div>
         {/if}
       </main>

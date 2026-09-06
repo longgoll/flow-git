@@ -1,5 +1,5 @@
-import { vi, type TranslationSchema } from "./vi";
-import { en } from "./en";
+import { vi, type TranslationSchema } from "./locales/vi";
+import { en } from "./locales/en";
 
 export type Locale = "vi" | "en";
 export type { TranslationSchema };

@@ -10,6 +10,7 @@
     RefreshCw,
   } from 'lucide-svelte';
   import { toast } from '../state/toastState.svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     isOpen: boolean;
@@ -37,7 +38,7 @@
       history = await getFileHistory(repoPath, filePath, 50);
     } catch (err: any) {
       console.error('Failed to load file history:', err);
-      toast.error('Lỗi tải lịch sử file', err?.message || err);
+      toast.error(localeState.t('graph.fileHistory.errorTitle'), err?.message || err);
     } finally {
       isLoading = false;
     }
@@ -86,7 +87,7 @@
           </div>
           <div class="truncate max-w-md">
             <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              Lịch sử chỉnh sửa tệp (File History)
+              {localeState.t('graph.fileHistory.title')}
             </h2>
             <p class="text-xs font-mono text-cyan-600 dark:text-cyan-400 truncate mt-0.5">
               {filePath}
@@ -107,11 +108,11 @@
         {#if isLoading}
           <div class="py-12 flex flex-col items-center justify-center text-zinc-500 gap-2">
             <RefreshCw class="w-6 h-6 animate-spin text-purple-600 dark:text-purple-400" />
-            <span class="text-xs">Đang truy xuất các commit thay đổi tệp này...</span>
+            <span class="text-xs">{localeState.t('graph.fileHistory.loading')}</span>
           </div>
         {:else if history.length === 0}
           <div class="py-12 text-center text-zinc-500 text-xs">
-            Không tìm thấy commit nào thay đổi tệp này trong lịch sử nhánh hiện tại.
+            {localeState.t('graph.fileHistory.empty')}
           </div>
         {:else}
           <div class="space-y-2">
@@ -125,7 +126,7 @@
                       {item.short_id}
                     </span>
                     <span class="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate">
-                      {item.summary || '(Không có thông điệp commit)'}
+                      {item.summary || localeState.t('graph.fileHistory.noMessage')}
                     </span>
                   </div>
 
@@ -146,10 +147,10 @@
                   <button
                     onclick={() => handleJumpToCommit(item.commit_id)}
                     class="px-2.5 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-purple-50 dark:hover:bg-purple-950 hover:border-purple-300 dark:hover:border-purple-700/60 hover:text-purple-700 dark:hover:text-purple-300 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 mt-0.5 shadow-xs"
-                    title="Xem commit này trên Living Graph"
+                    title={localeState.t('graph.fileHistory.viewCommitTooltip')}
                   >
                     <GitCommit class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                    <span>Xem commit</span>
+                    <span>{localeState.t('graph.fileHistory.viewCommit')}</span>
                   </button>
                 {/if}
               </div>

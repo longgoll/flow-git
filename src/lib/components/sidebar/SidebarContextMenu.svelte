@@ -67,7 +67,7 @@
           <span class="truncate">{activeBranchMenu.branch.shorthand}</span>
         </div>
         <div class="text-[10px] text-zinc-500 truncate mt-0.5">
-          {activeBranchMenu.branch.upstream_name ? `Tracks: ${activeBranchMenu.branch.upstream_name}` : localeState.t('sidebar.localOnly')}
+          {activeBranchMenu.branch.upstream_name ? localeState.t('sidebar.tracks', { upstream: activeBranchMenu.branch.upstream_name }) : localeState.t('sidebar.localOnly')}
         </div>
       </div>
 
@@ -94,10 +94,10 @@
               if (b) onRebaseBranch(b);
             }}
             class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-amber-50 dark:hover:bg-amber-950/60 text-amber-800 dark:text-amber-300 hover:text-amber-950 dark:hover:text-amber-100 transition-colors cursor-pointer text-left font-medium"
-            title={`Rebase HEAD (${repoSummary?.current_branch}) onto ${activeBranchMenu.branch.shorthand}`}
+            title={localeState.t('sidebar.rebaseOntoTooltip', { head: repoSummary?.current_branch || 'HEAD', branch: activeBranchMenu.branch.shorthand })}
           >
             <GitFork class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-            <span class="truncate">Rebase HEAD onto {activeBranchMenu.branch.shorthand}</span>
+            <span class="truncate">{localeState.t('sidebar.rebaseOnto', { branch: activeBranchMenu.branch.shorthand })}</span>
           </button>
         {/if}
       {/if}
@@ -126,7 +126,7 @@
             }}
             disabled={activeBranchMenu.branch.ahead_count === 0}
             class="w-full flex items-center justify-between px-2 py-1.5 rounded-md transition-colors text-left {activeBranchMenu.branch.ahead_count > 0 ? 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white cursor-pointer' : 'text-zinc-400 dark:text-zinc-600 cursor-not-allowed opacity-50'}"
-            title={activeBranchMenu.branch.ahead_count > 0 ? `Push +${activeBranchMenu.branch.ahead_count}` : 'Up to date'}
+            title={activeBranchMenu.branch.ahead_count > 0 ? localeState.t('sidebar.pushAheadTooltip', { count: activeBranchMenu.branch.ahead_count }) : localeState.t('sidebar.upToDate')}
           >
             <div class="flex items-center gap-2">
               <Upload class="w-3.5 h-3.5 {activeBranchMenu.branch.ahead_count > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400 dark:text-zinc-600'}" />
@@ -135,7 +135,7 @@
             {#if activeBranchMenu.branch.ahead_count > 0}
               <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">+{activeBranchMenu.branch.ahead_count}</span>
             {:else}
-              <span class="text-[9px] font-mono text-zinc-400 dark:text-zinc-600">Up to date</span>
+              <span class="text-[9px] font-mono text-zinc-400 dark:text-zinc-600">{localeState.t('sidebar.upToDate')}</span>
             {/if}
           </button>
           <button
@@ -230,7 +230,7 @@
           class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-200 transition-colors cursor-pointer text-left"
         >
           <Trash2 class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
-          <span>{localeState.t('sidebar.deleteBranch')}{isProtectedBranch(activeBranchMenu.branch) ? ' (Protected)' : ''}</span>
+          <span>{localeState.t('sidebar.deleteBranch')}{isProtectedBranch(activeBranchMenu.branch) ? ` ${localeState.t('sidebar.protectedBadge')}` : ''}</span>
         </button>
       {/if}
     </div>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { AlertOctagon, Trash2, ShieldAlert, X, ArrowRight } from 'lucide-svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     isOpen: boolean;
@@ -46,10 +47,10 @@
           </div>
           <div>
             <h2 class="text-sm font-bold text-rose-950 dark:text-white flex items-center gap-2">
-              Xóa Vĩnh Viễn Khỏi Lịch Sử Git (Nuke File)
+              {localeState.t('modals.nukeHistory.title')}
             </h2>
             <p class="text-xs text-rose-700 dark:text-rose-300/80 mt-0.5">
-              Xóa sạch dấu vết của tệp khỏi toàn bộ các commit trong quá khứ
+              {localeState.t('modals.nukeHistory.subtitle')}
             </p>
           </div>
         </div>
@@ -67,7 +68,7 @@
       <div class="p-6 space-y-4 text-xs">
         <!-- Target File Path Card -->
         <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2">
-          <span class="text-zinc-600 dark:text-zinc-400">Tệp mục tiêu:</span>
+          <span class="text-zinc-600 dark:text-zinc-400">{localeState.t('modals.nukeHistory.targetFile')}</span>
           <span class="font-mono font-bold text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-950/60 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-900/60 break-all select-text">
             {filePath}
           </span>
@@ -77,12 +78,12 @@
         <div class="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-200 space-y-2 leading-relaxed">
           <div class="flex items-center gap-2 font-semibold text-rose-700 dark:text-rose-300">
             <ShieldAlert class="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
-            <span>Lưu ý quan trọng trước khi thực hiện:</span>
+            <span>{localeState.t('modals.nukeHistory.warningNotice')}</span>
           </div>
           <ul class="list-disc list-inside space-y-1 text-zinc-700 dark:text-zinc-300 pl-1">
-            <li>Lệnh này sẽ viết lại (rewrite) toàn bộ commit history của repo.</li>
-            <li>Tệp <code class="text-rose-700 dark:text-rose-300 font-mono">{filePath}</code> sẽ biến mất hoàn toàn khỏi mọi commit cũ và mới.</li>
-            <li>Tất cả các commit SHA sẽ bị thay đổi. Nếu đã push lên GitHub/GitLab, bạn sẽ phải thực hiện <strong>Force Push (`--force`)</strong>.</li>
+            <li>{localeState.t('modals.nukeHistory.warningPoint1')}</li>
+            <li>{localeState.t('modals.nukeHistory.warningPoint2')}</li>
+            <li>{localeState.t('modals.nukeHistory.warningPoint3')}</li>
           </ul>
         </div>
 
@@ -101,7 +102,7 @@
             class="w-4 h-4 mt-0.5 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-rose-600 focus:ring-0 cursor-pointer"
           />
           <span class="text-zinc-700 dark:text-zinc-300 leading-snug">
-            Tôi hiểu rằng thao tác này sẽ viết lại toàn bộ lịch sử Git và tôi đã sao lưu mã nguồn nếu cần.
+            {localeState.t('modals.nukeHistory.confirmCheckbox')}
           </span>
         </label>
 
@@ -113,7 +114,7 @@
             disabled={isNuking}
             class="px-4 py-2 rounded-xl text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-40"
           >
-            Hủy bỏ
+            {localeState.t('common.cancel')}
           </button>
 
           <button
@@ -124,10 +125,10 @@
           >
             {#if isNuking}
               <div class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              <span>Đang viết lại lịch sử Git...</span>
+              <span>{localeState.t('modals.nukeHistory.nuking')}</span>
             {:else}
               <Trash2 class="w-4 h-4" />
-              <span>Xóa Vĩnh Viễn (Nuke)</span>
+              <span>{localeState.t('modals.nukeHistory.nukeBtn')}</span>
               <ArrowRight class="w-3.5 h-3.5" />
             {/if}
           </button>

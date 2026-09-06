@@ -12,6 +12,7 @@
     parsePatchLines,
     parseSplitDiffRows,
   } from './prDiffUtils';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     selectedPR: GitHubPullRequest;
@@ -90,7 +91,7 @@
     class="border-r border-zinc-200 dark:border-zinc-800 overflow-y-auto bg-zinc-50/60 dark:bg-zinc-950/40 divide-y divide-zinc-200/60 dark:divide-zinc-900/60 shrink-0"
   >
     <div class="p-2.5 bg-zinc-100/60 dark:bg-zinc-900/40 border-b border-zinc-200/80 dark:border-zinc-800/80 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider flex items-center justify-between">
-      <span>Tệp thay đổi</span>
+      <span>{localeState.t('pullRequest.reviewer.filesTab.filesChanged')}</span>
       <span class="px-1.5 py-0.2 rounded-full font-mono text-[10px] bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
         {prFiles.length}
       </span>
@@ -141,7 +142,7 @@
           type="button"
           onclick={() => onToggleFileViewed(file.filename)}
           class="p-1.5 mr-2 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer shrink-0 transition-colors"
-          title={isViewed ? 'Bỏ đánh dấu đã xem' : 'Đánh dấu đã xem'}
+          title={isViewed ? localeState.t('pullRequest.reviewer.filesTab.unmarkAsViewed') : localeState.t('pullRequest.reviewer.filesTab.markAsViewed')}
         >
           {#if isViewed}
             <CheckCircle class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 fill-emerald-100 dark:fill-emerald-950/60" />
@@ -160,7 +161,7 @@
     aria-orientation="vertical"
     onmousedown={handleStartResizeFiles}
     class="w-1.5 hover:w-2 bg-zinc-200/80 dark:bg-zinc-800/80 hover:bg-violet-500 active:bg-violet-600 cursor-col-resize transition-all shrink-0 flex items-center justify-center select-none {isResizingFiles ? 'bg-violet-600 w-2' : ''}"
-    title="Kéo để thay đổi độ rộng danh sách tệp"
+    title={localeState.t('pullRequest.reviewer.filesTab.dragResizeTooltip')}
   ></div>
 
   <!-- Diff Content & Inline Commenting -->
@@ -184,14 +185,14 @@
               onclick={() => onDiffModeChange('unified')}
               class="px-2 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer {diffMode === 'unified' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-bold shadow-xs' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'}"
             >
-              Unified
+              {localeState.t('pullRequest.reviewer.filesTab.unifiedMode')}
             </button>
             <button
               type="button"
               onclick={() => onDiffModeChange('split')}
               class="px-2 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer {diffMode === 'split' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-bold shadow-xs' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'}"
             >
-              Split (2 cột)
+              {localeState.t('pullRequest.reviewer.filesTab.splitMode')}
             </button>
           </div>
 
@@ -203,18 +204,18 @@
           >
             {#if activeViewed}
               <CheckCircle class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Đã xem tệp</span>
+              <span>{localeState.t('pullRequest.reviewer.filesTab.viewedFile')}</span>
             {:else}
               <Eye class="w-3.5 h-3.5" />
-              <span>Đánh dấu đã xem</span>
+              <span>{localeState.t('pullRequest.reviewer.filesTab.markAsViewed')}</span>
             {/if}
           </button>
 
           <span class="px-2 py-0.5 rounded-full text-[11px] font-mono bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-            +{activeFile.additions} dòng
+            {localeState.t('pullRequest.reviewer.filesTab.additionsCount', { count: activeFile.additions })}
           </span>
           <span class="px-2 py-0.5 rounded-full text-[11px] font-mono bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
-            -{activeFile.deletions} dòng
+            {localeState.t('pullRequest.reviewer.filesTab.deletionsCount', { count: activeFile.deletions })}
           </span>
         </div>
       </div>
@@ -303,7 +304,7 @@
                       <button
                         onclick={() => onOpenInlineComment(activeFile.filename, commentTargetLine)}
                         class="opacity-0 group-hover:opacity-100 p-0.5 rounded bg-violet-600 hover:bg-violet-500 text-white transition-opacity cursor-pointer ml-2 shadow-xs"
-                        title="Thêm bình luận tại dòng {commentTargetLine}"
+                        title={localeState.t('pullRequest.reviewer.filesTab.inlineCommentPrompt', { line: commentTargetLine })}
                       >
                         <Plus class="w-3 h-3" />
                       </button>
@@ -327,7 +328,7 @@
                     <div class="ml-24 p-3 bg-zinc-50 dark:bg-zinc-900 border-t border-violet-200 dark:border-violet-800/40 space-y-2">
                       <textarea
                         bind:value={inlineCommentText}
-                        placeholder="Nhập nhận xét của bạn trên dòng {commentTargetLine}..."
+                        placeholder={localeState.t('pullRequest.reviewer.filesTab.inlineCommentInputPlaceholder', { line: commentTargetLine })}
                         rows={2}
                         class="w-full bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg p-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 resize-none font-sans"
                       ></textarea>
@@ -337,7 +338,7 @@
                           onclick={onCloseInlineComment}
                           class="px-2.5 py-1 rounded text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 cursor-pointer"
                         >
-                          Hủy
+                          {localeState.t('pullRequest.reviewer.filesTab.cancel')}
                         </button>
                         <button
                           type="button"
@@ -346,7 +347,7 @@
                           class="px-3 py-1 rounded bg-violet-600 hover:bg-violet-500 text-white font-medium text-xs flex items-center gap-1 cursor-pointer disabled:opacity-50"
                         >
                           <Send class="w-3 h-3" />
-                          <span>Gửi nhận xét</span>
+                          <span>{localeState.t('pullRequest.reviewer.filesTab.sendComment')}</span>
                         </button>
                       </div>
                     </div>
@@ -358,7 +359,7 @@
         {/if}
       {:else}
         <div class="p-6 text-center text-zinc-400 dark:text-zinc-500">
-          Tệp nhị phân hoặc không có diff chi tiết.
+          {localeState.t('pullRequest.reviewer.filesTab.binaryOrNoDiff')}
         </div>
       {/if}
     {/if}

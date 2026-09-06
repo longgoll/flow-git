@@ -11,6 +11,7 @@
   import RepositoryExplorer from './RepositoryExplorer.svelte';
   import PullRequestReviewer from './PullRequestReviewer.svelte';
   import { toast } from '../state/toastState.svelte';
+  import { localeState } from '../state/localeState.svelte';
   import type { RepoState } from '../state/repoState.svelte';
   import type { WorkingTreeState } from '../state/workingTreeState.svelte';
   import type { RemoteState } from '../state/remoteState.svelte';
@@ -169,7 +170,7 @@
         <button
           onclick={() => (repo.isDetailOpen = true)}
           class="absolute bottom-3 right-4 px-3 py-1.5 rounded-lg bg-white/95 dark:bg-zinc-900/95 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/70 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-white shadow-xl flex items-center gap-2 backdrop-blur-md cursor-pointer transition-all hover:scale-105 z-10"
-          title="Mở bảng chi tiết commit"
+          title={localeState.t('graph.canvas.openDetailsTooltip')}
         >
           <Info class="w-3.5 h-3.5 text-cyan-400" />
           <span>Commit Details</span>
@@ -186,7 +187,7 @@
         tabindex="-1"
         onmousedown={handleStartResizeDetail}
         class="h-1.5 w-full bg-zinc-200/80 dark:bg-zinc-800/80 hover:bg-cyan-500 active:bg-cyan-600 cursor-row-resize transition-colors flex items-center justify-center shrink-0 group relative z-10 select-none {isResizingDetail ? 'bg-cyan-500!' : ''}"
-        title="Kéo chuột để điều chỉnh độ cao panel chi tiết"
+        title={localeState.t('graph.canvas.resizeDetailsTooltip')}
       >
         <div class="w-10 h-0.5 rounded-full bg-zinc-400 dark:bg-zinc-600 group-hover:bg-white transition-colors"></div>
       </div>

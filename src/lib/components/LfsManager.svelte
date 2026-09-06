@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getLfsInfo, pullLfsFiles, lockLfsFile, unlockLfsFile } from '../api';
+  import { localeState } from '../state/localeState.svelte';
   import type { LfsSummary } from '../types';
 
   let {
@@ -117,18 +118,18 @@
           </div>
           <div>
             <h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-              Git Large File Storage (LFS) Asset Hub
+              {localeState.t('lfs.title')}
               {#if lfsData.is_lfs_enabled}
                 <span class="text-xs px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-950/80 border border-sky-200 dark:border-sky-800/50 text-sky-800 dark:text-sky-300 font-normal">
-                  Active ({lfsData.files.length} files)
+                  {localeState.t('lfs.activeCount', { count: lfsData.files.length })}
                 </span>
               {:else}
                 <span class="text-xs px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 font-normal border border-neutral-200 dark:border-transparent">
-                  Inactive
+                  {localeState.t('lfs.inactive')}
                 </span>
               {/if}
             </h2>
-            <p class="text-xs text-neutral-500 dark:text-neutral-400">Theo dõi, khóa và tải tệp nhị phân dung lượng lớn</p>
+            <p class="text-xs text-neutral-500 dark:text-neutral-400">{localeState.t('lfs.description')}</p>
           </div>
         </div>
 
@@ -142,12 +143,12 @@
               {#if actionLoading === 'pull_all'}
                 <span class="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
               {/if}
-              Pull All LFS Binaries
+              {localeState.t('lfs.pullAll')}
             </button>
           {/if}
           <button
             onclick={onClose}
-            aria-label="Đóng modal"
+            aria-label={localeState.t('lfs.closeModal')}
             class="p-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors cursor-pointer"
           >
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -170,23 +171,23 @@
         {#if isLoading}
           <div class="py-12 flex flex-col items-center justify-center gap-3 text-neutral-500 text-xs">
             <span class="w-6 h-6 border-2 border-sky-500/30 border-t-sky-500 rounded-full animate-spin"></span>
-            Đang truy xuất metadata Git LFS...
+            {localeState.t('lfs.scanning')}
           </div>
         {:else if !lfsData.is_lfs_enabled}
           <div class="py-12 text-center text-neutral-500">
             <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-neutral-100 dark:bg-neutral-800/50 flex items-center justify-center text-neutral-400 dark:text-neutral-500 font-bold text-sm">
               LFS
             </div>
-            <p class="text-sm font-medium text-neutral-800 dark:text-neutral-300">Git LFS chưa được cấu hình</p>
+            <p class="text-sm font-medium text-neutral-800 dark:text-neutral-300">{localeState.t('lfs.notConfiguredTitle')}</p>
             <p class="text-xs text-neutral-500 mt-1 max-w-sm mx-auto">
-              Không tìm thấy khai báo <code>filter=lfs</code> trong file <code>.gitattributes</code>. Bạn có thể kích hoạt bằng cách chạy <code>git lfs track "*.psd"</code>.
+              {localeState.t('lfs.notConfiguredDesc')}
             </p>
           </div>
         {:else}
           <!-- Tracked patterns -->
           {#if lfsData.tracked_patterns.length > 0}
             <div class="p-3 bg-neutral-50 dark:bg-neutral-950/40 rounded-lg border border-neutral-200 dark:border-neutral-800">
-              <span class="text-xs font-semibold text-neutral-800 dark:text-neutral-300 block mb-1.5">Tracked Extensions / Patterns</span>
+              <span class="text-xs font-semibold text-neutral-800 dark:text-neutral-300 block mb-1.5">{localeState.t('lfs.trackedPatterns')}</span>
               <div class="flex flex-wrap gap-1.5">
                 {#each lfsData.tracked_patterns as pat}
                   <span class="px-2 py-0.5 text-xs font-mono rounded-md bg-neutral-100 dark:bg-neutral-800/80 text-sky-700 dark:text-sky-300 border border-neutral-200 dark:border-neutral-700/60">
@@ -201,7 +202,7 @@
           <div class="p-3.5 bg-neutral-50 dark:bg-neutral-950/40 rounded-lg border border-neutral-200 dark:border-neutral-800 space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="text-xs font-semibold text-neutral-800 dark:text-neutral-300 flex items-center gap-1.5">
-                🔒 Git LFS Locks ({lfsData.locks.length})
+                {localeState.t('lfs.locksTitle', { count: lfsData.locks.length })}
               </span>
             </div>
             
@@ -209,7 +210,7 @@
               <input
                 type="text"
                 bind:value={newLockPath}
-                placeholder="Nhập đường dẫn tệp muốn khóa (vd: assets/model.fbx)..."
+                placeholder={localeState.t('lfs.lockPlaceholder')}
                 class="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-200 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-hidden focus:border-sky-500 select-text"
               />
               <button
@@ -217,7 +218,7 @@
                 disabled={!newLockPath.trim() || actionLoading !== null}
                 class="px-3 py-1.5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 rounded-lg transition-colors disabled:opacity-50 border border-neutral-200 dark:border-transparent cursor-pointer"
               >
-                Khóa Tệp (Lock)
+                {localeState.t('lfs.lockBtn')}
               </button>
             </div>
 
@@ -227,14 +228,14 @@
                   <div class="px-3 py-2 text-xs flex items-center justify-between bg-white dark:bg-neutral-900/50">
                     <div>
                       <span class="font-mono text-neutral-900 dark:text-neutral-200">{lock.path}</span>
-                      <span class="text-neutral-500 text-[10px] ml-2 font-sans">bởi {lock.owner} (ID: {lock.id})</span>
+                      <span class="text-neutral-500 text-[10px] ml-2 font-sans">{localeState.t('lfs.lockedBy', { owner: lock.owner, id: lock.id })}</span>
                     </div>
                     <button
                       onclick={() => handleUnlock(lock.path)}
                       disabled={actionLoading !== null}
                       class="px-2 py-0.5 text-[10px] rounded bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/60 border border-red-200 dark:border-red-800/50 transition-colors cursor-pointer"
                     >
-                      Mở khóa (Unlock)
+                      {localeState.t('lfs.unlockBtn')}
                     </button>
                   </div>
                 {/each}
@@ -244,21 +245,21 @@
 
           <!-- LFS Files List -->
           <div>
-            <span class="text-xs font-semibold text-neutral-800 dark:text-neutral-300 block mb-2">Tệp LFS trong Repository</span>
+            <span class="text-xs font-semibold text-neutral-800 dark:text-neutral-300 block mb-2">{localeState.t('lfs.filesInRepo')}</span>
             {#if lfsData.files.length === 0}
-              <p class="text-xs text-neutral-500 italic">Chưa có tệp LFS nào được commit trong lịch sử.</p>
+              <p class="text-xs text-neutral-500 italic">{localeState.t('lfs.noFilesCommitted')}</p>
             {:else}
               <div class="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-800/50">
                 {#each lfsData.files as file}
                   <div class="px-3.5 py-2 text-xs flex items-center justify-between bg-white dark:bg-neutral-950/20 hover:bg-neutral-50 dark:hover:bg-neutral-900/40 transition-colors">
                     <div class="flex items-center gap-2 truncate pr-2">
                       {#if file.is_pointer}
-                        <span class="px-1.5 py-0.5 text-[10px] rounded bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40 font-semibold" title="Chỉ chứa con trỏ Pointer (chưa tải binary)">
-                          Pointer
+                        <span class="px-1.5 py-0.5 text-[10px] rounded bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40 font-semibold" title={localeState.t('lfs.pointerTooltip')}>
+                          {localeState.t('lfs.pointerBadge')}
                         </span>
                       {:else}
-                        <span class="px-1.5 py-0.5 text-[10px] rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-semibold" title="Binary đã tải về máy">
-                          Downloaded
+                        <span class="px-1.5 py-0.5 text-[10px] rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-semibold" title={localeState.t('lfs.downloadedTooltip')}>
+                          {localeState.t('lfs.downloadedBadge')}
                         </span>
                       {/if}
                       <span class="font-mono text-neutral-900 dark:text-neutral-200 truncate select-text">{file.path}</span>

@@ -1,0 +1,43 @@
+import type { diff as viDiff } from '../vi/diff';
+
+export const diff: typeof viDiff = {
+  // DiffViewer
+  renamedFrom: "renamed from {path}",
+  noFileSelected: "No file selected",
+  vsCodeEngine: "VS Code",
+  vsCodeTooltip: "Monaco VS Code Rich Diff (Syntax highlighting & Minimap)",
+  hunksEngine: "Hunks",
+  hunksTooltip: "Hunk Staging Mode (Interactive staging)",
+  unifiedMode: "Unified",
+  unifiedTooltip: "Unified View",
+  splitMode: "Split",
+  splitTooltip: "Side-by-Side Split View",
+  ignoreSpace: "Ignore Space",
+  ignoreSpaceTooltip: "Ignore whitespace and line endings (CRLF/LF)",
+  unstageFile: "Unstage File",
+  stageFile: "Stage File",
+  discardFileTooltip: "Safe Discard File (48h protected)",
+  generatingDiff: "Generating deep interactive diff...",
+  selectFilePrompt: "Select a file to inspect differences",
+  selectFileDesc: "Code diff and line modifications will appear here",
+  binaryNotice: "Binary file changes cannot be displayed as text",
+  noDifferences: "No differences found",
+  unstageHunk: "Unstage Hunk",
+  stageHunk: "Stage Hunk",
+  unstageHunkTooltip: "Unstage hunk containing this line",
+  stageHunkTooltip: "Stage hunk containing this line",
+  copyLineTooltip: "Copy code line",
+  copiedLineToast: "Code line copied to clipboard.",
+
+  // ThreeColumnLayout
+  commitsAndGraph: "Commits & Graph",
+  commitsCount: "{count} commits",
+  loadingCommit: "Loading commit...",
+  copyShaTooltip: "Click to copy full commit SHA",
+  changedFiles: "Changed Files",
+  filterFilesPlaceholder: "Filter files...",
+  showMoreFiles: "Show more files (+150)... ({rendered}/{total})",
+  noMatchingFiles: "No matching files found",
+  noChangesInCommit: "No changes in this commit",
+  selectCommitPrompt: "Select a commit on the left to inspect its modified files",
+};

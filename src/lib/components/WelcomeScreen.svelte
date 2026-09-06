@@ -2,6 +2,7 @@
   import { open } from '@tauri-apps/plugin-dialog';
   import { cloneRepository, isTauri } from '../api';
   import type { AccountProfile, GitCredentials } from '../types';
+  import { localeState } from '../state/localeState.svelte';
 
   let {
     isOpen = true,
@@ -32,7 +33,7 @@
         const selected = await open({
           directory: true,
           multiple: false,
-          title: 'Chọn thư mục Git Repository',
+          title: localeState.t('assistant.welcome.selectDirTitle'),
         });
         if (selected && typeof selected === 'string') {
           onClose();
@@ -55,7 +56,7 @@
         const selected = await open({
           directory: true,
           multiple: false,
-          title: 'Chọn thư mục chứa Repository tải về',
+          title: localeState.t('assistant.welcome.cloneTargetTitle'),
         });
         if (selected && typeof selected === 'string') {
           cloneTargetPath = selected;
@@ -88,7 +89,7 @@
     } catch (err: any) {
       const msg = err?.message || String(err);
       if (msg.includes('AUTH_REQUIRED') || msg.includes('401')) {
-        cloneError = 'Repository yêu cầu xác thực. Vui lòng đăng nhập GitHub/GitLab trước.';
+        cloneError = localeState.t('assistant.welcome.authRequired');
       } else {
         cloneError = msg;
       }
@@ -114,7 +115,7 @@
             onclick={onClose}
             class="absolute top-6 right-6 px-3 py-1.5 rounded-lg bg-neutral-100 dark:bg-neutral-800/80 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
           >
-            <span>Vào Workspace</span>
+            <span>{localeState.t('assistant.welcome.enterWorkspace')}</span>
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
@@ -128,14 +129,14 @@
           <div>
             <div class="flex items-center gap-2.5">
               <h1 class="text-xl font-bold bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-600 dark:from-neutral-100 dark:via-neutral-200 dark:to-neutral-400 bg-clip-text text-transparent">
-                Chào mừng bạn đến với FlowGit
+                {localeState.t('assistant.welcome.title')}
               </h1>
               <span class="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800/60">
                 2026 Edition
               </span>
             </div>
             <p class="text-xs text-neutral-600 dark:text-neutral-400 mt-1">
-              Trình quản lý Git trực quan thế hệ mới – Hiệu năng cao, Kéo thả mượt mà, An toàn tuyệt đối (No-Fear Git)
+              {localeState.t('assistant.welcome.subtitle')}
             </p>
           </div>
         </div>
@@ -155,7 +156,7 @@
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
               </svg>
-              <span>Mở Repository Cục Bộ</span>
+              <span>{localeState.t('assistant.welcome.tabOpen')}</span>
             </button>
             <button
               type="button"
@@ -165,7 +166,7 @@
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
               </svg>
-              <span>Clone từ Remote</span>
+              <span>{localeState.t('assistant.welcome.tabClone')}</span>
             </button>
           </div>
 
@@ -175,7 +176,7 @@
               <div class="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-950/50 border border-neutral-200 dark:border-neutral-800/80 space-y-3">
                 <div class="flex items-center gap-2 text-xs font-semibold text-neutral-800 dark:text-neutral-200">
                   <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
-                  <span>Mở thư mục dự án Git đã có sẵn trên máy</span>
+                  <span>{localeState.t('assistant.welcome.tabOpen')}</span>
                 </div>
                 <p class="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
                   FlowGit sẽ tự động tải Living Commit Graph, phát hiện Working Tree và kích hoạt cơ chế bảo vệ Safe Discard 48h.
@@ -188,7 +189,7 @@
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
                   </svg>
-                  <span>Chọn Thư Mục Dự Án (Browse Folder...)</span>
+                  <span>{localeState.t('assistant.welcome.browseFolder')}</span>
                 </button>
               </div>
 
@@ -208,7 +209,7 @@
                     onclick={() => manualPath.trim() && onSelectRepo(manualPath.trim())}
                     class="px-3.5 py-2 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-xs font-medium text-neutral-800 dark:text-neutral-200 rounded-lg transition-colors cursor-pointer border border-neutral-200 dark:border-transparent"
                   >
-                    Mở
+                    {localeState.t('assistant.welcome.openProjectBtn')}
                   </button>
                 </div>
               </div>
@@ -218,20 +219,20 @@
             <form onsubmit={handleExecuteClone} class="space-y-3 pt-1">
               <div class="space-y-1">
                 <label for="clone-url" class="text-xs font-medium text-neutral-700 dark:text-neutral-300 block">
-                  Remote Repository URL
+                  {localeState.t('assistant.welcome.urlLabel')}
                 </label>
                 <input
                   id="clone-url"
                   type="text"
                   bind:value={cloneUrl}
-                  placeholder="https://github.com/username/repo.git hoặc git@github.com:..."
+                  placeholder={localeState.t('assistant.welcome.urlPlaceholder')}
                   class="w-full px-3 py-2 text-xs bg-white dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700/80 rounded-lg text-neutral-900 dark:text-neutral-200 font-mono focus:outline-hidden focus:border-indigo-500"
                 />
               </div>
 
               <div class="space-y-1">
                 <label for="clone-target" class="text-xs font-medium text-neutral-700 dark:text-neutral-300 block">
-                  Thư mục lưu về máy (Target Path)
+                  {localeState.t('assistant.welcome.pathLabel')}
                 </label>
                 <div class="flex items-center gap-2">
                   <input
@@ -246,7 +247,7 @@
                     onclick={handleBrowseCloneTarget}
                     class="px-3 py-2 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-xs font-medium text-neutral-800 dark:text-neutral-200 rounded-lg transition-colors cursor-pointer border border-neutral-200 dark:border-transparent"
                   >
-                    Chọn...
+                    {localeState.t('assistant.welcome.browseFolder')}
                   </button>
                 </div>
               </div>
@@ -264,12 +265,12 @@
               >
                 {#if isCloning}
                   <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Đang tải mã nguồn (Git Clone)...</span>
+                  <span>{localeState.t('assistant.welcome.cloning')}</span>
                 {:else}
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
                   </svg>
-                  <span>Bắt Đầu Clone & Mở Dự Án</span>
+                  <span>{localeState.t('assistant.welcome.cloneBtn')}</span>
                 {/if}
               </button>
             </form>
@@ -341,7 +342,7 @@
           <!-- Recent Repositories -->
           <div class="space-y-2 flex-1 pt-2">
             <h3 class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex items-center justify-between">
-              <span>Gần đây (Recent Repos)</span>
+              <span>{localeState.t('assistant.welcome.recentRepos')}</span>
               {#if recentRepos.length > 0}
                 <span class="text-[10px] font-mono text-neutral-500 font-normal">{recentRepos.length} repos</span>
               {/if}
@@ -372,7 +373,7 @@
               </div>
             {:else}
               <div class="p-4 rounded-xl bg-neutral-100/50 dark:bg-neutral-900/50 border border-dashed border-neutral-300 dark:border-neutral-800 text-center">
-                <span class="text-xs text-neutral-500">Chưa có lịch sử repository nào</span>
+                <span class="text-xs text-neutral-500">{localeState.t('assistant.welcome.noRecentRepos')}</span>
               </div>
             {/if}
           </div>

@@ -9,6 +9,7 @@
     Check,
     FolderGit2,
   } from 'lucide-svelte';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     isOpen: boolean;
@@ -58,17 +59,17 @@
   );
 
   function handleSelectWorkingTree() {
-    onSelect({ commitOid: null, label: 'Working Tree (Live Files)' });
+    onSelect({ commitOid: null, label: localeState.t('explorer.refPicker.liveFilesLabel') });
     onClose();
   }
 
   function handleSelectBranch(b: BranchInfo) {
-    onSelect({ commitOid: b.target_commit_id, label: `Branch: ${b.shorthand}` });
+    onSelect({ commitOid: b.target_commit_id, label: localeState.t('explorer.refPicker.branchLabel', { name: b.shorthand }) });
     onClose();
   }
 
   function handleSelectTag(t: TagInfo) {
-    onSelect({ commitOid: t.target_commit_id, label: `Tag: ${t.name}` });
+    onSelect({ commitOid: t.target_commit_id, label: localeState.t('explorer.refPicker.tagLabel', { name: t.name }) });
     onClose();
   }
 
@@ -102,8 +103,8 @@
             <FolderGit2 class="w-4 h-4" />
           </div>
           <div>
-            <h3 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Chọn Điểm Khám Phá Mã Nguồn (Target Ref)</h3>
-            <p class="text-[11px] text-zinc-500 dark:text-zinc-400">Duyệt live working tree hoặc snapshot tại branch/tag/commit bất kỳ</p>
+            <h3 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{localeState.t('explorer.refPicker.title')}</h3>
+            <p class="text-[11px] text-zinc-500 dark:text-zinc-400">{localeState.t('explorer.refPicker.subtitle')}</p>
           </div>
         </div>
         <button
@@ -118,14 +119,14 @@
       <div class="p-3 bg-zinc-100/60 dark:bg-zinc-950/40 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span class="text-xs font-semibold text-zinc-800 dark:text-zinc-200">Live Working Tree</span>
+          <span class="text-xs font-semibold text-zinc-800 dark:text-zinc-200">{localeState.t('explorer.refPicker.liveWorkingTree')}</span>
           <span class="text-[10px] text-zinc-500 font-mono">({currentBranchName})</span>
         </div>
         <button
           onclick={handleSelectWorkingTree}
           class="px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all {selectedCommitOid === null ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-600 border border-zinc-200 dark:border-zinc-700'}"
         >
-          {selectedCommitOid === null ? 'Đang chọn' : 'Xem Live Files'}
+          {selectedCommitOid === null ? localeState.t('explorer.refPicker.currentlySelected') : localeState.t('explorer.refPicker.viewLiveFiles')}
         </button>
       </div>
 
@@ -137,21 +138,21 @@
             class="flex-1 py-1.5 rounded-md flex items-center justify-center gap-1.5 cursor-pointer transition-all {activeTab === 'branches' ? 'bg-white dark:bg-zinc-800 text-cyan-600 dark:text-cyan-400 font-semibold shadow-xs' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'}"
           >
             <GitBranch class="w-3.5 h-3.5" />
-            <span>Branches ({branches.length})</span>
+            <span>{localeState.t('explorer.refPicker.branchesTab', { count: branches.length })}</span>
           </button>
           <button
             onclick={() => { activeTab = 'tags'; searchQuery = ''; }}
             class="flex-1 py-1.5 rounded-md flex items-center justify-center gap-1.5 cursor-pointer transition-all {activeTab === 'tags' ? 'bg-white dark:bg-zinc-800 text-amber-600 dark:text-amber-400 font-semibold shadow-xs' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'}"
           >
             <Tag class="w-3.5 h-3.5" />
-            <span>Tags ({tags.length})</span>
+            <span>{localeState.t('explorer.refPicker.tagsTab', { count: tags.length })}</span>
           </button>
           <button
             onclick={() => { activeTab = 'commits'; searchQuery = ''; }}
             class="flex-1 py-1.5 rounded-md flex items-center justify-center gap-1.5 cursor-pointer transition-all {activeTab === 'commits' ? 'bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400 font-semibold shadow-xs' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'}"
           >
             <GitCommit class="w-3.5 h-3.5" />
-            <span>Commits ({commits.length})</span>
+            <span>{localeState.t('explorer.refPicker.commitsTab', { count: commits.length })}</span>
           </button>
         </div>
 
@@ -160,7 +161,7 @@
           <input
             type="text"
             bind:value={searchQuery}
-            placeholder={activeTab === 'branches' ? 'Lọc tên nhánh...' : activeTab === 'tags' ? 'Lọc thẻ tag...' : 'Lọc commit message hoặc hash...'}
+            placeholder={activeTab === 'branches' ? localeState.t('explorer.refPicker.searchBranches') : activeTab === 'tags' ? localeState.t('explorer.refPicker.searchTags') : localeState.t('explorer.refPicker.searchCommits')}
             class="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-cyan-500"
           />
         </div>
@@ -170,7 +171,7 @@
       <div class="flex-1 overflow-y-auto p-2 divide-y divide-zinc-100 dark:divide-zinc-800/60 max-h-80">
         {#if activeTab === 'branches'}
           {#if filteredBranches.length === 0}
-            <div class="py-8 text-center text-xs text-zinc-400">Không tìm thấy nhánh phù hợp</div>
+            <div class="py-8 text-center text-xs text-zinc-400">{localeState.t('explorer.refPicker.noBranchesFound')}</div>
           {:else}
             {#each filteredBranches as branch}
               {@const isSelected = selectedCommitOid === branch.target_commit_id}
@@ -200,7 +201,7 @@
 
         {:else if activeTab === 'tags'}
           {#if filteredTags.length === 0}
-            <div class="py-8 text-center text-xs text-zinc-400">Không tìm thấy tag phù hợp</div>
+            <div class="py-8 text-center text-xs text-zinc-400">{localeState.t('explorer.refPicker.noTagsFound')}</div>
           {:else}
             {#each filteredTags as tag}
               {@const isSelected = selectedCommitOid === tag.target_commit_id}
@@ -224,7 +225,7 @@
 
         {:else if activeTab === 'commits'}
           {#if filteredCommits.length === 0}
-            <div class="py-8 text-center text-xs text-zinc-400">Không tìm thấy commit phù hợp</div>
+            <div class="py-8 text-center text-xs text-zinc-400">{localeState.t('explorer.refPicker.noCommitsFound')}</div>
           {:else}
             {#each filteredCommits as commit}
               {@const isSelected = selectedCommitOid === commit.id}

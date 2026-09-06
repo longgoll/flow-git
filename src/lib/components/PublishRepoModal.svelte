@@ -3,6 +3,7 @@
   import { addRemote, createGitHubRepository, getStoredGitHubToken, saveGitHubToken, smartSync } from '../api';
   import type { AccountProfile } from '../types';
   import { toast } from '../state/toastState.svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   let {
     isOpen = false,
@@ -112,20 +113,20 @@
           </div>
           <div>
             <h2 class="text-base font-semibold text-neutral-900 dark:text-white tracking-wide flex items-center gap-2">
-              Xuất bản lên GitHub
+              {localeState.t('modals.publishRepo.title')}
               <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-mono font-semibold">
-                Publish Repository
+                {localeState.t('modals.publishRepo.badge')}
               </span>
             </h2>
             <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-              Đưa dự án từ máy tính cá nhân lên kho lưu trữ đám mây GitHub.
+              {localeState.t('modals.publishRepo.subtitle')}
             </p>
           </div>
         </div>
         <button
           onclick={onClose}
           class="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-          title="Đóng"
+          title={localeState.t('common.close')}
           disabled={isPublishing}
         >
           <X class="w-4 h-4" />
@@ -137,7 +138,7 @@
         <!-- Repo Name -->
         <div class="space-y-1.5">
           <label for="pub-name" class="text-xs font-medium text-neutral-700 dark:text-neutral-300 block">
-            Tên Repository trên GitHub
+            {localeState.t('modals.publishRepo.repoNameLabel')}
           </label>
           <input
             id="pub-name"
@@ -145,7 +146,7 @@
             bind:value={targetName}
             required
             disabled={isPublishing}
-            placeholder="vd: my-awesome-app"
+            placeholder={localeState.t('modals.publishRepo.repoNamePlaceholder')}
             class="w-full bg-white dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-800 rounded-lg px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-mono select-text"
           />
         </div>
@@ -153,14 +154,14 @@
         <!-- Description -->
         <div class="space-y-1.5">
           <label for="pub-desc" class="text-xs font-medium text-neutral-700 dark:text-neutral-300 block">
-            Mô tả dự án (Tùy chọn)
+            {localeState.t('modals.publishRepo.descriptionLabel')}
           </label>
           <input
             id="pub-desc"
             type="text"
             bind:value={description}
             disabled={isPublishing}
-            placeholder="Mô tả ngắn về dự án của bạn..."
+            placeholder={localeState.t('modals.publishRepo.descriptionPlaceholder')}
             class="w-full bg-white dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-800 rounded-lg px-3 py-2 text-xs text-neutral-900 dark:text-neutral-200 placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-indigo-500 transition-all select-text"
           />
         </div>
@@ -168,7 +169,7 @@
         <!-- Privacy Selection (Radio cards) -->
         <div class="space-y-2">
           <span class="text-xs font-medium text-neutral-700 dark:text-neutral-300 block">
-            Quyền riêng tư (Visibility):
+            {localeState.t('modals.publishRepo.visibilityLabel')}
           </span>
           <div class="grid grid-cols-2 gap-3">
             <!-- Private Option -->
@@ -181,10 +182,10 @@
             >
               <div class="flex items-center gap-2">
                 <Lock class="w-4 h-4 {isPrivate ? 'text-indigo-600 dark:text-indigo-400' : 'text-neutral-400 dark:text-neutral-500'}" />
-                <span class="text-xs font-semibold text-neutral-900 dark:text-neutral-200">Riêng tư (Private)</span>
+                <span class="text-xs font-semibold text-neutral-900 dark:text-neutral-200">{localeState.t('modals.publishRepo.privateOption')}</span>
               </div>
               <p class="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug">
-                Chỉ một mình bạn và người bạn cấp quyền mới xem được code.
+                {localeState.t('modals.publishRepo.privateDesc')}
               </p>
             </button>
 
@@ -198,10 +199,10 @@
             >
               <div class="flex items-center gap-2">
                 <Globe class="w-4 h-4 {!isPrivate ? 'text-indigo-600 dark:text-indigo-400' : 'text-neutral-400 dark:text-neutral-500'}" />
-                <span class="text-xs font-semibold text-neutral-900 dark:text-neutral-200">Công khai (Public)</span>
+                <span class="text-xs font-semibold text-neutral-900 dark:text-neutral-200">{localeState.t('modals.publishRepo.publicOption')}</span>
               </div>
               <p class="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug">
-                Bất kỳ ai trên internet cũng có thể xem và sao chép dự án.
+                {localeState.t('modals.publishRepo.publicDesc')}
               </p>
             </button>
           </div>
@@ -212,7 +213,7 @@
           <div class="space-y-1.5 pt-1">
             <div class="flex items-center justify-between text-xs">
               <label for="pub-token" class="font-medium text-neutral-700 dark:text-neutral-300">
-                GitHub Personal Access Token (PAT)
+                {localeState.t('modals.publishRepo.patLabel')}
               </label>
               <a
                 href="https://github.com/settings/tokens/new?scopes=repo"
@@ -220,7 +221,7 @@
                 rel="noreferrer"
                 class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 flex items-center gap-1 text-[11px]"
               >
-                Tạo Token <ExternalLink class="w-3 h-3" />
+                {localeState.t('modals.publishRepo.createTokenLink')} <ExternalLink class="w-3 h-3" />
               </a>
             </div>
             <input
@@ -237,9 +238,9 @@
           <div class="bg-neutral-50 dark:bg-neutral-950/50 border border-neutral-200 dark:border-neutral-800/80 rounded-xl p-2.5 flex items-center justify-between text-xs">
             <div class="flex items-center gap-2 text-neutral-700 dark:text-neutral-300">
               <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>Tài khoản: <strong class="text-neutral-900 dark:text-white">{activeAccount?.username || 'GitHub Token'}</strong></span>
+              <span>{localeState.t('modals.publishRepo.accountLabel', { account: activeAccount?.username || 'GitHub Token' })}</span>
             </div>
-            <span class="text-[11px] text-neutral-500 font-mono">Đã sẵn sàng</span>
+            <span class="text-[11px] text-neutral-500 font-mono">{localeState.t('modals.publishRepo.readyStatus')}</span>
           </div>
         {/if}
 
@@ -258,7 +259,7 @@
             disabled={isPublishing}
             class="px-4 py-2 text-xs font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors cursor-pointer"
           >
-            Hủy
+            {localeState.t('common.cancel')}
           </button>
           <button
             type="submit"
@@ -267,10 +268,10 @@
           >
             {#if isPublishing}
               <div class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              <span>Đang xuất bản...</span>
+              <span>{localeState.t('modals.publishRepo.publishing')}</span>
             {:else}
               <Sparkles class="w-3.5 h-3.5" />
-              <span>Xuất bản ({isPrivate ? 'Riêng tư' : 'Công khai'})</span>
+              <span>{localeState.t('modals.publishRepo.publishBtn', { visibility: isPrivate ? localeState.t('modals.publishRepo.privateBadge') : localeState.t('modals.publishRepo.publicBadge') })}</span>
             {/if}
           </button>
         </div>

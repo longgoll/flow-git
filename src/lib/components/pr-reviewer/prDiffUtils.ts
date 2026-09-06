@@ -1,6 +1,7 @@
 import type { ComponentType } from 'svelte';
 import { GitPullRequest, GitMerge, FileCode, XCircle } from 'lucide-svelte';
 import type { GitHubPRFile, GitHubPullRequest } from '../../types';
+import { localeState } from '../../state/localeState.svelte';
 
 export interface ParsedDiffLine {
   type: 'header' | 'add' | 'del' | 'context';
@@ -143,7 +144,7 @@ export function getFileStatusBadge(file: GitHubPRFile): FileStatusBadge {
 export function getPRStatusBadge(pr: GitHubPullRequest): PRStatusBadge {
   if (pr.merged || pr.merged_at) {
     return {
-      label: 'MERGED',
+      label: localeState.t('pullRequest.reviewer.statusBadges.merged'),
       bg: 'bg-purple-100 dark:bg-purple-950/80',
       text: 'text-purple-800 dark:text-purple-300',
       border: 'border-purple-300 dark:border-purple-800/60',
@@ -152,7 +153,7 @@ export function getPRStatusBadge(pr: GitHubPullRequest): PRStatusBadge {
   }
   if (pr.draft) {
     return {
-      label: 'DRAFT',
+      label: localeState.t('pullRequest.reviewer.statusBadges.draft'),
       bg: 'bg-zinc-100 dark:bg-zinc-900',
       text: 'text-zinc-600 dark:text-zinc-400',
       border: 'border-dashed border-zinc-300 dark:border-zinc-700',
@@ -161,7 +162,7 @@ export function getPRStatusBadge(pr: GitHubPullRequest): PRStatusBadge {
   }
   if (pr.state === 'closed') {
     return {
-      label: 'CLOSED',
+      label: localeState.t('pullRequest.reviewer.statusBadges.closed'),
       bg: 'bg-rose-100 dark:bg-rose-950/80',
       text: 'text-rose-800 dark:text-rose-300',
       border: 'border-rose-300 dark:border-rose-800/60',
@@ -169,7 +170,7 @@ export function getPRStatusBadge(pr: GitHubPullRequest): PRStatusBadge {
     };
   }
   return {
-    label: 'OPEN',
+    label: localeState.t('pullRequest.reviewer.statusBadges.open'),
     bg: 'bg-emerald-100 dark:bg-emerald-950/80',
     text: 'text-emerald-800 dark:text-emerald-300',
     border: 'border-emerald-300 dark:border-emerald-800/60',

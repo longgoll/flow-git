@@ -1,0 +1,25 @@
+import type { lfs as viLfs } from '../vi/lfs';
+
+export const lfs: typeof viLfs = {
+  title: "Git Large File Storage (LFS) Asset Hub",
+  activeCount: "Active ({count} files)",
+  inactive: "Inactive",
+  description: "Track, lock, and pull large binary asset files",
+  pullAll: "Pull All LFS Binaries",
+  closeModal: "Close dialog",
+  scanning: "Retrieving Git LFS metadata...",
+  notConfiguredTitle: "Git LFS is not configured",
+  notConfiguredDesc: "No filter=lfs declaration found in .gitattributes. You can enable it by running git lfs track.",
+  trackedPatterns: "Tracked Extensions / Patterns",
+  locksTitle: "🔒 Git LFS Locks ({count})",
+  lockPlaceholder: "Enter file path to lock (e.g. assets/model.fbx)...",
+  lockBtn: "Lock File",
+  lockedBy: "by {owner} (ID: {id})",
+  unlockBtn: "Unlock",
+  filesInRepo: "LFS Files in Repository",
+  noFilesCommitted: "No LFS files committed in history yet.",
+  pointerBadge: "Pointer",
+  pointerTooltip: "Contains only LFS Pointer (binary not yet downloaded)",
+  downloadedBadge: "Downloaded",
+  downloadedTooltip: "Binary file downloaded locally",
+};

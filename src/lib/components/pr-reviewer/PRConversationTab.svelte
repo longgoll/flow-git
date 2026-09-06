@@ -13,6 +13,7 @@
   import type { GitHubPRComment, GitHubPullRequest } from '../../types';
   import { formatRelativeTime } from '../../utils/timeUtils';
   import MarkdownViewer from '../MarkdownViewer.svelte';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     selectedPR: GitHubPullRequest;
@@ -52,14 +53,14 @@
       <div class="flex items-center justify-between border-b border-violet-200/60 dark:border-violet-800/40 pb-2">
         <div class="flex items-center gap-2 text-xs font-bold text-violet-900 dark:text-violet-200">
           <Bot class="w-4 h-4 text-violet-600 dark:text-violet-400" />
-          <span>FlowGit AI Reviewer</span>
+          <span>{localeState.t('pullRequest.reviewer.conversation.aiReviewerTitle')}</span>
         </div>
         <button
           type="button"
           onclick={onCloseAIReview}
           class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-xs cursor-pointer"
         >
-          Đóng
+          {localeState.t('pullRequest.reviewer.conversation.closeAI')}
         </button>
       </div>
       <MarkdownViewer content={aiReviewResult} />
@@ -72,12 +73,12 @@
       <div class="flex items-center gap-2">
         <User class="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
         <span class="font-medium text-zinc-900 dark:text-zinc-200">{selectedPR.user.login}</span>
-        <span>đã mở PR này</span>
+        <span>{localeState.t('pullRequest.reviewer.conversation.authorOpened')}</span>
       </div>
       <span class="text-[11px] text-zinc-400">{formatRelativeTime(selectedPR.created_at)}</span>
     </div>
     <div class="pt-1 select-text">
-      <MarkdownViewer content={selectedPR.body || 'Không có mô tả chi tiết.'} />
+      <MarkdownViewer content={selectedPR.body || localeState.t('pullRequest.reviewer.conversation.noDescription')} />
     </div>
   </div>
 
@@ -85,7 +86,7 @@
   {#if prComments.length > 0}
     <div class="space-y-3 pt-2">
       <h3 class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-        Thảo luận & Nhận xét ({prComments.length})
+        {localeState.t('pullRequest.reviewer.conversation.discussionTitle', { count: prComments.length })}
       </h3>
       {#each prComments as comment (comment.id)}
         <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 space-y-1.5 select-text">
@@ -116,10 +117,10 @@
         </div>
         <div class="space-y-0.5 flex-1">
           <div class="text-xs font-bold text-zinc-900 dark:text-zinc-100">
-            No conflicts with base branch ({selectedPR.base.ref})
+            {localeState.t('pullRequest.reviewer.conversation.noConflictsWithBase', { base: selectedPR.base.ref })}
           </div>
           <div class="text-[11px] text-zinc-500 dark:text-zinc-400">
-            Merging can be performed automatically on GitHub.
+            {localeState.t('pullRequest.reviewer.conversation.mergingCanBePerformed')}
           </div>
         </div>
       </div>
@@ -132,7 +133,7 @@
             class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-2 transition-all shadow-md hover:shadow-emerald-500/20 cursor-pointer active:scale-98"
           >
             <GitMerge class="w-4 h-4" />
-            <span>Merge pull request</span>
+            <span>{localeState.t('pullRequest.reviewer.conversation.mergePullRequest')}</span>
           </button>
           <button
             type="button"
@@ -141,11 +142,11 @@
             class="px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700/80 hover:border-rose-300 dark:hover:border-rose-800/60 bg-white dark:bg-zinc-850 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-zinc-700 dark:text-zinc-300 hover:text-rose-600 dark:hover:text-rose-400 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
           >
             <XCircle class="w-4 h-4 text-rose-500/80" />
-            <span>Đóng PR</span>
+            <span>{localeState.t('pullRequest.reviewer.conversation.closePR')}</span>
           </button>
         </div>
         <span class="text-[11px] text-zinc-400">
-          Sẵn sàng hợp nhất {selectedPR.head.ref} vào {selectedPR.base.ref}
+          {localeState.t('pullRequest.reviewer.conversation.readyToMergeInto', { head: selectedPR.head.ref, base: selectedPR.base.ref })}
         </span>
       </div>
     </div>
@@ -156,10 +157,10 @@
       </div>
       <div>
         <div class="text-xs font-bold text-purple-900 dark:text-purple-200">
-          Pull Request #{selectedPR.number} đã được Merge thành công
+          {localeState.t('pullRequest.reviewer.conversation.prMergedTitle', { number: selectedPR.number })}
         </div>
         <div class="text-[11px] text-purple-700/80 dark:text-purple-400/80">
-          Toàn bộ thay đổi đã được tích hợp vào nhánh {selectedPR.base.ref}.
+          {localeState.t('pullRequest.reviewer.conversation.prMergedDesc', { base: selectedPR.base.ref })}
         </div>
       </div>
     </div>
@@ -172,10 +173,10 @@
         </div>
         <div>
           <div class="text-xs font-bold text-rose-900 dark:text-rose-200">
-            Pull Request #{selectedPR.number} đã bị đóng (Closed)
+            {localeState.t('pullRequest.reviewer.conversation.prClosedTitle', { number: selectedPR.number })}
           </div>
           <div class="text-[11px] text-rose-700/80 dark:text-rose-400/80">
-            Các thay đổi chưa được hợp nhất vào nhánh {selectedPR.base.ref}.
+            {localeState.t('pullRequest.reviewer.conversation.prClosedDesc', { base: selectedPR.base.ref })}
           </div>
         </div>
       </div>
@@ -187,10 +188,10 @@
       >
         {#if isTogglingPRState}
           <RefreshCw class="w-3.5 h-3.5 animate-spin" />
-          <span>Đang mở lại...</span>
+          <span>{localeState.t('pullRequest.reviewer.conversation.reopening')}</span>
         {:else}
           <RotateCcw class="w-3.5 h-3.5" />
-          <span>Mở lại PR</span>
+          <span>{localeState.t('pullRequest.reviewer.conversation.reopenPR')}</span>
         {/if}
       </button>
     </div>
@@ -201,9 +202,9 @@
     <div class="flex items-center justify-between text-xs">
       <span class="font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
         <MessageSquare class="w-3.5 h-3.5 text-violet-500" />
-        <span>Viết bình luận nhanh</span>
+        <span>{localeState.t('pullRequest.reviewer.conversation.quickCommentTitle')}</span>
       </span>
-      <span class="text-[11px] text-zinc-400 font-mono">Ctrl + Enter để gửi</span>
+      <span class="text-[11px] text-zinc-400 font-mono">{localeState.t('pullRequest.reviewer.conversation.ctrlEnterToSend')}</span>
     </div>
     <textarea
       bind:value={quickCommentText}
@@ -214,7 +215,7 @@
         }
       }}
       rows={3}
-      placeholder="Nhập nhận xét hoặc phản hồi của bạn về PR này..."
+      placeholder={localeState.t('pullRequest.reviewer.conversation.quickCommentPlaceholder')}
       class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 resize-none font-sans"
     ></textarea>
     <div class="flex items-center justify-between flex-wrap gap-2">
@@ -228,7 +229,7 @@
             title="Đóng Pull Request này kèm bình luận"
           >
             <XCircle class="w-3.5 h-3.5 text-rose-500/80" />
-            <span>{quickCommentText.trim() ? 'Đóng với bình luận' : 'Đóng PR'}</span>
+            <span>{quickCommentText.trim() ? localeState.t('pullRequest.reviewer.conversation.closeWithComment') : localeState.t('pullRequest.reviewer.conversation.closePR')}</span>
           </button>
         {:else if !selectedPR.merged}
           <button
@@ -239,7 +240,7 @@
             title="Mở lại Pull Request này kèm bình luận"
           >
             <RotateCcw class="w-3.5 h-3.5 text-emerald-500" />
-            <span>{quickCommentText.trim() ? 'Mở lại & Bình luận' : 'Mở lại PR'}</span>
+            <span>{quickCommentText.trim() ? localeState.t('pullRequest.reviewer.conversation.reopenWithComment') : localeState.t('pullRequest.reviewer.conversation.reopenPR')}</span>
           </button>
         {/if}
       </div>
@@ -252,10 +253,10 @@
       >
         {#if isPostingQuickComment}
           <RefreshCw class="w-3.5 h-3.5 animate-spin" />
-          <span>Đang gửi...</span>
+          <span>{localeState.t('pullRequest.reviewer.conversation.postingComment')}</span>
         {:else}
           <Send class="w-3.5 h-3.5" />
-          <span>Gửi bình luận</span>
+          <span>{localeState.t('pullRequest.reviewer.conversation.postCommentBtn')}</span>
         {/if}
       </button>
     </div>

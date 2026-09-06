@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { BranchInfo } from '../types';
   import { GitBranch, X, Sparkles, AlertCircle, Check } from 'lucide-svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     open: boolean;
@@ -40,9 +41,9 @@
   let validationError = $derived.by(() => {
     const name = newBranchName.trim();
     if (!name) return '';
-    if (INVALID_CHARS.test(name)) return "Không được chứa khoảng trắng hoặc ký tự đặc biệt.";
-    if (INVALID_SEQUENCES.test(name)) return "Tên nhánh không hợp lệ (không dùng '..' hoặc bắt đầu bằng '-').";
-    if (name.length > 100) return "Tên nhánh quá dài (tối đa 100 ký tự).";
+    if (INVALID_CHARS.test(name)) return localeState.t('modals.createBranch.invalidChars');
+    if (INVALID_SEQUENCES.test(name)) return localeState.t('modals.createBranch.invalidSeq');
+    if (name.length > 100) return localeState.t('modals.createBranch.tooLong');
     return '';
   });
 
@@ -70,7 +71,7 @@
     onkeydown={handleKeydown}
     role="dialog"
     aria-modal="true"
-    aria-label="Tạo nhánh mới"
+    aria-label={localeState.t('modals.createBranch.title')}
     tabindex="-1"
   >
     <!-- Modal card -->
@@ -86,14 +87,14 @@
             <GitBranch class="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
           </div>
           <div>
-            <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Tạo nhánh mới</h2>
-            <p class="text-[11px] text-zinc-500">Tạo branch từ nhánh hoặc commit đang chọn</p>
+            <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{localeState.t('modals.createBranch.title')}</h2>
+            <p class="text-[11px] text-zinc-500">{localeState.t('modals.createBranch.subtitle')}</p>
           </div>
         </div>
         <button
           onclick={onClose}
           class="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-          aria-label="Đóng"
+          aria-label={localeState.t('common.close')}
         >
           <X class="w-4 h-4" />
         </button>
@@ -105,7 +106,7 @@
         <!-- Tên nhánh mới -->
         <div class="space-y-1.5">
           <label for="new-branch-name" class="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
-            Tên nhánh mới
+            {localeState.t('modals.createBranch.branchNameLabel')}
           </label>
           <div class="relative">
             <input
@@ -114,7 +115,7 @@
               bind:value={newBranchName}
               onkeydown={handleKeydown}
               type="text"
-              placeholder="vd: feature/login, dev, hotfix/issue-123"
+              placeholder={localeState.t('modals.createBranch.placeholder')}
               class="w-full px-3 py-2.5 pr-9 bg-zinc-50 dark:bg-zinc-800/80 border rounded-xl text-sm font-mono text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-600 outline-none transition-all select-text
                 {validationError
                   ? 'border-rose-500/60 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20'
@@ -143,7 +144,7 @@
         <!-- Tạo từ nhánh nào -->
         <div class="space-y-1.5">
           <label for="from-branch" class="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
-            Tạo từ nhánh
+            {localeState.t('modals.createBranch.fromBranchLabel')}
           </label>
           <select
             id="from-branch"
@@ -175,7 +176,7 @@
             </div>
           </div>
           <div>
-            <p class="text-[12px] font-medium text-zinc-800 dark:text-zinc-200">Chuyển sang nhánh mới ngay</p>
+            <p class="text-[12px] font-medium text-zinc-800 dark:text-zinc-200">{localeState.t('modals.createBranch.checkoutCheckbox')}</p>
             <p class="text-[10px] text-zinc-500">Checkout và đặt HEAD vào nhánh sau khi tạo</p>
           </div>
         </label>
@@ -197,7 +198,7 @@
             onclick={onClose}
             class="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/50 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200 transition-all cursor-pointer"
           >
-            Hủy
+            {localeState.t('common.cancel')}
           </button>
           <button
             onclick={handleSubmit}
@@ -208,7 +209,7 @@
                 : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 border border-zinc-200 dark:border-transparent cursor-not-allowed'}"
           >
             <GitBranch class="w-4 h-4" />
-            Tạo nhánh
+            {localeState.t('modals.createBranch.createBtn')}
           </button>
         </div>
       </div>

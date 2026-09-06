@@ -9,6 +9,7 @@
   import type { GitHubPullRequest } from '../../types';
   import { getPRStatusBadge } from './prDiffUtils';
   import { formatRelativeTime } from '../../utils/timeUtils';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     filteredPRs: GitHubPullRequest[];
@@ -63,11 +64,11 @@
           onclick={() => onSaveToken(inputToken)}
           class="px-2.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-xs cursor-pointer shadow-xs shrink-0"
         >
-          Lưu
+          {localeState.t('pullRequest.reviewer.list.patDrawerSave')}
         </button>
       </div>
       <p class="text-[10px] text-zinc-500 dark:text-zinc-400">
-        Cần quyền <code class="text-cyan-700 dark:text-cyan-300">repo</code> để gửi nhận xét inline và duyệt PR.
+        {localeState.t('pullRequest.reviewer.list.patDrawerNotice', { repoScope: 'repo' })}
       </p>
     </div>
   {/if}
@@ -80,7 +81,7 @@
         type="text"
         bind:value={searchQuery}
         oninput={(e) => onSearchChange(e.currentTarget.value)}
-        placeholder="Tìm PR theo tên hoặc số..."
+        placeholder={localeState.t('pullRequest.reviewer.list.searchPlaceholder')}
         class="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500"
       />
     </div>
@@ -103,12 +104,12 @@
     {#if isLoadingPRs}
       <div class="p-6 text-center text-xs text-zinc-500 flex flex-col items-center gap-2">
         <RefreshCw class="w-4 h-4 animate-spin text-violet-600 dark:text-violet-400" />
-        <span>Đang tải danh sách PRs từ GitHub...</span>
+        <span>{localeState.t('pullRequest.reviewer.list.loadingPRs')}</span>
       </div>
     {:else if filteredPRs.length === 0}
       <div class="p-6 text-center text-xs text-zinc-400 dark:text-zinc-500 space-y-3">
         {#if searchQuery.trim()}
-          <div class="leading-relaxed">Không tìm thấy PR nào khớp với "<strong class="text-zinc-700 dark:text-zinc-300">{searchQuery}</strong>"</div>
+          <div class="leading-relaxed">{localeState.t('pullRequest.reviewer.list.noPRsMatching', { query: searchQuery })}</div>
           <button
             type="button"
             onclick={() => {
@@ -118,17 +119,17 @@
             class="px-2.5 py-1 rounded-md bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-[11px] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
           >
             <RotateCcw class="w-3 h-3" />
-            <span>Xóa tìm kiếm</span>
+            <span>{localeState.t('pullRequest.reviewer.list.clearSearch')}</span>
           </button>
         {:else}
-          <div>Chưa có Pull Request nào ({prFilter})</div>
+          <div>{localeState.t('pullRequest.reviewer.list.noPRsFilter', { filter: prFilter })}</div>
           <button
             type="button"
             onclick={onOpenCreatePR}
             class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-[11px] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer shadow-xs"
           >
             <Plus class="w-3.5 h-3.5" />
-            <span>Tạo PR mới</span>
+            <span>{localeState.t('pullRequest.reviewer.list.createNewPR')}</span>
           </button>
         {/if}
       </div>

@@ -20,10 +20,10 @@
     selectedCount?: number;
     isLockedFocus?: boolean;
     onClose: () => void;
-    onCreateBranch: (commit: CommitNode) => void;
-    onCreateTag: (commit: CommitNode) => void;
-    onRevert: (commit: CommitNode) => void;
-    onReset: (commit: CommitNode, mode: 'soft' | 'mixed' | 'hard') => void;
+    onCreateBranch?: (commit: CommitNode) => void;
+    onCreateTag?: (commit: CommitNode) => void;
+    onRevert?: (commit: CommitNode) => void;
+    onReset?: (commit: CommitNode, mode: 'soft' | 'mixed' | 'hard') => void;
     onSquash?: () => void;
     onInteractiveRebase?: (commit: CommitNode) => void;
     onCopySha: (sha: string) => void;
@@ -88,11 +88,15 @@
   });
 </script>
 
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
 <div
   bind:this={menuEl}
   style="top: {posY}px; left: {posX}px;"
   class="fixed z-50 min-w-56 bg-white/95 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700/80 rounded-xl shadow-2xl backdrop-blur-xl p-1.5 text-xs text-zinc-800 dark:text-zinc-200 animate-in fade-in zoom-in-95 duration-100 font-sans select-none"
   role="menu"
+  tabindex="-1"
+  onclick={(e) => e.stopPropagation()}
+  onmousedown={(e) => e.stopPropagation()}
 >
   <!-- Header with Commit short info -->
   <div class="px-2.5 py-1.5 border-b border-zinc-200 dark:border-zinc-800 text-[11px] flex items-center justify-between text-zinc-600 dark:text-zinc-400">
@@ -105,8 +109,8 @@
       <!-- Multi-select Squash option -->
       <button
         onclick={() => {
-          onClose();
           onSquash();
+          onClose();
         }}
         class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-amber-800 dark:text-amber-300 hover:text-amber-950 dark:hover:text-white hover:bg-amber-100 dark:hover:bg-amber-600/30 transition-colors cursor-pointer font-semibold"
         role="menuitem"
@@ -117,38 +121,42 @@
       <div class="my-1 border-t border-zinc-200 dark:border-zinc-800"></div>
     {/if}
 
-    <!-- Create Branch from here -->
-    <button
-      onclick={() => {
-        onClose();
-        onCreateBranch(commit);
-      }}
-      class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
-      role="menuitem"
-    >
-      <GitBranch class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-      <span>Tạo nhánh mới tại commit này...</span>
-    </button>
+    {#if onCreateBranch}
+      <!-- Create Branch from here -->
+      <button
+        onclick={() => {
+          onCreateBranch(commit);
+          onClose();
+        }}
+        class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
+        role="menuitem"
+      >
+        <GitBranch class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+        <span>Tạo nhánh mới tại commit này...</span>
+      </button>
+    {/if}
 
-    <!-- Create Tag from here -->
-    <button
-      onclick={() => {
-        onClose();
-        onCreateTag(commit);
-      }}
-      class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
-      role="menuitem"
-    >
-      <Tag class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-      <span>Tạo Tag / Release tại đây...</span>
-    </button>
+    {#if onCreateTag}
+      <!-- Create Tag from here -->
+      <button
+        onclick={() => {
+          onCreateTag(commit);
+          onClose();
+        }}
+        class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
+        role="menuitem"
+      >
+        <Tag class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+        <span>Tạo Tag / Release tại đây...</span>
+      </button>
+    {/if}
 
     {#if onCompare}
       <!-- Compare with HEAD -->
       <button
         onclick={() => {
-          onClose();
           onCompare(commit);
+          onClose();
         }}
         class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
         role="menuitem"
@@ -162,8 +170,8 @@
       <!-- Lock Focus to Branch -->
       <button
         onclick={() => {
-          onClose();
           onToggleLockFocus(commit.lane);
+          onClose();
         }}
         class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
         role="menuitem"
@@ -175,26 +183,28 @@
 
     <div class="my-1 border-t border-zinc-200 dark:border-zinc-800"></div>
 
-    <!-- Revert Commit -->
-    <button
-      onclick={() => {
-        onClose();
-        onRevert(commit);
-      }}
-      class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:text-rose-900 dark:hover:text-rose-100 transition-colors cursor-pointer"
-      role="menuitem"
-      title="Tạo commit mới đảo ngược lại commit này an toàn"
-    >
-      <RotateCcw class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
-      <span>Revert commit này (git revert)</span>
-    </button>
+    {#if onRevert}
+      <!-- Revert Commit -->
+      <button
+        onclick={() => {
+          onRevert(commit);
+          onClose();
+        }}
+        class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:text-rose-900 dark:hover:text-rose-100 transition-colors cursor-pointer"
+        role="menuitem"
+        title="Tạo commit mới đảo ngược lại commit này an toàn"
+      >
+        <RotateCcw class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+        <span>Revert commit này (git revert)</span>
+      </button>
+    {/if}
 
     {#if onInteractiveRebase}
       <!-- Interactive Rebase onto this commit -->
       <button
         onclick={() => {
-          onClose();
           onInteractiveRebase(commit);
+          onClose();
         }}
         class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:text-amber-950 dark:hover:text-amber-100 transition-colors cursor-pointer"
         role="menuitem"
@@ -205,71 +215,73 @@
       </button>
     {/if}
 
-    <!-- Reset HEAD to this commit (With Submenu / toggle) -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="relative"
-      onmouseenter={() => (showResetSubmenu = true)}
-      onmouseleave={() => (showResetSubmenu = false)}
-    >
-      <button
-        class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
-        role="menuitem"
+    {#if onReset}
+      <!-- Reset HEAD to this commit (With Submenu / toggle) -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="relative"
+        onmouseenter={() => (showResetSubmenu = true)}
+        onmouseleave={() => (showResetSubmenu = false)}
       >
-        <div class="flex items-center gap-2">
-          <Rewind class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-          <span>Reset HEAD về commit này</span>
-        </div>
-        <span class="text-[10px] text-zinc-400 dark:text-zinc-500">▶</span>
-      </button>
-
-      {#if showResetSubmenu}
-        <div
-          class="absolute left-full top-0 ml-1 min-w-48 bg-white/95 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700/80 rounded-xl shadow-2xl backdrop-blur-xl p-1.5 text-xs text-zinc-800 dark:text-zinc-200 z-50"
+        <button
+          class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
+          role="menuitem"
         >
-          <button
-            onclick={() => {
-              onClose();
-              onReset(commit, 'soft');
-            }}
-            class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
-          >
-            <div class="font-bold text-emerald-700 dark:text-emerald-300">Soft Reset</div>
-            <div class="text-[10px] text-zinc-500 dark:text-zinc-400">Giữ nguyên thay đổi ở Staged</div>
-          </button>
+          <div class="flex items-center gap-2">
+            <Rewind class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+            <span>Reset HEAD về commit này</span>
+          </div>
+          <span class="text-[10px] text-zinc-400 dark:text-zinc-500">▶</span>
+        </button>
 
-          <button
-            onclick={() => {
-              onClose();
-              onReset(commit, 'mixed');
-            }}
-            class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
+        {#if showResetSubmenu}
+          <div
+            class="absolute left-full top-0 ml-1 min-w-48 bg-white/95 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700/80 rounded-xl shadow-2xl backdrop-blur-xl p-1.5 text-xs text-zinc-800 dark:text-zinc-200 z-50"
           >
-            <div class="font-bold text-cyan-700 dark:text-cyan-300">Mixed Reset (Mặc định)</div>
-            <div class="text-[10px] text-zinc-500 dark:text-zinc-400">Giữ thay đổi ở Working Tree</div>
-          </button>
+            <button
+              onclick={() => {
+                onReset(commit, 'soft');
+                onClose();
+              }}
+              class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
+            >
+              <div class="font-bold text-emerald-700 dark:text-emerald-300">Soft Reset</div>
+              <div class="text-[10px] text-zinc-500 dark:text-zinc-400">Giữ nguyên thay đổi ở Staged</div>
+            </button>
 
-          <button
-            onclick={() => {
-              onClose();
-              onReset(commit, 'hard');
-            }}
-            class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:text-rose-950 dark:hover:text-rose-100 transition-colors cursor-pointer"
-          >
-            <div class="font-bold text-rose-600 dark:text-rose-400">Hard Reset (Nguy hiểm)</div>
-            <div class="text-[10px] text-rose-600/80 dark:text-rose-300/70">Xóa sạch code về commit này (Undo Ctrl+Z)</div>
-          </button>
-        </div>
-      {/if}
-    </div>
+            <button
+              onclick={() => {
+                onReset(commit, 'mixed');
+                onClose();
+              }}
+              class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
+            >
+              <div class="font-bold text-cyan-700 dark:text-cyan-300">Mixed Reset (Mặc định)</div>
+              <div class="text-[10px] text-zinc-500 dark:text-zinc-400">Giữ thay đổi ở Working Tree</div>
+            </button>
+
+            <button
+              onclick={() => {
+                onReset(commit, 'hard');
+                onClose();
+              }}
+              class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:text-rose-950 dark:hover:text-rose-100 transition-colors cursor-pointer"
+            >
+              <div class="font-bold text-rose-600 dark:text-rose-400">Hard Reset (Nguy hiểm)</div>
+              <div class="text-[10px] text-rose-600/80 dark:text-rose-300/70">Xóa sạch code về commit này (Undo Ctrl+Z)</div>
+            </button>
+          </div>
+        {/if}
+      </div>
+    {/if}
 
     <div class="my-1 border-t border-zinc-200 dark:border-zinc-800"></div>
 
     <!-- Copy SHA -->
     <button
       onclick={() => {
-        onClose();
         onCopySha(commit.id);
+        onClose();
       }}
       class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-zinc-200 text-zinc-500 dark:text-zinc-400 transition-colors cursor-pointer text-[11px]"
       role="menuitem"

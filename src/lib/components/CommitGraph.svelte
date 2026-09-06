@@ -249,7 +249,7 @@
   }
 
   function handleMouseDown(e: MouseEvent) {
-    if (isDraggingScrollbar) return;
+    if (isDraggingScrollbar || e.target !== canvasEl) return;
     const rect = containerEl.getBoundingClientRect();
     const y = e.clientY - rect.top + scrollTop;
     const clickedIndex = Math.floor(y / ROW_HEIGHT);
@@ -264,6 +264,7 @@
   }
 
   function handleMouseMove(e: MouseEvent) {
+    if (!isDraggingNode && e.target !== canvasEl) return;
     const rect = containerEl.getBoundingClientRect();
     const y = e.clientY - rect.top + scrollTop;
     const hoveredIndex = Math.floor(y / ROW_HEIGHT);
@@ -349,7 +350,7 @@
   }
 
   function handleClick(e: MouseEvent) {
-    if (isDraggingNode) return;
+    if (isDraggingNode || e.target !== canvasEl) return;
     const rect = containerEl.getBoundingClientRect();
     const y = e.clientY - rect.top + scrollTop;
     const clickedIndex = Math.floor(y / ROW_HEIGHT);
@@ -513,6 +514,7 @@
   }
 
   function handleContextMenu(e: MouseEvent) {
+    if (e.target !== canvasEl) return;
     e.preventDefault();
     const rect = containerEl.getBoundingClientRect();
     const y = e.clientY - rect.top + scrollTop;
@@ -750,33 +752,45 @@
         scheduleRender();
       }}
       onClose={() => (contextMenuData = null)}
-      onCreateBranch={(c) => {
-        contextMenuData = null;
-        onCreateBranch?.(c);
-      }}
-      onCreateTag={(c) => {
-        contextMenuData = null;
-        onCreateTag?.(c);
-      }}
-      onRevert={(c) => {
-        contextMenuData = null;
-        onRevertCommit?.(c);
-      }}
-      onReset={(c, mode) => {
-        contextMenuData = null;
-        onResetCommit?.(c, mode);
-      }}
-      onSquash={() => {
-        contextMenuData = null;
-        const selectedCommits = commits.filter((c) =>
-          activeSelectedIds.includes(c.id),
-        );
-        onSquashCommits?.(selectedCommits);
-      }}
-      onInteractiveRebase={(c) => {
-        contextMenuData = null;
-        onInteractiveRebase?.(c);
-      }}
+      onCreateBranch={onCreateBranch
+        ? (c) => {
+            onCreateBranch(c);
+            contextMenuData = null;
+          }
+        : undefined}
+      onCreateTag={onCreateTag
+        ? (c) => {
+            onCreateTag(c);
+            contextMenuData = null;
+          }
+        : undefined}
+      onRevert={onRevertCommit
+        ? (c) => {
+            onRevertCommit(c);
+            contextMenuData = null;
+          }
+        : undefined}
+      onReset={onResetCommit
+        ? (c, mode) => {
+            onResetCommit(c, mode);
+            contextMenuData = null;
+          }
+        : undefined}
+      onSquash={onSquashCommits
+        ? () => {
+            const selectedCommits = commits.filter((c) =>
+              activeSelectedIds.includes(c.id),
+            );
+            onSquashCommits(selectedCommits);
+            contextMenuData = null;
+          }
+        : undefined}
+      onInteractiveRebase={onInteractiveRebase
+        ? (c) => {
+            onInteractiveRebase(c);
+            contextMenuData = null;
+          }
+        : undefined}
       onCopySha={(sha) => {
         navigator.clipboard.writeText(sha);
         toast.success("Copied SHA", `Đã sao chép ${sha.slice(0, 7)}`);

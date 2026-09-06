@@ -37,6 +37,11 @@
     onCloseFocus: () => void;
     onPush?: () => Promise<void>;
     onSyncWithBase?: (baseBranch?: string) => Promise<void>;
+    onCreateBranch?: (commit: CommitNode) => void;
+    onCreateTag?: (commit: CommitNode) => void;
+    onRevertCommit?: (commit: CommitNode) => void;
+    onResetCommit?: (commit: CommitNode, mode: 'soft' | 'mixed' | 'hard') => void;
+    onInteractiveRebase?: (commit: CommitNode) => void;
   }
 
   let {
@@ -55,6 +60,11 @@
     onCloseFocus,
     onPush,
     onSyncWithBase,
+    onCreateBranch,
+    onCreateTag,
+    onRevertCommit,
+    onResetCommit,
+    onInteractiveRebase,
   }: Props = $props();
 
   let focusData = $state<FocusBranchResult | null>(null);
@@ -403,6 +413,11 @@
           onSelectMultipleCommits={onSelectMultipleCommits}
           onSquashCommits={onSquashCommits}
           onCompareCommits={onCompareCommits}
+          {onCreateBranch}
+          {onCreateTag}
+          {onRevertCommit}
+          {onResetCommit}
+          {onInteractiveRebase}
         />
       </div>
 

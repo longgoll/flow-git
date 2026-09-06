@@ -675,13 +675,15 @@
 />
 
 <!-- Interactive Rebase Modal -->
-<InteractiveRebaseModal
-  isOpen={showInteractiveRebaseModal}
-  repoPath={currentRepoPath}
-  ontoCommit={interactiveRebaseOntoCommit}
-  onClose={() => onCloseInteractiveRebase?.()}
-  onSuccess={onInteractiveRebaseSuccess}
-/>
+{#if showInteractiveRebaseModal}
+  <InteractiveRebaseModal
+    isOpen={showInteractiveRebaseModal}
+    repoPath={currentRepoPath}
+    ontoCommit={interactiveRebaseOntoCommit}
+    onClose={() => onCloseInteractiveRebase?.()}
+    onSuccess={onInteractiveRebaseSuccess}
+  />
+{/if}
 
 <!-- Git Identity Profile Switcher Modal -->
 <IdentitySwitcherModal

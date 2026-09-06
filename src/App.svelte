@@ -1402,6 +1402,11 @@
           onSelectMultipleCommits={(ids) => (repo.selectedCommitIds = ids)}
           onSquashCommits={handleOpenSquash}
           onCompareCommits={handleCompareCommits}
+          onCreateBranch={handleOpenCreateBranchFromCommit}
+          onCreateTag={handleOpenCreateTag}
+          onRevertCommit={handleRevertCommit}
+          onResetCommit={handleResetToCommit}
+          onInteractiveRebase={handleOpenInteractiveRebase}
           onOpenCreatePR={(source) => handleOpenCreatePR(source)}
           onPush={handlePushCurrentBranch}
           onCloseFocus={() => (viewMode = "graph")}

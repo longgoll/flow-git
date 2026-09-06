@@ -112,35 +112,9 @@ pub fn execute_interactive_rebase(
     fs::write(&todo_file_path, todo_content)
         .map_err(|e| AppError::Internal(format!("Không thể tạo tệp todo tạm thời: {e}")))?;
 
-    #[cfg(target_os = "windows")]
-    let (script_path, editor_cmd) = {
-        let bat_path = temp_dir.join(format!("flowgit_seq_editor_{}.bat", pid));
-        let bat_content = format!(
-            "@echo off\r\ncopy /y \"{}\" \"%~1\" >nul\r\n",
-            todo_file_path.display()
-        );
-        fs::write(&bat_path, bat_content)
-            .map_err(|e| AppError::Internal(format!("Không thể tạo script editor: {e}")))?;
-        let path_str = bat_path.to_string_lossy().to_string();
-        (bat_path, path_str)
-    };
-
-    #[cfg(not(target_os = "windows"))]
-    let (script_path, editor_cmd) = {
-        let sh_path = temp_dir.join(format!("flowgit_seq_editor_{}.sh", pid));
-        let sh_content = format!(
-            "#!/bin/sh\ncp -f \"{}\" \"$1\"\n",
-            todo_file_path.display()
-        );
-        fs::write(&sh_path, sh_content)
-            .map_err(|e| AppError::Internal(format!("Không thể tạo script editor: {e}")))?;
-        use std::os::unix::fs::PermissionsExt;
-        let mut perms = fs::metadata(&sh_path).map_err(|e| AppError::Internal(e.to_string()))?.permissions();
-        perms.set_mode(0o755);
-        let _ = fs::set_permissions(&sh_path, perms);
-        let path_str = sh_path.to_string_lossy().to_string();
-        (sh_path, path_str)
-    };
+    // Convert path to forward slashes for Git's POSIX shell (MSYS2 / Git Bash on Windows)
+    let todo_posix = todo_file_path.to_string_lossy().replace('\\', "/");
+    let editor_cmd = format!("cp -f \"{}\"", todo_posix);
 
     let mut cmd = Command::new("git");
     cmd.current_dir(workdir);
@@ -153,9 +127,8 @@ pub fn execute_interactive_rebase(
 
     let output_res = cmd.output();
 
-    // Clean up temporary files
+    // Clean up temporary file
     let _ = fs::remove_file(&todo_file_path);
-    let _ = fs::remove_file(&script_path);
 
     let output = output_res.map_err(|e| AppError::Internal(format!("Lỗi thực thi git rebase -i: {e}")))?;
 

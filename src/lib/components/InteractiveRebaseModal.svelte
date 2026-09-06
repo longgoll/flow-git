@@ -10,6 +10,9 @@
     Check,
     RefreshCw,
     AlertTriangle,
+    Search,
+    Filter,
+    RotateCcw,
   } from 'lucide-svelte';
   import { toast } from '../state/toastState.svelte';
   import { localeState } from '../state/localeState.svelte';
@@ -27,10 +30,61 @@
   let todos = $state<RebaseTodoItem[]>([]);
   let isLoading = $state<boolean>(false);
   let isExecuting = $state<boolean>(false);
+  let searchQuery = $state<string>('');
+  let filterMode = $state<'all' | 'merges' | 'dropped'>('all');
 
+  function isMergeCommit(summary: string): boolean {
+    const s = summary.toLowerCase();
+    return s.startsWith('merge ') || s.includes('merge pull request') || s.includes('merge branch');
+  }
+
+  let mergeCount = $derived(todos.filter((t) => isMergeCommit(t.summary)).length);
+  let droppedCount = $derived(todos.filter((t) => t.action === 'drop').length);
+  let activeMergesNotDropped = $derived(todos.filter((t) => isMergeCommit(t.summary) && t.action !== 'drop').length);
+
+  let filteredTodosWithIndex = $derived.by(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return todos
+      .map((item, originalIndex) => ({ item, originalIndex }))
+      .filter(({ item }) => {
+        if (filterMode === 'merges' && !isMergeCommit(item.summary)) return false;
+        if (filterMode === 'dropped' && item.action !== 'drop') return false;
+
+        if (!q) return true;
+        return (
+          item.summary.toLowerCase().includes(q) ||
+          item.short_id.toLowerCase().includes(q) ||
+          item.author.toLowerCase().includes(q)
+        );
+      });
+  });
+
+  function dropAllMerges() {
+    let count = 0;
+    todos = todos.map((item) => {
+      if (isMergeCommit(item.summary) && item.action !== 'drop') {
+        count++;
+        return { ...item, action: 'drop' };
+      }
+      return item;
+    });
+    if (count > 0) {
+      toast.success(
+        localeState.t('workflows.rebase.toastSuccess'),
+        `Đã đánh dấu Drop cho ${count} commit merge.`
+      );
+    }
+  }
+
+  function restoreAll() {
+    todos = todos.map((item) => ({ ...item, action: 'pick' }));
+    toast.info(localeState.t('workflows.rebase.restoreAll'), 'Đã đặt lại tất cả commit về pick.');
+  }
 
   $effect(() => {
     if (isOpen && repoPath && ontoCommit) {
+      searchQuery = '';
+      filterMode = 'all';
       loadTodos();
     }
   });
@@ -176,6 +230,88 @@
         <span class="text-zinc-500 font-mono text-[11px] shrink-0">{todos.length} commits</span>
       </div>
 
+      <!-- Search & Filter Controls Toolbar -->
+      <div class="px-6 py-2.5 bg-zinc-50/80 dark:bg-zinc-900/80 border-b border-zinc-200 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+        <!-- Search Input -->
+        <div class="relative flex-1 min-w-[220px]">
+          <Search class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <input
+            type="text"
+            bind:value={searchQuery}
+            placeholder={localeState.t('workflows.rebase.searchPlaceholder')}
+            class="w-full pl-8.5 pr-8 py-1.5 text-xs bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-hidden focus:border-amber-500 font-sans transition-colors"
+          />
+          {#if searchQuery}
+            <button
+              onclick={() => (searchQuery = '')}
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5"
+            >
+              <X class="w-3 h-3" />
+            </button>
+          {/if}
+        </div>
+
+        <!-- Filter Tabs & Quick Action Buttons -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <div class="flex items-center bg-zinc-200/70 dark:bg-zinc-800/80 p-0.5 rounded-lg text-xs">
+            <button
+              onclick={() => (filterMode = 'all')}
+              class="px-2.5 py-1 rounded-md transition-all font-medium cursor-pointer {filterMode === 'all' ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+            >
+              {localeState.t('workflows.rebase.filterAll')} ({todos.length})
+            </button>
+            <button
+              onclick={() => (filterMode = 'merges')}
+              class="px-2.5 py-1 rounded-md transition-all font-medium cursor-pointer flex items-center gap-1.5 {filterMode === 'merges' ? 'bg-white dark:bg-zinc-900 text-purple-600 dark:text-purple-400 shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+            >
+              <span>{localeState.t('workflows.rebase.filterMerges')}</span>
+              {#if mergeCount > 0}
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300">
+                  {mergeCount}
+                </span>
+              {/if}
+            </button>
+            <button
+              onclick={() => (filterMode = 'dropped')}
+              class="px-2.5 py-1 rounded-md transition-all font-medium cursor-pointer flex items-center gap-1.5 {filterMode === 'dropped' ? 'bg-white dark:bg-zinc-900 text-rose-600 dark:text-rose-400 shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+            >
+              <span>{localeState.t('workflows.rebase.filterDropped')}</span>
+              {#if droppedCount > 0}
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300">
+                  {droppedCount}
+                </span>
+              {/if}
+            </button>
+          </div>
+
+          <!-- Magic Batch Button: Drop All Merges -->
+          {#if activeMergesNotDropped > 0}
+            <button
+              onclick={dropAllMerges}
+              title={localeState.t('workflows.rebase.dropAllMergesTooltip', { count: activeMergesNotDropped })}
+              class="px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+            >
+              <Trash2 class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+              <span>{localeState.t('workflows.rebase.dropAllMerges')}</span>
+              <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-200 dark:bg-rose-800 text-rose-900 dark:text-rose-100 font-bold">
+                {activeMergesNotDropped}
+              </span>
+            </button>
+          {/if}
+
+          <!-- Restore All Button -->
+          {#if droppedCount > 0}
+            <button
+              onclick={restoreAll}
+              class="px-2 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 transition-all cursor-pointer"
+            >
+              <RotateCcw class="w-3 h-3" />
+              <span>{localeState.t('workflows.rebase.restoreAll')}</span>
+            </button>
+          {/if}
+        </div>
+      </div>
+
       <!-- Timeline Commits List -->
       <div class="p-6 max-h-[500px] overflow-y-auto space-y-2.5">
         {#if isLoading}
@@ -187,27 +323,32 @@
           <div class="py-12 text-center text-zinc-500 text-xs font-mono">
             {localeState.t('workflows.rebase.emptyTodos')}
           </div>
+        {:else if filteredTodosWithIndex.length === 0}
+          <div class="py-12 text-center text-zinc-500 text-xs font-sans">
+            <Filter class="w-6 h-6 mx-auto mb-2 text-zinc-400 opacity-60" />
+            <p>{localeState.t('workflows.rebase.noFilterResults')}</p>
+          </div>
         {:else}
           <div class="space-y-2 font-mono">
-            {#each todos as item, index (item.commit_id)}
+            {#each filteredTodosWithIndex as { item, originalIndex } (item.commit_id)}
               <div
-                class="p-3 rounded-xl border transition-all flex items-center justify-between gap-3 {item.action === 'drop' ? 'bg-rose-50/50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/40 opacity-60' : 'bg-zinc-50 dark:bg-zinc-950/80 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'}"
+                class="p-3 rounded-xl border transition-all flex items-center justify-between gap-3 {item.action === 'drop' ? 'bg-rose-50/50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/40 opacity-60' : isMergeCommit(item.summary) ? 'bg-purple-50/40 dark:bg-purple-950/20 border-purple-200 dark:border-purple-900/50' : 'bg-zinc-50 dark:bg-zinc-950/80 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'}"
               >
                 <!-- Left: Reorder & Action Picker -->
                 <div class="flex items-center gap-2 shrink-0">
-                  <!-- Move up/down -->
+                  <!-- Move up/down (based on original index) -->
                   <div class="flex flex-col gap-0.5">
                     <button
-                      onclick={() => moveUp(index)}
-                      disabled={index === 0}
+                      onclick={() => moveUp(originalIndex)}
+                      disabled={originalIndex === 0}
                       class="p-1 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white disabled:opacity-20 cursor-pointer disabled:cursor-default transition-colors border border-zinc-200 dark:border-transparent"
                       title={localeState.t('workflows.rebase.moveUpTooltip')}
                     >
                       <ArrowUp class="w-3 h-3" />
                     </button>
                     <button
-                      onclick={() => moveDown(index)}
-                      disabled={index === todos.length - 1}
+                      onclick={() => moveDown(originalIndex)}
+                      disabled={originalIndex === todos.length - 1}
                       class="p-1 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white disabled:opacity-20 cursor-pointer disabled:cursor-default transition-colors border border-zinc-200 dark:border-transparent"
                       title={localeState.t('workflows.rebase.moveDownTooltip')}
                     >
@@ -218,7 +359,7 @@
                   <!-- Action Dropdown / Select -->
                   <select
                     value={item.action}
-                    onchange={(e) => setAction(index, e.currentTarget.value)}
+                    onchange={(e) => setAction(originalIndex, e.currentTarget.value)}
                     class="px-2 py-1.5 rounded-lg text-xs font-bold border transition-colors outline-hidden cursor-pointer {ACTION_CONFIGS[item.action]?.color || 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700'}"
                   >
                     <option value="pick">pick ({localeState.t('workflows.rebase.pickDesc')})</option>
@@ -238,6 +379,11 @@
                     <span class="text-[11px] text-zinc-500">
                       {item.author}
                     </span>
+                    {#if isMergeCommit(item.summary)}
+                      <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60">
+                        Merge PR
+                      </span>
+                    {/if}
                   </div>
 
                   {#if item.action === 'reword'}
@@ -258,7 +404,7 @@
                 <div class="shrink-0">
                   {#if item.action !== 'drop'}
                     <button
-                      onclick={() => setAction(index, 'drop')}
+                      onclick={() => setAction(originalIndex, 'drop')}
                       class="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                       title={localeState.t('workflows.rebase.dropTooltip')}
                     >
@@ -266,7 +412,7 @@
                     </button>
                   {:else}
                     <button
-                      onclick={() => setAction(index, 'pick')}
+                      onclick={() => setAction(originalIndex, 'pick')}
                       class="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors cursor-pointer"
                       title={localeState.t('workflows.rebase.restoreTooltip')}
                     >

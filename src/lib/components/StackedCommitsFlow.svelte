@@ -106,20 +106,20 @@
   async function handleApplyReorder() {
     if (!repoPath || commits.length === 0) return;
     isSaving = true;
-    statusMessage = 'Applying reordered commit stack...';
+    statusMessage = localeState.t('graph.stackedCommits.statusApplying');
     try {
       // Commits are ordered from newest (top) to oldest (bottom) in UI
       // For rebase application, we pass them in reverse (oldest first)
       const ids = commits.map((c) => c.id).reverse();
       await reorderStackedCommits(repoPath, ids);
       hasChanges = false;
-      statusMessage = 'Stack reordered successfully! Reflog snapshot saved.';
+      statusMessage = localeState.t('graph.stackedCommits.statusSuccess');
       await onRefreshRepo();
       await loadCommits();
       setTimeout(() => (statusMessage = ''), 4000);
     } catch (err: any) {
       console.error(err);
-      statusMessage = `Error: ${err.message || err}`;
+      statusMessage = `${localeState.t('common.error')}: ${err.message || err}`;
     } finally {
       isSaving = false;
     }

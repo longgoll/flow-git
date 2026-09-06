@@ -162,7 +162,7 @@
     }
     chunkChoices = newChoices;
     rebuildTextFromChoices();
-    toast.success('Đã chọn phiên bản Ours (HEAD) cho tất cả các đoạn xung đột');
+    toast.success(localeState.t('workflows.conflictResolver.toastTakeAllOurs'));
   }
 
   function acceptAllTheirs() {
@@ -173,7 +173,7 @@
     }
     chunkChoices = newChoices;
     rebuildTextFromChoices();
-    toast.success('Đã chọn phiên bản Theirs (Incoming) cho tất cả các đoạn xung đột');
+    toast.success(localeState.t('workflows.conflictResolver.toastTakeAllTheirs'));
   }
 
   function acceptAllBoth() {
@@ -184,19 +184,19 @@
     }
     chunkChoices = newChoices;
     rebuildTextFromChoices();
-    toast.success('Đã chọn ghép cả hai phiên bản (Ours + Theirs)');
+    toast.success(localeState.t('workflows.conflictResolver.toastTakeAllBoth'));
   }
 
   function resetToOurs() {
     chunkChoices = {};
     buildInitialResolvedText(false);
-    toast.info('Đã hoàn tác và đặt lại mã nguồn về Ours (HEAD)');
+    toast.info(localeState.t('workflows.conflictResolver.toastResetToOurs'));
   }
 
   function insertGitConflictMarkers() {
     chunkChoices = {};
     buildInitialResolvedText(true);
-    toast.warning('Đã chèn các mốc Git (<<<<<<< / ======= / >>>>>>>) vào trình biên tập');
+    toast.warning(localeState.t('workflows.conflictResolver.toastInsertGitMarkers'));
   }
 
   // AI Conflict Resolutions
@@ -222,9 +222,9 @@
         }
       }
       resolvedText = text.trimEnd();
-      toast.success(`✨ AI đã giải quyết xong xung đột #${chunk.chunk_index + 1}!`);
+      toast.success(localeState.t('workflows.conflictResolver.toastAiChunkSuccess', { index: chunk.chunk_index + 1 }));
     } catch (e: any) {
-      toast.error('AI giải quyết thất bại: ' + (e?.message || e));
+      toast.error(localeState.t('workflows.conflictResolver.toastAiChunkError', { error: e?.message || e }));
     } finally {
       aiResolvingChunkIdx = null;
     }
@@ -241,9 +241,9 @@
         newChoices[chunk.chunk_index] = 'ours';
       }
       chunkChoices = newChoices;
-      toast.success('✨ AI đã phân tích và tự động ghép mã nguồn cho toàn bộ tệp!');
+      toast.success(localeState.t('workflows.conflictResolver.toastAiFileSuccess'));
     } catch (e: any) {
-      toast.error('AI hòa giải file thất bại: ' + (e?.message || e));
+      toast.error(localeState.t('workflows.conflictResolver.toastAiFileError', { error: e?.message || e }));
     } finally {
       isAiResolving = false;
     }
@@ -295,7 +295,7 @@
         <button
           onclick={() => (layoutMode = '2way')}
           class="flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer {layoutMode === '2way' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-xs' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
-          title="VS Code 2-Way Diff"
+          title={localeState.t('workflows.conflictResolver.layout2wayTooltip')}
         >
           <Columns class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
           <span>{localeState.t('workflows.conflictResolver.layout2way')}</span>

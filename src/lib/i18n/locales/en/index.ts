@@ -14,6 +14,7 @@ import { timeMachine } from "./timeMachine";
 import { pullRequest } from "./pullRequest";
 import { assistant } from "./assistant";
 import { auth } from "./auth";
+import { actions } from "./actions";
 
 export const en: TranslationSchema = {
   common,
@@ -37,4 +38,5 @@ export const en: TranslationSchema = {
   pullRequest,
   assistant,
   auth,
+  actions,
 };

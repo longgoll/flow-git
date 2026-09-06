@@ -88,20 +88,30 @@
     try {
       await setRepoIdentity(repoPath, profile.name, profile.email, applyGlobal);
       toast.success(
-        'Đã đổi tác giả Git',
-        `Áp dụng ${profile.label} (${profile.name} <${profile.email}>)${applyGlobal ? ' toàn cục (Global)' : ' cho repo này'}`
+        localeState.t('modals.identitySwitcher.applySuccessTitle'),
+        localeState.t('modals.identitySwitcher.applySuccessMsg', {
+          label: profile.label,
+          name: profile.name,
+          email: profile.email,
+          scope: applyGlobal
+            ? localeState.t('modals.identitySwitcher.globalScope')
+            : localeState.t('modals.identitySwitcher.repoScope'),
+        })
       );
       await loadData();
       onIdentityChanged?.();
       onClose();
     } catch (err: any) {
-      toast.error('Không thể đổi hồ sơ', err?.message || err);
+      toast.error(localeState.t('modals.identitySwitcher.applyError'), err?.message || err);
     }
   }
 
   async function handleSaveNewProfile() {
     if (!newLabel.trim() || !newName.trim() || !newEmail.trim()) {
-      toast.warning('Thiếu thông tin', 'Vui lòng nhập đầy đủ tên nhãn, họ tên và email.');
+      toast.warning(
+        localeState.t('modals.identitySwitcher.missingInfoTitle'),
+        localeState.t('modals.identitySwitcher.missingInfoMsg')
+      );
       return;
     }
 
@@ -114,14 +124,17 @@
 
     try {
       await saveIdentityProfile(newProfile);
-      toast.success('Đã lưu hồ sơ mới', `Hồ sơ "${newProfile.label}" đã được thêm vào danh sách.`);
+      toast.success(
+        localeState.t('modals.identitySwitcher.saveSuccessTitle'),
+        localeState.t('modals.identitySwitcher.saveSuccessMsg', { label: newProfile.label })
+      );
       newLabel = '';
       newName = '';
       newEmail = '';
       showAddForm = false;
       await loadData();
     } catch (err: any) {
-      toast.error('Lỗi khi lưu', err?.message || err);
+      toast.error(localeState.t('modals.identitySwitcher.saveError'), err?.message || err);
     }
   }
 
@@ -129,9 +142,12 @@
     try {
       await deleteIdentityProfile(id);
       await loadData();
-      toast.info('Đã xóa hồ sơ', 'Hồ sơ đã được gỡ khỏi danh sách.');
+      toast.info(
+        localeState.t('modals.identitySwitcher.deleteSuccessTitle'),
+        localeState.t('modals.identitySwitcher.deleteSuccessMsg')
+      );
     } catch (err: any) {
-      toast.error('Lỗi khi xóa', err?.message || err);
+      toast.error(localeState.t('modals.identitySwitcher.deleteError'), err?.message || err);
     }
   }
 

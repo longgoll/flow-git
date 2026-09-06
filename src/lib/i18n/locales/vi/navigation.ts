@@ -219,4 +219,13 @@ export const statusBar = {
   gitAuthorTip: "Tác giả Git: {name} (Nhấp để đổi)",
   trashTooltip: "Thùng rác an toàn Safe Discard (Lưu trữ 48h)",
   langToggleTooltip: "Chuyển đổi ngôn ngữ / Switch language",
+  toggleLogTip: "Nhấp để bật/tắt nhật ký thao tác (Operation Log)",
+  openingRepo: "Đang mở kho chứa tại {path}...",
+  loadedCommits: "Đã tải {count} commits. Trình theo dõi file realtime đang hoạt động.",
+  initializingRepo: "Đang khởi tạo kho chứa Git tại {path}...",
+  initSuccess: "Khởi tạo kho chứa thành công. Nhánh: {branch}",
+  loadedCommitsSimple: "Đã tải {count} commits.",
+  loadedMoreCommits: "Đã tải {count} commits ({status})",
+  moreAvailable: "còn thêm",
+  allHistoryLoaded: "đã tải toàn bộ lịch sử",
 };

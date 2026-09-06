@@ -227,4 +227,13 @@ export const statusBar: typeof viStatusBar = {
   gitAuthorTip: "Git Author: {name} (Click to switch)",
   trashTooltip: "Safe Discard 48h Trash Inspector",
   langToggleTooltip: "Chuyển đổi ngôn ngữ / Switch language",
+  toggleLogTip: "Click to toggle Operation Log",
+  openingRepo: "Opening repository at {path}...",
+  loadedCommits: "Loaded {count} commits. Realtime file watcher active.",
+  initializingRepo: "Initializing git repository at {path}...",
+  initSuccess: "Repository initialized successfully. Branch: {branch}",
+  loadedCommitsSimple: "Loaded {count} commits.",
+  loadedMoreCommits: "Loaded {count} commits ({status})",
+  moreAvailable: "more available",
+  allHistoryLoaded: "all history loaded",
 };

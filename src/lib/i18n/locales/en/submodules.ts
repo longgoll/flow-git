@@ -19,4 +19,8 @@ export const submodules: typeof viSubmodules = {
   remoteUrl: "Remote URL",
   registeredCommit: "Registered Commit (Index)",
   diverged: "HEAD: {head} (diverged)",
+  loadError: "Failed to load submodules",
+  updateError: "Failed to update submodules",
+  updateNameError: "Failed to update {name}",
+  syncError: "Failed to sync submodules",
 };

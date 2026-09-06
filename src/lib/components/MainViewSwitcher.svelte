@@ -237,7 +237,7 @@
     onSyncWithBase={async (baseBranch) => {
       if (!repo.currentRepoPath) return;
       if (baseBranch) {
-        repo.statusMessage = `Rebasing onto ${baseBranch}...`;
+        repo.statusMessage = localeState.t('actions.switcher.rebasingOnto', { branch: baseBranch });
         try {
           const res = await executeRebase(repo.currentRepoPath, baseBranch);
           if (res.status === 'completed') {
@@ -252,7 +252,7 @@
           }
           return;
         } catch (e: any) {
-          toast.error(`Rebase thất bại: ${e?.message || e}`);
+          toast.error(localeState.t('actions.switcher.rebaseFailed', { error: e?.message || e }));
         }
       }
       const res = await remote.runSmartSync(
@@ -300,14 +300,17 @@
       const snapId = await wt.discardFile(repo.currentRepoPath, f, refreshWorkingTreeAndDiff);
       await safety.refreshTrashSnapshots(repo.currentRepoPath);
       toast.warning(
-        'Đã Discard thay đổi',
-        `Tệp '${f}' đã được sao lưu an toàn trong Thùng rác 48h.`,
+        localeState.t('actions.switcher.discardedFileTitle'),
+        localeState.t('actions.switcher.discardedFileMsg', { file: f }),
         {
-          label: 'Hoàn tác',
+          label: localeState.t('actions.switcher.undoBtn'),
           onClick: async () => {
             if (snapId) {
               await safety.restoreTrash(repo.currentRepoPath, snapId, refreshWorkingTreeAndDiff);
-              toast.success('Đã khôi phục', `Tệp '${f}' đã được hoàn tác về Working Tree.`);
+              toast.success(
+                localeState.t('actions.switcher.restoredFileTitle'),
+                localeState.t('actions.switcher.restoredFileMsg', { file: f })
+              );
             } else {
               safety.openTrash(repo.currentRepoPath);
             }
@@ -319,13 +322,16 @@
       const snapIds = await wt.discardAll(repo.currentRepoPath, refreshWorkingTreeAndDiff);
       await safety.refreshTrashSnapshots(repo.currentRepoPath);
       toast.warning(
-        'Đã Discard tất cả thay đổi',
-        `${snapIds.length} tệp đã được sao lưu vào Thùng rác an toàn 48h.`,
+        localeState.t('actions.switcher.discardedAllTitle'),
+        localeState.t('actions.switcher.discardedAllMsg', { count: snapIds.length }),
         {
-          label: 'Hoàn tác tất cả',
+          label: localeState.t('actions.switcher.undoAllBtn'),
           onClick: async () => {
             await safety.restoreAllTrash(repo.currentRepoPath, refreshWorkingTreeAndDiff);
-            toast.success('Đã khôi phục tất cả', 'Các tệp đã được hoàn tác về Working Tree.');
+            toast.success(
+              localeState.t('actions.switcher.restoredAllTitle'),
+              localeState.t('actions.switcher.restoredAllMsg')
+            );
           },
         }
       );
@@ -333,19 +339,25 @@
     onAddToGitignore={async (pattern) => {
       try {
         await addToGitignore(repo.currentRepoPath, pattern);
-        toast.success('Đã cập nhật .gitignore', `Đã thêm '${pattern}' vào .gitignore thành công.`);
+        toast.success(
+          localeState.t('actions.switcher.gitignoreUpdatedTitle'),
+          localeState.t('actions.switcher.gitignoreUpdatedMsg', { pattern })
+        );
         await refreshWorkingTreeAndDiff();
       } catch (err: any) {
-        toast.error('Lỗi cập nhật .gitignore', err.message || String(err));
+        toast.error(localeState.t('actions.switcher.gitignoreUpdateError'), err.message || String(err));
       }
     }}
     onGenerateGitignore={async () => {
       try {
         const added = await generateStandardGitignore(repo.currentRepoPath);
-        toast.success('Đã tạo .gitignore chuẩn', `Đã bổ sung ${added.length} quy tắc tương thích dự án.`);
+        toast.success(
+          localeState.t('actions.switcher.gitignoreGeneratedTitle'),
+          localeState.t('actions.switcher.gitignoreGeneratedMsg', { count: added.length })
+        );
         await refreshWorkingTreeAndDiff();
       } catch (err: any) {
-        toast.error('Lỗi tạo .gitignore', err.message || String(err));
+        toast.error(localeState.t('actions.switcher.gitignoreGenerateError'), err.message || String(err));
       }
     }}
     onCommit={async (msg, amend, noVerify = false) => {
@@ -356,12 +368,12 @@
         noVerify,
         () => loadRepository(repo.currentRepoPath)
       );
-      repo.statusMessage = `Committed: ${sha.slice(0, 7)}`;
+      repo.statusMessage = localeState.t('actions.switcher.committedStatus', { sha: sha.slice(0, 7) });
       toast.success(
-        amend ? 'Đã Amend Commit thành công' : 'Đã tạo Commit thành công',
+        amend ? localeState.t('actions.switcher.commitAmendSuccess') : localeState.t('actions.switcher.commitSuccess'),
         `${sha.slice(0, 7)}: ${msg}`,
         {
-          label: 'Hoàn tác (Ctrl+Z)',
+          label: localeState.t('actions.switcher.undoCtrlZ'),
           onClick: () => handleUndo(),
         }
       );
@@ -393,20 +405,20 @@
     }}
     onContinueRebase={async () => {
       if (!repo.currentRepoPath) return;
-      repo.statusMessage = 'Continuing rebase...';
+      repo.statusMessage = localeState.t('actions.switcher.continuingRebaseStatus');
       try {
         const res = await continueRebase(repo.currentRepoPath);
         if (res.status === 'completed') {
-          toast.success('Rebase hoàn tất thành công!');
+          toast.success(localeState.t('actions.switcher.rebaseSuccess'));
           safety.isRebasing = false;
           onChangeViewMode('graph');
           await loadRepository(repo.currentRepoPath);
         } else if (res.status === 'conflict') {
-          toast.warning('Xung đột ở commit tiếp theo. Vui lòng giải quyết tiếp.');
+          toast.warning(localeState.t('actions.switcher.rebaseNextConflict'));
           await safety.loadConflictFiles(repo.currentRepoPath);
         }
       } catch (e: any) {
-        toast.error(`Continue rebase failed: ${e?.message || e}`);
+        toast.error(localeState.t('actions.switcher.rebaseContinueFailed', { error: e?.message || e }));
       }
     }}
     onAbortMerge={async () => {
@@ -437,14 +449,17 @@
       const snapId = await wt.discardFile(repo.currentRepoPath, p, () => loadRepository(repo.currentRepoPath));
       await safety.refreshTrashSnapshots(repo.currentRepoPath);
       toast.warning(
-        'Đã Discard thay đổi',
-        `Tệp '${p}' đã được sao lưu an toàn trong Thùng rác 48h.`,
+        localeState.t('actions.switcher.discardedFileTitle'),
+        localeState.t('actions.switcher.discardedFileMsg', { file: p }),
         {
-          label: 'Hoàn tác',
+          label: localeState.t('actions.switcher.undoBtn'),
           onClick: async () => {
             if (snapId) {
               await safety.restoreTrash(repo.currentRepoPath, snapId, () => loadRepository(repo.currentRepoPath));
-              toast.success('Đã khôi phục', `Tệp '${p}' đã được hoàn tác.`);
+              toast.success(
+                localeState.t('actions.switcher.restoredFileTitle'),
+                localeState.t('actions.switcher.restoredFileSimpleMsg', { file: p })
+              );
             } else {
               safety.openTrash(repo.currentRepoPath);
             }

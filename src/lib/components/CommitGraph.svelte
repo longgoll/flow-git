@@ -365,10 +365,16 @@
       if (commit.is_capsule) {
         if (expandedCapsuleIds.has(commit.id)) {
           expandedCapsuleIds.delete(commit.id);
-          toast.info("Collapsed", `Đã thu gọn nhóm ${commit.capsule_count || 3} commits.`);
+          toast.info(
+            localeState.t('graph.canvas.collapsedTitle'),
+            localeState.t('graph.canvas.collapsedDesc', { count: commit.capsule_count || 3 })
+          );
         } else {
           expandedCapsuleIds.add(commit.id);
-          toast.info("Expanded", `Đã mở rộng ${commit.capsule_count || 3} commits chi tiết.`);
+          toast.info(
+            localeState.t('graph.canvas.expandedTitle'),
+            localeState.t('graph.canvas.expandedDesc', { count: commit.capsule_count || 3 })
+          );
         }
         expandedCapsuleIds = new Set(expandedCapsuleIds);
         scheduleRender();
@@ -452,12 +458,20 @@
     } else if (e.key === "m" || e.key === "M") {
       e.preventDefault();
       viewMode = viewMode === "micro" ? "macro" : "micro";
-      toast.info("Chế độ xem", `Đã chuyển sang ${viewMode === "macro" ? "Macro Map (PR View)" : "Micro DAG"}.`);
+      toast.info(
+        localeState.t('graph.canvas.viewModeTitle'),
+        localeState.t('graph.canvas.viewModeDesc', { mode: viewMode === "macro" ? "Macro Map (PR View)" : "Micro DAG" })
+      );
       scheduleRender();
     } else if (e.key === "c" || e.key === "C") {
       e.preventDefault();
       autoCapsule = !autoCapsule;
-      toast.info("Semantic Capsules", `Đã ${autoCapsule ? "BẬT" : "TẮT"} chế độ gom nhóm commit.`);
+      toast.info(
+        localeState.t('graph.canvas.capsulesTitle'),
+        localeState.t('graph.canvas.capsulesDesc', {
+          state: autoCapsule ? localeState.t('graph.canvas.stateOn') : localeState.t('graph.canvas.stateOff'),
+        })
+      );
       scheduleRender();
     } else if (e.key === "f" || e.key === "F") {
       e.preventDefault();
@@ -466,10 +480,16 @@
         if (curr) {
           if (lockedLane === curr.lane) {
             lockedLane = null;
-            toast.info("Focus Unlocked", "Đã bỏ khóa tiêu điểm nhánh.");
+            toast.info(
+              localeState.t('graph.canvas.focusUnlocked'),
+              localeState.t('graph.canvas.focusUnlockedDesc')
+            );
           } else {
             lockedLane = curr.lane;
-            toast.success("Focus Locked", `Đã khóa tiêu điểm vào Lane ${curr.lane}.`);
+            toast.success(
+              localeState.t('graph.canvas.focusLocked'),
+              localeState.t('graph.canvas.focusLockedDesc', { lane: curr.lane })
+            );
           }
           scheduleRender();
         }
@@ -509,7 +529,7 @@
         scrollTop = Math.max(0, Math.min(maxScrollTop, itemTop - containerHeight / 2));
         scheduleRender();
         const label = c.refs?.[0]?.shorthand || c.short_id;
-        toast.info("Milestone Jump", `${label}: ${c.summary}`);
+        toast.info(localeState.t('graph.canvas.milestoneJumpTitle'), `${label}: ${c.summary}`);
         return;
       }
       idx += offset;

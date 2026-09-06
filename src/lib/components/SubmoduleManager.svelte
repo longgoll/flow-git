@@ -30,7 +30,7 @@
     try {
       submodules = await getSubmodules(repoPath);
     } catch (e: any) {
-      statusMessage = { text: e?.toString() || 'Failed to load submodules', type: 'error' };
+      statusMessage = { text: e?.toString() || localeState.t('submodules.loadError'), type: 'error' };
     } finally {
       isLoading = false;
     }
@@ -44,7 +44,7 @@
       statusMessage = { text: res, type: 'success' };
       await loadSubmodules();
     } catch (e: any) {
-      statusMessage = { text: e?.toString() || 'Failed to update submodules', type: 'error' };
+      statusMessage = { text: e?.toString() || localeState.t('submodules.updateError'), type: 'error' };
     } finally {
       actionLoading = null;
     }
@@ -58,7 +58,7 @@
       statusMessage = { text: res, type: 'success' };
       await loadSubmodules();
     } catch (e: any) {
-      statusMessage = { text: e?.toString() || `Failed to update ${name}`, type: 'error' };
+      statusMessage = { text: e?.toString() || localeState.t('submodules.updateNameError', { name }), type: 'error' };
     } finally {
       actionLoading = null;
     }
@@ -72,7 +72,7 @@
       statusMessage = { text: res, type: 'success' };
       await loadSubmodules();
     } catch (e: any) {
-      statusMessage = { text: e?.toString() || 'Failed to sync submodules', type: 'error' };
+      statusMessage = { text: e?.toString() || localeState.t('submodules.syncError'), type: 'error' };
     } finally {
       actionLoading = null;
     }

@@ -17,4 +17,8 @@ export const submodules = {
   remoteUrl: "Remote URL",
   registeredCommit: "Registered Commit (Index)",
   diverged: "HEAD: {head} (diverged)",
+  loadError: "Lỗi tải danh sách submodule",
+  updateError: "Lỗi cập nhật submodule",
+  updateNameError: "Lỗi cập nhật {name}",
+  syncError: "Lỗi đồng bộ submodule",
 };

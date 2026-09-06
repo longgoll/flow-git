@@ -1,4 +1,5 @@
 import { toast } from '../state/toastState.svelte';
+import { localeState } from '../state/localeState.svelte';
 import type { RepoState } from '../state/repoState.svelte';
 import type { WorkingTreeState } from '../state/workingTreeState.svelte';
 import type { GitSafetyState } from '../state/gitSafetyState.svelte';
@@ -101,23 +102,29 @@ export function createGitActions(ctx: GitActionContext) {
 
   async function cherryPickCommit(commit: CommitNode) {
     if (!repo.currentRepoPath) return;
-    repo.setStatus(`Cherry-picking commit ${commit.short_id}...`);
+    repo.setStatus(localeState.t('actions.cherryPick.inProgress', { sha: commit.short_id }));
     try {
       const newSha = await executeCherryPick(repo.currentRepoPath, commit.id);
-      repo.setStatus(`Cherry-pick succeeded: ${newSha.slice(0, 7)}`, 'success');
-      toast.success('Cherry-pick thành công', `Đã áp dụng commit ${commit.short_id} -> ${newSha.slice(0, 7)}`);
+      repo.setStatus(localeState.t('actions.cherryPick.succeededStatus', { sha: newSha.slice(0, 7) }), 'success');
+      toast.success(
+        localeState.t('actions.cherryPick.success'),
+        localeState.t('actions.cherryPick.successMsg', { source: commit.short_id, target: newSha.slice(0, 7) })
+      );
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
       const errMsg = e?.message || String(e);
       if (errMsg.toLowerCase().includes('conflict')) {
-        toast.warning('Phát hiện xung đột khi Cherry-pick', 'Đang tự động chuyển sang trang giải quyết Conflict...');
-        repo.setStatus('Cherry-pick conflict. Vui lòng giải quyết xung đột.', 'warn');
+        toast.warning(
+          localeState.t('actions.cherryPick.conflictTitle'),
+          localeState.t('actions.cherryPick.conflictMsg')
+        );
+        repo.setStatus(localeState.t('actions.cherryPick.conflictStatus'), 'warn');
         await loadRepository(repo.currentRepoPath);
         await safety.loadConflictFiles(repo.currentRepoPath);
         setViewMode('conflict');
       } else {
-        repo.setStatus(`Cherry-pick failed: ${errMsg}`, 'error');
-        toast.error('Cherry-pick thất bại', errMsg);
+        repo.setStatus(localeState.t('actions.cherryPick.failedStatus', { error: errMsg }), 'error');
+        toast.error(localeState.t('actions.cherryPick.failed'), errMsg);
       }
     }
   }
@@ -125,22 +132,25 @@ export function createGitActions(ctx: GitActionContext) {
   async function cherryPickDrop(source: CommitNode) {
     if (!repo.currentRepoPath) return;
     modalState.closeDropAction();
-    repo.setStatus(`Cherry-picking commit ${source.short_id}...`);
+    repo.setStatus(localeState.t('actions.cherryPick.inProgress', { sha: source.short_id }));
     try {
       const newSha = await executeCherryPick(repo.currentRepoPath, source.id);
-      repo.setStatus(`Cherry-pick succeeded: ${newSha.slice(0, 7)}`, 'success');
+      repo.setStatus(localeState.t('actions.cherryPick.succeededStatus', { sha: newSha.slice(0, 7) }), 'success');
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
       const errMsg = e?.message || String(e);
       if (errMsg.toLowerCase().includes('conflict')) {
-        toast.warning('Phát hiện xung đột khi Cherry-pick', 'Đang tự động chuyển sang trang giải quyết Conflict...');
-        repo.setStatus('Cherry-pick conflict. Vui lòng giải quyết xung đột.', 'warn');
+        toast.warning(
+          localeState.t('actions.cherryPick.conflictTitle'),
+          localeState.t('actions.cherryPick.conflictMsg')
+        );
+        repo.setStatus(localeState.t('actions.cherryPick.conflictStatus'), 'warn');
         await loadRepository(repo.currentRepoPath);
         await safety.loadConflictFiles(repo.currentRepoPath);
         setViewMode('conflict');
       } else {
-        repo.setStatus(`Cherry-pick failed: ${errMsg}`, 'error');
-        toast.error('Cherry-pick failed', errMsg);
+        repo.setStatus(localeState.t('actions.cherryPick.failedStatus', { error: errMsg }), 'error');
+        toast.error(localeState.t('actions.cherryPick.failed'), errMsg);
       }
     }
   }
@@ -148,22 +158,25 @@ export function createGitActions(ctx: GitActionContext) {
   async function mergeDrop(source: CommitNode) {
     if (!repo.currentRepoPath) return;
     modalState.closeDropAction();
-    repo.setStatus(`Merging commit ${source.short_id} into HEAD...`);
+    repo.setStatus(localeState.t('actions.merge.inProgress', { sha: source.short_id }));
     try {
       const newSha = await executeMerge(repo.currentRepoPath, source.id);
-      repo.setStatus(`Merge succeeded: ${newSha.slice(0, 7)}`, 'success');
+      repo.setStatus(localeState.t('actions.merge.successStatus', { sha: newSha.slice(0, 7) }), 'success');
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
       const errMsg = e?.message || String(e);
       if (errMsg.toLowerCase().includes('conflict')) {
-        toast.warning('Phát hiện xung đột khi Merge', 'Đang tự động chuyển sang trang giải quyết Conflict...');
-        repo.setStatus('Merge conflict. Vui lòng giải quyết xung đột.', 'warn');
+        toast.warning(
+          localeState.t('actions.merge.conflictTitle'),
+          localeState.t('actions.merge.conflictMsg')
+        );
+        repo.setStatus(localeState.t('actions.merge.conflictStatus'), 'warn');
         await loadRepository(repo.currentRepoPath);
         await safety.loadConflictFiles(repo.currentRepoPath);
         setViewMode('conflict');
       } else {
-        repo.setStatus(`Merge failed: ${errMsg}`, 'error');
-        toast.error('Merge failed', errMsg);
+        repo.setStatus(localeState.t('actions.merge.failedStatus', { error: errMsg }), 'error');
+        toast.error(localeState.t('actions.merge.failed'), errMsg);
       }
     }
   }
@@ -172,7 +185,7 @@ export function createGitActions(ctx: GitActionContext) {
     if (!repo.currentRepoPath) return;
     modalState.closeDropAction();
     const targetRef = target.refs?.[0]?.shorthand || target.id;
-    repo.setStatus(`Rebasing onto ${targetRef}...`);
+    repo.setStatus(localeState.t('actions.rebase.inProgress', { target: targetRef }));
     try {
       const res = await executeRebase(repo.currentRepoPath, targetRef);
       if (res.status === 'completed') {
@@ -187,14 +200,15 @@ export function createGitActions(ctx: GitActionContext) {
         setViewMode('conflict');
       }
     } catch (e: any) {
-      toast.error(`Rebase thất bại: ${e?.message || e}`);
-      repo.setStatus(`Rebase failed: ${e?.message || e}`, 'error');
+      const errText = e?.message || String(e);
+      toast.error(localeState.t('actions.rebase.failed', { error: errText }));
+      repo.setStatus(localeState.t('actions.rebase.failed', { error: errText }), 'error');
     }
   }
 
   async function rebaseBranch(branch: BranchInfo) {
     if (!repo.currentRepoPath) return;
-    repo.setStatus(`Rebasing HEAD onto ${branch.shorthand}...`);
+    repo.setStatus(localeState.t('actions.rebase.inProgressOnto', { branch: branch.shorthand }));
     try {
       const res = await executeRebase(repo.currentRepoPath, branch.shorthand);
       if (res.status === 'completed') {
@@ -209,8 +223,9 @@ export function createGitActions(ctx: GitActionContext) {
         setViewMode('conflict');
       }
     } catch (e: any) {
-      toast.error(`Rebase thất bại: ${e?.message || e}`);
-      repo.setStatus(`Rebase failed: ${e?.message || e}`, 'error');
+      const errText = e?.message || String(e);
+      toast.error(localeState.t('actions.rebase.failed', { error: errText }));
+      repo.setStatus(localeState.t('actions.rebase.failed', { error: errText }), 'error');
     }
   }
 
@@ -234,7 +249,7 @@ export function createGitActions(ctx: GitActionContext) {
     if (!repo.currentRepoPath) return;
     await createWorktree(repo.currentRepoPath, name, targetPath, branchName);
     repo.worktrees = await listWorktrees(repo.currentRepoPath);
-    repo.setStatus(`Created worktree '${name}' successfully.`, 'success');
+    repo.setStatus(localeState.t('actions.worktree.createdStatus', { name }), 'success');
 
     const tab = tabState.openTab({
       path: targetPath,
@@ -245,7 +260,10 @@ export function createGitActions(ctx: GitActionContext) {
     });
     modalState.showWorktreeModal = false;
     await loadRepository(tab.path);
-    toast.success(`Đã tạo và mở Worktree '${name}'`, `Thư mục: ${targetPath}`);
+    toast.success(
+      localeState.t('actions.worktree.createdToast', { name }),
+      localeState.t('actions.worktree.createdToastMsg', { path: targetPath })
+    );
   }
 
   async function deleteWorktreeAction(name: string) {
@@ -253,7 +271,7 @@ export function createGitActions(ctx: GitActionContext) {
     const targetWt = repo.worktrees.find((w) => w.name === name);
     await deleteWorktree(repo.currentRepoPath, name);
     repo.worktrees = await listWorktrees(repo.currentRepoPath);
-    repo.setStatus(`Removed worktree '${name}'.`, 'info');
+    repo.setStatus(localeState.t('actions.worktree.removedStatus', { name }), 'info');
     if (targetWt) {
       tabState.closeTab(targetWt.path);
     }
@@ -283,11 +301,18 @@ export function createGitActions(ctx: GitActionContext) {
     if (!repo.currentRepoPath) return;
     try {
       await createBranch(repo.currentRepoPath, newName, fromRef, checkout);
-      repo.setStatus(`✓ Tạo nhánh '${newName}' từ '${fromRef}' thành công${checkout ? ' và đã checkout' : ''}.`, 'success');
+      repo.setStatus(
+        localeState.t('actions.branch.createdStatus', {
+          name: newName,
+          from: fromRef,
+          checkout: checkout ? localeState.t('actions.branch.checkoutAnd') : '',
+        }),
+        'success'
+      );
       modalState.closeCreateBranch();
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
-      repo.setStatus(`Lỗi tạo nhánh: ${e?.message || e}`, 'error');
+      repo.setStatus(localeState.t('actions.branch.createErrorStatus', { error: e?.message || e }), 'error');
     }
   }
 
@@ -307,7 +332,7 @@ export function createGitActions(ctx: GitActionContext) {
       }
       return true;
     } catch (err: any) {
-      toast.error(`Tiếp tục rebase thất bại: ${err?.message || err}`);
+      toast.error(localeState.t('actions.rebase.continueFailed', { error: err?.message || err }));
       return false;
     }
   }
@@ -328,7 +353,7 @@ export function createGitActions(ctx: GitActionContext) {
       }
       return true;
     } catch (err: any) {
-      toast.error(`Bỏ qua commit thất bại: ${err?.message || err}`);
+      toast.error(localeState.t('actions.rebase.skipFailed', { error: err?.message || err }));
       return false;
     }
   }
@@ -343,7 +368,7 @@ export function createGitActions(ctx: GitActionContext) {
       await loadRepository(repo.currentRepoPath);
       return true;
     } catch (err: any) {
-      toast.error(`Hủy thao tác thất bại: ${err?.message || err}`);
+      toast.error(localeState.t('actions.rebase.abortFailed', { error: err?.message || err }));
       return false;
     }
   }
@@ -354,7 +379,7 @@ export function createGitActions(ctx: GitActionContext) {
 
   async function publishBranch(branch: BranchInfo) {
     if (!repo.currentRepoPath) return;
-    repo.setStatus(`Đang publish nhánh '${branch.shorthand}'...`);
+    repo.setStatus(localeState.t('actions.branch.publishing', { name: branch.shorthand }));
     const res = await remote.pushBranch(
       repo.currentRepoPath,
       branch.shorthand,
@@ -368,10 +393,10 @@ export function createGitActions(ctx: GitActionContext) {
       setRecentPushedBranch(branch.shorthand);
       tabState.updateActiveTabMeta({ recentPushedBranch: branch.shorthand });
       toast.success(
-        `Đã publish nhánh '${branch.shorthand}' lên origin`,
-        `Bạn có muốn tạo Pull Request vào nhánh chính không?`,
+        localeState.t('actions.branch.publishSuccessToast', { branch: branch.shorthand }),
+        localeState.t('actions.branch.createPRPrompt'),
         {
-          label: 'Tạo Pull Request',
+          label: localeState.t('actions.branch.createPRBtn'),
           onClick: () => openCreatePR(branch.shorthand),
         },
         8000
@@ -381,7 +406,7 @@ export function createGitActions(ctx: GitActionContext) {
 
   async function pushBranch(branch: BranchInfo, force = false) {
     if (!repo.currentRepoPath) return;
-    repo.setStatus(`Đang push nhánh '${branch.shorthand}'...`);
+    repo.setStatus(localeState.t('actions.branch.pushing', { name: branch.shorthand }));
     const res = await remote.pushBranch(
       repo.currentRepoPath,
       branch.shorthand,
@@ -395,10 +420,10 @@ export function createGitActions(ctx: GitActionContext) {
       setRecentPushedBranch(branch.shorthand);
       tabState.updateActiveTabMeta({ recentPushedBranch: branch.shorthand });
       toast.success(
-        `Đã push nhánh '${branch.shorthand}'`,
-        `Bạn có muốn tạo Pull Request vào nhánh chính không?`,
+        localeState.t('actions.branch.pushSuccessToast', { branch: branch.shorthand }),
+        localeState.t('actions.branch.createPRPrompt'),
         {
-          label: 'Tạo Pull Request',
+          label: localeState.t('actions.branch.createPRBtn'),
           onClick: () => openCreatePR(branch.shorthand),
         },
         8000
@@ -414,7 +439,7 @@ export function createGitActions(ctx: GitActionContext) {
     } else if (current) {
       await pushBranch(current, false);
     } else {
-      repo.setStatus(`Đang push lên remote...`);
+      repo.setStatus(localeState.t('actions.branch.pushingRemote'));
       const res = await remote.executeRemote(
         repo.currentRepoPath,
         'push',
@@ -431,14 +456,17 @@ export function createGitActions(ctx: GitActionContext) {
   async function checkoutBranchAction(branch: BranchInfo) {
     if (!repo.currentRepoPath || branch.is_head) return;
     try {
-      repo.setStatus(`Checking out '${branch.shorthand}'...`);
+      repo.setStatus(localeState.t('actions.branch.checkingOut', { name: branch.shorthand }));
       await checkoutBranch(repo.currentRepoPath, branch.shorthand);
-      repo.setStatus(`✓ Đã chuyển sang nhánh '${branch.shorthand}'.`, 'success');
-      toast.info('Đã chuyển nhánh', `Hiện đang ở nhánh '${branch.shorthand}'.`);
+      repo.setStatus(localeState.t('actions.branch.checkoutSuccessStatus', { name: branch.shorthand }), 'success');
+      toast.info(
+        localeState.t('actions.branch.checkoutSuccessToast'),
+        localeState.t('actions.branch.checkoutCurrentToast', { name: branch.shorthand })
+      );
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
-      repo.setStatus(`Lỗi checkout: ${e?.message || e}`, 'error');
-      toast.error('Lỗi chuyển nhánh', e?.message || String(e));
+      repo.setStatus(localeState.t('actions.branch.checkoutErrorStatus', { error: e?.message || e }), 'error');
+      toast.error(localeState.t('actions.branch.checkoutError'), e?.message || String(e));
     }
   }
 
@@ -447,13 +475,13 @@ export function createGitActions(ctx: GitActionContext) {
     try {
       await renameBranch(repo.currentRepoPath, branch.shorthand, newName);
       toast.success(
-        'Đổi tên nhánh thành công',
-        `Nhánh '${branch.shorthand}' đã được đổi thành '${newName}'.`
+        localeState.t('actions.branch.renameSuccessToast'),
+        localeState.t('actions.branch.renameSuccessMsg', { oldName: branch.shorthand, newName })
       );
-      repo.setStatus(`Đổi tên nhánh '${branch.shorthand}' -> '${newName}'`, 'success');
+      repo.setStatus(localeState.t('actions.branch.renamingStatus', { oldName: branch.shorthand, newName }), 'success');
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
-      toast.error('Lỗi đổi tên nhánh', e?.message || String(e));
+      toast.error(localeState.t('actions.branch.renameError'), e?.message || String(e));
     }
   }
 
@@ -487,16 +515,16 @@ export function createGitActions(ctx: GitActionContext) {
           branch.is_remote
         );
       }
-      repo.setStatus(`Đã xóa nhánh ${branch.shorthand} thành công`, 'success');
+      repo.setStatus(localeState.t('actions.branch.deletingStatus', { name: branch.shorthand }), 'success');
       toast.success(
-        'Đã xóa nhánh',
-        `Nhánh '${branch.shorthand}' đã được xóa an toàn.`
+        localeState.t('actions.branch.deleteSuccessToast'),
+        localeState.t('actions.branch.deleteSuccessMsg', { name: branch.shorthand })
       );
       modalState.closeDeleteBranch();
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
-      repo.setStatus(`Lỗi xóa nhánh: ${e?.message || e}`, 'error');
-      toast.error('Lỗi xóa nhánh', e?.message || String(e));
+      repo.setStatus(localeState.t('actions.branch.deleteErrorStatus', { error: e?.message || e }), 'error');
+      toast.error(localeState.t('actions.branch.deleteError'), e?.message || String(e));
     } finally {
       modalState.isDeleteBranchLoading = false;
     }
@@ -508,7 +536,7 @@ export function createGitActions(ctx: GitActionContext) {
     repo.selectedCommitIds = [c1.id, c2.id];
     setViewMode('compare');
     setIsComparisonLoading(true);
-    repo.setStatus(`Comparing ${c1.short_id} .. ${c2.short_id}...`);
+    repo.setStatus(localeState.t('actions.compare.comparing', { c1: c1.short_id, c2: c2.short_id }));
     try {
       const res = await compareTwoCommits(
         repo.currentRepoPath,
@@ -516,9 +544,9 @@ export function createGitActions(ctx: GitActionContext) {
         c2.id
       );
       setComparisonResult(res);
-      repo.setStatus(`Comparison ready: ${res.files_changed.length} files changed`, 'success');
+      repo.setStatus(localeState.t('actions.compare.ready', { count: res.files_changed.length }), 'success');
     } catch (e: any) {
-      repo.setStatus(`Comparison failed: ${e?.message || e}`, 'error');
+      repo.setStatus(localeState.t('actions.compare.failed', { error: e?.message || e }), 'error');
     } finally {
       setIsComparisonLoading(false);
     }
@@ -531,7 +559,7 @@ export function createGitActions(ctx: GitActionContext) {
     const oldBase = current.base_id;
     const oldTarget = current.target_id;
     setIsComparisonLoading(true);
-    repo.setStatus(`Comparing ${oldTarget.slice(0, 7)} .. ${oldBase.slice(0, 7)}...`);
+    repo.setStatus(localeState.t('actions.compare.comparing', { c1: oldTarget.slice(0, 7), c2: oldBase.slice(0, 7) }));
     try {
       const res = await compareTwoCommits(
         repo.currentRepoPath,
@@ -540,53 +568,53 @@ export function createGitActions(ctx: GitActionContext) {
       );
       setComparisonResult(res);
       repo.selectedCommitIds = [oldTarget, oldBase];
-      repo.setStatus(`Comparison ready: ${res.files_changed.length} files changed`, 'success');
+      repo.setStatus(localeState.t('actions.compare.ready', { count: res.files_changed.length }), 'success');
     } catch (e: any) {
-      repo.setStatus(`Comparison failed: ${e?.message || e}`, 'error');
+      repo.setStatus(localeState.t('actions.compare.failed', { error: e?.message || e }), 'error');
     } finally {
       setIsComparisonLoading(false);
     }
   }
 
   async function undo() {
-    repo.setStatus('Time Machine: Undoing last action...');
+    repo.setStatus(localeState.t('actions.timeMachine.undoing'));
     try {
       const record = await safety.undo(repo.currentRepoPath, () =>
         loadRepository(repo.currentRepoPath)
       );
       if (record) {
-        repo.setStatus(`Time Machine: Undid ${record.description}`, 'success');
+        repo.setStatus(localeState.t('actions.timeMachine.undone', { desc: record.description }), 'success');
         toast.info(
-          'Đã hoàn tác (Time Machine)',
-          `Đã hoàn tác: ${record.description}`,
+          localeState.t('actions.timeMachine.undoToast'),
+          localeState.t('actions.timeMachine.undoToastMsg', { desc: record.description }),
           {
-            label: 'Làm lại (Redo)',
+            label: localeState.t('actions.timeMachine.redoBtn'),
             onClick: () => redo(),
           }
         );
       }
     } catch (e: any) {
-      repo.setStatus(`Undo failed: ${e?.message || e}`, 'error');
-      toast.warning('Không thể hoàn tác', e?.message || String(e));
+      repo.setStatus(localeState.t('actions.timeMachine.undoFailedStatus', { error: e?.message || e }), 'error');
+      toast.warning(localeState.t('actions.timeMachine.undoFailed'), e?.message || String(e));
     }
   }
 
   async function redo() {
-    repo.setStatus('Time Machine: Redoing action...');
+    repo.setStatus(localeState.t('actions.timeMachine.redoing'));
     try {
       const record = await safety.redo(repo.currentRepoPath, () =>
         loadRepository(repo.currentRepoPath)
       );
       if (record) {
-        repo.setStatus(`Time Machine: Redid ${record.description}`, 'success');
+        repo.setStatus(localeState.t('actions.timeMachine.redone', { desc: record.description }), 'success');
         toast.info(
-          'Đã làm lại (Time Machine)',
-          `Đã khôi phục: ${record.description}`
+          localeState.t('actions.timeMachine.redoToast'),
+          localeState.t('actions.timeMachine.redoToastMsg', { desc: record.description })
         );
       }
     } catch (e: any) {
-      repo.setStatus(`Redo failed: ${e?.message || e}`, 'error');
-      toast.warning('Không thể làm lại', e?.message || String(e));
+      repo.setStatus(localeState.t('actions.timeMachine.redoFailedStatus', { error: e?.message || e }), 'error');
+      toast.warning(localeState.t('actions.timeMachine.redoFailed'), e?.message || String(e));
     }
   }
 
@@ -612,13 +640,13 @@ export function createGitActions(ctx: GitActionContext) {
         message
       );
       toast.success(
-        'Đã tạo Tag',
-        `Tag ${tagName} đã được tạo tại ${modalState.tagTargetCommit.short_id}`
+        localeState.t('actions.tag.createSuccess'),
+        localeState.t('actions.tag.createSuccessMsg', { name: tagName, sha: modalState.tagTargetCommit.short_id })
       );
       modalState.closeCreateTag();
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
-      toast.warning('Lỗi tạo Tag', e?.message || String(e));
+      toast.warning(localeState.t('actions.tag.createError'), e?.message || String(e));
     } finally {
       modalState.isCreateTagLoading = false;
     }
@@ -627,26 +655,29 @@ export function createGitActions(ctx: GitActionContext) {
   async function deleteTagAction(tagName: string) {
     try {
       await deleteTag(repo.currentRepoPath, tagName);
-      toast.info('Đã xóa Tag', `Đã xóa tag ${tagName}`);
+      toast.info(
+        localeState.t('actions.tag.deleteSuccess'),
+        localeState.t('actions.tag.deleteSuccessMsg', { name: tagName })
+      );
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
-      toast.warning('Lỗi xóa Tag', e?.message || String(e));
+      toast.warning(localeState.t('actions.tag.deleteError'), e?.message || String(e));
     }
   }
 
   async function revertCommitAction(commit: CommitNode) {
-    repo.setStatus(`Reverting commit ${commit.short_id}...`);
+    repo.setStatus(localeState.t('actions.revert.inProgress', { sha: commit.short_id }));
     try {
       const newSha = await revertCommit(repo.currentRepoPath, commit.id);
       toast.success(
-        'Revert thành công',
-        `Đã tạo commit đảo ngược: ${newSha.slice(0, 7)}`
+        localeState.t('actions.revert.success'),
+        localeState.t('actions.revert.successMsg', { sha: newSha.slice(0, 7) })
       );
-      repo.setStatus(`Revert succeeded: ${newSha.slice(0, 7)}`, 'success');
+      repo.setStatus(localeState.t('actions.revert.succeededStatus', { sha: newSha.slice(0, 7) }), 'success');
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
-      repo.setStatus(`Revert failed: ${e?.message || e}`, 'error');
-      toast.warning('Lỗi Revert commit', e?.message || String(e));
+      repo.setStatus(localeState.t('actions.revert.failedStatus', { error: e?.message || e }), 'error');
+      toast.warning(localeState.t('actions.revert.error'), e?.message || String(e));
     }
   }
 
@@ -654,19 +685,19 @@ export function createGitActions(ctx: GitActionContext) {
     commit: CommitNode,
     mode: 'soft' | 'mixed' | 'hard'
   ) {
-    repo.setStatus(`Resetting (${mode}) to ${commit.short_id}...`);
+    repo.setStatus(localeState.t('actions.reset.inProgress', { sha: commit.short_id, mode }));
     try {
       await resetToCommit(repo.currentRepoPath, commit.id, mode);
       toast.info(
-        'Reset hoàn tất',
-        `HEAD đã đưa về ${commit.short_id} (${mode})`
+        localeState.t('actions.reset.success'),
+        localeState.t('actions.reset.successMsg', { sha: commit.short_id, mode })
       );
-      repo.setStatus(`Reset (${mode}) to ${commit.short_id} done`, 'success');
+      repo.setStatus(localeState.t('actions.reset.doneStatus', { sha: commit.short_id, mode }), 'success');
       await loadRepository(repo.currentRepoPath);
       await refreshWorkingTreeAndDiff();
     } catch (e: any) {
-      repo.setStatus(`Reset failed: ${e?.message || e}`, 'error');
-      toast.warning('Lỗi Reset commit', e?.message || String(e));
+      repo.setStatus(localeState.t('actions.reset.failedStatus', { error: e?.message || e }), 'error');
+      toast.warning(localeState.t('actions.reset.error'), e?.message || String(e));
     }
   }
 
@@ -679,14 +710,14 @@ export function createGitActions(ctx: GitActionContext) {
         message
       );
       toast.success(
-        'Squash thành công',
-        `Đã gộp ${commitIds.length} commit thành ${newSha.slice(0, 7)}`
+        localeState.t('actions.squash.success'),
+        localeState.t('actions.squash.successMsg', { count: commitIds.length, sha: newSha.slice(0, 7) })
       );
       modalState.closeSquash();
       await loadRepository(repo.currentRepoPath);
       await refreshWorkingTreeAndDiff();
     } catch (e: any) {
-      toast.warning('Lỗi Squash commit', e?.message || String(e));
+      toast.warning(localeState.t('actions.squash.error'), e?.message || String(e));
     } finally {
       modalState.isSquashLoading = false;
     }
@@ -698,7 +729,7 @@ export function createGitActions(ctx: GitActionContext) {
     try {
       modalState.mergedBranches = await getMergedBranches(repo.currentRepoPath);
     } catch (e: any) {
-      toast.warning('Lỗi kiểm tra nhánh merged', e?.message || String(e));
+      toast.warning(localeState.t('actions.cleanup.mergedBranchesCheckError'), e?.message || String(e));
     } finally {
       modalState.isCleanMergedLoading = false;
     }
@@ -712,13 +743,13 @@ export function createGitActions(ctx: GitActionContext) {
         branchesToDelete
       );
       toast.success(
-        'Dọn dẹp hoàn tất',
-        `Đã xóa ${deletedCount} nhánh đã merge.`
+        localeState.t('actions.cleanup.success'),
+        localeState.t('actions.cleanup.successMsg', { count: deletedCount, target: 'HEAD' })
       );
       modalState.showCleanMergedModal = false;
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
-      toast.warning('Lỗi dọn dẹp nhánh', e?.message || String(e));
+      toast.warning(localeState.t('actions.cleanup.error'), e?.message || String(e));
     } finally {
       modalState.isCleanMergedLoading = false;
     }
@@ -733,7 +764,7 @@ export function createGitActions(ctx: GitActionContext) {
       if (wt.workingTreeStatus && wt.workingTreeStatus.total_dirty_count > 0) {
         await stashSave(
           repo.currentRepoPath,
-          `Auto-stash trước hotfix: ${hotfixBranchName} (${new Date().toLocaleTimeString()})`,
+          localeState.t('actions.hotfix.autoStashMsg', { branch: hotfixBranchName, time: new Date().toLocaleTimeString() }),
           true
         );
         modalState.hotfixStashed = true;
@@ -749,19 +780,19 @@ export function createGitActions(ctx: GitActionContext) {
       await refreshWorkingTreeAndDiff();
 
       toast.success(
-        `Bắt đầu Quick Hotfix: ${hotfixBranchName}`,
+        localeState.t('actions.hotfix.started', { branch: hotfixBranchName }),
         modalState.hotfixStashed
-          ? 'Toàn bộ code dở dang đã được gom vào Stash an toàn. Khi fix xong, bấm "Khôi phục code dở" trên Toolbar.'
-          : 'Working tree sạch sẽ. Đã chuyển sang nhánh hotfix.',
+          ? localeState.t('actions.hotfix.stashedMsg')
+          : localeState.t('actions.hotfix.cleanMsg'),
         modalState.hotfixStashed
           ? {
-              label: 'Xem Changes',
+              label: localeState.t('actions.hotfix.viewChanges'),
               onClick: () => setViewMode('changes'),
             }
           : undefined
       );
     } catch (err: any) {
-      toast.error('Lỗi khi bắt đầu Quick Hotfix', err?.message || String(err));
+      toast.error(localeState.t('actions.hotfix.startError'), err?.message || String(err));
       throw err;
     }
   }
@@ -780,11 +811,11 @@ export function createGitActions(ctx: GitActionContext) {
       await refreshWorkingTreeAndDiff();
 
       toast.success(
-        'Đã khôi phục code dở dang',
-        `Đã hoàn tất khôi phục code từ Stash cho phiên hotfix '${finishedBranch}'.`
+        localeState.t('actions.hotfix.restored'),
+        localeState.t('actions.hotfix.restoredMsg', { branch: finishedBranch || '' })
       );
     } catch (err: any) {
-      toast.error('Lỗi khôi phục code dở dang', err?.message || String(err));
+      toast.error(localeState.t('actions.hotfix.restoreError'), err?.message || String(err));
     }
   }
 
@@ -792,12 +823,12 @@ export function createGitActions(ctx: GitActionContext) {
     if (!repo.currentRepoPath) return;
     try {
       const res = await nukeFileFromHistory(repo.currentRepoPath, filePath);
-      toast.success('Xóa vĩnh viễn thành công', res);
+      toast.success(localeState.t('actions.nuke.success'), res);
       modalState.closeNukeFile();
       await loadRepository(repo.currentRepoPath);
       await refreshWorkingTreeAndDiff();
     } catch (err: any) {
-      toast.error('Lỗi khi xóa tệp khỏi lịch sử', err?.message || String(err));
+      toast.error(localeState.t('actions.nuke.error'), err?.message || String(err));
       throw err;
     }
   }
@@ -806,7 +837,7 @@ export function createGitActions(ctx: GitActionContext) {
     try {
       await revealInFileManager(path);
     } catch (e: any) {
-      toast.error('Không thể mở File Explorer', e?.message || String(e));
+      toast.error(localeState.t('actions.fileManager.openError'), e?.message || String(e));
     }
   }
 
@@ -829,11 +860,11 @@ export function createGitActions(ctx: GitActionContext) {
       repo.showWelcomeScreen = false;
       tabState.initDefaultTab(targetPath, defaultBranch);
       toast.success(
-        'Khởi tạo Git thành công',
-        `Đã tạo kho Git mới với nhánh ${defaultBranch || 'main'}`
+        localeState.t('actions.init.success'),
+        localeState.t('actions.init.successMsg', { branch: defaultBranch || 'main' })
       );
     } catch (err: any) {
-      toast.error('Khởi tạo thất bại', err?.message || String(err));
+      toast.error(localeState.t('actions.init.error'), err?.message || String(err));
       throw err;
     }
   }

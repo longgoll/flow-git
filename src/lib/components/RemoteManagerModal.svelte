@@ -59,7 +59,7 @@
       remotes = await getRemotes(repoPath);
     } catch (err: any) {
       console.error('Failed to load remotes:', err);
-      toast.error('Lỗi nạp Remote', err?.message || err);
+      toast.error(localeState.t('modals.remoteManager.loadError'), err?.message || err);
     } finally {
       isLoading = false;
     }
@@ -69,21 +69,24 @@
     const name = newRemoteName.trim();
     const url = newRemoteUrl.trim();
     if (!name || !url) {
-      toast.warning('Vui lòng nhập tên và URL remote.');
+      toast.warning(localeState.t('modals.remoteManager.missingFieldsWarning'));
       return;
     }
 
     isAdding = true;
     try {
       await addRemote(repoPath, name, url);
-      toast.success('Đã thêm Remote', `Thêm remote '${name}' thành công.`);
+      toast.success(
+        localeState.t('modals.remoteManager.addSuccessTitle'),
+        localeState.t('modals.remoteManager.addSuccessMsg', { name })
+      );
       newRemoteName = '';
       newRemoteUrl = '';
       showAddForm = false;
       await loadRemotes();
       onRemotesChanged?.();
     } catch (err: any) {
-      toast.error('Thêm Remote thất bại', err?.message || err);
+      toast.error(localeState.t('modals.remoteManager.addError'), err?.message || err);
     } finally {
       isAdding = false;
     }
@@ -97,19 +100,22 @@
   async function handleSaveEdit(name: string) {
     const url = editUrl.trim();
     if (!url) {
-      toast.warning('URL không được để trống.');
+      toast.warning(localeState.t('modals.remoteManager.emptyUrlWarning'));
       return;
     }
 
     isSavingEdit = true;
     try {
       await setRemoteUrl(repoPath, name, url);
-      toast.success('Cập nhật thành công', `Đã đổi URL cho remote '${name}'.`);
+      toast.success(
+        localeState.t('modals.remoteManager.updateSuccessTitle'),
+        localeState.t('modals.remoteManager.updateSuccessMsg', { name })
+      );
       editingRemoteName = null;
       await loadRemotes();
       onRemotesChanged?.();
     } catch (err: any) {
-      toast.error('Cập nhật URL thất bại', err?.message || err);
+      toast.error(localeState.t('modals.remoteManager.updateError'), err?.message || err);
     } finally {
       isSavingEdit = false;
     }
@@ -118,12 +124,12 @@
   async function handleConfirmDelete(name: string) {
     try {
       await removeRemote(repoPath, name);
-      toast.info(`Đã xóa remote '${name}'.`);
+      toast.info(localeState.t('modals.remoteManager.deleteSuccessMsg', { name }));
       deletingRemoteName = null;
       await loadRemotes();
       onRemotesChanged?.();
     } catch (err: any) {
-      toast.error('Xóa remote thất bại', err?.message || err);
+      toast.error(localeState.t('modals.remoteManager.deleteError'), err?.message || err);
     }
   }
 
@@ -131,10 +137,10 @@
     isFetchingName = name;
     try {
       const msg = await fetchRemote(repoPath, name);
-      toast.success(`Đã fetch remote '${name}'`, msg);
+      toast.success(localeState.t('modals.remoteManager.fetchSuccessTitle', { name }), msg);
       onRemotesChanged?.();
     } catch (err: any) {
-      toast.error(`Fetch '${name}' thất bại`, err?.message || err);
+      toast.error(localeState.t('modals.remoteManager.fetchErrorTitle', { name }), err?.message || err);
     } finally {
       isFetchingName = null;
     }
@@ -273,7 +279,7 @@
                       {remote.name}
                     </span>
                     {#if remote.name === 'origin'}
-                      <span class="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">(Mặc định)</span>
+                      <span class="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">{localeState.t('modals.remoteManager.defaultBadge')}</span>
                     {/if}
                   </div>
 
@@ -283,7 +289,7 @@
                       onclick={() => handleFetch(remote.name)}
                       disabled={isFetchingName === remote.name}
                       class="px-2 py-1 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-700/70 text-zinc-700 dark:text-zinc-300 text-[11px] flex items-center gap-1 cursor-pointer transition-colors disabled:opacity-50 shadow-xs"
-                      title="Fetch cập nhật từ remote này"
+                      title={localeState.t('modals.remoteManager.fetchTooltip')}
                     >
                       <RefreshCw class="w-3 h-3 text-cyan-600 dark:text-cyan-400 {isFetchingName === remote.name ? 'animate-spin' : ''}" />
                       <span>{localeState.t('modals.remoteManager.fetch')}</span>
@@ -293,7 +299,7 @@
                     <button
                       onclick={() => startEdit(remote)}
                       class="p-1 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-700/70 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 cursor-pointer transition-colors shadow-xs"
-                      title="Sửa URL remote"
+                      title={localeState.t('modals.remoteManager.editTooltip')}
                     >
                       <Edit2 class="w-3 h-3" />
                     </button>
@@ -303,7 +309,7 @@
                       <button
                         onclick={() => (deletingRemoteName = remote.name)}
                         class="p-1 rounded bg-white dark:bg-zinc-900 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-zinc-300 dark:border-zinc-700/70 text-zinc-500 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400 cursor-pointer transition-colors shadow-xs"
-                        title="Xóa remote này"
+                        title={localeState.t('modals.remoteManager.deleteTooltip')}
                       >
                         <Trash2 class="w-3 h-3" />
                       </button>
@@ -382,7 +388,7 @@
       <!-- Footer -->
       <div class="px-6 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 flex items-center justify-between">
         <span class="text-[11px] text-zinc-500 font-mono">
-          Tip: Đa remote giúp bạn push vào fork riêng và pull cập nhật từ upstream của team.
+          {localeState.t('modals.remoteManager.tip')}
         </span>
         <button
           onclick={onClose}

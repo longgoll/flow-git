@@ -235,7 +235,7 @@
       }
     } catch (err) {
       console.error('Failed to load file content:', err);
-      toast.error('Lỗi đọc file', `Không thể đọc nội dung file: ${filePath}`);
+      toast.error(localeState.t('explorer.repository.readFileError'), localeState.t('explorer.repository.cannotReadFileMsg', { path: filePath }));
     } finally {
       isContentLoading = false;
     }
@@ -270,12 +270,12 @@
     try {
       await saveFileContent(repoPath, selectedFilePath, fileContent);
       initialLoadedContent = fileContent;
-      toast.success('Đã lưu file thành công', selectedFilePath);
+      toast.success(localeState.t('explorer.repository.savedToast'), selectedFilePath);
       // Auto refresh tree to update dirty status
       await refreshTree();
     } catch (err: any) {
       console.error('Save failed:', err);
-      toast.error('Lưu file thất bại', err?.message || err);
+      toast.error(localeState.t('explorer.repository.saveFileError'), err?.message || err);
     } finally {
       isSaving = false;
     }
@@ -288,7 +288,7 @@
       blameHunks = await getFileBlame(repoPath, filePath);
     } catch (err: any) {
       console.error('Failed to load blame:', err);
-      toast.error('Lỗi tính toán Git Blame', err?.message || err);
+      toast.error(localeState.t('explorer.repository.blameError'), err?.message || err);
     } finally {
       isBlameLoading = false;
     }
@@ -316,7 +316,7 @@
       );
     } catch (err: any) {
       console.error('Grep search failed:', err);
-      toast.error('Tìm kiếm thất bại', err?.message || err);
+      toast.error(localeState.t('explorer.repository.searchError'), err?.message || err);
     } finally {
       isGrepSearching = false;
     }
@@ -357,13 +357,13 @@
     if (!selectedFilePath) return;
     const target = isAbsolute ? `${repoPath}/${selectedFilePath}` : selectedFilePath;
     navigator.clipboard.writeText(target);
-    toast.info('Đã sao chép đường dẫn', target);
+    toast.info(localeState.t('explorer.repository.copiedPathToast'), target);
   }
 
   function copyContent() {
     if (!fileContent) return;
     navigator.clipboard.writeText(fileContent);
-    toast.info('Đã sao chép', 'Toàn bộ nội dung file đã được sao chép vào bộ nhớ tạm.');
+    toast.info(localeState.t('explorer.repository.copiedContentToast'), localeState.t('explorer.repository.copiedContentMsg'));
   }
 
   async function handleOpenInEditor(editor: 'cursor' | 'antigravity' | 'code' | 'zed' | 'default') {
@@ -373,12 +373,12 @@
     try {
       await openInExternalEditor(fullPath, editor);
       toast.success(
-        'Mở editor thành công',
-        `Đang khởi chạy ${editor === 'antigravity' ? 'Antigravity IDE' : editor.toUpperCase()}`
+        localeState.t('explorer.repository.launchEditorSuccess'),
+        localeState.t('explorer.repository.launchEditorSuccessMsg', { editor: editor === 'antigravity' ? 'Antigravity IDE' : editor.toUpperCase() })
       );
     } catch (err: any) {
       console.error(`Failed to open in ${editor}:`, err);
-      toast.error('Lỗi khởi chạy editor', err?.message || err);
+      toast.error(localeState.t('explorer.repository.launchEditorError'), err?.message || err);
     }
   }
 
@@ -389,7 +389,7 @@
       await revealInFileManager(fullPath);
     } catch (err: any) {
       console.error('Failed to reveal file:', err);
-      toast.error('Lỗi mở thư mục', err?.message || err);
+      toast.error(localeState.t('explorer.repository.openFolderError'), err?.message || err);
     }
   }
 

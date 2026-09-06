@@ -79,14 +79,20 @@
     try {
       const ok = await clearIndexLock(repoPath);
       if (ok) {
-        toast.success('Đã gỡ kẹt index.lock', 'Repository đã mở khóa và có thể thực hiện các lệnh Git bình thường.');
+        toast.success(
+          localeState.t('assistant.playbook.toastLockCleared'),
+          localeState.t('assistant.playbook.toastLockClearedMsg')
+        );
         hasIndexLock = false;
         await onRepoRefreshed?.();
       } else {
-        toast.info('Không phát hiện tệp khóa', 'Tệp .git/index.lock không tồn tại.');
+        toast.info(
+          localeState.t('assistant.playbook.toastNoLockDetected'),
+          localeState.t('assistant.playbook.toastNoLockDetectedMsg')
+        );
       }
     } catch (err: any) {
-      toast.error('Lỗi khi xóa lock file', err?.message || err);
+      toast.error(localeState.t('assistant.playbook.toastClearLockError'), err?.message || err);
     } finally {
       isClearingLock = false;
     }
@@ -98,12 +104,18 @@
     try {
       heavyFiles = await scanHeavyFiles(repoPath, 50);
       if (heavyFiles.length === 0) {
-        toast.success('Không có tệp quá lớn', 'Tất cả tệp đã staged đều dưới 50MB (an toàn để push lên GitHub).');
+        toast.success(
+          localeState.t('assistant.playbook.toastNoHeavyFiles'),
+          localeState.t('assistant.playbook.toastNoHeavyFilesMsg')
+        );
       } else {
-        toast.warning('Phát hiện tệp lớn', `Có ${heavyFiles.length} tệp vượt quá 50MB cần lưu ý.`);
+        toast.warning(
+          localeState.t('assistant.playbook.toastHeavyFilesDetected'),
+          localeState.t('assistant.playbook.toastHeavyFilesDetectedMsg', { count: heavyFiles.length })
+        );
       }
     } catch (err: any) {
-      toast.error('Lỗi quét tệp', err?.message || err);
+      toast.error(localeState.t('assistant.playbook.toastScanError'), err?.message || err);
     } finally {
       isScanningHeavy = false;
     }
@@ -190,7 +202,7 @@
           class="px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer {activeTab === 'fileLocks' ? 'bg-purple-100 dark:bg-purple-600/20 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-500/40 font-semibold' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'}"
         >
           <ShieldCheck class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-          <span>Cứu Code (48h Trash)</span>
+          <span>{localeState.t('assistant.playbook.tabRescueCode')}</span>
         </button>
       </div>
 
@@ -210,24 +222,24 @@
                 </div>
                 <div class="space-y-1 flex-1">
                   <h3 class="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                    Trạng thái:
+                    {localeState.t('assistant.playbook.statusLabel')}
                     {#if hasIndexLock}
-                      <span class="text-rose-700 dark:text-rose-400 font-mono">Phát hiện tệp `.git/index.lock` tồn đọng!</span>
+                      <span class="text-rose-700 dark:text-rose-400 font-mono">{localeState.t('assistant.playbook.lockFoundMsg')}</span>
                     {:else}
-                      <span class="text-emerald-700 dark:text-emerald-400 font-mono">Repository đang mở khóa bình thường</span>
+                      <span class="text-emerald-700 dark:text-emerald-400 font-mono">{localeState.t('assistant.playbook.lockNormalMsg')}</span>
                     {/if}
                   </h3>
                   <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                    Khi một lệnh Git bị tắt đột ngột hoặc IDE khóa tệp, Git để lại tệp `index.lock` khiến mọi thao tác commit, stage hoặc checkout bị từ chối với lỗi <code class="text-amber-700 dark:text-amber-400 font-mono">Unable to create .git/index.lock: File exists</code>.
+                    {localeState.t('assistant.playbook.lockExplanation')} <code class="text-amber-700 dark:text-amber-400 font-mono">Unable to create .git/index.lock: File exists</code>.
                   </p>
                 </div>
               </div>
             </div>
 
             <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 space-y-3">
-              <h4 class="text-xs font-semibold text-zinc-800 dark:text-zinc-300">Giải pháp cứu hộ:</h4>
+              <h4 class="text-xs font-semibold text-zinc-800 dark:text-zinc-300">{localeState.t('assistant.playbook.lockSolutionTitle')}</h4>
               <p class="text-xs text-zinc-600 dark:text-zinc-400">
-                Nhấn nút bên dưới để gỡ bỏ an toàn tệp khóa tồn đọng ngay lập tức mà không cần dùng Terminal hay vào thư mục ẩn `.git`.
+                {localeState.t('assistant.playbook.lockSolutionDesc')}
               </p>
               <div class="flex items-center gap-3 pt-1">
                 <button
@@ -237,10 +249,10 @@
                 >
                   {#if isClearingLock}
                     <RefreshCw class="w-3.5 h-3.5 animate-spin" />
-                    <span>Đang xử lý...</span>
+                    <span>{localeState.t('assistant.playbook.processing')}</span>
                   {:else}
                     <Unlock class="w-3.5 h-3.5" />
-                    <span>Xóa `index.lock` ngay</span>
+                    <span>{localeState.t('assistant.playbook.clearLockNow')}</span>
                   {/if}
                 </button>
                 <button
@@ -250,9 +262,9 @@
                 >
                   {#if isCheckingIndexLock}
                     <RefreshCw class="w-3.5 h-3.5 animate-spin" />
-                    <span>Đang kiểm tra...</span>
+                    <span>{localeState.t('assistant.playbook.checking')}</span>
                   {:else}
-                    <span>Kiểm tra lại</span>
+                    <span>{localeState.t('assistant.playbook.recheck')}</span>
                   {/if}
                 </button>
               </div>
@@ -265,17 +277,17 @@
             <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 space-y-2">
               <h3 class="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                 <AlertTriangle class="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                Cảnh báo tệp nhị phân siêu lớn (>50MB)
+                {localeState.t('assistant.playbook.heavyFilesTitle')}
               </h3>
               <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                GitHub và GitLab từ chối push tệp nhị phân có dung lượng trên 50MB – 100MB trừ khi được quản trị qua Git LFS. Việc lỡ commit tệp nặng vào lịch sử sẽ làm phình to repository vĩnh viễn.
+                {localeState.t('assistant.playbook.heavyFilesDesc')}
               </p>
             </div>
 
             <div class="space-y-2">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold text-zinc-800 dark:text-zinc-300">
-                  Tệp staged vượt ngưỡng 50MB ({heavyFiles.length})
+                  {localeState.t('assistant.playbook.heavyFilesCount', { count: heavyFiles.length })}
                 </span>
                 <button
                   onclick={handleScanHeavy}
@@ -283,14 +295,14 @@
                   class="px-2.5 py-1 rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-zinc-300 dark:border-transparent shadow-xs"
                 >
                   <RefreshCw class="w-3 h-3 {isScanningHeavy ? 'animate-spin' : ''}" />
-                  <span>Quét lại</span>
+                  <span>{localeState.t('assistant.playbook.rescan')}</span>
                 </button>
               </div>
 
               {#if heavyFiles.length === 0}
                 <div class="py-8 text-center border border-dashed border-zinc-300 dark:border-zinc-800 rounded-xl text-zinc-500 text-xs">
                   <CheckCircle2 class="w-6 h-6 text-emerald-500 mx-auto mb-1 opacity-80" />
-                  Không có tệp nặng vượt quá 50MB trong khu vực Staging.
+                  {localeState.t('assistant.playbook.noHeavyFilesStaged')}
                 </div>
               {:else}
                 <div class="space-y-1.5 font-mono text-xs">
@@ -314,30 +326,30 @@
               <div class="flex items-center justify-between">
                 <h3 class="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                   <GitBranch class="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                  Kịch bản: Đang code tính năng nhưng lỡ commit nhầm vào `{currentBranch || 'main'}`
+                  {localeState.t('assistant.playbook.wrongBranchScenario', { branch: currentBranch || 'main' })}
                 </h3>
                 {#if currentBranch}
                   <span class="px-2 py-0.5 rounded bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300 font-mono text-[11px] border border-teal-200 dark:border-teal-800/60 font-semibold">
-                    Nhánh: {currentBranch}
+                    {localeState.t('assistant.playbook.branchLabel', { branch: currentBranch })}
                   </span>
                 {/if}
               </div>
               <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Đừng hoảng loạn! FlowGit có thể giúp bạn chuyển toàn bộ các commit đó sang một nhánh tính năng mới, và đưa `{currentBranch || 'main'}` về lại mốc ban đầu sạch sẽ không tì vết.
+                {localeState.t('assistant.playbook.wrongBranchCalm', { branch: currentBranch || 'main' })}
               </p>
             </div>
 
             <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 space-y-3 text-xs text-zinc-800 dark:text-zinc-300">
-              <h4 class="font-semibold text-teal-700 dark:text-teal-400">Các bước thực hiện nhanh trực tiếp trên Living Graph:</h4>
+              <h4 class="font-semibold text-teal-700 dark:text-teal-400">{localeState.t('assistant.playbook.wrongBranchStepsTitle')}</h4>
               <ol class="list-decimal pl-5 space-y-2 text-zinc-600 dark:text-zinc-400">
                 <li>
-                  <strong class="text-zinc-900 dark:text-zinc-200">Bước 1:</strong> Chuột phải vào commit trên cùng -> Chọn <span class="text-teal-700 dark:text-teal-300 font-mono font-medium">"Tạo nhánh mới tại commit này..."</span> -> Đặt tên nhánh mới (ví dụ: <code class="text-cyan-700 dark:text-cyan-300 font-semibold">feature/my-task</code>).
+                  {localeState.t('assistant.playbook.wrongBranchStep1')}
                 </li>
                 <li>
-                  <strong class="text-zinc-900 dark:text-zinc-200">Bước 2:</strong> Chuột phải vào commit cũ của `{currentBranch || 'main'}` (trước những commit bị nhầm) -> Chọn <span class="text-amber-700 dark:text-amber-300 font-mono font-medium">"Reset HEAD về commit này"</span> -> Chọn <strong class="text-zinc-900 dark:text-zinc-200">Mixed</strong> hoặc <strong class="text-zinc-900 dark:text-zinc-200">Hard</strong>.
+                  {localeState.t('assistant.playbook.wrongBranchStep2', { branch: currentBranch || 'main' })}
                 </li>
                 <li>
-                  <strong class="text-zinc-900 dark:text-zinc-200">Kết quả:</strong> Nhánh `{currentBranch || 'main'}` của bạn quay về đúng mốc sạch ban đầu, còn toàn bộ công việc đã nằm an toàn trên nhánh mới.
+                  {localeState.t('assistant.playbook.wrongBranchResult', { branch: currentBranch || 'main' })}
                 </li>
               </ol>
             </div>
@@ -349,10 +361,10 @@
             <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 space-y-2">
               <h3 class="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                 <ShieldCheck class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                Cứu mã nguồn bị lỡ tay Discard hoặc Reset nhầm
+                {localeState.t('assistant.playbook.rescueTitle')}
               </h3>
               <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Triết lý <strong>No-Fear Git</strong> của FlowGit đảm bảo không bao giờ làm mất mã nguồn. Mọi thay đổi chưa commit khi Discard đều được lưu lại trong Thùng rác an toàn 48h (SQLite Store).
+                {localeState.t('assistant.playbook.rescuePhilosophy')}
               </p>
             </div>
 
@@ -361,17 +373,17 @@
                 <div>
                   <h4 class="text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 mb-1">
                     <Trash2 class="w-4 h-4" />
-                    Thùng rác Uncommitted 48h
+                    {localeState.t('assistant.playbook.trashCardTitle')}
                   </h4>
                   <p class="text-xs text-zinc-600 dark:text-zinc-400">
-                    Phục hồi các tệp hoặc khối code chưa commit đã lỡ tay Discard trong vòng 48 giờ.
+                    {localeState.t('assistant.playbook.trashCardDesc')}
                   </p>
                 </div>
                 <button
                   onclick={() => { onClose(); onOpenTrash(); }}
                   class="mt-3 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-600/20 hover:bg-emerald-100 dark:hover:bg-emerald-600/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/40 text-xs font-semibold flex items-center justify-between cursor-pointer transition-colors"
                 >
-                  <span>Mở Thùng rác Safe Discard</span>
+                  <span>{localeState.t('assistant.playbook.openTrashBtn')}</span>
                   <ArrowRight class="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -380,17 +392,17 @@
                 <div>
                   <h4 class="text-xs font-bold text-purple-700 dark:text-purple-400 flex items-center gap-1.5 mb-1">
                     <History class="w-4 h-4" />
-                    Cỗ máy Thời gian (Ctrl + Z)
+                    {localeState.t('assistant.playbook.timeMachineCardTitle')}
                   </h4>
                   <p class="text-xs text-zinc-600 dark:text-zinc-400">
-                    Dịch chuyển ngược thời gian (Reflog Time-Travel) để hoàn tác các lệnh Merge, Rebase, Reset hoặc Checkout nhầm.
+                    {localeState.t('assistant.playbook.timeMachineCardDesc')}
                   </p>
                 </div>
                 <button
                   onclick={() => { onClose(); onOpenTimeMachine(); }}
                   class="mt-3 px-3 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-600/20 hover:bg-purple-100 dark:hover:bg-purple-600/30 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40 text-xs font-semibold flex items-center justify-between cursor-pointer transition-colors"
                 >
-                  <span>Mở Time Machine Reflog</span>
+                  <span>{localeState.t('assistant.playbook.openTimeMachineBtn')}</span>
                   <ArrowRight class="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -402,13 +414,13 @@
       <!-- Footer -->
       <div class="px-6 py-3.5 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 flex items-center justify-between">
         <span class="text-[11px] text-zinc-500 font-mono">
-          FlowGit Rescue Kit • Luôn an toàn tuyệt đối với mọi thao tác Git
+          {localeState.t('assistant.playbook.footerTagline')}
         </span>
         <button
           onclick={onClose}
           class="px-4 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 text-xs font-medium cursor-pointer transition-colors border border-zinc-200 dark:border-transparent"
         >
-          Đóng
+          {localeState.t('common.close')}
         </button>
       </div>
     </div>

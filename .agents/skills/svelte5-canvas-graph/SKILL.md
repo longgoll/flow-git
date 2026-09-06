@@ -122,3 +122,5 @@ let dragState = $state<DragState>({
 - [ ] Khởi tạo canvas dùng `transferControlToOffscreen()` trước khi gọi bất kỳ context nào.
 - [ ] Giao diện hỗ trợ Dark Theme chuẩn HSL, không gây chói mắt.
 - [ ] Hỗ trợ High-DPI screens (`window.devicePixelRatio`).
+- [ ] **Đa ngôn ngữ (i18n):** 100% text UI sử dụng `localeState.t(...)`, đồng bộ đầy đủ cả 2 file `src/lib/i18n/locales/vi.ts` và `en.ts`, tuyệt đối không hardcode text thô.
+

@@ -9,6 +9,7 @@
   import ToastContainer from "./lib/components/ToastContainer.svelte";
   import MainViewSwitcher from "./lib/components/MainViewSwitcher.svelte";
   import { toast } from "./lib/state/toastState.svelte";
+  import { localeState } from "./lib/state/localeState.svelte";
   import { RepoState } from "./lib/state/repoState.svelte";
   import { WorkingTreeState } from "./lib/state/workingTreeState.svelte";
   import { RemoteState } from "./lib/state/remoteState.svelte";
@@ -233,7 +234,7 @@
         modalState.initRepoPath = path;
         modalState.showInitRepoModal = true;
       } else {
-        toast.error('Lỗi mở repository', msg);
+        toast.error(localeState.t('actions.switcher.openRepoError'), msg);
       }
       throw err;
     }

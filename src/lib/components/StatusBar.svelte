@@ -173,7 +173,7 @@
     <button
       onclick={onToggleLog}
       class="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 shrink-0 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors cursor-pointer group"
-      title="Click to toggle Operation Log"
+      title={localeState.t('statusBar.toggleLogTip')}
     >
       <CheckCircle class="w-3 h-3 shrink-0" />
       <span class="truncate max-w-[400px]">{statusMessage}</span>

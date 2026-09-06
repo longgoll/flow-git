@@ -13,6 +13,7 @@ import { timeMachine } from "./timeMachine";
 import { pullRequest } from "./pullRequest";
 import { assistant } from "./assistant";
 import { auth } from "./auth";
+import { actions } from "./actions";
 
 export const vi = {
   common,
@@ -36,6 +37,7 @@ export const vi = {
   pullRequest,
   assistant,
   auth,
+  actions,
 };
 
 export type TranslationSchema = typeof vi;

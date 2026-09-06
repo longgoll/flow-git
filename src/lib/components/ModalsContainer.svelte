@@ -274,13 +274,16 @@
     const ids = await wt.discardAll(repo.currentRepoPath, refreshWorkingTreeAndDiff);
     await safety.refreshTrashSnapshots(repo.currentRepoPath);
     toast.warning(
-      'Đã Discard tất cả thay đổi',
-      `${ids.length} tệp đã được sao lưu vào Thùng rác an toàn 48h.`,
+      localeState.t('actions.switcher.discardedAllTitle'),
+      localeState.t('actions.switcher.discardedAllMsg', { count: ids.length }),
       {
-        label: 'Hoàn tác tất cả',
+        label: localeState.t('actions.switcher.undoAllBtn'),
         onClick: async () => {
           await safety.restoreAllTrash(repo.currentRepoPath, refreshWorkingTreeAndDiff);
-          toast.success('Đã khôi phục tất cả', 'Các tệp đã được hoàn tác về Working Tree.');
+          toast.success(
+            localeState.t('actions.switcher.restoredAllTitle'),
+            localeState.t('actions.switcher.restoredAllMsg')
+          );
         },
       }
     );
@@ -369,7 +372,7 @@
       const tab = tabState.openTab({ path });
       await loadRepository(tab.path);
     } catch (err: any) {
-      toast.error('Không thể mở repository', err?.message || String(err));
+      toast.error(localeState.t('actions.switcher.openRepoError'), err?.message || String(err));
     }
   }}
   onOpenAuth={() => (remote.showAuthModal = true)}

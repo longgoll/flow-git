@@ -36,7 +36,7 @@
     try {
       lfsData = await getLfsInfo(repoPath);
     } catch (e: any) {
-      statusMessage = { text: e?.toString() || 'Failed to query Git LFS', type: 'error' };
+      statusMessage = { text: e?.toString() || localeState.t('lfs.queryError'), type: 'error' };
     } finally {
       isLoading = false;
     }
@@ -50,7 +50,7 @@
       statusMessage = { text: res, type: 'success' };
       await loadLfs();
     } catch (e: any) {
-      statusMessage = { text: e?.toString() || 'Failed to pull LFS files', type: 'error' };
+      statusMessage = { text: e?.toString() || localeState.t('lfs.pullError'), type: 'error' };
     } finally {
       actionLoading = null;
     }
@@ -66,7 +66,7 @@
       newLockPath = '';
       await loadLfs();
     } catch (e: any) {
-      statusMessage = { text: e?.toString() || `Failed to lock ${filePath}`, type: 'error' };
+      statusMessage = { text: e?.toString() || localeState.t('lfs.lockError', { path: filePath }), type: 'error' };
     } finally {
       actionLoading = null;
     }
@@ -80,7 +80,7 @@
       statusMessage = { text: res, type: 'success' };
       await loadLfs();
     } catch (e: any) {
-      statusMessage = { text: e?.toString() || `Failed to unlock ${filePath}`, type: 'error' };
+      statusMessage = { text: e?.toString() || localeState.t('lfs.unlockError', { path: filePath }), type: 'error' };
     } finally {
       actionLoading = null;
     }

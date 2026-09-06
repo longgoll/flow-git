@@ -16,7 +16,8 @@ Tài liệu này chứa các quy tắc bắt buộc và ngữ cảnh chung dành
 ## 🛠️ TECH STACK TIÊN TIẾN NHẤT 2026 (OFFICIAL 2026 STACK)
 1. **Frontend:**
    - **Framework:** Svelte 5 SPA (Vite) sử dụng 100% Runes (`$state`, `$state.raw`, `$derived`, `$effect`, `$props`).
-   - **Quản lý Trạng thái:** Class-based Reactive Stores trong `src/lib/state/` (`RepoState`, `WorkingTreeState`, `RemoteState`, `GitSafetyState`, `ThemeState`, `ToastState`).
+   - **Quản lý Trạng thái:** Class-based Reactive Stores trong `src/lib/state/` (`RepoState`, `WorkingTreeState`, `RemoteState`, `GitSafetyState`, `ThemeState`, `ToastState`, `LocaleState`).
+   - **Đa ngôn ngữ (i18n):** Hệ thống song ngữ Tiếng Việt (`vi`) & Tiếng Anh (`en`) qua `LocaleState` (`localeState.t(...)`) và từ điển kép `src/lib/i18n/locales/{vi,en}.ts`.
    - **Hiệu năng Dữ liệu Lớn:** Bắt buộc dùng `$state.raw` cho mảng dữ liệu Commit History hàng chục nghìn nodes để triệt tiêu chi phí Proxy overhead.
    - **Styling & UI Primitives:** Tailwind CSS v4 (`@tailwindcss/vite`), Bits UI / Lucide Svelte.
    - **Code & Diff Viewing:** Monaco Editor & Monaco Diff Editor cho mọi trải nghiệm xem code, diff và blame.
@@ -66,3 +67,11 @@ Tài liệu này chứa các quy tắc bắt buộc và ngữ cảnh chung dành
 6. **Đồng bộ Tài liệu khi Thay đổi Code:**
    - Khi thêm mới hoặc thay đổi bất kỳ IPC command nào, bắt buộc cập nhật danh mục trong [`docs/architecture/ipc-api-reference.md`](./docs/architecture/ipc-api-reference.md).
    - Khi hoàn thành hoặc mở rộng tính năng, cập nhật tài liệu tương ứng trong `docs/features/`.
+
+7. **Bắt buộc Song ngữ Toàn diện (i18n - Tiếng Việt & Tiếng Anh):**
+   - Ứng dụng bắt buộc hỗ trợ đầy đủ 2 ngôn ngữ: Tiếng Việt (`vi`) và Tiếng Anh (`en`).
+   - Nghiêm cấm hardcode chuỗi ký tự hiển thị (text, labels, buttons, tooltips, placeholders, modals, toasts, thông báo lỗi cho người dùng) trực tiếp trong file Svelte hoặc TypeScript.
+   - Mọi chuỗi giao diện phải được ánh xạ qua `localeState.t('path.to.key', params?)` từ `src/lib/state/localeState.svelte.ts`.
+   - Khi thêm tính năng mới hoặc chỉnh sửa giao diện, bắt buộc khai báo và đồng bộ đồng thời cả 2 từ điển:
+     + `src/lib/i18n/locales/vi.ts` (chuẩn Tiếng Việt tự nhiên, chính xác, thân thiện với lập trình viên).
+     + `src/lib/i18n/locales/en.ts` (chuẩn Tiếng Anh quốc tế chuẩn Git client).

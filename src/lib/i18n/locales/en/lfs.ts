@@ -22,4 +22,8 @@ export const lfs: typeof viLfs = {
   pointerTooltip: "Contains only LFS Pointer (binary not yet downloaded)",
   downloadedBadge: "Downloaded",
   downloadedTooltip: "Binary file downloaded locally",
+  queryError: "Failed to query Git LFS",
+  pullError: "Failed to pull LFS files",
+  lockError: "Failed to lock {path}",
+  unlockError: "Failed to unlock {path}",
 };

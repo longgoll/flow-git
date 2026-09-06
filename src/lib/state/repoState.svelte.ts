@@ -21,7 +21,7 @@ import {
   listWorktrees,
   openRepository,
 } from '../api';
-
+import { localeState } from './localeState.svelte';
 export class RepoState {
   // Svelte 5 Runes:
   // MANDATORY: Use $state.raw for commits to eliminate Proxy overhead on large datasets (>50k items)
@@ -46,7 +46,7 @@ export class RepoState {
   isDetailOpen = $state<boolean>(true);
   isDetailMaximized = $state<boolean>(false);
 
-  statusMessage = $state<string>('Ready');
+  statusMessage = $state<string>(localeState.t('statusBar.ready'));
   operationLogs = $state<OperationLog[]>([]);
   isLogPanelOpen = $state<boolean>(false);
 
@@ -143,7 +143,7 @@ export class RepoState {
 
   async loadRepo(path: string, onAfterLoad?: (wtStatus: any) => void, preferredCommitId?: string | null) {
     this.isLoading = true;
-    this.setStatus(`Opening repository at ${path}...`);
+    this.setStatus(localeState.t('statusBar.openingRepo', { path }));
     if (this.currentRepoPath !== path) {
       this.resetRepoData();
     }
@@ -198,10 +198,10 @@ export class RepoState {
 
       this.saveRecentRepo(path);
       this.showWelcomeScreen = false;
-      this.setStatus(`Loaded ${hist.length.toLocaleString()} commits. Realtime file watcher active.`, 'success');
+      this.setStatus(localeState.t('statusBar.loadedCommits', { count: hist.length.toLocaleString() }), 'success');
     } catch (err: any) {
       console.error('Failed to open repository:', err);
-      this.setStatus(`Error: ${err?.message || err}`, 'error');
+      this.setStatus(`${localeState.t('common.error')}: ${err?.message || err}`, 'error');
       this.repoSummary = null;
       this.rawCommits = [];
       this.showWelcomeScreen = true;
@@ -213,7 +213,7 @@ export class RepoState {
 
   async initRepo(path: string, defaultBranch?: string, onAfterLoad?: (wtStatus: any) => void) {
     this.isLoading = true;
-    this.setStatus(`Initializing git repository at ${path}...`);
+    this.setStatus(localeState.t('statusBar.initializingRepo', { path }));
     try {
       this.currentRepoPath = path;
       const summary = await initRepository(path, defaultBranch);
@@ -241,11 +241,11 @@ export class RepoState {
 
       this.saveRecentRepo(path);
       this.showWelcomeScreen = false;
-      this.setStatus(`Repository initialized successfully. Branch: ${summary.current_branch || 'main'}`, 'success');
+      this.setStatus(localeState.t('statusBar.initSuccess', { branch: summary.current_branch || 'main' }), 'success');
       return summary;
     } catch (err: any) {
       console.error('Failed to init repository:', err);
-      this.setStatus(`Error: ${err?.message || err}`, 'error');
+      this.setStatus(`${localeState.t('common.error')}: ${err?.message || err}`, 'error');
       throw err;
     } finally {
       this.isLoading = false;
@@ -314,7 +314,7 @@ export class RepoState {
       this.isLoading = true;
       try {
         this.rawCommits = await getCommitHistory(this.currentRepoPath, this.commitLimit);
-        this.setStatus(`Loaded ${this.rawCommits.length.toLocaleString()} commits.`, 'success');
+        this.setStatus(localeState.t('statusBar.loadedCommitsSimple', { count: this.rawCommits.length.toLocaleString() }), 'success');
       } finally {
         this.isLoading = false;
       }
@@ -329,7 +329,13 @@ export class RepoState {
       const res = await getPaginatedCommitHistory(this.currentRepoPath, nextSkip, 500);
       this.rawCommits = [...this.rawCommits, ...res.commits];
       this.hasMoreCommits = res.has_more;
-      this.setStatus(`Loaded ${this.rawCommits.length} commits (${this.hasMoreCommits ? 'more available' : 'all history loaded'})`, 'success');
+      this.setStatus(
+        localeState.t('statusBar.loadedMoreCommits', {
+          count: this.rawCommits.length,
+          status: this.hasMoreCommits ? localeState.t('statusBar.moreAvailable') : localeState.t('statusBar.allHistoryLoaded'),
+        }),
+        'success'
+      );
     } catch (err: any) {
       console.error('Failed to load more commits:', err);
     } finally {

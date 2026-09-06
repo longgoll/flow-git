@@ -20,4 +20,8 @@ export const lfs = {
   pointerTooltip: "Chỉ chứa con trỏ Pointer (chưa tải binary)",
   downloadedBadge: "Downloaded",
   downloadedTooltip: "Binary đã tải về máy",
+  queryError: "Lỗi truy vấn Git LFS",
+  pullError: "Lỗi tải tệp LFS",
+  lockError: "Lỗi khóa {path}",
+  unlockError: "Lỗi mở khóa {path}",
 };

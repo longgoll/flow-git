@@ -358,6 +358,15 @@
           <Play class="w-3.5 h-3.5 fill-current" />
           <span>Continue Rebase</span>
         </button>
+      {:else if conflictedFiles.length === 0}
+        <button
+          onclick={onClose}
+          class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-sm transition-all cursor-pointer"
+          title="Đã giải quyết xong mọi xung đột. Nhấn để quay lại làm việc."
+        >
+          <Check class="w-3.5 h-3.5" />
+          <span>Hoàn tất & Quay lại</span>
+        </button>
       {/if}
 
       <button
@@ -412,6 +421,14 @@
               >
                 <Play class="w-3.5 h-3.5 fill-current" />
                 <span>Tiếp tục Rebase</span>
+              </button>
+            {:else}
+              <button
+                onclick={onClose}
+                class="w-full py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md cursor-pointer transition-all flex items-center justify-center gap-1.5"
+              >
+                <Check class="w-4 h-4" />
+                <span>Hoàn tất & Quay về Biểu đồ Commit</span>
               </button>
             {/if}
           </div>

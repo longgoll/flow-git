@@ -517,6 +517,12 @@
             isOperatingAlert = false;
           }
         }}
+        onOpenConflict={async () => {
+          if (repo.currentRepoPath) {
+            await safety.loadConflictFiles(repo.currentRepoPath);
+          }
+          viewMode = 'conflict';
+        }}
         hideActions={viewMode === 'conflict'}
         onCreateBranchFromDetached={actions.createBranchFromDetached}
       />
@@ -554,6 +560,7 @@
         {loadRepository}
         {refreshWorkingTreeAndDiff}
         handleCompareCommits={actions.compareCommits}
+        handleCherryPickCommit={actions.cherryPickCommit}
         handleRevertCommit={actions.revertCommit}
         handleResetToCommit={actions.resetToCommit}
         handlePushCurrentBranch={actions.pushCurrentBranch}

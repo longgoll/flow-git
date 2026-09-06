@@ -25,6 +25,7 @@
     onCompareCommits?: (c1: CommitNode, c2: CommitNode) => void;
     onCreateBranch?: (commit: CommitNode) => void;
     onCreateTag?: (commit: CommitNode) => void;
+    onCherryPickCommit?: (commit: CommitNode) => void;
     onRevertCommit?: (commit: CommitNode) => void;
     onResetCommit?: (
       commit: CommitNode,
@@ -53,6 +54,7 @@
     onCompareCommits,
     onCreateBranch,
     onCreateTag,
+    onCherryPickCommit,
     onRevertCommit,
     onResetCommit,
     onSquashCommits,
@@ -761,6 +763,12 @@
       onCreateTag={onCreateTag
         ? (c) => {
             onCreateTag(c);
+            contextMenuData = null;
+          }
+        : undefined}
+      onCherryPick={onCherryPickCommit
+        ? (c) => {
+            onCherryPickCommit(c);
             contextMenuData = null;
           }
         : undefined}

@@ -48,6 +48,7 @@
     loadRepository: (path: string) => Promise<void>;
     refreshWorkingTreeAndDiff: () => Promise<void>;
     handleCompareCommits: (c1: CommitNode, c2: CommitNode) => void;
+    handleCherryPickCommit: (c: CommitNode) => Promise<void>;
     handleRevertCommit: (c: CommitNode) => Promise<void>;
     handleResetToCommit: (c: CommitNode, mode: 'soft' | 'mixed' | 'hard') => Promise<void>;
     handlePushCurrentBranch: () => Promise<void>;
@@ -78,6 +79,7 @@
     loadRepository,
     refreshWorkingTreeAndDiff,
     handleCompareCommits,
+    handleCherryPickCommit,
     handleRevertCommit,
     handleResetToCommit,
     handlePushCurrentBranch,
@@ -131,6 +133,7 @@
       onCompareCommits={handleCompareCommits}
       onCreateBranch={(c) => modalState.openCreateBranch(c.id)}
       onCreateTag={(c) => modalState.openCreateTag(c)}
+      onCherryPickCommit={handleCherryPickCommit}
       onRevertCommit={handleRevertCommit}
       onResetCommit={handleResetToCommit}
       onSquashCommits={(commits) => modalState.openSquash(commits)}
@@ -152,6 +155,7 @@
         onCompareCommits={handleCompareCommits}
         onCreateBranch={(c) => modalState.openCreateBranch(c.id)}
         onCreateTag={(c) => modalState.openCreateTag(c)}
+        onCherryPickCommit={handleCherryPickCommit}
         onRevertCommit={handleRevertCommit}
         onResetCommit={handleResetToCommit}
         onSquashCommits={(commits) => modalState.openSquash(commits)}
@@ -220,6 +224,7 @@
     onCompareCommits={handleCompareCommits}
     onCreateBranch={(c) => modalState.openCreateBranch(c.id)}
     onCreateTag={(c) => modalState.openCreateTag(c)}
+    onCherryPickCommit={handleCherryPickCommit}
     onRevertCommit={handleRevertCommit}
     onResetCommit={handleResetToCommit}
     onInteractiveRebase={(c) => modalState.openInteractiveRebase(c)}

@@ -140,12 +140,10 @@ pub fn delete_branch(repo: &Repository, branch_name: &str, is_remote: bool) -> A
         &clean_name
     };
 
-    let protected = ["main", "master", "develop", "dev", "trunk", "head", "release"];
-    if protected.contains(&base_name) {
-        return Err(AppError::Internal(format!(
-            "Không thể xóa nhánh được bảo vệ (Protected Branch): '{}'",
-            branch_name
-        )));
+    if base_name == "head" {
+        return Err(AppError::Internal(
+            "Không thể xóa tham chiếu HEAD.".to_string(),
+        ));
     }
 
     let branch_type = if is_remote {

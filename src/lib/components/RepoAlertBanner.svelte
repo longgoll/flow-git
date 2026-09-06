@@ -9,6 +9,7 @@
     GitBranch,
     Play,
     Bug,
+    Split,
   } from 'lucide-svelte';
 
   interface Props {
@@ -21,6 +22,7 @@
     onContinueRebase?: () => void;
     onSkipRebase?: () => void;
     onAbortOperation?: () => void;
+    onOpenConflict?: () => void;
     onCreateBranchFromDetached?: () => void;
   }
 
@@ -34,6 +36,7 @@
     onContinueRebase,
     onSkipRebase,
     onAbortOperation,
+    onOpenConflict,
     onCreateBranchFromDetached,
   }: Props = $props();
 </script>
@@ -127,6 +130,17 @@
 
       {#if !hideActions}
         <div class="flex items-center gap-2 shrink-0">
+          {#if onOpenConflict}
+            <button
+              type="button"
+              onclick={onOpenConflict}
+              class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer font-semibold shadow-xs"
+              title="Mở giao diện giải quyết xung đột 3-way"
+            >
+              <Split class="w-3.5 h-3.5" />
+              <span>Mở trang Conflict</span>
+            </button>
+          {/if}
           {#if onAbortOperation}
             <button
               type="button"
@@ -166,6 +180,17 @@
       </div>
 
       <div class="flex items-center gap-2 shrink-0">
+        {#if onOpenConflict}
+          <button
+            type="button"
+            onclick={onOpenConflict}
+            class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer font-semibold shadow-xs"
+            title="Mở giao diện giải quyết xung đột 3-way"
+          >
+            <Split class="w-3.5 h-3.5" />
+            <span>Mở trang Conflict</span>
+          </button>
+        {/if}
         {#if onAbortOperation}
           <button
             type="button"

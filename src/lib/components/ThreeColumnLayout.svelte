@@ -36,6 +36,7 @@
     ) => void;
     onCreateBranch?: (commit: CommitNode) => void;
     onCreateTag?: (commit: CommitNode) => void;
+    onCherryPickCommit?: (commit: CommitNode) => void;
     onRevertCommit?: (commit: CommitNode) => void;
     onResetCommit?: (commit: CommitNode, mode: 'soft' | 'mixed' | 'hard') => void;
     onSquashCommits?: (commits: CommitNode[]) => void;
@@ -56,6 +57,7 @@
     onCompareCommits,
     onCreateBranch,
     onCreateTag,
+    onCherryPickCommit,
     onRevertCommit,
     onResetCommit,
     onSquashCommits,
@@ -153,6 +155,7 @@
         {onCompareCommits}
         {onCreateBranch}
         {onCreateTag}
+        {onCherryPickCommit}
         {onRevertCommit}
         {onResetCommit}
         {onSquashCommits}

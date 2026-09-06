@@ -98,6 +98,29 @@ export function createGitActions(ctx: GitActionContext) {
     modalState.openDropAction(source, target, sim, pos);
   }
 
+  async function cherryPickCommit(commit: CommitNode) {
+    if (!repo.currentRepoPath) return;
+    repo.statusMessage = `Cherry-picking commit ${commit.short_id}...`;
+    try {
+      const newSha = await executeCherryPick(repo.currentRepoPath, commit.id);
+      repo.statusMessage = `Cherry-pick succeeded: ${newSha.slice(0, 7)}`;
+      toast.success('Cherry-pick thành công', `Đã áp dụng commit ${commit.short_id} -> ${newSha.slice(0, 7)}`);
+      await loadRepository(repo.currentRepoPath);
+    } catch (e: any) {
+      const errMsg = e?.message || String(e);
+      if (errMsg.toLowerCase().includes('conflict')) {
+        toast.warning('Phát hiện xung đột khi Cherry-pick', 'Đang tự động chuyển sang trang giải quyết Conflict...');
+        repo.statusMessage = 'Cherry-pick conflict. Vui lòng giải quyết xung đột.';
+        await loadRepository(repo.currentRepoPath);
+        await safety.loadConflictFiles(repo.currentRepoPath);
+        setViewMode('conflict');
+      } else {
+        repo.statusMessage = `Cherry-pick failed: ${errMsg}`;
+        toast.error('Cherry-pick thất bại', errMsg);
+      }
+    }
+  }
+
   async function cherryPickDrop(source: CommitNode) {
     if (!repo.currentRepoPath) return;
     modalState.closeDropAction();
@@ -107,7 +130,17 @@ export function createGitActions(ctx: GitActionContext) {
       repo.statusMessage = `Cherry-pick succeeded: ${newSha.slice(0, 7)}`;
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
-      repo.statusMessage = `Cherry-pick failed: ${e?.message || e}`;
+      const errMsg = e?.message || String(e);
+      if (errMsg.toLowerCase().includes('conflict')) {
+        toast.warning('Phát hiện xung đột khi Cherry-pick', 'Đang tự động chuyển sang trang giải quyết Conflict...');
+        repo.statusMessage = 'Cherry-pick conflict. Vui lòng giải quyết xung đột.';
+        await loadRepository(repo.currentRepoPath);
+        await safety.loadConflictFiles(repo.currentRepoPath);
+        setViewMode('conflict');
+      } else {
+        repo.statusMessage = `Cherry-pick failed: ${errMsg}`;
+        toast.error('Cherry-pick failed', errMsg);
+      }
     }
   }
 
@@ -120,7 +153,17 @@ export function createGitActions(ctx: GitActionContext) {
       repo.statusMessage = `Merge succeeded: ${newSha.slice(0, 7)}`;
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
-      repo.statusMessage = `Merge failed: ${e?.message || e}`;
+      const errMsg = e?.message || String(e);
+      if (errMsg.toLowerCase().includes('conflict')) {
+        toast.warning('Phát hiện xung đột khi Merge', 'Đang tự động chuyển sang trang giải quyết Conflict...');
+        repo.statusMessage = 'Merge conflict. Vui lòng giải quyết xung đột.';
+        await loadRepository(repo.currentRepoPath);
+        await safety.loadConflictFiles(repo.currentRepoPath);
+        setViewMode('conflict');
+      } else {
+        repo.statusMessage = `Merge failed: ${errMsg}`;
+        toast.error('Merge failed', errMsg);
+      }
     }
   }
 
@@ -772,6 +815,7 @@ export function createGitActions(ctx: GitActionContext) {
     openCreatePR,
     openDropAction,
     cherryPickDrop,
+    cherryPickCommit,
     mergeDrop,
     rebaseDrop,
     rebaseBranch,

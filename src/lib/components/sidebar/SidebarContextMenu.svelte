@@ -218,7 +218,7 @@
         <span>Sao chép tên nhánh</span>
       </button>
 
-      {#if !isProtectedBranch(activeBranchMenu.branch) && onDeleteBranch}
+      {#if !activeBranchMenu.branch.is_head && onDeleteBranch}
         <div class="h-px bg-zinc-200 dark:bg-zinc-800 my-1"></div>
         <button
           onclick={() => {
@@ -229,7 +229,7 @@
           class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-200 transition-colors cursor-pointer text-left"
         >
           <Trash2 class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
-          <span>Xóa nhánh này</span>
+          <span>Xóa nhánh này{isProtectedBranch(activeBranchMenu.branch) ? ' (Nhánh cốt lõi)' : ''}</span>
         </button>
       {/if}
     </div>

@@ -84,6 +84,9 @@ pub fn create_commit(
             &parents,
         )?;
 
+        // Tự động dọn dẹp cờ tạm thời như CHERRY_PICK_HEAD, MERGE_HEAD
+        let _ = repo.cleanup_state();
+
         Ok(new_commit_id.to_string())
     }
 }

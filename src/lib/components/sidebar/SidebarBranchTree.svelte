@@ -253,20 +253,19 @@
               <MoreVertical class="w-3 h-3" />
             </button>
 
-            {#if isProtectedBranch(branch)}
-              {#if !branch.is_head}
+            {#if !branch.is_head && onDeleteBranch}
+              {#if isProtectedBranch(branch)}
                 <div
-                  class="opacity-0 group-hover:opacity-100 p-1 text-amber-500/80 dark:text-amber-400/70"
-                  title="Nhánh bảo vệ (Protected Branch)"
+                  class="opacity-0 group-hover:opacity-100 p-0.5 text-amber-500/80 dark:text-amber-400/70 shrink-0"
+                  title="Nhánh cốt lõi (Protected Branch)"
                 >
                   <Shield class="w-3 h-3" />
                 </div>
               {/if}
-            {:else if onDeleteBranch}
               <button
                 onclick={(e) => { e.stopPropagation(); onDeleteBranch(branch); }}
-                class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-950/60 text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 transition-all cursor-pointer"
-                title={`Xóa nhánh ${branch.shorthand}`}
+                class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-950/60 text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 transition-all cursor-pointer shrink-0"
+                title={`Xóa nhánh ${branch.shorthand}${isProtectedBranch(branch) ? ' (Cần gõ tên xác nhận)' : ''}`}
               >
                 <Trash2 class="w-3 h-3" />
               </button>
@@ -323,18 +322,19 @@
             <span class="w-1.5 h-1.5 rounded-full bg-purple-500/60 shrink-0"></span>
             <span class="truncate font-mono text-[11px]">{branch.shorthand}</span>
           </div>
-          {#if isProtectedBranch(branch)}
-            <div
-              class="opacity-0 group-hover:opacity-100 p-1 text-purple-600/70 dark:text-purple-400/60"
-              title="Nhánh Remote cốt lõi (Protected Upstream Branch)"
-            >
-              <Lock class="w-3 h-3" />
-            </div>
-          {:else if onDeleteBranch}
+          {#if onDeleteBranch}
+            {#if isProtectedBranch(branch)}
+              <div
+                class="opacity-0 group-hover:opacity-100 p-0.5 text-purple-600/70 dark:text-purple-400/60 shrink-0"
+                title="Nhánh Remote cốt lõi (Protected Upstream Branch)"
+              >
+                <Lock class="w-3 h-3" />
+              </div>
+            {/if}
             <button
               onclick={(e) => { e.stopPropagation(); onDeleteBranch(branch); }}
               class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-950/60 text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 transition-all cursor-pointer shrink-0"
-              title={`Xóa reference remote ${branch.shorthand}`}
+              title={`Xóa reference remote ${branch.shorthand}${isProtectedBranch(branch) ? ' (Cần gõ tên xác nhận)' : ''}`}
             >
               <Trash2 class="w-3 h-3" />
             </button>

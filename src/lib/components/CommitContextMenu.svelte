@@ -11,6 +11,7 @@
     Layers,
     GitFork,
     Eye,
+    GitPullRequest,
   } from 'lucide-svelte';
 
   interface Props {
@@ -22,6 +23,7 @@
     onClose: () => void;
     onCreateBranch?: (commit: CommitNode) => void;
     onCreateTag?: (commit: CommitNode) => void;
+    onCherryPick?: (commit: CommitNode) => void;
     onRevert?: (commit: CommitNode) => void;
     onReset?: (commit: CommitNode, mode: 'soft' | 'mixed' | 'hard') => void;
     onSquash?: () => void;
@@ -40,6 +42,7 @@
     onClose,
     onCreateBranch,
     onCreateTag,
+    onCherryPick,
     onRevert,
     onReset,
     onSquash,
@@ -182,6 +185,22 @@
     {/if}
 
     <div class="my-1 border-t border-zinc-200 dark:border-zinc-800"></div>
+
+    {#if onCherryPick}
+      <!-- Cherry-pick Commit -->
+      <button
+        onclick={() => {
+          onCherryPick(commit);
+          onClose();
+        }}
+        class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-cyan-50 dark:hover:bg-cyan-950/40 text-cyan-800 dark:text-cyan-300 hover:text-cyan-950 dark:hover:text-cyan-100 transition-colors cursor-pointer"
+        role="menuitem"
+        title="Áp dụng các thay đổi của commit này vào nhánh hiện tại (git cherry-pick)"
+      >
+        <GitPullRequest class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+        <span>Cherry-pick commit này (git cherry-pick)</span>
+      </button>
+    {/if}
 
     {#if onRevert}
       <!-- Revert Commit -->

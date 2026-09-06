@@ -13,6 +13,7 @@
     Sparkles,
     FileCode,
     Folder,
+    AlertTriangle,
   } from 'lucide-svelte';
 
   interface Props {
@@ -67,6 +68,7 @@
     onGenerateGitignore,
   }: Props = $props();
 
+  let showConflictedSection = $state(true);
   let showStagedSection = $state(true);
   let showUnstagedSection = $state(true);
   let showUntrackedSection = $state(true);
@@ -235,6 +237,62 @@
           </div>
         </div>
       {/if}
+      <!-- CONFLICTED FILES (CRITICAL) -->
+      {#if (status?.conflicted.length || 0) > 0}
+        <div class="rounded-xl border border-rose-300 dark:border-rose-800/80 bg-rose-50/80 dark:bg-rose-950/30 p-2 space-y-1.5 shadow-xs">
+          <div class="flex items-center justify-between px-1">
+            <button
+              onclick={() => (showConflictedSection = !showConflictedSection)}
+              class="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[11px] text-rose-700 dark:text-rose-300 cursor-pointer"
+            >
+              {#if showConflictedSection}
+                <ChevronDown class="w-3.5 h-3.5 text-rose-500" />
+              {:else}
+                <ChevronRight class="w-3.5 h-3.5 text-rose-500" />
+              {/if}
+              <AlertTriangle class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
+              <span>Conflicted Files</span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-200 dark:bg-rose-900/80 font-mono font-bold text-rose-800 dark:text-rose-200">
+                {status?.conflicted.length || 0}
+              </span>
+            </button>
+          </div>
+
+          {#if showConflictedSection}
+            <div class="space-y-0.5 pl-1">
+              {#each status?.conflicted || [] as item (item.path)}
+                {@const badge = getStatusBadge(item)}
+                <div
+                  class="group w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs transition-colors cursor-pointer {selectedFilePath === item.path ? 'bg-rose-100 dark:bg-rose-900/50 border border-rose-300 dark:border-rose-700 text-rose-900 dark:text-rose-100 shadow-xs font-semibold' : 'hover:bg-rose-100/60 dark:hover:bg-rose-950/60 text-zinc-800 dark:text-zinc-200'}"
+                  onclick={() => onSelectFile(item, false)}
+                  role="button"
+                  tabindex="0"
+                  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelectFile(item, false); }}
+                >
+                  <div class="flex items-center gap-2 truncate pr-1">
+                    <span class="w-4 h-4 rounded text-[10px] font-mono font-bold flex items-center justify-center border shrink-0 {badge.class}">
+                      {badge.label}
+                    </span>
+                    <span class="font-mono text-[11px] truncate text-rose-800 dark:text-rose-300 font-medium">{item.path}</span>
+                  </div>
+
+                  <div class="flex items-center gap-1">
+                    <button
+                      onclick={(e) => { e.stopPropagation(); onStageFile(item.path); }}
+                      class="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-medium flex items-center gap-1 shadow-xs cursor-pointer"
+                      title="Đánh dấu đã giải quyết (Mark Resolved / Stage)"
+                    >
+                      <Plus class="w-2.5 h-2.5" />
+                      <span>Stage</span>
+                    </button>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      {/if}
+
       <!-- STAGED CHANGES -->
       <div>
         <div class="flex items-center justify-between px-2 py-1">

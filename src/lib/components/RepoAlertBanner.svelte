@@ -17,6 +17,7 @@
     currentBranch?: string;
     headCommitId?: string;
     isOperating?: boolean;
+    hideActions?: boolean;
     onContinueRebase?: () => void;
     onSkipRebase?: () => void;
     onAbortOperation?: () => void;
@@ -29,6 +30,7 @@
     currentBranch = '',
     headCommitId = '',
     isOperating = false,
+    hideActions = false,
     onContinueRebase,
     onSkipRebase,
     onAbortOperation,
@@ -61,46 +63,48 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2 shrink-0">
-        {#if onContinueRebase}
-          <button
-            type="button"
-            onclick={onContinueRebase}
-            disabled={isOperating}
-            class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-            title="Tiếp tục rebase sau khi đã giải quyết xong conflict"
-          >
-            <Play class="w-3.5 h-3.5 fill-current" />
-            <span>Tiếp tục (Continue)</span>
-          </button>
-        {/if}
+      {#if !hideActions}
+        <div class="flex items-center gap-2 shrink-0">
+          {#if onContinueRebase}
+            <button
+              type="button"
+              onclick={onContinueRebase}
+              disabled={isOperating}
+              class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+              title="Tiếp tục rebase sau khi đã giải quyết xong conflict"
+            >
+              <Play class="w-3.5 h-3.5 fill-current" />
+              <span>Tiếp tục (Continue)</span>
+            </button>
+          {/if}
 
-        {#if onSkipRebase}
-          <button
-            type="button"
-            onclick={onSkipRebase}
-            disabled={isOperating}
-            class="px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer disabled:opacity-50 shadow-xs"
-            title="Bỏ qua commit này và chuyển sang commit tiếp theo"
-          >
-            <SkipForward class="w-3.5 h-3.5" />
-            <span>Bỏ qua (Skip)</span>
-          </button>
-        {/if}
+          {#if onSkipRebase}
+            <button
+              type="button"
+              onclick={onSkipRebase}
+              disabled={isOperating}
+              class="px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer disabled:opacity-50 shadow-xs"
+              title="Bỏ qua commit này và chuyển sang commit tiếp theo"
+            >
+              <SkipForward class="w-3.5 h-3.5" />
+              <span>Bỏ qua (Skip)</span>
+            </button>
+          {/if}
 
-        {#if onAbortOperation}
-          <button
-            type="button"
-            onclick={onAbortOperation}
-            disabled={isOperating}
-            class="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800/60 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-            title="Hủy bỏ toàn bộ quá trình rebase và quay về trạng thái ban đầu"
-          >
-            <XCircle class="w-3.5 h-3.5" />
-            <span>Hủy bỏ (Abort)</span>
-          </button>
-        {/if}
-      </div>
+          {#if onAbortOperation}
+            <button
+              type="button"
+              onclick={onAbortOperation}
+              disabled={isOperating}
+              class="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800/60 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+              title="Hủy bỏ toàn bộ quá trình rebase và quay về trạng thái ban đầu"
+            >
+              <XCircle class="w-3.5 h-3.5" />
+              <span>Hủy bỏ (Abort)</span>
+            </button>
+          {/if}
+        </div>
+      {/if}
     </div>
   {:else if operationState.type === 'Merging'}
     <div
@@ -121,20 +125,22 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2 shrink-0">
-        {#if onAbortOperation}
-          <button
-            type="button"
-            onclick={onAbortOperation}
-            disabled={isOperating}
-            class="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800/60 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-            title="Hủy bỏ merge và khôi phục working tree về HEAD"
-          >
-            <XCircle class="w-3.5 h-3.5" />
-            <span>Hủy bỏ Merge (Abort)</span>
-          </button>
-        {/if}
-      </div>
+      {#if !hideActions}
+        <div class="flex items-center gap-2 shrink-0">
+          {#if onAbortOperation}
+            <button
+              type="button"
+              onclick={onAbortOperation}
+              disabled={isOperating}
+              class="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800/60 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+              title="Hủy bỏ merge và khôi phục working tree về HEAD"
+            >
+              <XCircle class="w-3.5 h-3.5" />
+              <span>Hủy bỏ Merge (Abort)</span>
+            </button>
+          {/if}
+        </div>
+      {/if}
     </div>
   {:else if operationState.type === 'CherryPicking'}
     <div

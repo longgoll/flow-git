@@ -1,4 +1,4 @@
-import type { AISettings } from '../types';
+import type { AISettings, ConflictChunk } from '../types';
 
 export async function generateAICommitMessage(
   diffContext: string,
@@ -197,3 +197,100 @@ ${hasDocs ? '- 📚 Có tài liệu / hướng dẫn cập nhật đi kèm.' : '
 #### ✅ Khuyến nghị:
 - Code đạt tiêu chuẩn sạch sẽ. **Sẵn sàng để Merge** sau khi chạy kiểm thử hoàn tất!`;
 }
+
+export async function resolveConflictChunkAI(
+  chunk: ConflictChunk,
+  filePath: string,
+  settings?: AISettings
+): Promise<string> {
+  if (settings?.provider === 'ollama' && settings.endpoint) {
+    try {
+      const prompt = `You are an expert Git conflict resolution engine.
+File: "${filePath}"
+${chunk.base_content ? `BASE (Ancestor):\n${chunk.base_content}\n\n` : ''}OURS (Current Branch):\n${chunk.our_content}\n\nTHEIRS (Incoming Branch):\n${chunk.their_content}
+
+Resolve this conflict by logically merging the changes from both sides.
+Rules:
+1. Preserve functional intent from both sides without duplicated variables or syntax errors.
+2. Return ONLY the final resolved code block.
+3. Absolutely DO NOT include markdown code blocks, backticks, or conflict markers (<<<<<<<, =======, >>>>>>>).`;
+
+      const response = await fetch(`${settings.endpoint}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: settings.model || 'qwen2.5-coder',
+          prompt,
+          stream: false,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        let cleaned = (data.response || '').trim();
+        // Strip markdown fences if any
+        if (cleaned.startsWith('```')) {
+          cleaned = cleaned.replace(/^```[a-zA-Z0-9_-]*\n?/, '').replace(/\n?```$/, '');
+        }
+        if (cleaned) return cleaned;
+      }
+    } catch (e) {
+      console.warn('Ollama conflict resolve failed, using heuristic:', e);
+    }
+  }
+
+  // Heuristic Conflict Resolution
+  return heuristicResolveChunk(chunk);
+}
+
+function heuristicResolveChunk(chunk: ConflictChunk): string {
+  const ours = (chunk.our_content || '').trim();
+  const theirs = (chunk.their_content || '').trim();
+
+  if (!ours && theirs) return chunk.their_content;
+  if (!theirs && ours) return chunk.our_content;
+  if (ours === theirs) return chunk.our_content;
+
+  // Special heuristic: If both are import statements, combine and deduplicate lines
+  const ourLines = chunk.our_content.split('\n');
+  const theirLines = chunk.their_content.split('\n');
+  const isAllImports = [...ourLines, ...theirLines].every(
+    (l) => !l.trim() || l.trim().startsWith('import ') || l.trim().startsWith('from ') || l.trim().startsWith('} from') || l.trim().startsWith('use ')
+  );
+
+  if (isAllImports) {
+    const combinedSet = new Set<string>();
+    const resultLines: string[] = [];
+    for (const l of [...ourLines, ...theirLines]) {
+      const trimmed = l.trim();
+      if (trimmed && !combinedSet.has(trimmed)) {
+        combinedSet.add(trimmed);
+        resultLines.push(l);
+      } else if (!trimmed && resultLines.length > 0 && resultLines[resultLines.length - 1] !== '') {
+        resultLines.push('');
+      }
+    }
+    return resultLines.join('\n');
+  }
+
+  // Default: Smart combine with Ours prioritized then Theirs
+  return `${chunk.our_content}\n${chunk.their_content}`;
+}
+
+export async function resolveConflictFileAI(
+  chunks: ConflictChunk[],
+  filePath: string,
+  settings?: AISettings
+): Promise<string> {
+  const resolvedParts: string[] = [];
+  for (const chunk of chunks) {
+    if (!chunk.is_conflict) {
+      resolvedParts.push(chunk.our_content || chunk.their_content || '');
+    } else {
+      const resolved = await resolveConflictChunkAI(chunk, filePath, settings);
+      resolvedParts.push(resolved);
+    }
+  }
+  return resolvedParts.join('\n');
+}
+

@@ -95,6 +95,22 @@ export function ensureMonacoInitialized(): typeof monaco {
     },
   });
 
+  // Turn off compiler diagnostics / lint squiggles for Git diff & viewer
+  // This prevents red error underlines when viewing code with external imports (@/..., sonner, react, etc.)
+  const tsLang = (monaco.languages as any)?.typescript;
+  if (tsLang) {
+    tsLang.typescriptDefaults?.setDiagnosticsOptions({
+      noSemanticValidation: true,
+      noSyntaxValidation: true,
+      noSuggestionDiagnostics: true,
+    });
+    tsLang.javascriptDefaults?.setDiagnosticsOptions({
+      noSemanticValidation: true,
+      noSyntaxValidation: true,
+      noSuggestionDiagnostics: true,
+    });
+  }
+
   initialized = true;
   return monaco;
 }

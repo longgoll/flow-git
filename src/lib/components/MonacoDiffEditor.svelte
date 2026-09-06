@@ -80,6 +80,7 @@
       diffWordWrap: 'on',
       enableSplitViewResizing: true,
       renderOverviewRuler: true,
+      renderValidationDecorations: 'off',
       ignoreTrimWhitespace,
       hideUnchangedRegions: {
         enabled: true,

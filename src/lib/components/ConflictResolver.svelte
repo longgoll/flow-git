@@ -1,13 +1,25 @@
 <script lang="ts">
-  import type { ConflictFileDetail } from '../types';
+  import type { ConflictFileDetail, ConflictChunk } from '../types';
+  import MonacoEditor from './MonacoEditor.svelte';
+  import MonacoDiffEditor from './MonacoDiffEditor.svelte';
+  import { resolveConflictChunkAI, resolveConflictFileAI } from '../api/ai';
+  import { toast } from '../state/toastState.svelte';
   import {
     Split,
     CheckCircle,
     FileCode,
-    AlertTriangle,
     Save,
     RotateCcw,
-    Play
+    Play,
+    Sparkles,
+    Search,
+    Columns,
+    Layers,
+    Check,
+    RefreshCw,
+    X,
+    Code2,
+    Undo2
   } from 'lucide-svelte';
 
   interface Props {
@@ -36,83 +48,312 @@
     onClose,
   }: Props = $props();
 
-  // Svelte 5 runes for local state
+  // Local States
   let resolvedText = $state<string>('');
+  let searchQuery = $state<string>('');
+  let layoutMode = $state<'2way' | '3way' | 'chunks'>('2way');
+  let isAiResolving = $state<boolean>(false);
+  let aiResolvingChunkIdx = $state<number | null>(null);
+  let chunkChoices = $state<Record<number, 'ours' | 'theirs' | 'both-ours' | 'both-theirs' | 'base'>>({});
+  let lastLoadedFile = $state<string | null>(null);
 
+  // Derived calculations
+  let filteredFiles = $derived(
+    conflictedFiles.filter((f) =>
+      f.toLowerCase().includes(searchQuery.trim().toLowerCase())
+    )
+  );
+
+  let activeChunks = $derived(conflictDetail?.chunks || []);
+  let conflictChunks = $derived(activeChunks.filter((c) => c.is_conflict));
+  let resolvedChunksCount = $derived(
+    conflictChunks.filter((c) => chunkChoices[c.chunk_index] !== undefined).length
+  );
+
+  // Re-initialize state when selected file or detail changes
   $effect(() => {
-    if (conflictDetail) {
-      if (conflictDetail.chunks.length > 0) {
-        let initial = '';
-        for (const chunk of conflictDetail.chunks) {
-          if (chunk.is_conflict) {
-            initial += `<<<<<<< OURS\n${chunk.our_content}\n=======\n${chunk.their_content}\n>>>>>>> THEIRS\n`;
-          } else {
-            initial += chunk.our_content + '\n';
-          }
-        }
-        resolvedText = initial.trimEnd();
-      } else {
-        resolvedText = conflictDetail.our_content;
-      }
+    if (conflictDetail && conflictDetail.path !== lastLoadedFile) {
+      lastLoadedFile = conflictDetail.path;
+      chunkChoices = {};
+      buildInitialResolvedText();
     }
   });
 
-
-
-  function acceptOurs() {
+  /**
+   * Build initial clean resolved text.
+   * Defaulting to Ours keeps the syntax 100% valid TypeScript/JSX without red squiggly error marks!
+   */
+  function buildInitialResolvedText(includeRawMarkers = false) {
     if (!conflictDetail) return;
-    resolvedText = conflictDetail.our_content;
+    if (conflictDetail.chunks && conflictDetail.chunks.length > 0) {
+      let text = '';
+      for (const chunk of conflictDetail.chunks) {
+        if (!chunk.is_conflict) {
+          text += (chunk.our_content || chunk.their_content || '') + '\n';
+        } else {
+          const choice = chunkChoices[chunk.chunk_index];
+          if (choice === 'ours') {
+            text += chunk.our_content + '\n';
+          } else if (choice === 'theirs') {
+            text += chunk.their_content + '\n';
+          } else if (choice === 'both-ours') {
+            text += chunk.our_content + '\n' + chunk.their_content + '\n';
+          } else if (choice === 'both-theirs') {
+            text += chunk.their_content + '\n' + chunk.our_content + '\n';
+          } else if (choice === 'base') {
+            text += chunk.base_content + '\n';
+          } else {
+            if (includeRawMarkers) {
+              text += `<<<<<<< OURS (Current Branch)\n${chunk.our_content}\n=======\n${chunk.their_content}\n>>>>>>> THEIRS (Incoming Branch)\n`;
+            } else {
+              // Default to clean Ours to prevent syntax parse errors & red squiggly lines in Monaco
+              text += chunk.our_content + '\n';
+            }
+          }
+        }
+      }
+      resolvedText = text.trimEnd();
+    } else {
+      resolvedText = conflictDetail.our_content || '';
+    }
   }
 
-  function acceptTheirs() {
-    if (!conflictDetail) return;
-    resolvedText = conflictDetail.their_content;
+  function applyChunkChoice(
+    chunkIndex: number,
+    choice: 'ours' | 'theirs' | 'both-ours' | 'both-theirs' | 'base'
+  ) {
+    chunkChoices = { ...chunkChoices, [chunkIndex]: choice };
+    rebuildTextFromChoices();
   }
 
-  function acceptBoth() {
+  function rebuildTextFromChoices() {
     if (!conflictDetail) return;
-    resolvedText = `${conflictDetail.our_content}\n${conflictDetail.their_content}`;
+    let text = '';
+    for (const chunk of conflictDetail.chunks) {
+      if (!chunk.is_conflict) {
+        text += (chunk.our_content || chunk.their_content || '') + '\n';
+      } else {
+        const choice = chunkChoices[chunk.chunk_index];
+        if (choice === 'ours') {
+          text += chunk.our_content + '\n';
+        } else if (choice === 'theirs') {
+          text += chunk.their_content + '\n';
+        } else if (choice === 'both-ours') {
+          text += chunk.our_content + '\n' + chunk.their_content + '\n';
+        } else if (choice === 'both-theirs') {
+          text += chunk.their_content + '\n' + chunk.our_content + '\n';
+        } else if (choice === 'base') {
+          text += chunk.base_content + '\n';
+        } else {
+          // Default to Ours
+          text += chunk.our_content + '\n';
+        }
+      }
+    }
+    resolvedText = text.trimEnd();
   }
 
-  function acceptBase() {
+  function acceptAllOurs() {
     if (!conflictDetail) return;
-    resolvedText = conflictDetail.base_content;
+    const newChoices: Record<number, 'ours'> = {};
+    for (const chunk of conflictChunks) {
+      newChoices[chunk.chunk_index] = 'ours';
+    }
+    chunkChoices = newChoices;
+    rebuildTextFromChoices();
+    toast.success('Đã chọn phiên bản Ours (HEAD) cho tất cả các đoạn xung đột');
   }
 
+  function acceptAllTheirs() {
+    if (!conflictDetail) return;
+    const newChoices: Record<number, 'theirs'> = {};
+    for (const chunk of conflictChunks) {
+      newChoices[chunk.chunk_index] = 'theirs';
+    }
+    chunkChoices = newChoices;
+    rebuildTextFromChoices();
+    toast.success('Đã chọn phiên bản Theirs (Incoming) cho tất cả các đoạn xung đột');
+  }
+
+  function acceptAllBoth() {
+    if (!conflictDetail) return;
+    const newChoices: Record<number, 'both-ours'> = {};
+    for (const chunk of conflictChunks) {
+      newChoices[chunk.chunk_index] = 'both-ours';
+    }
+    chunkChoices = newChoices;
+    rebuildTextFromChoices();
+    toast.success('Đã chọn ghép cả hai phiên bản (Ours + Theirs)');
+  }
+
+  function resetToOurs() {
+    chunkChoices = {};
+    buildInitialResolvedText(false);
+    toast.info('Đã hoàn tác và đặt lại mã nguồn về Ours (HEAD)');
+  }
+
+  function insertGitConflictMarkers() {
+    chunkChoices = {};
+    buildInitialResolvedText(true);
+    toast.warning('Đã chèn các mốc Git (<<<<<<< / ======= / >>>>>>>) vào trình biên tập');
+  }
+
+  // AI Conflict Resolutions
+  async function handleAiResolveChunk(chunk: ConflictChunk) {
+    if (!selectedFile) return;
+    aiResolvingChunkIdx = chunk.chunk_index;
+    try {
+      const merged = await resolveConflictChunkAI(chunk, selectedFile);
+      chunkChoices = { ...chunkChoices, [chunk.chunk_index]: 'ours' };
+      let text = '';
+      for (const c of conflictDetail?.chunks || []) {
+        if (!c.is_conflict) {
+          text += (c.our_content || c.their_content || '') + '\n';
+        } else if (c.chunk_index === chunk.chunk_index) {
+          text += merged + '\n';
+        } else {
+          const choice = chunkChoices[c.chunk_index];
+          if (choice === 'ours') text += c.our_content + '\n';
+          else if (choice === 'theirs') text += c.their_content + '\n';
+          else if (choice === 'both-ours') text += c.our_content + '\n' + c.their_content + '\n';
+          else if (choice === 'both-theirs') text += c.their_content + '\n' + c.our_content + '\n';
+          else text += c.our_content + '\n';
+        }
+      }
+      resolvedText = text.trimEnd();
+      toast.success(`✨ AI đã giải quyết xong xung đột #${chunk.chunk_index + 1}!`);
+    } catch (e: any) {
+      toast.error('AI giải quyết thất bại: ' + (e?.message || e));
+    } finally {
+      aiResolvingChunkIdx = null;
+    }
+  }
+
+  async function handleAiResolveEntireFile() {
+    if (!conflictDetail || !selectedFile) return;
+    isAiResolving = true;
+    try {
+      const resolved = await resolveConflictFileAI(conflictDetail.chunks, selectedFile);
+      resolvedText = resolved.trimEnd();
+      const newChoices: Record<number, 'ours'> = {};
+      for (const chunk of conflictChunks) {
+        newChoices[chunk.chunk_index] = 'ours';
+      }
+      chunkChoices = newChoices;
+      toast.success('✨ AI đã phân tích và tự động ghép mã nguồn cho toàn bộ tệp!');
+    } catch (e: any) {
+      toast.error('AI hòa giải file thất bại: ' + (e?.message || e));
+    } finally {
+      isAiResolving = false;
+    }
+  }
+
+  function handleStage() {
+    if (!selectedFile || isLoading) return;
+    onResolveAndStage(resolvedText);
+  }
+
+  function handleKeyDown(e: KeyboardEvent) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      handleStage();
+    }
+  }
 </script>
+
+<svelte:window onkeydown={handleKeyDown} />
 
 <div class="h-full flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 overflow-hidden font-sans select-none">
   <!-- Top Conflict Header Toolbar -->
-  <header class="h-12 border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-100/70 dark:bg-zinc-900/60 px-4 flex items-center justify-between shrink-0">
-    <div class="flex items-center gap-3">
-      <div class="p-1.5 rounded-lg bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+  <header class="h-12 border-b border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/80 backdrop-blur-md px-4 flex items-center justify-between shrink-0 z-20">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="p-1.5 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 shrink-0">
         <Split class="w-4 h-4" />
       </div>
-      <div>
-        <h2 class="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-          3-Way Merge Conflict Visual Resolver
-          <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-500/30 font-semibold">
-            {conflictedFiles.length} conflicted file{conflictedFiles.length !== 1 ? 's' : ''}
+      <div class="min-w-0">
+        <div class="flex items-center gap-2">
+          <h2 class="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide truncate">
+            Visual Conflict Resolver
+          </h2>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-500/30 font-semibold shrink-0">
+            {conflictedFiles.length} tệp còn xung đột
           </span>
-        </h2>
+          {#if selectedFile}
+            <span class="text-zinc-400 dark:text-zinc-500 text-xs hidden sm:inline">•</span>
+            <span class="text-xs font-mono text-zinc-600 dark:text-zinc-300 truncate hidden sm:inline" title={selectedFile}>
+              {selectedFile.split('/').pop()}
+            </span>
+          {/if}
+        </div>
       </div>
     </div>
 
-    <div class="flex items-center gap-2">
+    <!-- Center: View Mode Switcher -->
+    {#if conflictDetail}
+      <div class="hidden md:flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700/60 text-xs">
+        <button
+          onclick={() => (layoutMode = '2way')}
+          class="flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer {layoutMode === '2way' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-xs' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+          title="Xem Diff 2 bên của VS Code (Ours vs Theirs) - Tự động tô màu thay đổi"
+        >
+          <Columns class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+          <span>VS Code Diff (Ours vs Theirs)</span>
+        </button>
+        <button
+          onclick={() => (layoutMode = '3way')}
+          class="flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer {layoutMode === '3way' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-xs' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+          title="Xem 3 khung Monaco Editor độc lập (Base | Ours | Theirs)"
+        >
+          <Split class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+          <span>3-Way (+Base)</span>
+        </button>
+        <button
+          onclick={() => (layoutMode = 'chunks')}
+          class="flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer {layoutMode === 'chunks' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-xs' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+          title="Xem danh sách từng đoạn xung đột kèm nút chọn trực tiếp"
+        >
+          <Layers class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+          <span>Từng khối ({conflictChunks.length})</span>
+        </button>
+      </div>
+    {/if}
+
+    <!-- Right: Actions Toolbar -->
+    <div class="flex items-center gap-2 shrink-0">
+      {#if conflictDetail}
+        <button
+          onclick={handleAiResolveEntireFile}
+          disabled={isAiResolving || isLoading}
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-medium text-xs shadow-xs transition-all cursor-pointer"
+          title="AI tự động phân tích và ghép code hợp lý cho toàn bộ tệp này"
+        >
+          {#if isAiResolving}
+            <RefreshCw class="w-3.5 h-3.5 animate-spin" />
+            <span>AI Đang xử lý...</span>
+          {:else}
+            <Sparkles class="w-3.5 h-3.5 text-amber-300" />
+            <span class="hidden sm:inline">AI Auto-Merge</span>
+          {/if}
+        </button>
+      {/if}
+
       <button
-        onclick={onAbortMerge}
-        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-400 text-xs text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-transparent transition-colors cursor-pointer"
+        onclick={handleStage}
+        disabled={isLoading || !selectedFile}
+        class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 text-white font-medium text-xs shadow-sm transition-all cursor-pointer"
+        title="Đánh dấu đã giải quyết và đưa vào Staging Area (Ctrl+Enter)"
       >
-        <RotateCcw class="w-3.5 h-3.5" />
-        <span>Abort Merge / Rebase</span>
+        <Save class="w-3.5 h-3.5" />
+        <span>Stage File</span>
+        <kbd class="hidden md:inline text-[9px] bg-emerald-700 px-1 py-0.2 rounded font-mono">Ctrl+↵</kbd>
       </button>
 
       {#if isRebasing && onContinueRebase}
         <button
           onclick={onContinueRebase}
           disabled={isLoading || conflictedFiles.length > 0}
-          class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-medium text-xs shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
-          title={conflictedFiles.length > 0 ? 'Vui lòng giải quyết hết các file conflict trước khi tiếp tục' : 'Tiếp tục chu trình rebase'}
+          class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-medium text-xs shadow-sm transition-all cursor-pointer"
+          title={conflictedFiles.length > 0 ? 'Vui lòng giải quyết hết các file xung đột trước khi tiếp tục rebase' : 'Tiếp tục chu trình rebase'}
         >
           <Play class="w-3.5 h-3.5 fill-current" />
           <span>Continue Rebase</span>
@@ -120,139 +361,374 @@
       {/if}
 
       <button
-        onclick={() => onResolveAndStage(resolvedText)}
-        disabled={isLoading || !selectedFile}
-        class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium text-xs shadow-lg shadow-emerald-600/30 transition-all cursor-pointer"
+        onclick={onAbortMerge}
+        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-400 text-xs border border-rose-200 dark:border-rose-900/50 transition-colors cursor-pointer"
+        title="Hủy bỏ hoàn toàn thao tác Merge / Rebase đang dở dang"
       >
-        <Save class="w-3.5 h-3.5" />
-        <span>Mark Resolved & Stage</span>
+        <RotateCcw class="w-3.5 h-3.5" />
+        <span class="hidden sm:inline">Abort</span>
       </button>
 
       <button
         onclick={onClose}
-        class="px-2.5 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-transparent text-xs transition-colors cursor-pointer"
+        class="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+        title="Đóng cửa sổ giải quyết xung đột"
       >
-        ✕
+        <X class="w-4 h-4" />
       </button>
     </div>
   </header>
 
-  <!-- Main Area: Conflicted Files List (Left) + 4-Pane Resolution Grid (Right) -->
+  <!-- Main Area: Conflicted Files Sidebar (Left) + Split Resolution View (Right) -->
   <div class="flex-1 flex overflow-hidden">
-    <!-- Left: Conflicted File Tabs -->
-    <aside class="w-64 border-r border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/70 dark:bg-zinc-950/80 flex flex-col shrink-0">
-      <div class="p-3 border-b border-zinc-200 dark:border-zinc-800 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-        Conflicted Files
+    <!-- Left Sidebar: Conflicted Files List -->
+    <aside class="w-72 border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/70 flex flex-col shrink-0 overflow-hidden">
+      <!-- Search Box -->
+      <div class="p-2.5 border-b border-zinc-200 dark:border-zinc-800/80">
+        <div class="relative">
+          <Search class="w-3.5 h-3.5 text-zinc-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            bind:value={searchQuery}
+            placeholder="Lọc tệp xung đột..."
+            class="w-full pl-8 pr-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-indigo-500 transition-colors font-sans"
+          />
+        </div>
       </div>
+
+      <!-- File List Container -->
       <div class="flex-1 overflow-y-auto p-2 space-y-1">
         {#if conflictedFiles.length === 0}
-          <div class="p-4 text-center text-xs text-emerald-600 dark:text-emerald-400 space-y-3">
-            <CheckCircle class="w-6 h-6 mx-auto mb-1 opacity-80" />
-            <p>All conflicts resolved!</p>
+          <div class="p-6 text-center text-xs text-emerald-600 dark:text-emerald-400 space-y-3">
+            <CheckCircle class="w-10 h-10 mx-auto text-emerald-500 opacity-90 animate-bounce" />
+            <div class="space-y-1">
+              <h3 class="font-bold text-sm text-zinc-900 dark:text-zinc-100">Đã giải quyết hết xung đột!</h3>
+              <p class="text-zinc-500 text-[11px]">Tất cả các tệp xung đột đã được đánh dấu an toàn vào Staging Area.</p>
+            </div>
             {#if isRebasing && onContinueRebase}
               <button
                 onclick={onContinueRebase}
-                class="w-full py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md cursor-pointer transition-all"
+                class="w-full py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md cursor-pointer transition-all flex items-center justify-center gap-1.5"
               >
-                Continue Rebase
+                <Play class="w-3.5 h-3.5 fill-current" />
+                <span>Tiếp tục Rebase</span>
               </button>
             {/if}
           </div>
+        {:else if filteredFiles.length === 0}
+          <div class="p-4 text-center text-xs text-zinc-400">
+            Không tìm thấy tệp phù hợp với "{searchQuery}"
+          </div>
         {:else}
-          {#each conflictedFiles as file}
+          {#each filteredFiles as file}
+            {@const isSelected = selectedFile === file}
+            {@const parts = file.split('/')}
+            {@const fileName = parts.pop() || file}
+            {@const dirPath = parts.join('/')}
             <button
               onclick={() => onSelectFile(file)}
-              class="w-full text-left px-3 py-2 rounded-lg text-xs font-mono flex items-center justify-between transition-colors {selectedFile === file ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-500/30 font-medium' : 'text-zinc-700 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-900'}"
+              class="w-full text-left p-2.5 rounded-xl text-xs flex items-start justify-between gap-2 transition-all cursor-pointer border {isSelected ? 'bg-rose-50 dark:bg-rose-500/15 text-rose-900 dark:text-rose-200 border-rose-300 dark:border-rose-500/40 shadow-xs' : 'bg-white/60 dark:bg-zinc-900/40 text-zinc-700 dark:text-zinc-300 border-zinc-200/70 dark:border-zinc-800/60 hover:bg-zinc-100 dark:hover:bg-zinc-900'}"
             >
-              <span class="truncate">{file}</span>
-              <AlertTriangle class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0 ml-1" />
+              <div class="min-w-0 flex-1">
+                <div class="font-mono font-semibold text-[12px] truncate flex items-center gap-1.5">
+                  <FileCode class="w-3.5 h-3.5 shrink-0 text-rose-500" />
+                  <span class="truncate">{fileName}</span>
+                </div>
+                {#if dirPath}
+                  <div class="text-[10px] text-zinc-400 dark:text-zinc-500 truncate font-mono mt-0.5" title={dirPath}>
+                    {dirPath}
+                  </div>
+                {/if}
+              </div>
+
+              <div class="shrink-0 flex items-center mt-0.5">
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30">
+                  conflict
+                </span>
+              </div>
             </button>
           {/each}
         {/if}
       </div>
     </aside>
 
-    <!-- Right: 4-Pane Split Layout (Base | Ours | Theirs -> Result) -->
+    <!-- Right: Resolution Workplace -->
     <div class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-zinc-950">
       {#if isLoading}
-        <div class="flex-1 flex items-center justify-center text-xs text-zinc-500">
-          Loading 3-way conflict data...
+        <div class="flex-1 flex flex-col items-center justify-center gap-2 text-xs text-zinc-500">
+          <RefreshCw class="w-6 h-6 animate-spin text-indigo-500" />
+          <span>Đang tải dữ liệu 3-way conflict...</span>
         </div>
       {:else if conflictDetail}
-        <!-- Top 3 Panes: Base (Ancestor) | Ours (Current) | Theirs (Incoming) -->
-        <div class="h-1/2 grid grid-cols-3 border-b border-zinc-200 dark:border-zinc-800 divide-x divide-zinc-200 dark:divide-zinc-800">
-          <!-- 1. BASE (Ancestor) -->
-          <div class="flex flex-col overflow-hidden bg-zinc-50/70 dark:bg-zinc-950/40">
-            <div class="h-8 px-3 bg-zinc-100 dark:bg-zinc-900/60 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-[11px]">
-              <span class="font-bold text-zinc-600 dark:text-zinc-400">1. Base (Ancestor)</span>
-              <button
-                onclick={acceptBase}
-                class="px-2 py-0.5 rounded bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-transparent text-[10px] text-zinc-700 dark:text-zinc-300 cursor-pointer"
-              >
-                Accept Base
-              </button>
-            </div>
-            <pre class="flex-1 p-3 text-[11px] font-mono text-zinc-700 dark:text-zinc-400 overflow-auto whitespace-pre leading-relaxed select-text">{conflictDetail.base_content || '(Empty in base)'}</pre>
-          </div>
+        <!-- Top Half: Comparison View (VS Code Monaco Diff Editor) -->
+        <div class="h-1/2 flex flex-col border-b border-zinc-200 dark:border-zinc-800 overflow-hidden">
+          {#if layoutMode === '2way'}
+            <!-- 2-Way View: Real Monaco Diff Editor (Side-by-side like VS Code with syntax highlighting & green/red diffs) -->
+            <div class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-zinc-950">
+              <!-- Diff Header Bar -->
+              <div class="h-8 px-3 bg-zinc-100/90 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs shrink-0 select-none">
+                <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1.5 font-bold text-cyan-700 dark:text-cyan-400 text-[11px]">
+                    <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
+                    <span>1. Current / Ours (HEAD)</span>
+                  </div>
+                  <button
+                    onclick={acceptAllOurs}
+                    class="px-2 py-0.5 rounded bg-cyan-100 dark:bg-cyan-600/30 hover:bg-cyan-200 dark:hover:bg-cyan-600/50 text-[10px] font-medium text-cyan-800 dark:text-cyan-200 border border-cyan-300 dark:border-cyan-500/40 cursor-pointer"
+                  >
+                    Lấy toàn bộ Ours
+                  </button>
+                </div>
 
-          <!-- 2. OURS (Current Branch) -->
-          <div class="flex flex-col overflow-hidden bg-cyan-50/40 dark:bg-cyan-950/10">
-            <div class="h-8 px-3 bg-cyan-100/60 dark:bg-cyan-950/30 border-b border-cyan-200 dark:border-cyan-800/30 flex items-center justify-between text-[11px]">
-              <span class="font-bold text-cyan-800 dark:text-cyan-400">2. Current / Ours (HEAD)</span>
-              <button
-                onclick={acceptOurs}
-                class="px-2 py-0.5 rounded bg-cyan-100 dark:bg-cyan-600/30 hover:bg-cyan-200 dark:hover:bg-cyan-600/50 text-[10px] text-cyan-800 dark:text-cyan-200 border border-cyan-300 dark:border-cyan-500/40 cursor-pointer transition-colors"
-              >
-                Accept Ours
-              </button>
-            </div>
-            <pre class="flex-1 p-3 text-[11px] font-mono text-cyan-900 dark:text-cyan-200/90 bg-cyan-50/20 dark:bg-cyan-950/5 overflow-auto whitespace-pre leading-relaxed select-text">{conflictDetail.our_content || '(Empty in ours)'}</pre>
-          </div>
+                <div class="text-[11px] text-zinc-400 font-mono hidden sm:flex items-center gap-1.5">
+                  <span>VS Code Diff Engine</span>
+                  <span>•</span>
+                  <span class="text-rose-600 dark:text-rose-400 font-semibold">Đỏ (Ours)</span>
+                  <span>vs</span>
+                  <span class="text-emerald-600 dark:text-emerald-400 font-semibold">Xanh (Theirs)</span>
+                </div>
 
-          <!-- 3. THEIRS (Incoming Branch) -->
-          <div class="flex flex-col overflow-hidden bg-amber-50/40 dark:bg-amber-950/10">
-            <div class="h-8 px-3 bg-amber-100/60 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800/30 flex items-center justify-between text-[11px]">
-              <span class="font-bold text-amber-800 dark:text-amber-400">3. Incoming / Theirs</span>
-              <button
-                onclick={acceptTheirs}
-                class="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-600/30 hover:bg-amber-200 dark:hover:bg-amber-600/50 text-[10px] text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-500/40 cursor-pointer transition-colors"
-              >
-                Accept Theirs
-              </button>
+                <div class="flex items-center gap-2">
+                  <button
+                    onclick={acceptAllTheirs}
+                    class="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-600/30 hover:bg-amber-200 dark:hover:bg-amber-600/50 text-[10px] font-medium text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-500/40 cursor-pointer"
+                  >
+                    Lấy toàn bộ Theirs
+                  </button>
+                  <div class="flex items-center gap-1.5 font-bold text-amber-700 dark:text-amber-400 text-[11px]">
+                    <span>2. Incoming / Theirs</span>
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Monaco Diff Editor Instance -->
+              <div class="flex-1 w-full h-full overflow-hidden">
+                <MonacoDiffEditor
+                  originalContent={conflictDetail.our_content || ''}
+                  modifiedContent={conflictDetail.their_content || ''}
+                  filePath={selectedFile || ''}
+                  viewMode="split"
+                  fontSize={12}
+                  minimap={false}
+                />
+              </div>
             </div>
-            <pre class="flex-1 p-3 text-[11px] font-mono text-amber-900 dark:text-amber-200/90 bg-amber-50/20 dark:bg-amber-950/5 overflow-auto whitespace-pre leading-relaxed select-text">{conflictDetail.their_content || '(Empty in theirs)'}</pre>
-          </div>
+          {:else if layoutMode === '3way'}
+            <!-- 3-Way View: 3 Monaco Editors (Base | Ours | Theirs) -->
+            <div class="flex-1 grid grid-cols-3 divide-x divide-zinc-200 dark:divide-zinc-800 overflow-hidden">
+              <!-- Base (Ancestor) -->
+              <div class="flex flex-col overflow-hidden">
+                <div class="h-8 px-3 bg-zinc-100/90 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-[11px] shrink-0">
+                  <span class="font-bold text-zinc-600 dark:text-zinc-400">1. Base (Ancestor)</span>
+                </div>
+                <div class="flex-1 w-full h-full overflow-hidden">
+                  <MonacoEditor
+                    content={conflictDetail.base_content || ''}
+                    filePath={selectedFile || ''}
+                    readOnly={true}
+                    minimap={false}
+                    fontSize={11}
+                  />
+                </div>
+              </div>
+
+              <!-- Ours (Current HEAD) -->
+              <div class="flex flex-col overflow-hidden">
+                <div class="h-8 px-3 bg-cyan-100/60 dark:bg-cyan-950/40 border-b border-cyan-200 dark:border-cyan-800/30 flex items-center justify-between text-[11px] shrink-0">
+                  <span class="font-bold text-cyan-800 dark:text-cyan-300">2. Current / Ours (HEAD)</span>
+                  <button
+                    onclick={acceptAllOurs}
+                    class="px-2 py-0.5 rounded bg-cyan-100 dark:bg-cyan-600/30 hover:bg-cyan-200 text-[10px] text-cyan-800 dark:text-cyan-200 border border-cyan-300 dark:border-cyan-500/40 cursor-pointer"
+                  >
+                    Lấy tất cả
+                  </button>
+                </div>
+                <div class="flex-1 w-full h-full overflow-hidden">
+                  <MonacoEditor
+                    content={conflictDetail.our_content || ''}
+                    filePath={selectedFile || ''}
+                    readOnly={true}
+                    minimap={false}
+                    fontSize={11}
+                  />
+                </div>
+              </div>
+
+              <!-- Theirs (Incoming) -->
+              <div class="flex flex-col overflow-hidden">
+                <div class="h-8 px-3 bg-amber-100/60 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800/30 flex items-center justify-between text-[11px] shrink-0">
+                  <span class="font-bold text-amber-800 dark:text-amber-300">3. Incoming / Theirs</span>
+                  <button
+                    onclick={acceptAllTheirs}
+                    class="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-600/30 hover:bg-amber-200 text-[10px] text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-500/40 cursor-pointer"
+                  >
+                    Lấy tất cả
+                  </button>
+                </div>
+                <div class="flex-1 w-full h-full overflow-hidden">
+                  <MonacoEditor
+                    content={conflictDetail.their_content || ''}
+                    filePath={selectedFile || ''}
+                    readOnly={true}
+                    minimap={false}
+                    fontSize={11}
+                  />
+                </div>
+              </div>
+            </div>
+          {:else}
+            <!-- Per-Chunk Inspector View -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-zinc-50/40 dark:bg-zinc-950/40">
+              <div class="text-xs text-zinc-500 flex items-center justify-between">
+                <span>Danh sách các khối xung đột ({conflictChunks.length} khối):</span>
+                <span class="font-mono text-[11px]">Đã giải quyết: {resolvedChunksCount} / {conflictChunks.length}</span>
+              </div>
+
+              {#each conflictChunks as chunk, idx}
+                {@const currentChoice = chunkChoices[chunk.chunk_index]}
+                <div class="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden shadow-xs">
+                  <!-- Chunk Header -->
+                  <div class="px-3 py-2 bg-zinc-100/80 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-2">
+                      <span class="font-bold text-rose-600 dark:text-rose-400 font-mono">Xung đột #{idx + 1}</span>
+                      {#if currentChoice}
+                        <span class="px-1.5 py-0.2 rounded text-[10px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30 flex items-center gap-1">
+                          <Check class="w-2.5 h-2.5" />
+                          Đã chọn: {currentChoice}
+                        </span>
+                      {:else}
+                        <span class="px-1.5 py-0.2 rounded text-[10px] font-medium bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/30">
+                          Mặc định: Ours (HEAD)
+                        </span>
+                      {/if}
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                      <button
+                        onclick={() => applyChunkChoice(chunk.chunk_index, 'ours')}
+                        class="px-2.5 py-1 rounded text-[11px] font-medium cursor-pointer transition-colors {currentChoice === 'ours' || !currentChoice ? 'bg-cyan-600 text-white shadow-xs' : 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-100 dark:hover:bg-cyan-900/60 border border-cyan-200 dark:border-cyan-800/40'}"
+                      >
+                        Lấy Ours
+                      </button>
+                      <button
+                        onclick={() => applyChunkChoice(chunk.chunk_index, 'theirs')}
+                        class="px-2.5 py-1 rounded text-[11px] font-medium cursor-pointer transition-colors {currentChoice === 'theirs' ? 'bg-amber-600 text-white shadow-xs' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800/40'}"
+                      >
+                        Lấy Theirs
+                      </button>
+                      <button
+                        onclick={() => applyChunkChoice(chunk.chunk_index, 'both-ours')}
+                        class="px-2.5 py-1 rounded text-[11px] font-medium cursor-pointer transition-colors {currentChoice === 'both-ours' ? 'bg-purple-600 text-white shadow-xs' : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-800/40'}"
+                      >
+                        Ghép cả 2
+                      </button>
+                      <button
+                        onclick={() => handleAiResolveChunk(chunk)}
+                        disabled={aiResolvingChunkIdx === chunk.chunk_index}
+                        class="px-2.5 py-1 rounded text-[11px] font-medium bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white cursor-pointer transition-all flex items-center gap-1 shadow-xs"
+                        title="AI gợi ý gộp khối này"
+                      >
+                        {#if aiResolvingChunkIdx === chunk.chunk_index}
+                          <RefreshCw class="w-3 h-3 animate-spin" />
+                        {:else}
+                          <Sparkles class="w-3 h-3 text-amber-300" />
+                        {/if}
+                        <span>AI</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Chunk Diff Content -->
+                  <div class="grid grid-cols-2 divide-x divide-zinc-200 dark:divide-zinc-800 text-[11px] font-mono leading-relaxed">
+                    <div class="p-2.5 bg-cyan-50/15 dark:bg-cyan-950/10 overflow-x-auto select-text">
+                      <div class="text-[10px] text-cyan-600 dark:text-cyan-400 font-bold mb-1 uppercase tracking-wide">Ours:</div>
+                      <pre class="whitespace-pre text-cyan-950 dark:text-cyan-100">{chunk.our_content || '(Empty)'}</pre>
+                    </div>
+                    <div class="p-2.5 bg-amber-50/15 dark:bg-amber-950/10 overflow-x-auto select-text">
+                      <div class="text-[10px] text-amber-600 dark:text-amber-400 font-bold mb-1 uppercase tracking-wide">Theirs:</div>
+                      <pre class="whitespace-pre text-amber-950 dark:text-amber-100">{chunk.their_content || '(Empty)'}</pre>
+                    </div>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          {/if}
         </div>
 
-        <!-- Bottom Pane: 4. Final Merged Result (Interactive Editable Editor) -->
-        <div class="h-1/2 flex flex-col overflow-hidden bg-zinc-50 dark:bg-zinc-900/20">
-          <div class="h-9 px-4 bg-zinc-100/80 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs">
+        <!-- Bottom Half: Monaco Editor (Final Output Result - 100% Clean Valid Code) -->
+        <div class="h-1/2 flex flex-col overflow-hidden bg-zinc-50 dark:bg-zinc-900/30">
+          <!-- Toolbar above Monaco -->
+          <div class="h-9 px-4 bg-zinc-100/90 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs shrink-0 select-none">
             <div class="flex items-center gap-2">
-              <span class="font-bold text-emerald-700 dark:text-emerald-400">4. Result (Final Output)</span>
-              <span class="text-zinc-500 text-[11px]">• Directly editable preview</span>
+              <Code2 class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span class="font-bold text-emerald-700 dark:text-emerald-400">Result (Final Output)</span>
+              <span class="text-zinc-500 text-[11px] hidden sm:inline">• Monaco Editor (Mã nguồn hợp nhất, chỉnh sửa trực tiếp)</span>
             </div>
 
-            <div class="flex items-center gap-2">
+            <!-- Global Quick Buttons -->
+            <div class="flex items-center gap-1.5">
               <button
-                onclick={acceptBoth}
-                class="px-2.5 py-1 rounded bg-purple-100 dark:bg-zinc-800 hover:bg-purple-200 dark:hover:bg-zinc-700 text-[11px] text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-500/30 cursor-pointer transition-colors"
+                onclick={acceptAllOurs}
+                class="px-2 py-1 rounded bg-cyan-50 dark:bg-cyan-950/40 hover:bg-cyan-100 dark:hover:bg-cyan-900/50 text-[10px] font-medium text-cyan-800 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800/40 cursor-pointer transition-colors"
+                title="Đặt kết quả toàn bộ theo nhánh Ours"
               >
-                Accept Both (Ours then Theirs)
+                Tất cả Ours
+              </button>
+              <button
+                onclick={acceptAllTheirs}
+                class="px-2 py-1 rounded bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-[10px] font-medium text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40 cursor-pointer transition-colors"
+                title="Đặt kết quả toàn bộ theo nhánh Theirs"
+              >
+                Tất cả Theirs
+              </button>
+              <button
+                onclick={acceptAllBoth}
+                class="px-2 py-1 rounded bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-[10px] font-medium text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/40 cursor-pointer transition-colors"
+                title="Ghép cả 2 nhánh (Ours trước, Theirs sau)"
+              >
+                Ghép cả hai
+              </button>
+              <button
+                onclick={resetToOurs}
+                class="px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-[10px] text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 cursor-pointer flex items-center gap-1 transition-colors"
+                title="Đặt lại về trạng thái ban đầu"
+              >
+                <Undo2 class="w-3 h-3" />
+                <span>Đặt lại</span>
+              </button>
+              <button
+                onclick={insertGitConflictMarkers}
+                class="px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-[10px] text-zinc-500 hover:text-rose-600 border border-zinc-200 dark:border-zinc-700 cursor-pointer transition-colors hidden md:inline"
+                title="Chèn lại mốc git <<<<<<< thô nếu muốn xem kiểu cũ"
+              >
+                Mốc git thô
               </button>
             </div>
           </div>
 
-          <textarea
-            bind:value={resolvedText}
-            class="flex-1 w-full p-4 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-mono text-xs leading-relaxed resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
-            placeholder="Merged result code goes here..."
-            spellcheck="false"
-          ></textarea>
+          <!-- Monaco Editor Component Container -->
+          <div class="flex-1 w-full h-full overflow-hidden">
+            <MonacoEditor
+              content={resolvedText}
+              filePath={selectedFile || ''}
+              readOnly={false}
+              minimap={false}
+              wordWrap="on"
+              fontSize={12}
+              onChange={(newVal) => {
+                resolvedText = newVal;
+              }}
+              onSave={handleStage}
+            />
+          </div>
         </div>
       {:else}
-        <div class="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs">
-          <FileCode class="w-8 h-8 mb-2 opacity-40" />
-          Select a conflicted file from the list to begin 3-way visual resolution.
+        <!-- Empty Selection View -->
+        <div class="flex-1 flex flex-col items-center justify-center text-zinc-400 text-xs p-6 space-y-2">
+          <FileCode class="w-12 h-12 opacity-30 text-zinc-400" />
+          <p class="font-medium">Chọn một tệp từ danh sách bên trái để bắt đầu giải quyết xung đột.</p>
+          <p class="text-[11px] text-zinc-500">Bạn có thể đối chiếu diff của VS Code phía trên, và chỉnh sửa kết quả trực tiếp phía dưới.</p>
         </div>
       {/if}
     </div>

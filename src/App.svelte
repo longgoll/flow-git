@@ -517,9 +517,10 @@
             isOperatingAlert = false;
           }
         }}
+        hideActions={viewMode === 'conflict'}
         onCreateBranchFromDetached={actions.createBranchFromDetached}
       />
-      {#if viewMode !== 'pr'}
+      {#if viewMode !== 'pr' && viewMode !== 'conflict'}
         <RecentPushBanner
           pushedBranch={recentPushedBranch}
           targetBranch={repo.branches.some((b) => b.shorthand === "main") ? "main" : "master"}

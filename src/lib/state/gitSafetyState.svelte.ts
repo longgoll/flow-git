@@ -215,9 +215,19 @@ export class GitSafetyState {
   ) {
     if (!repoPath || !this.selectedConflictFile) return;
     this.isConflictLoading = true;
+    const currentFile = this.selectedConflictFile;
     try {
-      await resolveConflictFile(repoPath, this.selectedConflictFile, resolvedContent);
-      await this.loadConflictFiles(repoPath);
+      await resolveConflictFile(repoPath, currentFile, resolvedContent);
+      this.conflictedFiles = await getConflictedFiles(repoPath);
+      // Auto-advance to next conflicted file if current is resolved
+      if (this.conflictedFiles.includes(currentFile)) {
+        await this.selectConflictFile(repoPath, currentFile);
+      } else if (this.conflictedFiles.length > 0) {
+        await this.selectConflictFile(repoPath, this.conflictedFiles[0]);
+      } else {
+        this.selectedConflictFile = null;
+        this.conflictFileDetail = null;
+      }
       await onRefreshWorkingTree();
     } finally {
       this.isConflictLoading = false;

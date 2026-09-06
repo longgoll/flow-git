@@ -57,6 +57,7 @@
       wordWrap,
       smoothScrolling: true,
       renderWhitespace: 'selection',
+      renderValidationDecorations: 'off',
       padding: { top: 8, bottom: 8 },
     });
 
@@ -104,6 +105,7 @@
         wordWrap,
         minimap: { enabled: minimap },
         readOnly,
+        renderValidationDecorations: 'off',
       });
     }
   });

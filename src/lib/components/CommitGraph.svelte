@@ -1,11 +1,14 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { CommitNode, ConflictSimulationResult, GraphViewMode, GraphEdge } from "../types";
+  import { Layers } from "lucide-svelte";
+  import type { CommitNode, ConflictSimulationResult, GraphViewMode } from "../types";
   import { simulateDragAction } from "../api";
   import { ROW_HEIGHT, renderCommitGraph } from "../utils/graphRenderer";
   import DragAvatarTooltip from "./graph/DragAvatarTooltip.svelte";
+  import GraphHeaderControls from "./graph/GraphHeaderControls.svelte";
+  import GraphFloatingDock from "./graph/GraphFloatingDock.svelte";
+  import { deriveDisplayCommits, buildCommitIndexMap, deriveGraphEdges } from "./graph/graphCapsuleUtils";
   import CommitContextMenu from "./CommitContextMenu.svelte";
-  import { GitCompare, Copy, X, Layers, Globe, Sparkles, Eye } from "lucide-svelte";
   import { toast } from "../state/toastState.svelte";
   import { themeState } from "../state/themeState.svelte";
 
@@ -91,72 +94,9 @@
   let lockedLane = $state<number | null>(null);
 
   // Derive displayCommits by applying Macro View filtering and Semantic Capsule collapsing
-  let displayCommits = $derived.by(() => {
-    if (commits.length === 0) return [];
-    if (viewMode === 'micro' && !autoCapsule) return commits;
-
-    const result: CommitNode[] = [];
-    const n = commits.length;
-    let i = 0;
-
-    while (i < n) {
-      const c = commits[i];
-      const isMerge = Array.isArray(c.parents) && c.parents.length > 1;
-      const hasRefs = Array.isArray(c.refs) && c.refs.length > 0;
-      const isRoot = !c.parents || c.parents.length === 0;
-
-      // In Macro mode: group non-milestone commits
-      // In Micro mode: group linear runs of >= 3 commits on non-trunk lanes (> 0)
-      const isMilestone = hasRefs || isMerge || isRoot || c.lane === 0;
-      const eligibleForRun = viewMode === 'macro' ? !isMilestone : (!isMilestone && c.lane > 0);
-
-      if (eligibleForRun) {
-        const run: CommitNode[] = [c];
-        let j = i + 1;
-        while (j < n) {
-          const nextC = commits[j];
-          const nextEligible = viewMode === 'macro'
-            ? (!nextC.refs?.length && nextC.parents?.length <= 1 && nextC.parents?.length > 0)
-            : (!nextC.refs?.length && nextC.parents?.length <= 1 && nextC.parents?.length > 0 && nextC.lane === c.lane);
-          if (nextEligible) {
-            run.push(nextC);
-            j++;
-          } else {
-            break;
-          }
-        }
-
-        const capsuleId = `capsule-${c.id}`;
-        const minThreshold = viewMode === 'macro' ? 2 : 3;
-
-        if (run.length >= minThreshold && !expandedCapsuleIds.has(capsuleId)) {
-          const lastInRun = run[run.length - 1];
-          result.push({
-            id: capsuleId,
-            short_id: `+${run.length}`,
-            parents: lastInRun.parents || [],
-            author_name: `${run.length} commits grouped`,
-            author_email: '',
-            summary: c.summary,
-            timestamp: c.timestamp,
-            lane: c.lane,
-            refs: [],
-            is_trunk: c.is_trunk,
-            is_capsule: true,
-            capsule_count: run.length,
-            collapsed_ids: run.map((r) => r.id),
-          });
-          i = j;
-          continue;
-        }
-      }
-
-      result.push(c);
-      i++;
-    }
-
-    return result;
-  });
+  let displayCommits = $derived(
+    deriveDisplayCommits(commits, viewMode, autoCapsule, expandedCapsuleIds)
+  );
 
   let totalHeight = $derived(displayCommits.length * ROW_HEIGHT);
   let maxScrollTop = $derived(Math.max(0, totalHeight - containerHeight));
@@ -186,43 +126,10 @@
   );
 
   // Fast OID to index mapping of displayCommits
-  let commitIndexMap = $derived.by(() => {
-    const map = new Map<string, number>();
-    for (let i = 0; i < displayCommits.length; i++) {
-      if (displayCommits[i]?.id) {
-        map.set(displayCommits[i].id, i);
-      }
-    }
-    return map;
-  });
+  let commitIndexMap = $derived(buildCommitIndexMap(displayCommits));
 
   // Precalculate continuous graph edges for Pass-through viewport intersection
-  let graphEdges = $derived.by<GraphEdge[]>(() => {
-    const list: GraphEdge[] = [];
-    for (let cIdx = 0; cIdx < displayCommits.length; cIdx++) {
-      const child = displayCommits[cIdx];
-      if (!child || !Array.isArray(child.parents)) continue;
-
-      for (let pIdx = 0; pIdx < child.parents.length; pIdx++) {
-        const parentId = child.parents[pIdx];
-        const parentIndex = commitIndexMap.get(parentId);
-        if (parentIndex === undefined) continue;
-
-        const parent = displayCommits[parentIndex];
-        if (!parent) continue;
-
-        list.push({
-          childIndex: cIdx,
-          parentIndex,
-          childLane: child.lane || 0,
-          parentLane: parent.lane || 0,
-          isTrunk: !!(child.is_trunk && parent.is_trunk),
-          isFirstParent: pIdx === 0,
-        });
-      }
-    }
-    return list;
-  });
+  let graphEdges = $derived(deriveGraphEdges(displayCommits, commitIndexMap));
 
   let animFrameId: number | null = null;
 
@@ -685,72 +592,25 @@
 
 <div class="flex flex-col w-full h-full bg-white dark:bg-zinc-950 overflow-hidden select-none">
   <!-- Graph Control Sub-Header -->
-  <div class="h-9 px-3.5 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/70 dark:bg-zinc-900/40 flex items-center justify-between shrink-0 text-xs select-none">
-    <!-- Left: Status & Commit Count -->
-    <div class="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
-      <span class="font-semibold text-zinc-700 dark:text-zinc-200 text-xs">Commit Graph</span>
-      <span class="text-zinc-300 dark:text-zinc-700">•</span>
-      <span class="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">{displayCommits.length} commits</span>
-      {#if lockedLane !== null}
-        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 text-[11px] font-medium border border-indigo-200 dark:border-indigo-800/80 shadow-xs">
-          <Eye class="w-3 h-3 text-indigo-500 animate-pulse" />
-          <span>Lane {lockedLane}</span>
-          <button
-            onclick={() => {
-              lockedLane = null;
-              scheduleRender();
-            }}
-            class="p-0.5 rounded hover:bg-indigo-200/60 dark:hover:bg-indigo-800/60 transition-colors cursor-pointer"
-            title="Bỏ khóa tiêu điểm"
-          >
-            <X class="w-2.5 h-2.5" />
-          </button>
-        </span>
-      {/if}
-    </div>
-
-    <!-- Right: View Modes & Capsules -->
-    <div class="flex items-center gap-2">
-      <div class="flex items-center p-0.5 rounded-md bg-zinc-200/60 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 text-xs">
-        <button
-          onclick={() => {
-            viewMode = 'micro';
-            scheduleRender();
-          }}
-          class="px-2 py-0.5 rounded text-[11px] transition-all flex items-center gap-1.5 cursor-pointer {viewMode === 'micro' ? 'bg-white dark:bg-zinc-900 text-cyan-600 dark:text-cyan-400 font-semibold shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
-          title="Micro DAG View: Xem chi tiết toàn bộ các commit"
-        >
-          <GitCompare class="w-3 h-3" />
-          <span>Micro DAG</span>
-        </button>
-
-        <button
-          onclick={() => {
-            viewMode = 'macro';
-            scheduleRender();
-          }}
-          class="px-2 py-0.5 rounded text-[11px] transition-all flex items-center gap-1.5 cursor-pointer {viewMode === 'macro' ? 'bg-white dark:bg-zinc-900 text-cyan-600 dark:text-cyan-400 font-semibold shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
-          title="Macro Map View: Ẩn commit lẻ, chỉ hiển thị PR, Merge commits, Tags và Head"
-        >
-          <Globe class="w-3 h-3" />
-          <span>Macro Map</span>
-        </button>
-      </div>
-
-      <!-- Semantic Capsules Toggle -->
-      <button
-        onclick={() => {
-          autoCapsule = !autoCapsule;
-          scheduleRender();
-        }}
-        class="px-2 py-0.5 rounded-md border text-[11px] flex items-center gap-1.5 shadow-xs transition-all cursor-pointer {autoCapsule ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700/60 text-emerald-700 dark:text-emerald-300 font-semibold' : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500'}"
-        title="Tự động nén các chuỗi commit phụ thành viên nang [+N commits]"
-      >
-        <Sparkles class="w-3 h-3 {autoCapsule ? 'text-emerald-500' : 'text-zinc-400'}" />
-        <span>Capsules {autoCapsule ? 'ON' : 'OFF'}</span>
-      </button>
-    </div>
-  </div>
+  <GraphHeaderControls
+    displayCount={displayCommits.length}
+    totalCount={commits.length}
+    lockedLane={lockedLane}
+    bind:viewMode
+    bind:autoCapsule
+    onUnlockLane={() => {
+      lockedLane = null;
+      scheduleRender();
+    }}
+    onToggleViewMode={(mode) => {
+      viewMode = mode;
+      scheduleRender();
+    }}
+    onToggleAutoCapsule={() => {
+      autoCapsule = !autoCapsule;
+      scheduleRender();
+    }}
+  />
 
   <!-- Canvas Container -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions, a11y_no_noninteractive_tabindex -->
@@ -828,84 +688,19 @@
   {/if}
 
   <!-- Multi-commit Floating Action Dock -->
-  {#if activeSelectedIds.length >= 2}
-    <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
-    <div
-      class="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 bg-white/95 dark:bg-zinc-900/95 border border-zinc-200 dark:border-zinc-700/80 backdrop-blur-md shadow-2xl rounded-2xl px-4 py-2 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-3 duration-150 select-none pointer-events-auto text-zinc-900 dark:text-zinc-100"
-      onclick={(e) => e.stopPropagation()}
-    >
-      <div class="flex items-center gap-2 text-xs font-mono">
-        <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
-        <span class="text-zinc-800 dark:text-zinc-200 font-semibold"
-          >{activeSelectedIds.length} commits selected</span
-        >
-      </div>
-
-      <div class="h-4 w-px bg-zinc-200 dark:bg-zinc-700"></div>
-
-      {#if onSquashCommits}
-        <button
-          onclick={() => {
-            const selectedCommits = commits.filter((c) =>
-              activeSelectedIds.includes(c.id),
-            );
-            if (selectedCommits.length >= 2) onSquashCommits(selectedCommits);
-          }}
-          class="px-2.5 py-1 rounded-lg text-xs bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-600/50 text-amber-800 dark:text-amber-300 font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102"
-          title="Gộp các commit được chọn thành 1 (S)"
-        >
-          <Layers class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-          <span>Squash (S)</span>
-        </button>
-      {/if}
-
-      {#if onCompareCommits}
-        <button
-          onclick={() => {
-            const c1 = commits.find((c) => c.id === activeSelectedIds[0]);
-            const c2 = commits.find(
-              (c) => c.id === activeSelectedIds[activeSelectedIds.length - 1],
-            );
-            if (c1 && c2) onCompareCommits(c1, c2);
-          }}
-          class="px-2.5 py-1 rounded-lg text-xs bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-cyan-700 dark:text-cyan-300 font-medium flex items-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102 border border-zinc-200 dark:border-transparent"
-          title="So sánh thay đổi giữa 2 đầu commit"
-        >
-          <GitCompare class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-          <span>Compare Commits</span>
-        </button>
-      {/if}
-
-      <button
-        onclick={() => {
-          navigator.clipboard.writeText(activeSelectedIds.join("\n"));
-          toast.success(
-            "Copied SHAs",
-            `Đã sao chép ${activeSelectedIds.length} mã commit SHA vào clipboard.`,
-          );
-        }}
-        class="px-2.5 py-1 rounded-lg text-xs bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-medium flex items-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102 border border-zinc-200 dark:border-transparent"
-        title="Sao chép toàn bộ commit hashes"
-      >
-        <Copy class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-        <span>Copy SHAs</span>
-      </button>
-
-      <button
-        onclick={() => {
-          if (onSelectMultipleCommits) onSelectMultipleCommits([]);
-          else if (selectedCommitId)
-            onSelectCommit(
-              commits.find((c) => c.id === selectedCommitId) || commits[0],
-            );
-        }}
-        class="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-        title="Bỏ chọn (Esc)"
-      >
-        <X class="w-3.5 h-3.5" />
-      </button>
-    </div>
-  {/if}
+  <GraphFloatingDock
+    {activeSelectedIds}
+    {commits}
+    {onSquashCommits}
+    {onCompareCommits}
+    onDeselect={() => {
+      if (onSelectMultipleCommits) onSelectMultipleCommits([]);
+      else if (selectedCommitId)
+        onSelectCommit(
+          commits.find((c) => c.id === selectedCommitId) || commits[0],
+        );
+    }}
+  />
 
   {#if commits.length === 0}
     <div

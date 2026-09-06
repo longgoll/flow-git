@@ -14,15 +14,7 @@
   import RepositoryExplorer from "./lib/components/RepositoryExplorer.svelte";
   import StatusBar from "./lib/components/StatusBar.svelte";
   import ModalsContainer from "./lib/components/ModalsContainer.svelte";
-  import CreateBranchModal from "./lib/components/CreateBranchModal.svelte";
-  import QuickHotfixModal from "./lib/components/QuickHotfixModal.svelte";
   import PullRequestReviewer from "./lib/components/PullRequestReviewer.svelte";
-  import CreatePullRequestModal from "./lib/components/CreatePullRequestModal.svelte";
-  import NukeHistoryModal from "./lib/components/NukeHistoryModal.svelte";
-  import RemoteManagerModal from "./lib/components/RemoteManagerModal.svelte";
-  import InteractiveRebaseModal from "./lib/components/InteractiveRebaseModal.svelte";
-  import IdentitySwitcherModal from "./lib/components/IdentitySwitcherModal.svelte";
-  import GitPlaybookModal from "./lib/components/GitPlaybookModal.svelte";
   import RepoAlertBanner from "./lib/components/RepoAlertBanner.svelte";
   import RecentPushBanner from "./lib/components/RecentPushBanner.svelte";
   import ToastContainer from "./lib/components/ToastContainer.svelte";
@@ -1722,117 +1714,75 @@
     {isCleanMergedLoading}
     onCloseCleanMerged={() => (showCleanMergedModal = false)}
     onConfirmCleanMerged={handleConfirmCleanMerged}
+    {showCreateBranchModal}
+    {createBranchBaseRef}
+    currentBranchName={repo.repoSummary?.current_branch || "main"}
+    onConfirmCreateBranch={handleConfirmCreateBranch}
+    onCloseCreateBranch={() => {
+      showCreateBranchModal = false;
+      createBranchBaseRef = "";
+    }}
+    {showQuickHotfixModal}
+    dirtyFilesCount={wt.workingTreeStatus?.total_dirty_count || 0}
+    onStartQuickHotfix={handleStartQuickHotfix}
+    onCloseQuickHotfix={() => (showQuickHotfixModal = false)}
+    {showNukeModal}
+    {nukeTargetFilePath}
+    onConfirmNukeFile={handleConfirmNukeFile}
+    onCloseNukeModal={() => (showNukeModal = false)}
+    {showRemoteManagerModal}
+    onCloseRemoteManager={() => (showRemoteManagerModal = false)}
+    onRemotesChanged={async () => {
+      if (repo.currentRepoPath) {
+        await loadRepository(repo.currentRepoPath);
+        await loadRemotesList(repo.currentRepoPath);
+      }
+    }}
+    {showInteractiveRebaseModal}
+    {interactiveRebaseOntoCommit}
+    onCloseInteractiveRebase={() => {
+      showInteractiveRebaseModal = false;
+      interactiveRebaseOntoCommit = null;
+    }}
+    onInteractiveRebaseSuccess={async (res) => {
+      if (res.status === "completed") {
+        await loadRepository(repo.currentRepoPath);
+      } else if (res.status === "conflict") {
+        safety.isRebasing = true;
+        await safety.loadConflictFiles(repo.currentRepoPath);
+        viewMode = "conflict";
+      }
+    }}
+    {showIdentityModal}
+    onCloseIdentityModal={() => (showIdentityModal = false)}
+    onIdentityChanged={async () => {
+      if (repo.currentRepoPath) {
+        await loadIdentity(repo.currentRepoPath);
+      }
+    }}
+    {showPlaybookModal}
+    onClosePlaybookModal={() => (showPlaybookModal = false)}
+    onPlaybookOpenTrash={() => safety.openTrash(repo.currentRepoPath)}
+    onPlaybookOpenTimeMachine={() => safety.openTimeMachine(repo.currentRepoPath)}
+    onRepoRefreshed={async () => {
+      if (repo.currentRepoPath) {
+        await loadRepository(repo.currentRepoPath);
+      }
+    }}
+    {showCreatePRModal}
+    {originRemoteUrl}
+    {createPRSourceBranch}
+    onCloseCreatePR={() => (showCreatePRModal = false)}
+    onCreatePRSuccess={async () => {
+      showCreatePRModal = false;
+      recentPushedBranch = null;
+      viewMode = "pr";
+      if (repo.currentRepoPath) {
+        await loadRepository(repo.currentRepoPath);
+      }
+    }}
   />
 </div>
-
-<!-- Create Branch Modal -->
-<CreateBranchModal
-  open={showCreateBranchModal}
-  branches={repo.branches}
-  currentBranch={createBranchBaseRef ||
-    repo.repoSummary?.current_branch ||
-    "main"}
-  onConfirm={handleConfirmCreateBranch}
-  onClose={() => {
-    showCreateBranchModal = false;
-    createBranchBaseRef = "";
-  }}
-/>
-
-<!-- Quick Hotfix Modal -->
-<QuickHotfixModal
-  isOpen={showQuickHotfixModal}
-  currentBranch={repo.repoSummary?.current_branch || ""}
-  dirtyFilesCount={wt.workingTreeStatus?.total_dirty_count || 0}
-  branches={repo.branches}
-  onStartHotfix={handleStartQuickHotfix}
-  onClose={() => (showQuickHotfixModal = false)}
-/>
-
-<!-- Nuke File from History Modal -->
-<NukeHistoryModal
-  isOpen={showNukeModal}
-  filePath={nukeTargetFilePath}
-  onConfirm={handleConfirmNukeFile}
-  onClose={() => (showNukeModal = false)}
-/>
-
-<!-- Multi-Remote Management Modal -->
-<RemoteManagerModal
-  isOpen={showRemoteManagerModal}
-  repoPath={repo.currentRepoPath}
-  onClose={() => (showRemoteManagerModal = false)}
-  onRemotesChanged={async () => {
-    if (repo.currentRepoPath) {
-      await loadRepository(repo.currentRepoPath);
-      await loadRemotesList(repo.currentRepoPath);
-    }
-  }}
-/>
-
-<!-- Interactive Rebase Modal -->
-<InteractiveRebaseModal
-  isOpen={showInteractiveRebaseModal}
-  repoPath={repo.currentRepoPath}
-  ontoCommit={interactiveRebaseOntoCommit}
-  onClose={() => {
-    showInteractiveRebaseModal = false;
-    interactiveRebaseOntoCommit = null;
-  }}
-  onSuccess={async (res) => {
-    if (res.status === "completed") {
-      await loadRepository(repo.currentRepoPath);
-    } else if (res.status === "conflict") {
-      safety.isRebasing = true;
-      await safety.loadConflictFiles(repo.currentRepoPath);
-      viewMode = "conflict";
-    }
-  }}
-/>
-
-<!-- Git Identity Profile Switcher Modal -->
-<IdentitySwitcherModal
-  isOpen={showIdentityModal}
-  repoPath={repo.currentRepoPath}
-  onClose={() => (showIdentityModal = false)}
-  onIdentityChanged={async () => {
-    if (repo.currentRepoPath) {
-      await loadIdentity(repo.currentRepoPath);
-    }
-  }}
-/>
-
-<!-- Git Emergency Playbook Recipes Modal -->
-<GitPlaybookModal
-  isOpen={showPlaybookModal}
-  repoPath={repo.currentRepoPath}
-  currentBranch={repo.repoSummary?.current_branch || ''}
-  onClose={() => (showPlaybookModal = false)}
-  onOpenTrash={() => safety.openTrash(repo.currentRepoPath)}
-  onOpenTimeMachine={() => safety.openTimeMachine(repo.currentRepoPath)}
-  onRepoRefreshed={async () => {
-    if (repo.currentRepoPath) {
-      await loadRepository(repo.currentRepoPath);
-    }
-  }}
-/>
-
-<!-- Create Pull Request Modal -->
-<CreatePullRequestModal
-  isOpen={showCreatePRModal}
-  remoteOriginUrl={originRemoteUrl}
-  branches={repo.branches}
-  initialSourceBranch={createPRSourceBranch}
-  onClose={() => (showCreatePRModal = false)}
-  onSuccess={async () => {
-    showCreatePRModal = false;
-    recentPushedBranch = null;
-    viewMode = "pr";
-    if (repo.currentRepoPath) {
-      await loadRepository(repo.currentRepoPath);
-    }
-  }}
-/>
 
 <!-- Floating Interactive Toast Notifications -->
 <ToastContainer />

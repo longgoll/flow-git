@@ -18,6 +18,14 @@
   import InitRepoDialog from './InitRepoDialog.svelte';
   import PublishRepoModal from './PublishRepoModal.svelte';
   import WorktreeManager from './WorktreeManager.svelte';
+  import CreateBranchModal from './CreateBranchModal.svelte';
+  import QuickHotfixModal from './QuickHotfixModal.svelte';
+  import NukeHistoryModal from './NukeHistoryModal.svelte';
+  import RemoteManagerModal from './RemoteManagerModal.svelte';
+  import InteractiveRebaseModal from './InteractiveRebaseModal.svelte';
+  import IdentitySwitcherModal from './IdentitySwitcherModal.svelte';
+  import GitPlaybookModal from './GitPlaybookModal.svelte';
+  import CreatePullRequestModal from './CreatePullRequestModal.svelte';
   import type {
     AccountProfile,
     ActionRecord,
@@ -183,6 +191,55 @@
     isCleanMergedLoading?: boolean;
     onCloseCleanMerged?: () => void;
     onConfirmCleanMerged?: (branchesToDelete: string[]) => Promise<void>;
+
+    // Create Branch Modal
+    showCreateBranchModal?: boolean;
+    createBranchBaseRef?: string;
+    currentBranchName?: string;
+    onConfirmCreateBranch?: (name: string, targetRef: string, checkout: boolean) => Promise<void>;
+    onCloseCreateBranch?: () => void;
+
+    // Quick Hotfix Modal
+    showQuickHotfixModal?: boolean;
+    dirtyFilesCount?: number;
+    onStartQuickHotfix?: (hotfixBranchName: string, baseBranch: string) => Promise<void> | void;
+    onCloseQuickHotfix?: () => void;
+
+    // Nuke History Modal
+    showNukeModal?: boolean;
+    nukeTargetFilePath?: string;
+    onConfirmNukeFile?: (path: string) => Promise<void>;
+    onCloseNukeModal?: () => void;
+
+    // Remote Manager Modal
+    showRemoteManagerModal?: boolean;
+    onCloseRemoteManager?: () => void;
+    onRemotesChanged?: () => Promise<void>;
+
+    // Interactive Rebase Modal
+    showInteractiveRebaseModal?: boolean;
+    interactiveRebaseOntoCommit?: CommitNode | null;
+    onCloseInteractiveRebase?: () => void;
+    onInteractiveRebaseSuccess?: (res: { status: string }) => Promise<void>;
+
+    // Identity Switcher Modal
+    showIdentityModal?: boolean;
+    onCloseIdentityModal?: () => void;
+    onIdentityChanged?: () => Promise<void>;
+
+    // Git Playbook Recipes Modal
+    showPlaybookModal?: boolean;
+    onClosePlaybookModal?: () => void;
+    onPlaybookOpenTrash?: () => void;
+    onPlaybookOpenTimeMachine?: () => void;
+    onRepoRefreshed?: () => Promise<void>;
+
+    // Create Pull Request Modal
+    showCreatePRModal?: boolean;
+    originRemoteUrl?: string | null;
+    createPRSourceBranch?: string | null;
+    onCloseCreatePR?: () => void;
+    onCreatePRSuccess?: (newPR?: any) => Promise<void> | void;
   }
 
   let {
@@ -298,6 +355,39 @@
     isCleanMergedLoading = false,
     onCloseCleanMerged,
     onConfirmCleanMerged,
+    showCreateBranchModal = false,
+    createBranchBaseRef = '',
+    currentBranchName = 'main',
+    onConfirmCreateBranch,
+    onCloseCreateBranch,
+    showQuickHotfixModal = false,
+    dirtyFilesCount = 0,
+    onStartQuickHotfix,
+    onCloseQuickHotfix,
+    showNukeModal = false,
+    nukeTargetFilePath = '',
+    onConfirmNukeFile,
+    onCloseNukeModal,
+    showRemoteManagerModal = false,
+    onCloseRemoteManager,
+    onRemotesChanged,
+    showInteractiveRebaseModal = false,
+    interactiveRebaseOntoCommit = null,
+    onCloseInteractiveRebase,
+    onInteractiveRebaseSuccess,
+    showIdentityModal = false,
+    onCloseIdentityModal,
+    onIdentityChanged,
+    showPlaybookModal = false,
+    onClosePlaybookModal,
+    onPlaybookOpenTrash,
+    onPlaybookOpenTimeMachine,
+    onRepoRefreshed,
+    showCreatePRModal = false,
+    originRemoteUrl = '',
+    createPRSourceBranch = '',
+    onCloseCreatePR,
+    onCreatePRSuccess,
   }: Props = $props();
 </script>
 
@@ -539,4 +629,85 @@
   {activeAccount}
   onSuccess={onPublishSuccess}
   onClose={onClosePublish}
+/>
+
+<!-- Create Branch Modal -->
+{#if showCreateBranchModal}
+  <CreateBranchModal
+    open={showCreateBranchModal}
+    {branches}
+    currentBranch={createBranchBaseRef || currentBranchName || "main"}
+    onConfirm={async (name, targetRef, checkout) => {
+      if (onConfirmCreateBranch) await onConfirmCreateBranch(name, targetRef, checkout);
+    }}
+    onClose={() => onCloseCreateBranch?.()}
+  />
+{/if}
+
+<!-- Quick Hotfix Modal -->
+<QuickHotfixModal
+  isOpen={showQuickHotfixModal}
+  currentBranch={currentBranchName || ""}
+  {dirtyFilesCount}
+  {branches}
+  onStartHotfix={async (name, base) => {
+    if (onStartQuickHotfix) await onStartQuickHotfix(name, base);
+  }}
+  onClose={() => onCloseQuickHotfix?.()}
+/>
+
+<!-- Nuke File from History Modal -->
+<NukeHistoryModal
+  isOpen={showNukeModal}
+  filePath={nukeTargetFilePath}
+  onConfirm={async (path) => {
+    if (onConfirmNukeFile) await onConfirmNukeFile(path);
+  }}
+  onClose={() => onCloseNukeModal?.()}
+/>
+
+<!-- Multi-Remote Management Modal -->
+<RemoteManagerModal
+  isOpen={showRemoteManagerModal}
+  repoPath={currentRepoPath}
+  onClose={() => onCloseRemoteManager?.()}
+  onRemotesChanged={onRemotesChanged}
+/>
+
+<!-- Interactive Rebase Modal -->
+<InteractiveRebaseModal
+  isOpen={showInteractiveRebaseModal}
+  repoPath={currentRepoPath}
+  ontoCommit={interactiveRebaseOntoCommit}
+  onClose={() => onCloseInteractiveRebase?.()}
+  onSuccess={onInteractiveRebaseSuccess}
+/>
+
+<!-- Git Identity Profile Switcher Modal -->
+<IdentitySwitcherModal
+  isOpen={showIdentityModal}
+  repoPath={currentRepoPath}
+  onClose={() => onCloseIdentityModal?.()}
+  onIdentityChanged={onIdentityChanged}
+/>
+
+<!-- Git Emergency Playbook Recipes Modal -->
+<GitPlaybookModal
+  isOpen={showPlaybookModal}
+  repoPath={currentRepoPath}
+  currentBranch={currentBranchName || ""}
+  onClose={() => onClosePlaybookModal?.()}
+  onOpenTrash={() => onPlaybookOpenTrash?.()}
+  onOpenTimeMachine={() => onPlaybookOpenTimeMachine?.()}
+  onRepoRefreshed={onRepoRefreshed}
+/>
+
+<!-- Create Pull Request Modal -->
+<CreatePullRequestModal
+  isOpen={showCreatePRModal}
+  remoteOriginUrl={originRemoteUrl}
+  {branches}
+  initialSourceBranch={createPRSourceBranch || ''}
+  onClose={() => onCloseCreatePR?.()}
+  onSuccess={(newPR) => onCreatePRSuccess?.(newPR)}
 />

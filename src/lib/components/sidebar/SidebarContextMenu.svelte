@@ -13,6 +13,7 @@
     Plus,
   } from 'lucide-svelte';
   import type { BranchInfo, RepoSummary } from '../../types';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     activeBranchMenu: { branch: BranchInfo; x: number; y: number } | null;
@@ -66,7 +67,7 @@
           <span class="truncate">{activeBranchMenu.branch.shorthand}</span>
         </div>
         <div class="text-[10px] text-zinc-500 truncate mt-0.5">
-          {activeBranchMenu.branch.upstream_name ? `Tracks: ${activeBranchMenu.branch.upstream_name}` : 'Local only (Chưa có trên remote)'}
+          {activeBranchMenu.branch.upstream_name ? `Tracks: ${activeBranchMenu.branch.upstream_name}` : localeState.t('sidebar.localOnly')}
         </div>
       </div>
 
@@ -81,7 +82,7 @@
             class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer text-left"
           >
             <Check class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-            <span>Checkout nhánh này</span>
+            <span>{localeState.t('sidebar.checkoutBranch')}</span>
           </button>
         {/if}
 
@@ -93,7 +94,7 @@
               if (b) onRebaseBranch(b);
             }}
             class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-amber-50 dark:hover:bg-amber-950/60 text-amber-800 dark:text-amber-300 hover:text-amber-950 dark:hover:text-amber-100 transition-colors cursor-pointer text-left font-medium"
-            title="Rebase nhánh hiện tại ({repoSummary?.current_branch}) lên {activeBranchMenu.branch.shorthand}"
+            title={`Rebase HEAD (${repoSummary?.current_branch}) onto ${activeBranchMenu.branch.shorthand}`}
           >
             <GitFork class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
             <span class="truncate">Rebase HEAD onto {activeBranchMenu.branch.shorthand}</span>
@@ -112,7 +113,7 @@
             class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-cyan-50 dark:hover:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 hover:text-cyan-950 dark:hover:text-cyan-100 transition-colors cursor-pointer text-left font-medium"
           >
             <CloudUpload class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-            <span>Publish lên remote (origin)</span>
+            <span>{localeState.t('sidebar.publishToRemote')}</span>
           </button>
         {/if}
       {:else}
@@ -125,11 +126,11 @@
             }}
             disabled={activeBranchMenu.branch.ahead_count === 0}
             class="w-full flex items-center justify-between px-2 py-1.5 rounded-md transition-colors text-left {activeBranchMenu.branch.ahead_count > 0 ? 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white cursor-pointer' : 'text-zinc-400 dark:text-zinc-600 cursor-not-allowed opacity-50'}"
-            title={activeBranchMenu.branch.ahead_count > 0 ? `Push ${activeBranchMenu.branch.ahead_count} commit mới` : 'Đã đồng bộ mới nhất (0 commit ahead)'}
+            title={activeBranchMenu.branch.ahead_count > 0 ? `Push +${activeBranchMenu.branch.ahead_count}` : 'Up to date'}
           >
             <div class="flex items-center gap-2">
               <Upload class="w-3.5 h-3.5 {activeBranchMenu.branch.ahead_count > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400 dark:text-zinc-600'}" />
-              <span>Push lên {activeBranchMenu.branch.upstream_name}</span>
+              <span>{localeState.t('sidebar.pushToRemote', { name: activeBranchMenu.branch.upstream_name })}</span>
             </div>
             {#if activeBranchMenu.branch.ahead_count > 0}
               <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">+{activeBranchMenu.branch.ahead_count}</span>
@@ -146,7 +147,7 @@
             class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-amber-50 dark:hover:bg-amber-950/50 text-amber-800 dark:text-amber-300 hover:text-amber-950 dark:hover:text-amber-200 transition-colors cursor-pointer text-left"
           >
             <Upload class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-            <span>Force Push (--force-with-lease)</span>
+            <span>{localeState.t('sidebar.forcePushToRemote', { name: activeBranchMenu.branch.upstream_name })}</span>
           </button>
         {/if}
         {#if onFetchBranch}
@@ -159,7 +160,7 @@
             class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer text-left"
           >
             <RefreshCw class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-            <span>Fetch & Đồng bộ</span>
+            <span>{localeState.t('sidebar.fetchFromRemote', { name: activeBranchMenu.branch.upstream_name })}</span>
           </button>
         {/if}
       {/if}
@@ -174,7 +175,7 @@
           class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-violet-50 dark:hover:bg-violet-950/60 text-violet-800 dark:text-violet-300 hover:text-violet-950 dark:hover:text-violet-100 transition-colors cursor-pointer text-left font-medium"
         >
           <GitPullRequest class="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
-          <span>Tạo Pull Request...</span>
+          <span>{localeState.t('sidebar.createPr')}</span>
         </button>
       {/if}
 
@@ -188,7 +189,7 @@
           class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer text-left"
         >
           <Plus class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-          <span>Tạo nhánh mới từ đây...</span>
+          <span>{localeState.t('sidebar.createBranchFromHere')}</span>
         </button>
       {/if}
 
@@ -202,7 +203,7 @@
           class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer text-left"
         >
           <Edit3 class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-          <span>Đổi tên nhánh (Rename)</span>
+          <span>{localeState.t('sidebar.renameBranch')}</span>
         </button>
       {/if}
 
@@ -215,7 +216,7 @@
         class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer text-left"
       >
         <Copy class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-        <span>Sao chép tên nhánh</span>
+        <span>{localeState.t('sidebar.copyBranchName')}</span>
       </button>
 
       {#if !activeBranchMenu.branch.is_head && onDeleteBranch}
@@ -229,7 +230,7 @@
           class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-200 transition-colors cursor-pointer text-left"
         >
           <Trash2 class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
-          <span>Xóa nhánh này{isProtectedBranch(activeBranchMenu.branch) ? ' (Nhánh cốt lõi)' : ''}</span>
+          <span>{localeState.t('sidebar.deleteBranch')}{isProtectedBranch(activeBranchMenu.branch) ? ' (Protected)' : ''}</span>
         </button>
       {/if}
     </div>

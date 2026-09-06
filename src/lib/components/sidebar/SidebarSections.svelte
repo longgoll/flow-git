@@ -13,6 +13,7 @@
     Settings,
   } from 'lucide-svelte';
   import type { RemoteInfo, StashInfo, TagInfo, WorktreeInfo } from '../../types';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     worktrees?: WorktreeInfo[];
@@ -58,7 +59,7 @@
     >
       <div class="flex items-center gap-1.5">
         <FolderGit2 class="w-3.5 h-3.5 text-zinc-400" />
-        <span>Worktrees</span>
+        <span>{localeState.t('sidebar.worktrees')}</span>
         <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({worktrees.length})</span>
       </div>
       {#if showWorktrees}
@@ -77,7 +78,7 @@
               else if (onOpenWorktrees) onOpenWorktrees();
             }}
             class="w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs transition-colors cursor-pointer text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-zinc-900/80 hover:text-zinc-950 dark:hover:text-white group"
-            title="Mở Worktree '{wt.name}' ({wt.path})"
+            title={`Worktree '${wt.name}' (${wt.path})`}
           >
             <div class="flex items-center gap-2 truncate pr-1">
               <span class="w-1.5 h-1.5 rounded-full {wt.is_main ? 'bg-cyan-500 dark:bg-cyan-400' : 'bg-purple-500 dark:bg-purple-400'} shrink-0"></span>
@@ -101,7 +102,7 @@
       class="flex items-center gap-1.5 cursor-pointer flex-1 text-left"
     >
       <Globe class="w-3.5 h-3.5 text-zinc-400" />
-      <span>Remotes</span>
+      <span>{localeState.t('sidebar.remotes')}</span>
       <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({remotes.length})</span>
     </button>
     <div class="flex items-center gap-1">
@@ -185,7 +186,7 @@
   >
     <div class="flex items-center gap-1.5">
       <Tag class="w-3.5 h-3.5 text-zinc-400" />
-      <span>Tags</span>
+      <span>{localeState.t('sidebar.tags')}</span>
       <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({tags.length})</span>
     </div>
     {#if showTags}
@@ -207,7 +208,7 @@
             <button
               onclick={(e) => { e.stopPropagation(); onDeleteTag(tag.name); }}
               class="opacity-0 group-hover:opacity-100 p-0.5 rounded text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all cursor-pointer"
-              title="Xóa Tag {tag.name}"
+              title={`Delete Tag ${tag.name}`}
             >
               <Trash2 class="w-3 h-3" />
             </button>
@@ -215,7 +216,7 @@
         </div>
       {/each}
       {#if tags.length === 0}
-        <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">No tags</div>
+        <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">{localeState.t('sidebar.noTagsFound')}</div>
       {/if}
     </div>
   {/if}
@@ -229,7 +230,7 @@
   >
     <div class="flex items-center gap-1.5">
       <Archive class="w-3.5 h-3.5 text-zinc-400" />
-      <span>Stashes</span>
+      <span>{localeState.t('sidebar.stashes')}</span>
       <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({stashes.length})</span>
     </div>
     {#if showStashes}
@@ -248,7 +249,7 @@
         </div>
       {/each}
       {#if stashes.length === 0}
-        <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">No stashes</div>
+        <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">{localeState.t('sidebar.noStashesFound')}</div>
       {/if}
     </div>
   {/if}

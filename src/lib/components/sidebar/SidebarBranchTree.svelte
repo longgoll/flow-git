@@ -18,6 +18,7 @@
     X as CloseIcon,
   } from 'lucide-svelte';
   import type { BranchInfo } from '../../types';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     branches: BranchInfo[];
@@ -75,7 +76,7 @@
       class="flex items-center gap-1.5 cursor-pointer flex-1 text-left"
     >
       <GitBranch class="w-3.5 h-3.5 text-zinc-400" />
-      <span>Local Branches</span>
+      <span>{localeState.t('sidebar.localBranches')}</span>
       <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({localBranches.length})</span>
     </button>
     <div class="flex items-center gap-1">
@@ -83,7 +84,7 @@
         <button
           onclick={(e) => { e.stopPropagation(); onCreateBranch(); }}
           class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-cyan-600 dark:hover:text-cyan-300 transition-colors cursor-pointer"
-          title="Tạo nhánh mới (New Branch)"
+          title={localeState.t('sidebar.createBranch')}
         >
           <Plus class="w-3 h-3" />
         </button>
@@ -92,7 +93,7 @@
         <button
           onclick={(e) => { e.stopPropagation(); onFetchPrune(); }}
           class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-cyan-600 dark:hover:text-cyan-300 transition-colors cursor-pointer"
-          title="Fetch & Đồng bộ tất cả nhánh"
+          title={localeState.t('sidebar.fetchPruneAll')}
         >
           <RefreshCw class="w-3 h-3" />
         </button>
@@ -101,7 +102,7 @@
         <button
           onclick={(e) => { e.stopPropagation(); onCleanMergedBranches(); }}
           class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-          title="Dọn dẹp các nhánh đã merge (Clean Merged Branches)"
+          title={localeState.t('sidebar.cleanMergedBranches')}
         >
           <Trash2 class="w-3 h-3" />
         </button>
@@ -288,7 +289,7 @@
       class="flex items-center gap-1.5 cursor-pointer flex-1 text-left"
     >
       <Globe class="w-3.5 h-3.5 text-zinc-400" />
-      <span>Remote Branches</span>
+      <span>{localeState.t('sidebar.remoteBranches')}</span>
       <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({remoteBranches.length})</span>
     </button>
     <div class="flex items-center gap-1">

@@ -26,373 +26,93 @@
   import IdentitySwitcherModal from './IdentitySwitcherModal.svelte';
   import GitPlaybookModal from './GitPlaybookModal.svelte';
   import CreatePullRequestModal from './CreatePullRequestModal.svelte';
+  import { toast } from '../state/toastState.svelte';
+  import type { ModalState } from '../state/modalState.svelte';
+  import type { RepoState } from '../state/repoState.svelte';
+  import type { WorkingTreeState } from '../state/workingTreeState.svelte';
+  import type { GitSafetyState } from '../state/gitSafetyState.svelte';
+  import type { RemoteState } from '../state/remoteState.svelte';
+  import type { WorkspaceTabState } from '../state/workspaceTabState.svelte';
   import type {
-    AccountProfile,
-    ActionRecord,
-    BisectStatus,
     BranchInfo,
     CommitNode,
-    ConflictFileDetail,
-    ConflictSimulationResult,
-    GitCredentials,
-    TagInfo,
-    TrashSnapshotItem,
     ViewMode,
     WorktreeInfo,
   } from '../types';
 
   interface Props {
-    // Current Repo
-    currentRepoPath: string;
+    modalState: ModalState;
+    repo: RepoState;
+    wt: WorkingTreeState;
+    safety: GitSafetyState;
+    remote: RemoteState;
+    tabState: WorkspaceTabState;
+    originRemoteUrl: string | null;
 
-    // Open Repo Dialog State
-    showOpenDialog: boolean;
-    inputRepoPath: string;
-    onCloseOpenDialog: () => void;
-    onConfirmManualOpen: () => void;
-
-    // Drop Action Modal
-    showDropActionModal: boolean;
-    dropSourceCommit: CommitNode | null;
-    dropTargetCommit: CommitNode | null;
-    dropSimulation: ConflictSimulationResult | null;
-    dropModalPosition: { x: number; y: number };
-    onCherryPickDrop: (source: CommitNode, target: CommitNode) => Promise<void>;
-    onMergeDrop: (source: CommitNode, target: CommitNode) => Promise<void>;
-    onRebaseDrop?: (source: CommitNode, target: CommitNode) => Promise<void>;
-    onCloseDropAction: () => void;
-
-    // Worktree Manager
-    showWorktreeModal: boolean;
-    worktrees: WorktreeInfo[];
-    branches: BranchInfo[];
-    isWorktreeLoading: boolean;
-    onCloseWorktree: () => void;
-    onCreateWorktree: (name: string, targetPath: string, branchName?: string) => Promise<void>;
-    onDeleteWorktree: (name: string) => Promise<void>;
-    onOpenWorktreeFolder: (path: string) => void;
-
-    // Trash Inspector
-    showTrashModal: boolean;
-    trashSnapshots: TrashSnapshotItem[];
-    isTrashLoading: boolean;
-    onCloseTrash: () => void;
-    onRestoreTrash: (snapshotId: number) => Promise<void>;
-    onDeleteTrash: (snapshotId: number) => Promise<void>;
-
-    // Bisect Wizard
-    showBisectModal: boolean;
-    bisectStatus: BisectStatus | null;
-    commits: CommitNode[];
-    isBisectLoading: boolean;
-    onStartBisect: (badId: string, goodId: string) => Promise<void>;
-    onBisectStep: (isGood: boolean) => Promise<void>;
-    onAbortBisect: () => Promise<void>;
-    onCloseBisect: () => void;
-
-    // Time Machine Drawer
-    showTimeMachineDrawer: boolean;
-    actionRecords: ActionRecord[];
-    isActionLoading: boolean;
-    onUndoAction: () => Promise<void>;
-    onRedoAction: () => Promise<void>;
-    onTimeTravel: (id: number) => Promise<void>;
-    onCloseTimeMachine: () => void;
-
-    // Command Palette
-    showCommandPalette: boolean;
-    tags: TagInfo[];
-    onSelectBranch: (branch: BranchInfo) => void;
+    // Operation handlers
+    loadRepository: (path: string) => Promise<void>;
+    refreshWorkingTreeAndDiff: () => Promise<void>;
     onChangeViewMode: (mode: ViewMode) => void;
-    onOpenTrash: () => void;
-    onOpenWorktreesModal: () => void;
-    onOpenBisect: () => void;
-    onOpenTimeMachine: () => void;
-    onOpenAI: () => void;
-    onSmartSync: () => void;
-    onStageAll: () => void;
-    onUnstageAll: () => void;
-    onDiscardAll: () => void;
-    onPush: () => void;
-    onPull: () => void;
-    onFetch: () => void;
-    onCloseCommandPalette: () => void;
-
-    // AI Assistant Modal
-    showAIModal: boolean;
-    aiDiffContext: string;
-    conflictDetail: ConflictFileDetail | null;
-    onApplyCommitMessage: (msg: string) => void;
-    onCloseAI: () => void;
-
-    // Submodules & LFS
-    showSubmoduleModal: boolean;
-    onCloseSubmodule: () => void;
-    showLfsModal: boolean;
-    onCloseLfs: () => void;
-
-    // Auth Credential Modal
-    showAuthModal: boolean;
-    authModalType: string;
-    authModalRemoteUrl: string;
-    onConfirmAuth: (creds: GitCredentials, profile?: AccountProfile) => void;
-    onCancelAuth: () => void;
-
-    // Delete Branch Modal
-    showDeleteBranchModal?: boolean;
-    deletingBranch?: BranchInfo | null;
-    isDeleteBranchLoading?: boolean;
-    onCloseDeleteBranch?: () => void;
-    onConfirmDeleteBranch?: (branch: BranchInfo, deleteOnRemoteServer?: boolean) => Promise<void>;
-
-    // Welcome Screen
-    showWelcomeScreen: boolean;
-    activeAccount: AccountProfile | null;
-    recentRepos: string[];
-    onSelectRepo: (path: string) => void;
-    onOpenAuthFromWelcome: () => void;
-    onCloseWelcome: () => void;
-
-    // Init Repo Dialog
-    showInitRepoModal?: boolean;
-    initRepoPath?: string;
-    onConfirmInitRepo?: (defaultBranch: string) => Promise<void> | void;
-    onCloseInitRepo?: () => void;
-
-    // Publish to GitHub Modal
-    showPublishModal?: boolean;
-    publishRepoPath?: string;
-    publishRepoName?: string;
-    publishCurrentBranch?: string;
-    onPublishSuccess?: () => void;
-    onClosePublish?: () => void;
-
-    // User Guide / Playbook
-    showGuideModal?: boolean;
-    onCloseGuide?: () => void;
-
-    // Create Tag Modal
-    showCreateTagModal?: boolean;
-    tagTargetCommit?: CommitNode | null;
-    isCreateTagLoading?: boolean;
-    onCloseCreateTag?: () => void;
-    onConfirmCreateTag?: (tagName: string, message?: string) => Promise<void>;
-
-    // Squash Commits Modal
-    showSquashModal?: boolean;
-    squashTargetCommits?: CommitNode[];
-    isSquashLoading?: boolean;
-    onCloseSquash?: () => void;
-    onConfirmSquash?: (commitIds: string[], message: string) => Promise<void>;
-
-    // Clean Merged Branches Modal
-    showCleanMergedModal?: boolean;
-    mergedBranches?: string[];
-    isCleanMergedLoading?: boolean;
-    onCloseCleanMerged?: () => void;
-    onConfirmCleanMerged?: (branchesToDelete: string[]) => Promise<void>;
-
-    // Create Branch Modal
-    showCreateBranchModal?: boolean;
-    createBranchBaseRef?: string;
-    currentBranchName?: string;
-    onConfirmCreateBranch?: (name: string, targetRef: string, checkout: boolean) => Promise<void>;
-    onCloseCreateBranch?: () => void;
-
-    // Quick Hotfix Modal
-    showQuickHotfixModal?: boolean;
-    dirtyFilesCount?: number;
-    onStartQuickHotfix?: (hotfixBranchName: string, baseBranch: string) => Promise<void> | void;
-    onCloseQuickHotfix?: () => void;
-
-    // Nuke History Modal
-    showNukeModal?: boolean;
-    nukeTargetFilePath?: string;
-    onConfirmNukeFile?: (path: string) => Promise<void>;
-    onCloseNukeModal?: () => void;
-
-    // Remote Manager Modal
-    showRemoteManagerModal?: boolean;
-    onCloseRemoteManager?: () => void;
-    onRemotesChanged?: () => Promise<void>;
-
-    // Interactive Rebase Modal
-    showInteractiveRebaseModal?: boolean;
-    interactiveRebaseOntoCommit?: CommitNode | null;
-    onCloseInteractiveRebase?: () => void;
-    onInteractiveRebaseSuccess?: (res: { status: string }) => Promise<void>;
-
-    // Identity Switcher Modal
-    showIdentityModal?: boolean;
-    onCloseIdentityModal?: () => void;
-    onIdentityChanged?: () => Promise<void>;
-
-    // Git Playbook Recipes Modal
-    showPlaybookModal?: boolean;
-    onClosePlaybookModal?: () => void;
-    onPlaybookOpenTrash?: () => void;
-    onPlaybookOpenTimeMachine?: () => void;
-    onRepoRefreshed?: () => Promise<void>;
-
-    // Create Pull Request Modal
-    showCreatePRModal?: boolean;
-    originRemoteUrl?: string | null;
-    createPRSourceBranch?: string | null;
-    onCloseCreatePR?: () => void;
-    onCreatePRSuccess?: (newPR?: any) => Promise<void> | void;
+    handleUndo: () => Promise<void>;
+    handleRedo: () => Promise<void>;
+    handlePushCurrentBranch: () => Promise<void>;
+    handleConfirmDeleteBranch: (branch: BranchInfo, deleteOnRemoteServer?: boolean) => Promise<void>;
+    handleConfirmCreateBranch: (name: string, targetRef: string, checkout: boolean) => Promise<void>;
+    handleConfirmCreateTag: (tagName: string, message?: string) => Promise<void>;
+    handleConfirmSquash: (commitIds: string[], message: string) => Promise<void>;
+    handleConfirmCleanMerged: (branchesToDelete: string[]) => Promise<void>;
+    handleStartQuickHotfix: (hotfixBranchName: string, baseBranch: string) => Promise<void>;
+    handleConfirmNukeFile: (filePath: string) => Promise<void>;
+    handleCherryPickDrop: (source: CommitNode, target: CommitNode) => Promise<void>;
+    handleMergeDrop: (source: CommitNode, target: CommitNode) => Promise<void>;
+    handleRebaseDrop: (source: CommitNode, target: CommitNode) => Promise<void>;
+    handleCreateWorktree: (name: string, targetPath: string, branchName?: string) => Promise<void>;
+    handleDeleteWorktree: (name: string) => Promise<void>;
+    handleSelectWorktree: (wtItem: WorktreeInfo) => Promise<void>;
+    handleConfirmInitRepo: (defaultBranch: string) => Promise<void>;
+    loadRemotesList: (path: string) => Promise<void>;
+    loadIdentity: (path: string) => Promise<void>;
+    handleOpenAI: () => void;
+    handleOpenWorktreesModal: () => void;
   }
 
   let {
-    currentRepoPath = '',
-    showOpenDialog = false,
-    inputRepoPath = $bindable(''),
-    onCloseOpenDialog,
-    onConfirmManualOpen,
-    showDropActionModal = false,
-    dropSourceCommit = null,
-    dropTargetCommit = null,
-    dropSimulation = null,
-    dropModalPosition = { x: 0, y: 0 },
-    onCherryPickDrop,
-    onMergeDrop,
-    onRebaseDrop,
-    onCloseDropAction,
-    showWorktreeModal = false,
-    worktrees = [],
-    branches = [],
-    isWorktreeLoading = false,
-    onCloseWorktree,
-    onCreateWorktree,
-    onDeleteWorktree,
-    onOpenWorktreeFolder,
-    showTrashModal = false,
-    trashSnapshots = [],
-    isTrashLoading = false,
-    onCloseTrash,
-    onRestoreTrash,
-    onDeleteTrash,
-    showBisectModal = false,
-    bisectStatus = null,
-    commits = [],
-    isBisectLoading = false,
-    onStartBisect,
-    onBisectStep,
-    onAbortBisect,
-    onCloseBisect,
-    showTimeMachineDrawer = false,
-    actionRecords = [],
-    isActionLoading = false,
-    onUndoAction,
-    onRedoAction,
-    onTimeTravel,
-    onCloseTimeMachine,
-    showCommandPalette = false,
-    tags = [],
-    onSelectBranch,
+    modalState,
+    repo,
+    wt,
+    safety,
+    remote,
+    tabState,
+    originRemoteUrl,
+    loadRepository,
+    refreshWorkingTreeAndDiff,
     onChangeViewMode,
-    onOpenTrash,
-    onOpenWorktreesModal,
-    onOpenBisect,
-    onOpenTimeMachine,
-    onOpenAI,
-    onSmartSync,
-    onStageAll,
-    onUnstageAll,
-    onDiscardAll,
-    onPush,
-    onPull,
-    onFetch,
-    onCloseCommandPalette,
-    showAIModal = false,
-    aiDiffContext = '',
-    conflictDetail = null,
-    onApplyCommitMessage,
-    onCloseAI,
-    showSubmoduleModal = false,
-    onCloseSubmodule,
-    showLfsModal = false,
-    onCloseLfs,
-    showAuthModal = false,
-    authModalType = 'token',
-    authModalRemoteUrl = 'origin',
-    onConfirmAuth,
-    onCancelAuth,
-    showDeleteBranchModal = false,
-    deletingBranch = null,
-    isDeleteBranchLoading = false,
-    onCloseDeleteBranch = () => {},
-    onConfirmDeleteBranch = async () => {},
-    showWelcomeScreen = false,
-    activeAccount = null,
-    recentRepos = [],
-    onSelectRepo,
-    onOpenAuthFromWelcome,
-    onCloseWelcome,
-    showInitRepoModal = false,
-    initRepoPath = '',
-    onConfirmInitRepo,
-    onCloseInitRepo,
-    showPublishModal = false,
-    publishRepoPath = '',
-    publishRepoName = '',
-    publishCurrentBranch = 'main',
-    onPublishSuccess = () => {},
-    onClosePublish = () => {},
-    showGuideModal = false,
-    onCloseGuide,
-    showCreateTagModal = false,
-    tagTargetCommit = null,
-    isCreateTagLoading = false,
-    onCloseCreateTag,
-    onConfirmCreateTag,
-    showSquashModal = false,
-    squashTargetCommits = [],
-    isSquashLoading = false,
-    onCloseSquash,
-    onConfirmSquash,
-    showCleanMergedModal = false,
-    mergedBranches = [],
-    isCleanMergedLoading = false,
-    onCloseCleanMerged,
-    onConfirmCleanMerged,
-    showCreateBranchModal = false,
-    createBranchBaseRef = '',
-    currentBranchName = 'main',
-    onConfirmCreateBranch,
-    onCloseCreateBranch,
-    showQuickHotfixModal = false,
-    dirtyFilesCount = 0,
-    onStartQuickHotfix,
-    onCloseQuickHotfix,
-    showNukeModal = false,
-    nukeTargetFilePath = '',
-    onConfirmNukeFile,
-    onCloseNukeModal,
-    showRemoteManagerModal = false,
-    onCloseRemoteManager,
-    onRemotesChanged,
-    showInteractiveRebaseModal = false,
-    interactiveRebaseOntoCommit = null,
-    onCloseInteractiveRebase,
-    onInteractiveRebaseSuccess,
-    showIdentityModal = false,
-    onCloseIdentityModal,
-    onIdentityChanged,
-    showPlaybookModal = false,
-    onClosePlaybookModal,
-    onPlaybookOpenTrash,
-    onPlaybookOpenTimeMachine,
-    onRepoRefreshed,
-    showCreatePRModal = false,
-    originRemoteUrl = '',
-    createPRSourceBranch = '',
-    onCloseCreatePR,
-    onCreatePRSuccess,
+    handleUndo,
+    handleRedo,
+    handlePushCurrentBranch,
+    handleConfirmDeleteBranch,
+    handleConfirmCreateBranch,
+    handleConfirmCreateTag,
+    handleConfirmSquash,
+    handleConfirmCleanMerged,
+    handleStartQuickHotfix,
+    handleConfirmNukeFile,
+    handleCherryPickDrop,
+    handleMergeDrop,
+    handleRebaseDrop,
+    handleCreateWorktree,
+    handleDeleteWorktree,
+    handleSelectWorktree,
+    handleConfirmInitRepo,
+    loadRemotesList,
+    loadIdentity,
+    handleOpenAI,
+    handleOpenWorktreesModal,
   }: Props = $props();
 </script>
 
 <!-- Open Repo Modal Dialog -->
-{#if showOpenDialog}
+{#if modalState.showOpenDialog}
   <div class="fixed inset-0 z-50 bg-black/50 dark:bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-2xl space-y-4">
       <div class="flex items-center justify-between">
@@ -401,7 +121,7 @@
           Open Git Repository
         </h3>
         <button
-          onclick={onCloseOpenDialog}
+          onclick={() => (modalState.showOpenDialog = false)}
           class="text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 text-sm cursor-pointer"
         >
           ✕
@@ -414,20 +134,26 @@
 
       <input
         type="text"
-        bind:value={inputRepoPath}
+        bind:value={modalState.inputRepoPath}
         placeholder="f:/Dev/product/git-tool"
         class="w-full bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs font-mono text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-cyan-500"
       />
 
       <div class="flex items-center justify-end gap-2 pt-2">
         <button
-          onclick={onCloseOpenDialog}
+          onclick={() => (modalState.showOpenDialog = false)}
           class="px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-transparent text-xs text-zinc-700 dark:text-zinc-300 cursor-pointer transition-colors"
         >
           Cancel
         </button>
         <button
-          onclick={onConfirmManualOpen}
+          onclick={async () => {
+            if (modalState.inputRepoPath.trim()) {
+              modalState.showOpenDialog = false;
+              const tab = tabState.openTab({ path: modalState.inputRepoPath.trim() });
+              await loadRepository(tab.path);
+            }
+          }}
           class="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-xs cursor-pointer shadow-lg shadow-cyan-600/30 transition-all"
         >
           Open Repo
@@ -439,277 +165,372 @@
 
 <!-- Drop Action Modal for Drag & Drop Execution -->
 <DropActionModal
-  isOpen={showDropActionModal}
-  sourceCommit={dropSourceCommit}
-  targetCommit={dropTargetCommit}
-  simulation={dropSimulation}
-  position={dropModalPosition}
-  onCherryPick={onCherryPickDrop}
-  onMerge={onMergeDrop}
-  onRebase={onRebaseDrop}
-  onCancel={onCloseDropAction}
+  isOpen={modalState.showDropActionModal}
+  sourceCommit={modalState.dropSourceCommit}
+  targetCommit={modalState.dropTargetCommit}
+  simulation={modalState.dropSimulation}
+  position={modalState.dropModalPosition}
+  onCherryPick={handleCherryPickDrop}
+  onMerge={handleMergeDrop}
+  onRebase={handleRebaseDrop}
+  onCancel={() => modalState.closeDropAction()}
 />
 
 <!-- Git Worktree Manager Modal -->
 <WorktreeManager
-  isOpen={showWorktreeModal}
-  {worktrees}
-  {branches}
-  isLoading={isWorktreeLoading}
-  onClose={onCloseWorktree}
-  onCreateWorktree={onCreateWorktree}
-  onDeleteWorktree={onDeleteWorktree}
-  onOpenWorktree={onOpenWorktreeFolder}
+  isOpen={modalState.showWorktreeModal}
+  worktrees={repo.worktrees}
+  branches={repo.branches}
+  isLoading={modalState.isWorktreeLoading}
+  onClose={() => (modalState.showWorktreeModal = false)}
+  onCreateWorktree={handleCreateWorktree}
+  onDeleteWorktree={handleDeleteWorktree}
+  onOpenWorktree={(p) => {
+    modalState.showWorktreeModal = false;
+    const wtItem = repo.worktrees.find((w) => w.path === p);
+    if (wtItem) {
+      handleSelectWorktree(wtItem);
+    } else {
+      const tab = tabState.openTab({ path: p, isWorktree: true });
+      loadRepository(tab.path);
+    }
+  }}
 />
 
 <!-- Safe Discard 48h Trash Inspector Modal -->
 <TrashInspector
-  isOpen={showTrashModal}
-  snapshots={trashSnapshots}
-  isLoading={isTrashLoading}
-  onClose={onCloseTrash}
-  onRestore={onRestoreTrash}
-  onDelete={onDeleteTrash}
+  isOpen={safety.showTrashModal}
+  snapshots={safety.trashSnapshots}
+  isLoading={safety.isTrashLoading}
+  onClose={() => (safety.showTrashModal = false)}
+  onRestore={(id) => safety.restoreTrash(repo.currentRepoPath, id, refreshWorkingTreeAndDiff)}
+  onDelete={(id) => safety.deleteTrash(repo.currentRepoPath, id)}
 />
 
 <!-- Visual Git Bisect Bug Hunter Modal -->
 <BisectWizard
-  isOpen={showBisectModal}
-  status={bisectStatus}
-  {commits}
-  isLoading={isBisectLoading}
-  onStartBisect={onStartBisect}
-  onBisectStep={onBisectStep}
-  onAbortBisect={onAbortBisect}
-  onClose={onCloseBisect}
+  isOpen={safety.showBisectModal}
+  status={safety.bisectStatus}
+  commits={repo.rawCommits}
+  isLoading={safety.isBisectLoading}
+  onStartBisect={async (bad, good) => {
+    await safety.startBisect(repo.currentRepoPath, bad, good, () =>
+      loadRepository(repo.currentRepoPath)
+    );
+  }}
+  onBisectStep={async (isGood) => {
+    await safety.bisectStep(repo.currentRepoPath, isGood, () =>
+      loadRepository(repo.currentRepoPath)
+    );
+  }}
+  onAbortBisect={() =>
+    safety.abortBisect(repo.currentRepoPath, () =>
+      loadRepository(repo.currentRepoPath)
+    )
+  }
+  onClose={() => (safety.showBisectModal = false)}
 />
 
 <!-- Safe-Flight Time Machine Drawer -->
 <TimeMachineDrawer
-  isOpen={showTimeMachineDrawer}
-  actions={actionRecords}
-  isLoading={isActionLoading}
-  onUndo={onUndoAction}
-  onRedo={onRedoAction}
-  onTimeTravel={onTimeTravel}
-  onClose={onCloseTimeMachine}
+  isOpen={safety.showTimeMachineDrawer}
+  actions={safety.actionRecords}
+  isLoading={safety.isActionLoading}
+  onUndo={handleUndo}
+  onRedo={handleRedo}
+  onTimeTravel={(id) =>
+    safety.timeTravel(repo.currentRepoPath, id, () =>
+      loadRepository(repo.currentRepoPath)
+    )
+  }
+  onClose={() => (safety.showTimeMachineDrawer = false)}
 />
 
 <!-- Command Palette (Ctrl + K) -->
 <CommandPalette
-  isOpen={showCommandPalette}
-  {branches}
-  {tags}
-  onSelectBranch={onSelectBranch}
-  onChangeViewMode={onChangeViewMode}
-  onOpenTrash={onOpenTrash}
-  onOpenWorktrees={onOpenWorktreesModal}
-  onOpenBisect={onOpenBisect}
-  onOpenTimeMachine={onOpenTimeMachine}
-  onOpenAI={onOpenAI}
-  onSmartSync={onSmartSync}
-  onStageAll={onStageAll}
-  onUnstageAll={onUnstageAll}
-  onDiscardAll={onDiscardAll}
-  onUndo={onUndoAction}
-  onRedo={onRedoAction}
-  onPush={onPush}
-  onPull={onPull}
-  onFetch={onFetch}
-  onOpenGuide={() => { showGuideModal = true; }}
-  onClose={onCloseCommandPalette}
+  isOpen={modalState.showCommandPalette}
+  branches={repo.branches}
+  tags={repo.tags}
+  onSelectBranch={(b) => repo.handleSelectBranch(b)}
+  onChangeViewMode={(mode: ViewMode) => onChangeViewMode(mode)}
+  onOpenTrash={() => safety.openTrash(repo.currentRepoPath)}
+  onOpenWorktrees={handleOpenWorktreesModal}
+  onOpenBisect={() => safety.openBisect(repo.currentRepoPath)}
+  onOpenTimeMachine={() => safety.openTimeMachine(repo.currentRepoPath)}
+  onOpenAI={handleOpenAI}
+  onSmartSync={async () => {
+    const res = await remote.runSmartSync(
+      repo.currentRepoPath,
+      undefined,
+      () => loadRepository(repo.currentRepoPath)
+    );
+    repo.statusMessage = res.message;
+  }}
+  onStageAll={() => wt.stageAll(repo.currentRepoPath, refreshWorkingTreeAndDiff)}
+  onUnstageAll={() => wt.unstageAll(repo.currentRepoPath, refreshWorkingTreeAndDiff)}
+  onDiscardAll={() => wt.discardAll(repo.currentRepoPath, refreshWorkingTreeAndDiff)}
+  onUndo={handleUndo}
+  onRedo={handleRedo}
+  onPush={handlePushCurrentBranch}
+  onPull={() =>
+    remote.executeRemote(
+      repo.currentRepoPath,
+      'pull',
+      'origin',
+      undefined,
+      false,
+      () => loadRepository(repo.currentRepoPath)
+    )
+  }
+  onFetch={() =>
+    remote.executeRemote(
+      repo.currentRepoPath,
+      'fetch',
+      'origin',
+      undefined,
+      false,
+      () => loadRepository(repo.currentRepoPath)
+    )
+  }
+  onOpenGuide={() => { modalState.showGuideModal = true; }}
+  onClose={() => (modalState.showCommandPalette = false)}
 />
 
 <!-- Local AI Assistant Modal -->
 <AIAssistantModal
-  isOpen={showAIModal}
-  diffContext={aiDiffContext}
-  {conflictDetail}
-  onApplyCommitMessage={onApplyCommitMessage}
-  onClose={onCloseAI}
+  isOpen={modalState.showAIModal}
+  diffContext={modalState.aiDiffContext}
+  conflictDetail={safety.conflictFileDetail}
+  onApplyCommitMessage={(msg) =>
+    (repo.statusMessage = `AI message: ${msg.slice(0, 40)}...`)}
+  onClose={() => (modalState.showAIModal = false)}
 />
 
 <!-- Git Submodules Explorer Modal -->
 <SubmoduleManager
-  repoPath={currentRepoPath}
-  isOpen={showSubmoduleModal}
-  onClose={onCloseSubmodule}
+  repoPath={repo.currentRepoPath}
+  isOpen={modalState.showSubmoduleModal}
+  onClose={() => (modalState.showSubmoduleModal = false)}
 />
 
 <!-- Git LFS Asset Manager Modal -->
 <LfsManager
-  repoPath={currentRepoPath}
-  isOpen={showLfsModal}
-  onClose={onCloseLfs}
+  repoPath={repo.currentRepoPath}
+  isOpen={modalState.showLfsModal}
+  onClose={() => (modalState.showLfsModal = false)}
 />
 
 <!-- Interactive SSH Passphrase & HTTPS Auth Modal -->
 <AuthCredentialModal
-  isOpen={showAuthModal}
-  authType={authModalType}
-  remoteUrl={authModalRemoteUrl}
-  onConfirm={onConfirmAuth}
-  onCancel={onCancelAuth}
+  isOpen={remote.showAuthModal}
+  authType={remote.authModalType}
+  remoteUrl={remote.authModalRemoteUrl}
+  onConfirm={(creds, profile) =>
+    remote.confirmAuth(creds, profile, repo.currentRepoPath, () =>
+      loadRepository(repo.currentRepoPath)
+    )
+  }
+  onCancel={() => remote.cancelAuth()}
 />
 
 <!-- Safe Delete Branch Modal Dialog -->
 <DeleteBranchModal
-  show={showDeleteBranchModal}
-  branch={deletingBranch}
-  isLoading={isDeleteBranchLoading}
-  onClose={onCloseDeleteBranch}
-  onConfirmDelete={onConfirmDeleteBranch}
+  show={modalState.showDeleteBranchModal}
+  branch={modalState.deletingBranch}
+  isLoading={modalState.isDeleteBranchLoading}
+  onClose={() => modalState.closeDeleteBranch()}
+  onConfirmDelete={handleConfirmDeleteBranch}
 />
 
 <!-- Welcome / Onboarding Screen -->
 <WelcomeScreen
-  isOpen={showWelcomeScreen}
-  {activeAccount}
-  {recentRepos}
-  onSelectRepo={onSelectRepo}
-  onOpenAuth={onOpenAuthFromWelcome}
-  onClose={onCloseWelcome}
+  isOpen={repo.showWelcomeScreen}
+  activeAccount={remote.activeAccount}
+  recentRepos={repo.recentRepos}
+  onSelectRepo={async (path) => {
+    repo.showWelcomeScreen = false;
+    try {
+      const tab = tabState.openTab({ path });
+      await loadRepository(tab.path);
+    } catch (err: any) {
+      toast.error('Không thể mở repository', err?.message || String(err));
+    }
+  }}
+  onOpenAuth={() => (remote.showAuthModal = true)}
+  onClose={() => (repo.showWelcomeScreen = false)}
 />
 
 <!-- FlowGit Playbook & Real-World User Guide Modal -->
 <UserGuideModal
-  isOpen={showGuideModal}
-  onClose={() => onCloseGuide?.()}
+  isOpen={modalState.showGuideModal}
+  onClose={() => (modalState.showGuideModal = false)}
 />
 
 <!-- Create Tag Modal -->
 <CreateTagModal
-  isOpen={showCreateTagModal}
-  commit={tagTargetCommit}
-  isLoading={isCreateTagLoading}
-  onClose={() => onCloseCreateTag?.()}
+  isOpen={modalState.showCreateTagModal}
+  commit={modalState.tagTargetCommit}
+  isLoading={modalState.isCreateTagLoading}
+  onClose={() => modalState.closeCreateTag()}
   onConfirm={async (name, msg) => {
-    if (onConfirmCreateTag) await onConfirmCreateTag(name, msg);
+    await handleConfirmCreateTag(name, msg);
   }}
 />
 
 <!-- Squash Commits Modal -->
 <SquashModal
-  isOpen={showSquashModal}
-  commits={squashTargetCommits}
-  isLoading={isSquashLoading}
-  onClose={() => onCloseSquash?.()}
+  isOpen={modalState.showSquashModal}
+  commits={modalState.squashTargetCommits}
+  isLoading={modalState.isSquashLoading}
+  onClose={() => modalState.closeSquash()}
   onConfirmSquash={async (ids, msg) => {
-    if (onConfirmSquash) await onConfirmSquash(ids, msg);
+    await handleConfirmSquash(ids, msg);
   }}
 />
 
 <!-- Clean Merged Branches Modal -->
 <CleanMergedBranchesModal
-  isOpen={showCleanMergedModal}
-  {mergedBranches}
-  isLoading={isCleanMergedLoading}
-  onClose={() => onCloseCleanMerged?.()}
+  isOpen={modalState.showCleanMergedModal}
+  mergedBranches={modalState.mergedBranches}
+  isLoading={modalState.isCleanMergedLoading}
+  onClose={() => (modalState.showCleanMergedModal = false)}
   onConfirmDelete={async (branches) => {
-    if (onConfirmCleanMerged) await onConfirmCleanMerged(branches);
+    await handleConfirmCleanMerged(branches);
   }}
 />
 
 <!-- Init Repository Dialog (when directory is not a Git repo) -->
 <InitRepoDialog
-  isOpen={showInitRepoModal}
-  folderPath={initRepoPath}
+  isOpen={modalState.showInitRepoModal}
+  folderPath={modalState.initRepoPath}
   onInit={async (branch) => {
-    if (onConfirmInitRepo) await onConfirmInitRepo(branch);
+    await handleConfirmInitRepo(branch);
   }}
-  onCancel={() => onCloseInitRepo?.()}
+  onCancel={() => {
+    modalState.showInitRepoModal = false;
+    modalState.initRepoPath = '';
+  }}
 />
 
 <!-- Publish to GitHub Modal -->
 <PublishRepoModal
-  isOpen={showPublishModal}
-  repoPath={publishRepoPath}
-  repoName={publishRepoName}
-  currentBranch={publishCurrentBranch}
-  {activeAccount}
-  onSuccess={onPublishSuccess}
-  onClose={onClosePublish}
+  isOpen={modalState.showPublishModal}
+  repoPath={modalState.publishRepoPath || repo.currentRepoPath}
+  repoName={modalState.publishRepoName || repo.repoSummary?.name || ''}
+  currentBranch={modalState.publishCurrentBranch || repo.repoSummary?.current_branch || 'main'}
+  activeAccount={remote.activeAccount}
+  onSuccess={async () => {
+    if (repo.currentRepoPath) await loadRemotesList(repo.currentRepoPath);
+  }}
+  onClose={() => (modalState.showPublishModal = false)}
 />
 
 <!-- Create Branch Modal -->
-{#if showCreateBranchModal}
+{#if modalState.showCreateBranchModal}
   <CreateBranchModal
-    open={showCreateBranchModal}
-    {branches}
-    currentBranch={createBranchBaseRef || currentBranchName || "main"}
+    open={modalState.showCreateBranchModal}
+    branches={repo.branches}
+    currentBranch={modalState.createBranchBaseRef || repo.repoSummary?.current_branch || 'main'}
     onConfirm={async (name, targetRef, checkout) => {
-      if (onConfirmCreateBranch) await onConfirmCreateBranch(name, targetRef, checkout);
+      await handleConfirmCreateBranch(name, targetRef, checkout);
     }}
-    onClose={() => onCloseCreateBranch?.()}
+    onClose={() => modalState.closeCreateBranch()}
   />
 {/if}
 
 <!-- Quick Hotfix Modal -->
 <QuickHotfixModal
-  isOpen={showQuickHotfixModal}
-  currentBranch={currentBranchName || ""}
-  {dirtyFilesCount}
-  {branches}
+  isOpen={modalState.showHotfixModal}
+  currentBranch={repo.repoSummary?.current_branch || ''}
+  dirtyFilesCount={wt.workingTreeStatus?.total_dirty_count || 0}
+  branches={repo.branches}
   onStartHotfix={async (name, base) => {
-    if (onStartQuickHotfix) await onStartQuickHotfix(name, base);
+    await handleStartQuickHotfix(name, base);
   }}
-  onClose={() => onCloseQuickHotfix?.()}
+  onClose={() => (modalState.showHotfixModal = false)}
 />
 
 <!-- Nuke File from History Modal -->
 <NukeHistoryModal
-  isOpen={showNukeModal}
-  filePath={nukeTargetFilePath}
+  isOpen={modalState.showNukeModal}
+  filePath={modalState.nukeTargetFilePath}
   onConfirm={async (path) => {
-    if (onConfirmNukeFile) await onConfirmNukeFile(path);
+    await handleConfirmNukeFile(path);
   }}
-  onClose={() => onCloseNukeModal?.()}
+  onClose={() => modalState.closeNukeFile()}
 />
 
 <!-- Multi-Remote Management Modal -->
 <RemoteManagerModal
-  isOpen={showRemoteManagerModal}
-  repoPath={currentRepoPath}
-  onClose={() => onCloseRemoteManager?.()}
-  onRemotesChanged={onRemotesChanged}
+  isOpen={modalState.showRemoteManagerModal}
+  repoPath={repo.currentRepoPath}
+  onClose={() => (modalState.showRemoteManagerModal = false)}
+  onRemotesChanged={async () => {
+    if (repo.currentRepoPath) {
+      await loadRepository(repo.currentRepoPath);
+      await loadRemotesList(repo.currentRepoPath);
+    }
+  }}
 />
 
 <!-- Interactive Rebase Modal -->
-{#if showInteractiveRebaseModal}
+{#if modalState.showInteractiveRebaseModal}
   <InteractiveRebaseModal
-    isOpen={showInteractiveRebaseModal}
-    repoPath={currentRepoPath}
-    ontoCommit={interactiveRebaseOntoCommit}
-    onClose={() => onCloseInteractiveRebase?.()}
-    onSuccess={onInteractiveRebaseSuccess}
+    isOpen={modalState.showInteractiveRebaseModal}
+    repoPath={repo.currentRepoPath}
+    ontoCommit={modalState.interactiveRebaseOntoCommit}
+    onClose={() => modalState.closeInteractiveRebase()}
+    onSuccess={async (res) => {
+      if (res.status === 'completed') {
+        await loadRepository(repo.currentRepoPath);
+      } else if (res.status === 'conflict') {
+        safety.isRebasing = true;
+        await safety.loadConflictFiles(repo.currentRepoPath);
+        onChangeViewMode('conflict');
+      }
+    }}
   />
 {/if}
 
 <!-- Git Identity Profile Switcher Modal -->
 <IdentitySwitcherModal
-  isOpen={showIdentityModal}
-  repoPath={currentRepoPath}
-  onClose={() => onCloseIdentityModal?.()}
-  onIdentityChanged={onIdentityChanged}
+  isOpen={modalState.showIdentityModal}
+  repoPath={repo.currentRepoPath}
+  onClose={() => (modalState.showIdentityModal = false)}
+  onIdentityChanged={async () => {
+    if (repo.currentRepoPath) {
+      await loadIdentity(repo.currentRepoPath);
+    }
+  }}
 />
 
 <!-- Git Emergency Playbook Recipes Modal -->
 <GitPlaybookModal
-  isOpen={showPlaybookModal}
-  repoPath={currentRepoPath}
-  currentBranch={currentBranchName || ""}
-  onClose={() => onClosePlaybookModal?.()}
-  onOpenTrash={() => onPlaybookOpenTrash?.()}
-  onOpenTimeMachine={() => onPlaybookOpenTimeMachine?.()}
-  onRepoRefreshed={onRepoRefreshed}
+  isOpen={modalState.showPlaybookModal}
+  repoPath={repo.currentRepoPath}
+  currentBranch={repo.repoSummary?.current_branch || ''}
+  onClose={() => (modalState.showPlaybookModal = false)}
+  onOpenTrash={() => safety.openTrash(repo.currentRepoPath)}
+  onOpenTimeMachine={() => safety.openTimeMachine(repo.currentRepoPath)}
+  onRepoRefreshed={async () => {
+    if (repo.currentRepoPath) {
+      await loadRepository(repo.currentRepoPath);
+    }
+  }}
 />
 
 <!-- Create Pull Request Modal -->
 <CreatePullRequestModal
-  isOpen={showCreatePRModal}
+  isOpen={modalState.showCreatePRModal}
   remoteOriginUrl={originRemoteUrl}
-  {branches}
-  initialSourceBranch={createPRSourceBranch || ''}
-  onClose={() => onCloseCreatePR?.()}
-  onSuccess={(newPR) => onCreatePRSuccess?.(newPR)}
+  branches={repo.branches}
+  initialSourceBranch={modalState.createPRSourceBranch || ''}
+  onClose={() => modalState.closeCreatePR()}
+  onSuccess={async () => {
+    modalState.closeCreatePR();
+    onChangeViewMode('pr');
+    if (repo.currentRepoPath) {
+      await loadRepository(repo.currentRepoPath);
+    }
+  }}
 />

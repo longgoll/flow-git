@@ -9,8 +9,11 @@ const translations = {
     heroTitleHighlight: "Nhanh Như Chớp",
     heroTitleSuffix: "An Toàn Tuyệt Đối",
     heroDesc: "Tạm biệt các ứng dụng Electron ì ạch ngốn cả Gigabyte RAM. FlowGit kết hợp sức mạnh native của Rust và đồ thị 60 FPS cùng cỗ máy thời gian hoàn tác, biến Git thành trải nghiệm không-nỗi-sợ.",
-    btnDownloadWindows: "Tải FlowGit cho Windows",
+    btnDownloadWindows: "Tải FlowGit cho Windows (.exe)",
+    btnDownloadMac: "Tải FlowGit cho macOS (.dmg)",
+    btnDownloadLinux: "Tải FlowGit cho Linux (.deb)",
     btnStarGithub: "Star trên GitHub",
+    otherPlatforms: "Nền tảng khác:",
     freeOpenSource: "Miễn phí & Mã nguồn mở",
     noTelemetry: "Không quảng cáo",
     autoUpdate: "Tự động cập nhật ngầm",
@@ -70,8 +73,11 @@ const translations = {
     
     // CTA
     ctaTitle: "Sẵn Sàng Nâng Tầm Trải Nghiệm Git?",
-    ctaDesc: "Tải ngay FlowGit cho Windows hoàn toàn miễn phí hoặc khám phá mã nguồn mở trên GitHub.",
-    ctaBtn: "Tải Bản Cài Đặt (.exe)",
+    ctaDesc: "Tải ngay FlowGit hoàn toàn miễn phí hoặc khám phá mã nguồn mở trên GitHub.",
+    ctaBtn: "Tải Bản Cài Đặt",
+    ctaBtnWindows: "Tải Bản Cài Đặt Windows (.exe)",
+    ctaBtnMac: "Tải Bản Cài Đặt macOS (.dmg)",
+    ctaBtnLinux: "Tải Bản Cài Đặt Linux (.deb / .AppImage)",
     
     // Showcase Tabs & Captions
     tabLivingGraph: "Living Graph & Monaco Diff",
@@ -116,8 +122,11 @@ const translations = {
     heroTitleHighlight: "Blazing Fast",
     heroTitleSuffix: "With Zero Fear",
     heroDesc: "Say goodbye to sluggish Electron apps that swallow a whole gigabyte of RAM. FlowGit combines native Rust performance with a 60 FPS canvas graph and a full Time Machine undo engine.",
-    btnDownloadWindows: "Download for Windows",
+    btnDownloadWindows: "Download FlowGit for Windows (.exe)",
+    btnDownloadMac: "Download FlowGit for macOS (.dmg)",
+    btnDownloadLinux: "Download FlowGit for Linux (.deb)",
     btnStarGithub: "Star on GitHub",
+    otherPlatforms: "Other platforms:",
     freeOpenSource: "Free & Open Source",
     noTelemetry: "No Adware / Spyware",
     autoUpdate: "Background Auto-Updates",
@@ -177,8 +186,11 @@ const translations = {
     
     // CTA
     ctaTitle: "Ready to Upgrade Your Git Workflow?",
-    ctaDesc: "Download FlowGit for Windows free of charge or inspect the source code on GitHub.",
-    ctaBtn: "Download Setup (.exe)",
+    ctaDesc: "Download FlowGit free of charge or inspect the source code on GitHub.",
+    ctaBtn: "Download Setup",
+    ctaBtnWindows: "Download Windows Setup (.exe)",
+    ctaBtnMac: "Download macOS Package (.dmg)",
+    ctaBtnLinux: "Download Linux Package (.deb / .AppImage)",
 
     // Showcase Tabs & Captions
     tabLivingGraph: "Living Graph & Monaco Diff",
@@ -284,6 +296,80 @@ function updateShowcaseView(shotKey) {
   }
 }
 
+function detectOS() {
+  const ua = (navigator.userAgent || '').toLowerCase();
+  const platform = (navigator.platform || '').toLowerCase();
+  if (ua.includes('mac') || platform.includes('mac') || /iphone|ipad|ipod/.test(ua)) return 'mac';
+  if (ua.includes('linux') || platform.includes('linux')) return 'linux';
+  return 'windows';
+}
+
+function detectLanguage() {
+  const saved = localStorage.getItem('flowgit_lang');
+  if (saved === 'vi' || saved === 'en') return saved;
+  const browserLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+  return browserLang.startsWith('vi') ? 'vi' : 'en';
+}
+
+let currentOS = detectOS();
+const releaseAssets = {
+  windows: null,
+  mac: null,
+  linux: null,
+};
+const defaultDownloadUrl = 'https://github.com/longgoll/flow-git/releases';
+
+const osIcons = {
+  windows: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.951-1.802"/></svg>`,
+  mac: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 0.92-2.85-.9.04-2.02.6-2.66 1.34-.56.64-.99 1.68-.87 2.7.99.08 2-.44 2.61-1.19z"/></svg>`,
+  linux: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12.003 2c-2.73 0-4.664 2.17-4.664 5.372 0 1.267.318 2.668.79 3.73-.55.437-1.065 1.082-1.397 1.84-.442 1.012-.479 2.052-.232 2.875.228.761.714 1.347 1.332 1.701-.01.19-.015.385-.015.586 0 1.956.88 3.518 2.378 4.316-1.05.518-1.737 1.347-1.737 2.316 0 .428.145.83.407 1.17.394.512 1.066.862 1.916 1.004.815.137 1.82.164 2.945.074 1.125.09 2.13-.037 2.945-.174.85-.142 1.522-.492 1.916-1.004.262-.34.407-.742.407-1.17 0-.969-.687-1.798-1.737-2.316 1.498-.798 2.378-2.36 2.378-4.316 0-.201-.005-.396-.015-.586.618-.354 1.104-.94 1.332-1.701.247-.823.21-1.863-.232-2.875-.332-.758-.847-1.403-1.397-1.84.472-1.062.79-2.463.79-3.73C16.667 4.172 14.733 2 12.003 2z"/></svg>`,
+};
+
+function updateDownloadButtons(targetOS) {
+  if (targetOS) currentOS = targetOS;
+  const dict = translations[currentLang] || translations.vi;
+
+  const mainBtn = document.getElementById('main-download-btn');
+  const ctaBtn = document.getElementById('cta-download-btn');
+  const mainIcon = document.getElementById('main-download-icon');
+  const ctaIcon = document.getElementById('cta-download-icon');
+  const mainText = document.getElementById('main-download-text');
+  const ctaText = document.getElementById('cta-download-text');
+
+  const heroTexts = {
+    windows: dict.btnDownloadWindows,
+    mac: dict.btnDownloadMac,
+    linux: dict.btnDownloadLinux,
+  };
+
+  const ctaTexts = {
+    windows: dict.ctaBtnWindows,
+    mac: dict.ctaBtnMac,
+    linux: dict.ctaBtnLinux,
+  };
+
+  if (mainIcon && osIcons[currentOS]) mainIcon.innerHTML = osIcons[currentOS];
+  if (ctaIcon && osIcons[currentOS]) ctaIcon.innerHTML = osIcons[currentOS];
+
+  if (mainText && heroTexts[currentOS]) mainText.textContent = heroTexts[currentOS];
+  if (ctaText && ctaTexts[currentOS]) ctaText.textContent = ctaTexts[currentOS];
+
+  const targetUrl = releaseAssets[currentOS] || defaultDownloadUrl;
+  if (mainBtn) mainBtn.href = targetUrl;
+  if (ctaBtn) ctaBtn.href = targetUrl;
+
+  // Update OS selector badges
+  document.querySelectorAll('.os-badge').forEach((badge) => {
+    const os = badge.getAttribute('data-os-target');
+    badge.classList.toggle('active', os === currentOS);
+    if (releaseAssets[os]) {
+      badge.href = releaseAssets[os];
+    } else {
+      badge.href = defaultDownloadUrl;
+    }
+  });
+}
+
 function setLanguage(lang) {
   currentLang = lang;
   document.documentElement.lang = lang;
@@ -310,6 +396,9 @@ function setLanguage(lang) {
       captionEl.textContent = dict[shot.captionKey];
     }
   }
+
+  // Refresh download buttons text
+  updateDownloadButtons();
 }
 
 function setupShowcaseTabs() {
@@ -338,13 +427,21 @@ function setupShowcaseTabs() {
   }
 }
 
+function setupOSBadges() {
+  document.querySelectorAll('.os-badge').forEach((badge) => {
+    badge.addEventListener('click', (e) => {
+      const os = badge.getAttribute('data-os-target');
+      if (os) {
+        currentOS = os;
+        updateDownloadButtons(os);
+      }
+    });
+  });
+}
+
 async function fetchLatestRelease() {
   const repo = 'longgoll/flow-git';
-  const downloadBtn = document.getElementById('main-download-btn');
-  const ctaBtn = document.getElementById('cta-download-btn');
   const versionTag = document.getElementById('version-tag');
-
-  const defaultDownloadUrl = `https://github.com/${repo}/releases`;
 
   try {
     const res = await fetch(`https://api.github.com/repos/${repo}/releases/latest`);
@@ -355,33 +452,50 @@ async function fetchLatestRelease() {
       versionTag.textContent = data.tag_name;
     }
 
-    // Look for .exe or .msi asset
-    const exeAsset = data.assets?.find(a => a.name.endsWith('.exe') || a.name.endsWith('.msi'));
-    const downloadUrl = exeAsset ? exeAsset.browser_download_url : data.html_url;
+    if (data.assets && Array.isArray(data.assets)) {
+      // Windows asset (.exe or .msi)
+      const winAsset = data.assets.find(a => a.name.endsWith('.exe') || a.name.endsWith('.msi'));
+      if (winAsset) releaseAssets.windows = winAsset.browser_download_url;
 
-    if (downloadBtn) downloadBtn.href = downloadUrl;
-    if (ctaBtn) ctaBtn.href = downloadUrl;
+      // macOS asset (.dmg or .tar.gz)
+      const macAsset = data.assets.find(a => a.name.endsWith('.dmg') || (a.name.endsWith('.tar.gz') && a.name.includes('darwin')));
+      if (macAsset) releaseAssets.mac = macAsset.browser_download_url;
+
+      // Linux asset (.deb or .AppImage)
+      const linuxAsset = data.assets.find(a => a.name.endsWith('.deb') || a.name.endsWith('.AppImage'));
+      if (linuxAsset) releaseAssets.linux = linuxAsset.browser_download_url;
+    }
+
+    updateDownloadButtons();
   } catch (e) {
-    if (downloadBtn) downloadBtn.href = defaultDownloadUrl;
-    if (ctaBtn) ctaBtn.href = defaultDownloadUrl;
+    updateDownloadButtons();
   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Init default language
-  setLanguage('vi');
+  // Auto-detect or load saved language
+  const initialLang = detectLanguage();
+  setLanguage(initialLang);
 
   // Setup interactive real app showcase
   setupShowcaseTabs();
 
-  // Toggle button listener
+  // Setup OS selector badges click handler
+  setupOSBadges();
+
+  // Initial download button render for detected OS
+  updateDownloadButtons(currentOS);
+
+  // Toggle button listener with persistence
   const langBtn = document.getElementById('lang-toggle-btn');
   if (langBtn) {
     langBtn.addEventListener('click', () => {
-      setLanguage(currentLang === 'vi' ? 'en' : 'vi');
+      const nextLang = currentLang === 'vi' ? 'en' : 'vi';
+      localStorage.setItem('flowgit_lang', nextLang);
+      setLanguage(nextLang);
     });
   }
 
-  // Fetch release download link
+  // Fetch release download links
   fetchLatestRelease();
 });

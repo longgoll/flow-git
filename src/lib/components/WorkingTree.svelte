@@ -128,11 +128,41 @@
         return { label: '•', class: 'text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-zinc-900 border-zinc-300 dark:border-zinc-800' };
     }
   }
+
+  // Resizable Width state
+  let panelWidth = $state<number>(384);
+  let isResizingWidth = $state<boolean>(false);
+  let resizeStartX = 0;
+  let resizeStartWidth = 0;
+
+  function handleStartResizeWidth(e: MouseEvent) {
+    isResizingWidth = true;
+    resizeStartX = e.clientX;
+    resizeStartWidth = panelWidth;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!isResizingWidth) return;
+      const deltaX = moveEvent.clientX - resizeStartX;
+      panelWidth = Math.max(280, Math.min(680, resizeStartWidth + deltaX));
+    };
+
+    const onMouseUp = () => {
+      isResizingWidth = false;
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }
 </script>
 
 <div class="h-full w-full flex overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 select-none">
-  <!-- Left Column: Working Tree File Lists & Commit Box (width: 380px) -->
-  <div class="w-96 h-full border-r border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/70 dark:bg-zinc-950/60 flex flex-col shrink-0">
+  <!-- Left Column: Working Tree File Lists & Commit Box -->
+  <div
+    style="width: {panelWidth}px;"
+    class="h-full border-r border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/70 dark:bg-zinc-950/60 flex flex-col shrink-0 overflow-hidden transition-[width] duration-75"
+  >
     <!-- Header Summary -->
     <div class="p-3 border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-100/60 dark:bg-zinc-900/40 flex items-center justify-between">
       <div class="flex items-center gap-2">
@@ -453,6 +483,19 @@
         }
       }}
     />
+  </div>
+
+  <!-- Resizable Splitter Handle between File List and Diff Viewer -->
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions, a11y_no_noninteractive_tabindex -->
+  <div
+    role="separator"
+    aria-orientation="vertical"
+    tabindex="-1"
+    onmousedown={handleStartResizeWidth}
+    class="w-1.5 h-full bg-zinc-200/80 dark:bg-zinc-800/80 hover:bg-cyan-500 active:bg-cyan-600 cursor-col-resize transition-colors flex items-center justify-center shrink-0 group relative z-10 select-none {isResizingWidth ? 'bg-cyan-500!' : ''}"
+    title="Kéo chuột để điều chỉnh độ rộng danh sách tệp"
+  >
+    <div class="w-0.5 h-10 rounded-full bg-zinc-400 dark:bg-zinc-600 group-hover:bg-white transition-colors"></div>
   </div>
 
   <!-- Right Column: Interactive Diff Viewer -->

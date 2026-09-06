@@ -45,6 +45,20 @@
       original: originalModel,
       modified: modifiedModel,
     });
+
+    // Auto-reveal the first change so user doesn't have to scroll through unchanged lines
+    setTimeout(() => {
+      if (diffEditor) {
+        try {
+          const lineChanges = diffEditor.getLineChanges();
+          if (lineChanges && lineChanges.length > 0) {
+            const firstChange = lineChanges[0];
+            const targetLine = firstChange.modifiedStartLineNumber || firstChange.originalStartLineNumber || 1;
+            diffEditor.getModifiedEditor().revealLineInCenter(targetLine);
+          }
+        } catch (_) {}
+      }
+    }, 60);
   }
 
   onMount(() => {
@@ -67,7 +81,12 @@
       enableSplitViewResizing: true,
       renderOverviewRuler: true,
       ignoreTrimWhitespace,
-    });
+      hideUnchangedRegions: {
+        enabled: true,
+        minimumLineCount: 8,
+        contextLineCount: 3,
+      },
+    } as any);
 
     updateModels();
   });

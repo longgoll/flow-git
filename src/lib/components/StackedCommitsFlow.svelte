@@ -12,18 +12,25 @@
     Clock,
     User,
     ShieldCheck,
+    Sparkles,
+    Upload,
+    Anchor,
   } from 'lucide-svelte';
 
   interface Props {
     repoPath: string;
+    currentBranch?: string;
     onRefreshRepo: () => Promise<void>;
     onClose: () => void;
+    onPush?: () => Promise<void>;
   }
 
   let {
     repoPath = '',
+    currentBranch = '',
     onRefreshRepo,
     onClose,
+    onPush,
   }: Props = $props();
 
   let commits = $state<StackedCommitItem[]>([]);
@@ -178,87 +185,155 @@
   {/if}
 
   <!-- Main Card Stack Container -->
-  <div class="flex-1 overflow-y-auto p-6 max-w-2xl mx-auto w-full">
+  <div class="flex-1 overflow-y-auto p-6 max-w-3xl mx-auto w-full">
     {#if isLoading}
       <div class="h-64 flex items-center justify-center text-zinc-500 text-xs gap-2">
         <div class="w-4 h-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
         <span>Loading unpushed stacked commits...</span>
       </div>
     {:else if commits.length > 0}
-      <div class="space-y-3">
-        <div class="text-[11px] font-mono text-zinc-500 uppercase tracking-wider flex items-center justify-between pb-1 border-b border-zinc-200 dark:border-zinc-800/80">
-          <span>Recent Unpushed Commits (HEAD at top)</span>
-          <span>{commits.length} commits</span>
+      <div class="space-y-4">
+        <div class="text-[11px] font-mono text-zinc-500 uppercase tracking-wider flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800/80">
+          <span>Recent Unpushed Commits (Stack Order: HEAD at top)</span>
+          <span class="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold">{commits.length} unpushed</span>
         </div>
 
-        {#each commits as commit, idx}
-          {@const isTarget = dropTargetIndex === idx}
-          {@const isDragging = draggedIndex === idx}
-          <div
-            role="listitem"
-            draggable="true"
-            ondragstart={(e) => handleDragStart(idx, e)}
-            ondragover={(e) => handleDragOver(idx, e)}
-            ondrop={(e) => handleDrop(idx, e)}
-            class="relative group rounded-lg border bg-white dark:bg-zinc-900/60 p-3.5 transition-all flex items-start gap-3 select-none {isDragging ? 'opacity-40 scale-95 border-indigo-500' : isTarget ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 shadow-lg' : 'border-zinc-200 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700/80 hover:bg-zinc-100/70 dark:hover:bg-zinc-900 shadow-xs'}"
-          >
-            <!-- Drag Handle -->
-            <div class="pt-1 text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-600 dark:group-hover:text-zinc-400 cursor-grab active:cursor-grabbing shrink-0" title="Kéo để đổi thứ tự commit">
-              <GripVertical class="w-4 h-4" />
-            </div>
-
-            <!-- Commit Content -->
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between gap-2 mb-1">
-                <div class="flex items-center gap-2">
-                  <span class="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-mono text-cyan-700 dark:text-cyan-400 text-[11px] font-bold">
-                    {commit.short_id}
-                  </span>
-                  {#if idx === 0}
-                    <span class="px-1.5 py-0.2 rounded bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40 text-[10px] font-mono font-bold">
-                      HEAD
-                    </span>
-                  {/if}
-                </div>
-
-                <div class="flex items-center gap-3 text-zinc-500 text-[11px] font-mono">
-                  <div class="flex items-center gap-1">
-                    <User class="w-3 h-3 text-zinc-400 dark:text-zinc-600" />
-                    <span>{commit.author_name}</span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <Clock class="w-3 h-3 text-zinc-400 dark:text-zinc-600" />
-                    <span>{formatDate(commit.timestamp)}</span>
-                  </div>
-                </div>
+        <!-- Visual Stack Spine Container -->
+        <div class="relative pl-6 sm:pl-8 border-l-2 border-indigo-300 dark:border-indigo-800/70 ml-3 sm:ml-4 space-y-4">
+          {#each commits as commit, idx}
+            {@const isTarget = dropTargetIndex === idx}
+            {@const isDragging = draggedIndex === idx}
+            <div class="relative">
+              <!-- Node Indicator on Spine -->
+              <div class="absolute -left-[31px] sm:-left-[39px] top-4 w-3.5 h-3.5 rounded-full bg-white dark:bg-zinc-950 border-2 {idx === 0 ? 'border-emerald-500 ring-4 ring-emerald-500/20' : 'border-indigo-500'} flex items-center justify-center z-10">
+                <div class="w-1.5 h-1.5 rounded-full {idx === 0 ? 'bg-emerald-500' : 'bg-indigo-500'}"></div>
               </div>
 
-              <p class="text-xs text-zinc-800 dark:text-zinc-200 font-medium font-sans leading-snug">
-                {commit.summary}
-              </p>
+              <!-- Commit Card -->
+              <div
+                role="listitem"
+                draggable={commits.length > 1}
+                ondragstart={(e) => handleDragStart(idx, e)}
+                ondragover={(e) => handleDragOver(idx, e)}
+                ondrop={(e) => handleDrop(idx, e)}
+                class="group rounded-xl border bg-white dark:bg-zinc-900/80 p-3.5 transition-all flex items-start gap-3 select-none {isDragging ? 'opacity-40 scale-95 border-indigo-500' : isTarget ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 shadow-lg ring-2 ring-indigo-500/30' : 'border-zinc-200 dark:border-zinc-800/80 hover:border-indigo-300 dark:hover:border-indigo-700/80 hover:shadow-sm shadow-xs'}"
+              >
+                <!-- Drag Handle (Active only when >= 2 commits) -->
+                {#if commits.length > 1}
+                  <div class="pt-1 text-zinc-400 group-hover:text-indigo-600 dark:text-zinc-600 dark:group-hover:text-indigo-400 cursor-grab active:cursor-grabbing shrink-0" title="Kéo để đổi thứ tự commit trong ngăn xếp">
+                    <GripVertical class="w-4 h-4" />
+                  </div>
+                {/if}
+
+                <!-- Commit Content -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+                    <div class="flex items-center gap-2">
+                      <span class="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-mono text-cyan-700 dark:text-cyan-400 text-xs font-bold">
+                        {commit.short_id}
+                      </span>
+                      {#if idx === 0}
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 text-[10px] font-mono font-bold">
+                          HEAD (Latest)
+                        </span>
+                      {/if}
+                    </div>
+
+                    <div class="flex items-center gap-3 text-zinc-500 text-[11px] font-mono">
+                      <div class="flex items-center gap-1">
+                        <User class="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
+                        <span>{commit.author_name}</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <Clock class="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
+                        <span>{formatDate(commit.timestamp)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p class="text-xs text-zinc-900 dark:text-zinc-100 font-medium font-sans leading-snug">
+                    {commit.summary}
+                  </p>
+                </div>
+
+                <!-- Position Control Buttons (Only when >= 2 commits) -->
+                {#if commits.length > 1}
+                  <div class="flex flex-col gap-1 shrink-0 pt-0.5">
+                    <button
+                      onclick={() => moveCommit(idx, 'up')}
+                      disabled={idx === 0}
+                      class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
+                      title="Đẩy commit lên trên"
+                    >
+                      <ArrowUp class="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onclick={() => moveCommit(idx, 'down')}
+                      disabled={idx === commits.length - 1}
+                      class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
+                      title="Đẩy commit xuống dưới"
+                    >
+                      <ArrowDown class="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                {/if}
+              </div>
+            </div>
+          {/each}
+
+          <!-- Stack Anchor: Base Point (Upstream / Remote) -->
+          <div class="relative pt-2">
+            <!-- Anchor Dot on Spine -->
+            <div class="absolute -left-[31px] sm:-left-[39px] top-5 w-3.5 h-3.5 rounded-full bg-zinc-100 dark:bg-zinc-900 border-2 border-zinc-400 dark:border-zinc-600 flex items-center justify-center z-10">
+              <div class="w-1.5 h-1.5 rounded-full bg-zinc-500"></div>
             </div>
 
-            <!-- Position Control Buttons -->
-            <div class="flex flex-col gap-1 shrink-0 pt-0.5">
-              <button
-                onclick={() => moveCommit(idx, 'up')}
-                disabled={idx === 0}
-                class="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
-                title="Đẩy commit lên trên"
-              >
-                <ArrowUp class="w-3.5 h-3.5" />
-              </button>
-              <button
-                onclick={() => moveCommit(idx, 'down')}
-                disabled={idx === commits.length - 1}
-                class="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
-                title="Đẩy commit xuống dưới"
-              >
-                <ArrowDown class="w-3.5 h-3.5" />
-              </button>
+            <div class="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700/80 bg-zinc-50/70 dark:bg-zinc-900/30 p-3.5 flex items-center justify-between text-xs text-zinc-500">
+              <div class="flex items-center gap-2">
+                <Anchor class="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+                <span class="font-medium text-zinc-700 dark:text-zinc-300">Upstream Base (Synced & Safe)</span>
+                {#if currentBranch}
+                  <span class="font-mono text-[11px] px-2 py-0.5 rounded-md bg-zinc-200/70 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-medium">origin/{currentBranch}</span>
+                {/if}
+              </div>
+              <span class="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                <Check class="w-3 h-3" />
+                <span>Base Anchor</span>
+              </span>
             </div>
           </div>
-        {/each}
+        </div>
+
+        <!-- Smart Tip & Guidance -->
+        {#if commits.length === 1}
+          <div class="mt-6 p-4 rounded-xl bg-gradient-to-r from-indigo-50/80 via-white to-indigo-50/40 dark:from-indigo-950/40 dark:via-zinc-900 dark:to-indigo-950/20 border border-indigo-200/80 dark:border-indigo-800/60 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-start gap-3">
+              <div class="p-2 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5">
+                <Sparkles class="w-4 h-4" />
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-zinc-900 dark:text-zinc-100">Commit sẵn sàng push</h4>
+                <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 leading-relaxed">
+                  Bạn đang có <strong>1 commit</strong> cục bộ chưa đưa lên remote. Tính năng kéo thả sắp xếp (Reorder Stack) sẽ tự động kích hoạt khi có từ 2 commits trở lên.
+                </p>
+              </div>
+            </div>
+            {#if onPush}
+              <button
+                onclick={onPush}
+                class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+              >
+                <Upload class="w-3.5 h-3.5" />
+                <span>Push lên Remote</span>
+              </button>
+            {/if}
+          </div>
+        {:else}
+          <div class="mt-4 p-3 rounded-lg bg-zinc-100/60 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 text-xs text-zinc-600 dark:text-zinc-400 flex items-center gap-2">
+            <Sparkles class="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+            <span>Kéo thả các thẻ hoặc sử dụng mũi tên để sắp xếp lại thứ tự commit, sau đó bấm <strong>Apply Reorder</strong> ở trên.</span>
+          </div>
+        {/if}
       </div>
     {:else}
       <div class="h-64 flex flex-col items-center justify-center text-center p-8 text-zinc-500 text-xs gap-3">

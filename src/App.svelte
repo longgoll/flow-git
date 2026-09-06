@@ -1326,8 +1326,10 @@
       {:else if viewMode === "stacked"}
         <StackedCommitsFlow
           repoPath={repo.currentRepoPath}
+          currentBranch={repo.repoSummary?.current_branch}
           onRefreshRepo={() => loadRepository(repo.currentRepoPath)}
           onClose={() => (viewMode = "graph")}
+          onPush={handlePushCurrentBranch}
         />
       {:else if viewMode === "dag"}
         <DagCanvasMap

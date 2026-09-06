@@ -45,6 +45,33 @@
   let isDetailOpen = $state<boolean>(true);
   let isDetailMaximized = $state<boolean>(false);
 
+  // Resizable Splitter state
+  let detailHeight = $state<number>(360);
+  let isResizing = $state<boolean>(false);
+  let resizeStartY = 0;
+  let resizeStartHeight = 0;
+
+  function handleStartResize(e: MouseEvent) {
+    isResizing = true;
+    resizeStartY = e.clientY;
+    resizeStartHeight = detailHeight;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!isResizing) return;
+      const deltaY = resizeStartY - moveEvent.clientY;
+      detailHeight = Math.max(140, Math.min(window.innerHeight * 0.75, resizeStartHeight + deltaY));
+    };
+
+    const onMouseUp = () => {
+      isResizing = false;
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }
+
   onMount(() => {
     loadFocus();
   });
@@ -57,6 +84,10 @@
       focusData = res;
       if (res.commits.length > 0 && !selectedCommitId) {
         onSelectCommit(res.commits[0]);
+      }
+      // If only few commits in focus, allocate generous height for detail panel (files changed)
+      if (res.commits.length <= 3) {
+        detailHeight = Math.max(380, Math.round(window.innerHeight * 0.55));
       }
     } catch (err) {
       console.error('Failed to load focus branch:', err);
@@ -81,40 +112,47 @@
   }
 </script>
 
-<div class="flex-1 flex flex-col w-full h-full min-h-0 bg-zinc-50 dark:bg-zinc-950 overflow-hidden select-none font-sans">
+<div class="flex-1 flex flex-col w-full h-full min-h-0 bg-white dark:bg-zinc-950 overflow-hidden select-none font-sans">
   <!-- Top Focus Header Banner -->
-  <div class="px-4 py-2.5 border-b border-amber-200 dark:border-amber-900/40 bg-gradient-to-r from-amber-500/10 via-zinc-50 dark:via-zinc-950 to-zinc-50 dark:to-zinc-950 flex items-center justify-between gap-4 shrink-0 shadow-xs">
+  <div class="px-4 py-2 border-b border-amber-300/70 dark:border-amber-900/50 bg-amber-50/60 dark:bg-zinc-900/50 flex items-center justify-between gap-4 shrink-0 shadow-xs">
     <div class="flex items-center gap-3 flex-wrap min-w-0">
-      <div class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+      <div class="w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-700 dark:text-amber-400 shrink-0">
         <Crosshair class="w-4 h-4" />
       </div>
 
       <div>
         <div class="flex items-center gap-2">
           <span class="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">Dev Focus Mode</span>
-          <span class="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-500/20 border border-amber-300 dark:border-amber-500/30 text-amber-800 dark:text-amber-300 font-mono">
+          <span class="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-500/20 border border-amber-300/80 dark:border-amber-500/30 text-amber-900 dark:text-amber-300 font-mono font-medium">
             Isolated Path
           </span>
         </div>
-        <div class="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 font-mono mt-0.5">
-          <span class="text-amber-700 dark:text-amber-300 font-semibold">{focusData?.branch_name || currentBranchName || 'HEAD'}</span>
-          <span class="text-zinc-400 dark:text-zinc-600">relative to</span>
-          <span class="text-zinc-800 dark:text-zinc-300 bg-zinc-200/80 dark:bg-zinc-900 px-1.5 py-0.2 rounded border border-zinc-300 dark:border-zinc-800">{focusData?.base_branch || 'main'}</span>
+        <div class="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 font-mono mt-0.5">
+          <span class="text-amber-800 dark:text-amber-300 font-semibold">{focusData?.branch_name || currentBranchName || 'HEAD'}</span>
+          <span class="text-zinc-400 dark:text-zinc-500">relative to</span>
+          <span class="text-zinc-800 dark:text-zinc-200 bg-zinc-200/70 dark:bg-zinc-800 px-1.5 py-0.2 rounded border border-zinc-300 dark:border-zinc-700 font-semibold">{focusData?.base_branch || 'main'}</span>
         </div>
       </div>
 
       <!-- Ahead / Behind Stats -->
       {#if focusData}
         <div class="flex items-center gap-2 pl-3 border-l border-zinc-200 dark:border-zinc-800">
-          <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 text-xs font-mono font-semibold" title="Commits you made ahead of base">
+          <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300/80 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs font-mono font-semibold" title="Commits you made ahead of base">
             <ArrowUpRight class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>{focusData.ahead_count} Ahead</span>
           </div>
 
-          <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 text-amber-700 dark:text-amber-300 text-xs font-mono font-semibold" title="Commits on base you don't have yet">
-            <ArrowDownLeft class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-            <span>{focusData.behind_count} Behind</span>
-          </div>
+          {#if focusData.behind_count > 0}
+            <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-xs font-mono font-semibold" title="Commits on base you don't have yet">
+              <ArrowDownLeft class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>{focusData.behind_count} Behind</span>
+            </div>
+          {:else}
+            <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-mono font-medium" title="Up to date with base branch">
+              <Check class="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+              <span>0 Behind</span>
+            </div>
+          {/if}
         </div>
       {/if}
     </div>
@@ -124,22 +162,26 @@
       {#if onSyncWithBase}
         <button
           onclick={handleSync}
-          disabled={isSyncing}
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/30 border border-amber-300 dark:border-amber-500/40 text-xs font-medium text-amber-800 dark:text-amber-200 hover:text-amber-950 dark:hover:text-white transition-all cursor-pointer shadow-xs disabled:opacity-50"
+          disabled={isSyncing || focusData?.behind_count === 0}
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-medium transition-all {focusData?.behind_count === 0 ? 'bg-zinc-100 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 cursor-default opacity-80' : 'bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/30 border-amber-300 dark:border-amber-500/40 text-amber-900 dark:text-amber-200 cursor-pointer shadow-xs'}"
+          title={focusData?.behind_count === 0 ? 'Nhánh của bạn đã đồng bộ mới nhất với base' : `Rebase ${focusData?.behind_count} commit(s) mới từ ${focusData?.base_branch}`}
         >
           {#if syncSuccess}
             <Check class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span class="text-emerald-700 dark:text-emerald-300 font-bold">Synced!</span>
+          {:else if focusData?.behind_count === 0}
+            <Check class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>Up to date with Base</span>
           {:else}
-            <RefreshCw class="w-3.5 h-3.5 {isSyncing ? 'animate-spin text-amber-600 dark:text-amber-400' : 'text-amber-600 dark:text-amber-400'}" />
-            <span>{isSyncing ? 'Syncing...' : '1-Click Rebase on Base'}</span>
+            <RefreshCw class="w-3.5 h-3.5 {isSyncing ? 'animate-spin text-amber-600 dark:text-amber-400' : 'text-amber-700 dark:text-amber-400'}" />
+            <span>{isSyncing ? 'Syncing...' : `Rebase onto ${focusData?.base_branch || 'Base'}`}</span>
           {/if}
         </button>
       {/if}
 
       <button
         onclick={onCloseFocus}
-        class="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 transition-colors cursor-pointer"
+        class="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 transition-colors cursor-pointer shadow-xs"
         title="Quay lại đồ thị đầy đủ"
       >
         <X class="w-3.5 h-3.5" />
@@ -156,7 +198,7 @@
         <span>Calculating branch divergence...</span>
       </div>
     {:else if focusData && focusData.commits.length > 0}
-      <div class="flex-1 min-h-0 relative overflow-hidden flex flex-col">
+      <div class="flex-1 min-h-[120px] relative overflow-hidden flex flex-col">
         <CommitGraph
           commits={focusData.commits}
           {selectedCommitId}
@@ -167,7 +209,23 @@
       </div>
 
       {#if isDetailOpen && commitDetail}
-        <div class="{isDetailMaximized ? 'h-[65%]' : 'h-60'} shrink-0 transition-all duration-200">
+        <!-- Resizable Splitter Bar -->
+        <!-- svelte-ignore a11y_no_noninteractive_element_interactions, a11y_no_noninteractive_tabindex -->
+        <div
+          role="separator"
+          aria-orientation="horizontal"
+          tabindex="-1"
+          onmousedown={handleStartResize}
+          class="h-1.5 w-full bg-zinc-200/80 dark:bg-zinc-800/80 hover:bg-cyan-500 active:bg-cyan-600 cursor-row-resize transition-colors flex items-center justify-center shrink-0 group relative z-10 select-none {isResizing ? 'bg-cyan-500!' : ''}"
+          title="Kéo chuột để điều chỉnh độ cao panel chi tiết"
+        >
+          <div class="w-10 h-0.5 rounded-full bg-zinc-400 dark:bg-zinc-600 group-hover:bg-white transition-colors"></div>
+        </div>
+
+        <div
+          style={isDetailMaximized ? 'height: 70%;' : `height: ${detailHeight}px;`}
+          class="shrink-0 transition-[height] duration-75 overflow-hidden"
+        >
           <CommitDetail
             {commitDetail}
             isLoading={isDetailLoading}

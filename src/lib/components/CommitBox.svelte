@@ -3,7 +3,7 @@
   import PreCommitWarningModal, { type RiskyFileItem } from './PreCommitWarningModal.svelte';
   import type { FileStatusItem } from '../types';
 
-  const PROTECTED_BRANCHES = new Set(['main', 'master', 'develop', 'dev', 'trunk', 'head', 'release', 'production']);
+  const PROTECTED_BRANCHES = new Set(['main', 'master', 'production', 'release']);
 
   interface Props {
     stagedCount: number;
@@ -229,14 +229,14 @@
         type="text"
         placeholder="scope (opt)"
         bind:value={commitScope}
-        class="w-24 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-900 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 font-mono focus:outline-none focus:border-cyan-500 transition-colors"
+        class="w-24 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700/80 rounded-lg px-2.5 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 font-mono shadow-xs focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 transition-all"
       />
       <input
         type="text"
         placeholder="Commit summary message..."
         bind:value={commitSubject}
         onkeydown={handleKeyDown}
-        class="flex-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-cyan-500 transition-colors font-mono"
+        class="flex-1 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700/80 rounded-lg px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 transition-all font-sans font-medium shadow-xs"
       />
     </div>
 
@@ -246,7 +246,7 @@
       bind:value={commitBody}
       onkeydown={handleKeyDown}
       rows={2}
-      class="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-900 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-cyan-500 transition-colors font-mono resize-none"
+      class="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700/80 rounded-lg px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 transition-all font-sans resize-none shadow-xs"
     ></textarea>
   </div>
 

@@ -11,6 +11,7 @@
     GitCommit,
   } from 'lucide-svelte';
   import type {
+    AccountProfile,
     BranchInfo,
     GitHubPRComment,
     GitHubPRFile,
@@ -55,6 +56,8 @@
   interface Props {
     remoteOriginUrl?: string | null;
     localBranches?: BranchInfo[];
+    activeAccount?: AccountProfile | null;
+    onOpenAuth?: () => void;
     onCheckoutBranch?: (branchName: string) => Promise<void>;
     onOpenCreatePR?: () => void;
     onClose?: () => void;
@@ -64,6 +67,8 @@
   let {
     remoteOriginUrl = '',
     localBranches = [],
+    activeAccount = null,
+    onOpenAuth,
     onCheckoutBranch,
     onOpenCreatePR,
     onClose,
@@ -75,7 +80,6 @@
   let repoOwner = $state('');
   let repoName = $state('');
   let patToken = $state(getStoredGitHubToken());
-  let showTokenInput = $state(false);
   let showLocalCreatePRModal = $state(false);
   let activeAccountUsername = $state('');
 
@@ -139,6 +143,17 @@
     if (parsedRemote) {
       repoOwner = parsedRemote.owner;
       repoName = parsedRemote.repo;
+    }
+  });
+
+  // Sync token & account when activeAccount changes
+  $effect(() => {
+    if (activeAccount?.token) {
+      patToken = activeAccount.token;
+      saveGitHubToken(activeAccount.token);
+    }
+    if (activeAccount?.username) {
+      activeAccountUsername = activeAccount.username;
     }
   });
 
@@ -364,17 +379,6 @@
     }
   }
 
-  function handleSaveToken(token: string) {
-    patToken = token;
-    saveGitHubToken(token);
-    showTokenInput = false;
-    toast.success(
-      localeState.t('pullRequest.reviewer.tokenSaved'),
-      localeState.t('pullRequest.reviewer.tokenSavedDesc')
-    );
-    loadPullRequests();
-  }
-
   let filteredPRs = $derived.by(() => {
     if (!searchQuery.trim()) return prList;
     const q = searchQuery.toLowerCase().trim();
@@ -503,22 +507,29 @@
         <span>{localeState.t('pullRequest.reviewer.createPR')}</span>
       </button>
 
-      {#if !patToken}
+      {#if activeAccount || activeAccountUsername}
         <button
-          onclick={() => (showTokenInput = true)}
+          onclick={() => onOpenAuth?.()}
+          class="px-2 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+          title={localeState.t('toolbar.signedInAs', { username: activeAccount?.username || activeAccountUsername, provider: 'GitHub' })}
+        >
+          {#if activeAccount?.avatar_url}
+            <img src={activeAccount.avatar_url} alt="Avatar" class="w-4 h-4 rounded-full border border-zinc-300 dark:border-zinc-600 shrink-0" />
+          {:else}
+            <span class="w-4 h-4 rounded-full bg-cyan-600/20 text-cyan-700 dark:text-cyan-300 flex items-center justify-center text-[9px] font-bold shrink-0">
+              {(activeAccount?.username || activeAccountUsername).slice(0, 2).toUpperCase()}
+            </span>
+          {/if}
+          <span class="font-medium text-xs">@{activeAccount?.username || activeAccountUsername}</span>
+        </button>
+      {:else if onOpenAuth}
+        <button
+          onclick={onOpenAuth}
           class="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-800/50 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+          title={localeState.t('toolbar.signInTitle')}
         >
           <Key class="w-3.5 h-3.5" />
-          <span>{localeState.t('pullRequest.reviewer.inputToken')}</span>
-        </button>
-      {:else}
-        <button
-          onclick={() => (showTokenInput = !showTokenInput)}
-          class="px-2.5 py-1 rounded-lg bg-white dark:bg-zinc-850 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-          title={localeState.t('pullRequest.reviewer.changeTokenTitle')}
-        >
-          <Key class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span>{localeState.t('pullRequest.reviewer.tokenConnected')}</span>
+          <span>{localeState.t('toolbar.signIn')} GitHub</span>
         </button>
       {/if}
 
@@ -552,12 +563,9 @@
       {isLoadingPRs}
       bind:searchQuery
       bind:prFilter
-      {showTokenInput}
-      bind:patToken
       onSelectPR={selectPR}
       onFilterChange={(f) => { prFilter = f; loadPullRequests(); }}
       onSearchChange={(q) => { searchQuery = q; }}
-      onSaveToken={handleSaveToken}
       onOpenCreatePR={() => {
         if (onOpenCreatePR) {
           onOpenCreatePR();
@@ -710,6 +718,8 @@
   isOpen={showLocalCreatePRModal}
   {remoteOriginUrl}
   branches={localBranches}
+  {activeAccount}
+  {onOpenAuth}
   onClose={() => (showLocalCreatePRModal = false)}
   onSuccess={async (newPR) => {
     showLocalCreatePRModal = false;

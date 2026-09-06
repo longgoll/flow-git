@@ -4,7 +4,6 @@
     RefreshCw,
     RotateCcw,
     Plus,
-    Key,
   } from 'lucide-svelte';
   import type { GitHubPullRequest } from '../../types';
   import { getPRStatusBadge } from './prDiffUtils';
@@ -17,12 +16,9 @@
     isLoadingPRs: boolean;
     searchQuery: string;
     prFilter: 'open' | 'closed' | 'all';
-    showTokenInput: boolean;
-    patToken: string;
     onSelectPR: (pr: GitHubPullRequest) => void;
     onFilterChange: (filter: 'open' | 'closed' | 'all') => void;
     onSearchChange: (query: string) => void;
-    onSaveToken: (token: string) => void;
     onOpenCreatePR: () => void;
   }
 
@@ -32,46 +28,14 @@
     isLoadingPRs,
     searchQuery = $bindable(''),
     prFilter = $bindable('open'),
-    showTokenInput,
-    patToken = $bindable(''),
     onSelectPR,
     onFilterChange,
     onSearchChange,
-    onSaveToken,
     onOpenCreatePR,
   }: Props = $props();
-
-  let inputToken = $state(patToken);
-
-  $effect(() => {
-    inputToken = patToken;
-  });
 </script>
 
 <div class="w-80 border-r border-zinc-200 dark:border-zinc-800 flex flex-col bg-zinc-50/70 dark:bg-zinc-950/60 shrink-0">
-  <!-- Token Input Drawer (Optional) -->
-  {#if showTokenInput}
-    <div class="p-3 bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex flex-col gap-2 text-xs animate-in fade-in duration-150">
-      <div class="flex items-center gap-2">
-        <Key class="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" />
-        <input
-          type="password"
-          bind:value={inputToken}
-          placeholder="GitHub PAT (ghp_...)"
-          class="flex-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 font-mono focus:outline-none focus:border-cyan-500"
-        />
-        <button
-          onclick={() => onSaveToken(inputToken)}
-          class="px-2.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-xs cursor-pointer shadow-xs shrink-0"
-        >
-          {localeState.t('pullRequest.reviewer.list.patDrawerSave')}
-        </button>
-      </div>
-      <p class="text-[10px] text-zinc-500 dark:text-zinc-400">
-        {localeState.t('pullRequest.reviewer.list.patDrawerNotice', { repoScope: 'repo' })}
-      </p>
-    </div>
-  {/if}
 
   <!-- Search & Filters -->
   <div class="p-2.5 border-b border-zinc-200 dark:border-zinc-800/80 space-y-2">

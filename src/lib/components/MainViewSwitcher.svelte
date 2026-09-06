@@ -458,6 +458,8 @@
   <PullRequestReviewer
     remoteOriginUrl={originRemoteUrl}
     localBranches={repo.branches}
+    activeAccount={remote.activeAccount}
+    onOpenAuth={() => (remote.showAuthModal = true)}
     onOpenCreatePR={() => handleOpenCreatePR()}
     onCheckoutBranch={async (b: string) => {
       await checkoutBranch(repo.currentRepoPath, b);

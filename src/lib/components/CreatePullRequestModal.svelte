@@ -10,7 +10,7 @@
     Sparkles,
     Key,
   } from 'lucide-svelte';
-  import type { BranchInfo, GitHubPullRequest, GitHubBranchComparison } from '../types';
+  import type { AccountProfile, BranchInfo, GitHubPullRequest, GitHubBranchComparison } from '../types';
   import {
     createGitHubPullRequest,
     compareGitHubBranches,
@@ -27,6 +27,8 @@
     isOpen: boolean;
     remoteOriginUrl?: string | null;
     branches?: BranchInfo[];
+    activeAccount?: AccountProfile | null;
+    onOpenAuth?: () => void;
     initialSourceBranch?: string;
     initialTargetBranch?: string;
     onClose: () => void;
@@ -37,6 +39,8 @@
     isOpen = false,
     remoteOriginUrl = '',
     branches = [],
+    activeAccount = null,
+    onOpenAuth,
     initialSourceBranch = '',
     initialTargetBranch = '',
     onClose,
@@ -75,7 +79,14 @@
 
   // Token state
   let patToken = $state(getStoredGitHubToken());
-  let showTokenInput = $state(false);
+
+  // Sync token when activeAccount changes
+  $effect(() => {
+    if (activeAccount?.token) {
+      patToken = activeAccount.token;
+      saveGitHubToken(activeAccount.token);
+    }
+  });
 
   // Sync defaults when modal opens or branches update
   $effect(() => {
@@ -173,15 +184,6 @@
     }
   }
 
-  function handleSaveToken() {
-    saveGitHubToken(patToken);
-    showTokenInput = false;
-    toast.success(
-      localeState.t('pullRequest.create.tokenSavedToast'),
-      localeState.t('pullRequest.create.tokenSavedToastDesc')
-    );
-  }
-
   async function handleCreatePR() {
     errorMessage = '';
 
@@ -207,7 +209,9 @@
 
     const currentToken = patToken.trim() || getStoredGitHubToken();
     if (!currentToken) {
-      showTokenInput = true;
+      if (onOpenAuth) {
+        onOpenAuth();
+      }
       errorMessage = localeState.t('pullRequest.create.authPrompt');
       return;
     }
@@ -443,45 +447,52 @@
           </span>
         </label>
 
-        <!-- Token Input Accordion if needed -->
-        {#if showTokenInput || !patToken}
-          <div class="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 space-y-2">
-            <div class="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-300">
-              <Key class="w-4 h-4 text-amber-600" />
-              <span>{localeState.t('pullRequest.create.tokenTitle')}</span>
+        <!-- System Auth Banner if not authenticated -->
+        {#if !patToken}
+          <div class="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-center justify-between gap-3">
+            <div class="space-y-0.5">
+              <div class="flex items-center gap-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300">
+                <AlertCircle class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span>{localeState.t('pullRequest.create.tokenTitle')}</span>
+              </div>
+              <p class="text-[11px] text-amber-700 dark:text-amber-400">
+                {localeState.t('pullRequest.create.tokenHelp')}
+              </p>
             </div>
-            <p class="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
-              {localeState.t('pullRequest.create.tokenHelp')}
-            </p>
-            <div class="flex items-center gap-2">
-              <input
-                type="password"
-                bind:value={patToken}
-                placeholder="ghp_xxxxxxxxxxxx"
-                class="flex-1 px-2.5 py-1 text-xs font-mono rounded-lg bg-white dark:bg-zinc-900 border border-amber-300 dark:border-amber-800 text-zinc-900 dark:text-zinc-100 outline-hidden"
-              />
+            {#if onOpenAuth}
               <button
                 type="button"
-                onclick={handleSaveToken}
-                class="px-3 py-1 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white cursor-pointer"
+                onclick={onOpenAuth}
+                class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors cursor-pointer shrink-0 shadow-xs"
               >
-                {localeState.t('pullRequest.create.saveToken')}
+                {localeState.t('toolbar.signIn')}
               </button>
-            </div>
+            {/if}
           </div>
         {/if}
       </div>
 
       <!-- Footer Actions -->
       <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex items-center justify-between">
-        <button
-          type="button"
-          onclick={() => (showTokenInput = !showTokenInput)}
-          class="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 flex items-center gap-1.5 cursor-pointer"
-        >
-          <Key class="w-3.5 h-3.5" />
-          <span>{patToken ? localeState.t('pullRequest.create.updateTokenBtn') : localeState.t('pullRequest.create.inputTokenBtn')}</span>
-        </button>
+        <div class="flex items-center gap-2">
+          {#if activeAccount?.username}
+            <div class="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+              {#if activeAccount.avatar_url}
+                <img src={activeAccount.avatar_url} alt="Avatar" class="w-4 h-4 rounded-full border border-zinc-300 dark:border-zinc-600" />
+              {/if}
+              <span>@{activeAccount.username}</span>
+            </div>
+          {:else if onOpenAuth}
+            <button
+              type="button"
+              onclick={onOpenAuth}
+              class="text-xs text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1.5 cursor-pointer"
+            >
+              <Key class="w-3.5 h-3.5" />
+              <span>{localeState.t('toolbar.signIn')}</span>
+            </button>
+          {/if}
+        </div>
 
         <div class="flex items-center gap-2.5">
           <button

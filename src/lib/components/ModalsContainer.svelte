@@ -540,6 +540,8 @@
   isOpen={modalState.showCreatePRModal}
   remoteOriginUrl={originRemoteUrl}
   branches={repo.branches}
+  activeAccount={remote.activeAccount}
+  onOpenAuth={() => (remote.showAuthModal = true)}
   initialSourceBranch={modalState.createPRSourceBranch || ''}
   onClose={() => modalState.closeCreatePR()}
   onSuccess={async () => {

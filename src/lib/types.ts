@@ -589,6 +589,7 @@ export interface WorkspaceTab {
   isWorktree: boolean;
   mainRepoPath?: string;
   dirtyFilesCount?: number;
+  openPRCount?: number;
   lastActiveAt?: number;
   // Per-tab isolated state:
   selectedFilePath?: string | null;

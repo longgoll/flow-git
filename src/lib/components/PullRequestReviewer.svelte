@@ -29,6 +29,7 @@
     fetchGitHubCommitChecks,
     submitGitHubPullRequestReview,
     mergeGitHubPullRequest,
+    updateGitHubPullRequestState,
     deleteGitHubBranch,
     parseGitHubRemote,
     saveGitHubToken,
@@ -48,6 +49,7 @@
   import PRLaunchpadEmpty from './pr-reviewer/PRLaunchpadEmpty.svelte';
   import PRReviewModal from './pr-reviewer/PRReviewModal.svelte';
   import PRMergeModal from './pr-reviewer/PRMergeModal.svelte';
+  import PRCloseModal from './pr-reviewer/PRCloseModal.svelte';
 
   interface Props {
     remoteOriginUrl?: string | null;
@@ -55,6 +57,7 @@
     onCheckoutBranch?: (branchName: string) => Promise<void>;
     onOpenCreatePR?: () => void;
     onClose?: () => void;
+    onPRCountChange?: (count: number) => void;
   }
 
   let {
@@ -63,6 +66,7 @@
     onCheckoutBranch,
     onOpenCreatePR,
     onClose,
+    onPRCountChange,
   }: Props = $props();
 
   // Detection & Config
@@ -81,6 +85,10 @@
   let mergeCommitMessage = $state('');
   let deleteBranchAfterMerge = $state(false);
   let isMerging = $state(false);
+
+  // Close / Reopen PR State
+  let showCloseModal = $state(false);
+  let isTogglingPRState = $state(false);
 
   // Data state
   let prList = $state<GitHubPullRequest[]>([]);
@@ -175,6 +183,8 @@
       }
       const list = await fetchGitHubPullRequests(repoOwner, repoName, patToken, prFilter);
       prList = list;
+      const openCount = prFilter === 'open' ? list.length : list.filter((p) => p.state === 'open').length;
+      onPRCountChange?.(openCount);
       if (list.length > 0 && !selectedPR) {
         selectPR(list[0]);
       }
@@ -300,6 +310,38 @@
       toast.error('Không thể merge Pull Request', err.message || String(err));
     } finally {
       isMerging = false;
+    }
+  }
+
+  async function handleTogglePRState(targetState: 'open' | 'closed', comment?: string) {
+    if (!repoOwner || !repoName || !selectedPR) return;
+    try {
+      isTogglingPRState = true;
+      if (comment && comment.trim()) {
+        await createGitHubIssueComment(repoOwner, repoName, selectedPR.number, comment.trim(), patToken);
+      }
+      const updated = await updateGitHubPullRequestState(
+        repoOwner,
+        repoName,
+        selectedPR.number,
+        targetState,
+        patToken
+      );
+      selectedPR = updated;
+      toast.success(
+        targetState === 'closed' ? 'Đã đóng Pull Request' : 'Đã mở lại Pull Request',
+        `PR #${selectedPR.number} hiện ở trạng thái ${targetState}.`
+      );
+      showCloseModal = false;
+      await loadPullRequests();
+      if (comment && comment.trim()) {
+        quickCommentText = '';
+      }
+      await selectPR(updated);
+    } catch (err: any) {
+      toast.error('Thao tác thất bại', err.message || String(err));
+    } finally {
+      isTogglingPRState = false;
     }
   }
 
@@ -499,9 +541,12 @@
           prFilesCount={prFiles.length}
           {isGeneratingReview}
           canCheckout={!!onCheckoutBranch}
+          {isTogglingPRState}
           onAIReview={handleGenerateAIReview}
           onCheckout={handleCheckoutToLocal}
           onOpenMergeModal={() => (showMergeModal = true)}
+          onOpenCloseModal={() => (showCloseModal = true)}
+          onReopenPR={() => handleTogglePRState('open')}
           onOpenReviewModal={() => {
             if (isOwnPR) reviewEvent = 'COMMENT';
             showReviewModal = true;
@@ -555,8 +600,12 @@
             {aiReviewResult}
             bind:quickCommentText
             {isPostingQuickComment}
+            {isTogglingPRState}
             onCloseAIReview={() => (aiReviewResult = null)}
             onOpenMergeModal={() => (showMergeModal = true)}
+            onOpenCloseModal={() => (showCloseModal = true)}
+            onCloseWithComment={() => handleTogglePRState('closed', quickCommentText)}
+            onReopenPR={() => handleTogglePRState('open', quickCommentText)}
             onPostQuickComment={handlePostQuickComment}
           />
         {:else if activeTab === 'commits'}
@@ -644,4 +693,13 @@
   {isMerging}
   onClose={() => (showMergeModal = false)}
   onConfirm={handleConfirmMerge}
+/>
+
+<!-- Close Pull Request Confirmation Modal -->
+<PRCloseModal
+  isOpen={showCloseModal}
+  {selectedPR}
+  isClosing={isTogglingPRState}
+  onClose={() => (showCloseModal = false)}
+  onConfirm={(comment) => handleTogglePRState('closed', comment)}
 />

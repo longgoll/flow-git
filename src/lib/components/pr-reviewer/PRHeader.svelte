@@ -10,6 +10,7 @@
     Clock,
     XCircle,
     MessageSquare,
+    RotateCcw,
   } from 'lucide-svelte';
   import type { GitHubCommitChecks, GitHubPullRequest } from '../../types';
   import { getPRStatusBadge } from './prDiffUtils';
@@ -21,10 +22,13 @@
     prFilesCount: number;
     isGeneratingReview: boolean;
     canCheckout: boolean;
+    isTogglingPRState?: boolean;
     onAIReview: () => void;
     onCheckout: () => void;
     onOpenMergeModal: () => void;
     onOpenReviewModal: () => void;
+    onOpenCloseModal?: () => void;
+    onReopenPR?: () => void;
   }
 
   let {
@@ -33,10 +37,13 @@
     prFilesCount,
     isGeneratingReview,
     canCheckout,
+    isTogglingPRState = false,
     onAIReview,
     onCheckout,
     onOpenMergeModal,
     onOpenReviewModal,
+    onOpenCloseModal,
+    onReopenPR,
   }: Props = $props();
 
   let statusBadge = $derived(getPRStatusBadge(selectedPR));
@@ -134,7 +141,34 @@
         <CheckCircle2 class="w-3.5 h-3.5" />
         <span>Submit Review</span>
       </button>
+
+      <button
+        onclick={onOpenCloseModal}
+        disabled={isTogglingPRState}
+        class="px-2.5 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-zinc-200 dark:border-zinc-700 hover:border-rose-300 dark:hover:border-rose-800/60 text-zinc-700 dark:text-zinc-300 hover:text-rose-600 dark:hover:text-rose-400 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+        title="Đóng Pull Request này mà không hợp nhất (Close PR)"
+      >
+        <XCircle class="w-3.5 h-3.5 text-rose-500/80" />
+        <span>Đóng PR</span>
+      </button>
     {:else}
+      {#if !selectedPR.merged}
+        <button
+          onclick={onReopenPR}
+          disabled={isTogglingPRState}
+          class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-98 disabled:opacity-50"
+          title="Mở lại Pull Request đã đóng (Reopen PR)"
+        >
+          {#if isTogglingPRState}
+            <Loader2 class="w-3.5 h-3.5 animate-spin" />
+            <span>Đang mở lại...</span>
+          {:else}
+            <RotateCcw class="w-3.5 h-3.5" />
+            <span>Mở lại PR</span>
+          {/if}
+        </button>
+      {/if}
+
       <button
         onclick={onOpenReviewModal}
         class="px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"

@@ -117,6 +117,7 @@ export class WorkspaceTabState {
       if (params.isWorktree !== undefined) existing.isWorktree = params.isWorktree;
       if (params.mainRepoPath) existing.mainRepoPath = normalizePath(params.mainRepoPath);
       if (params.dirtyFilesCount !== undefined) existing.dirtyFilesCount = params.dirtyFilesCount;
+      if (params.openPRCount !== undefined) existing.openPRCount = params.openPRCount;
       if (params.selectedFilePath !== undefined) existing.selectedFilePath = params.selectedFilePath;
       if (params.selectedFileIsStaged !== undefined) existing.selectedFileIsStaged = params.selectedFileIsStaged;
       if (params.selectedCommitId !== undefined) existing.selectedCommitId = params.selectedCommitId;
@@ -137,6 +138,7 @@ export class WorkspaceTabState {
       isWorktree: !!params.isWorktree,
       mainRepoPath: params.mainRepoPath ? normalizePath(params.mainRepoPath) : undefined,
       dirtyFilesCount: params.dirtyFilesCount || 0,
+      openPRCount: params.openPRCount,
       lastActiveAt: Date.now(),
       selectedFilePath: params.selectedFilePath,
       selectedFileIsStaged: params.selectedFileIsStaged,

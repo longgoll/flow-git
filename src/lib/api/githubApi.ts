@@ -271,6 +271,30 @@ export async function mergeGitHubPullRequest(
   return await res.json();
 }
 
+export async function updateGitHubPullRequestState(
+  owner: string,
+  repo: string,
+  pullNumber: number,
+  state: 'open' | 'closed',
+  token?: string
+): Promise<GitHubPullRequest> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}`;
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      ...getHeaders(token),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ state }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    let msg = errorData.message || `Cập nhật trạng thái PR thất bại (${res.status})`;
+    throw new Error(msg);
+  }
+  return await res.json();
+}
+
 export async function deleteGitHubBranch(
   owner: string,
   repo: string,

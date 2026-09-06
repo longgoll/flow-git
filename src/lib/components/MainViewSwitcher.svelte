@@ -459,5 +459,8 @@
       await checkoutBranch(repo.currentRepoPath, b);
       await loadRepository(repo.currentRepoPath);
     }}
+    onPRCountChange={(count) => {
+      remote.openPRCount = count;
+    }}
   />
 {/if}

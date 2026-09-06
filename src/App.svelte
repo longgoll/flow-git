@@ -136,6 +136,16 @@
       originRemoteUrl = await getRemoteUrl(path).catch(() => null);
       if (sessionId !== currentLoadSessionId) return;
 
+      if (originRemoteUrl) {
+        remote.refreshPRCount(originRemoteUrl).then((count) => {
+          if (sessionId === currentLoadSessionId) {
+            tabState.updateActiveTabMeta({ openPRCount: count });
+          }
+        });
+      } else {
+        remote.openPRCount = 0;
+      }
+
       await loadRemotesList(path);
       if (sessionId !== currentLoadSessionId) return;
 
@@ -200,6 +210,7 @@
         name: repo.repoSummary?.name,
         branch: repo.repoSummary?.current_branch,
         dirtyFilesCount: wt.workingTreeStatus?.total_dirty_count || 0,
+        openPRCount: tabContext?.openPRCount ?? remote.openPRCount,
         isWorktree: isWt,
         recentPushedBranch: tabContext?.recentPushedBranch || null,
         viewMode: tabContext?.viewMode || viewMode,
@@ -247,6 +258,9 @@
     modalState.aiDiffContext = '';
 
     recentPushedBranch = tab.recentPushedBranch || null;
+    if (tab.openPRCount !== undefined) {
+      remote.openPRCount = tab.openPRCount;
+    }
     if (tab.viewMode) {
       viewMode = tab.viewMode;
     }
@@ -376,6 +390,7 @@
     dirtyFilesCount={wt.workingTreeStatus?.total_dirty_count || 0}
     stagedFilesCount={wt.workingTreeStatus?.total_staged_count || 0}
     conflictedFilesCount={safety.conflictedFiles.length}
+    openPRCount={remote.openPRCount}
     {isSidebarOpen}
     workspaceTabs={tabState.tabs}
     activeTabId={tabState.activeTabId}

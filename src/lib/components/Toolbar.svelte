@@ -30,6 +30,7 @@
     dirtyFilesCount: number;
     stagedFilesCount: number;
     conflictedFilesCount?: number;
+    openPRCount?: number;
     isSidebarOpen?: boolean;
     filterHideMerges?: boolean;
     filterMyCommits?: boolean;
@@ -82,6 +83,7 @@
     dirtyFilesCount = 0,
     stagedFilesCount = 0,
     conflictedFilesCount = 0,
+    openPRCount = 0,
     isSidebarOpen = true,
     layoutMode = 'horizontal',
     filterHideMerges = false,
@@ -203,6 +205,7 @@
       {dirtyFilesCount}
       {stagedFilesCount}
       {conflictedFilesCount}
+      {openPRCount}
       {onChangeViewMode}
     />
   </div>

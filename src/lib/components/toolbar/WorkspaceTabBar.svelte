@@ -171,8 +171,18 @@
           {/if}
         </div>
 
-        <!-- Right: Dirty Indicator Dot & Close Button -->
+        <!-- Right: PR Badge & Dirty Indicator Dot & Close Button -->
         <div class="flex items-center gap-1 shrink-0 ml-1">
+          {#if tab.openPRCount && tab.openPRCount > 0}
+            <span
+              class="flex items-center gap-0.5 px-1 py-0.2 rounded-full text-[9px] font-mono font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shrink-0"
+              title="{tab.openPRCount} Pull Requests đang mở"
+            >
+              <span class="w-1 h-1 rounded-full bg-amber-500 shrink-0 animate-pulse"></span>
+              <span>{tab.openPRCount} PR</span>
+            </span>
+          {/if}
+
           {#if tab.dirtyFilesCount && tab.dirtyFilesCount > 0}
             <span
               class="w-1.5 h-1.5 rounded-full bg-amber-500 ring-2 ring-amber-500/20 shrink-0 animate-pulse"

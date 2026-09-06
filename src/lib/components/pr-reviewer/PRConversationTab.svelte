@@ -7,6 +7,8 @@
     MessageSquare,
     Send,
     RefreshCw,
+    XCircle,
+    RotateCcw,
   } from 'lucide-svelte';
   import type { GitHubPRComment, GitHubPullRequest } from '../../types';
   import { formatRelativeTime } from '../../utils/timeUtils';
@@ -18,9 +20,13 @@
     aiReviewResult: string | null;
     quickCommentText: string;
     isPostingQuickComment: boolean;
+    isTogglingPRState?: boolean;
     onCloseAIReview: () => void;
     onOpenMergeModal: () => void;
     onPostQuickComment: () => void;
+    onOpenCloseModal?: () => void;
+    onCloseWithComment?: () => void;
+    onReopenPR?: () => void;
   }
 
   let {
@@ -29,9 +35,13 @@
     aiReviewResult = null,
     quickCommentText = $bindable(''),
     isPostingQuickComment = false,
+    isTogglingPRState = false,
     onCloseAIReview,
     onOpenMergeModal,
     onPostQuickComment,
+    onOpenCloseModal,
+    onCloseWithComment,
+    onReopenPR,
   }: Props = $props();
 </script>
 
@@ -114,15 +124,26 @@
         </div>
       </div>
 
-      <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between">
-        <button
-          type="button"
-          onclick={onOpenMergeModal}
-          class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-2 transition-all shadow-md hover:shadow-emerald-500/20 cursor-pointer active:scale-98"
-        >
-          <GitMerge class="w-4 h-4" />
-          <span>Merge pull request</span>
-        </button>
+      <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between flex-wrap gap-2">
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            onclick={onOpenMergeModal}
+            class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-2 transition-all shadow-md hover:shadow-emerald-500/20 cursor-pointer active:scale-98"
+          >
+            <GitMerge class="w-4 h-4" />
+            <span>Merge pull request</span>
+          </button>
+          <button
+            type="button"
+            onclick={onOpenCloseModal}
+            disabled={isTogglingPRState}
+            class="px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700/80 hover:border-rose-300 dark:hover:border-rose-800/60 bg-white dark:bg-zinc-850 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-zinc-700 dark:text-zinc-300 hover:text-rose-600 dark:hover:text-rose-400 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <XCircle class="w-4 h-4 text-rose-500/80" />
+            <span>Đóng PR</span>
+          </button>
+        </div>
         <span class="text-[11px] text-zinc-400">
           Sẵn sàng hợp nhất {selectedPR.head.ref} vào {selectedPR.base.ref}
         </span>
@@ -141,6 +162,37 @@
           Toàn bộ thay đổi đã được tích hợp vào nhánh {selectedPR.base.ref}.
         </div>
       </div>
+    </div>
+  {:else}
+    <!-- Closed PR Card without Merge -->
+    <div class="p-4 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/30 flex items-center justify-between gap-3 mt-4">
+      <div class="flex items-center gap-3">
+        <div class="p-2 rounded-full bg-rose-100 dark:bg-rose-900/70 text-rose-600 dark:text-rose-400">
+          <XCircle class="w-4 h-4 stroke-[2.5]" />
+        </div>
+        <div>
+          <div class="text-xs font-bold text-rose-900 dark:text-rose-200">
+            Pull Request #{selectedPR.number} đã bị đóng (Closed)
+          </div>
+          <div class="text-[11px] text-rose-700/80 dark:text-rose-400/80">
+            Các thay đổi chưa được hợp nhất vào nhánh {selectedPR.base.ref}.
+          </div>
+        </div>
+      </div>
+      <button
+        type="button"
+        onclick={onReopenPR}
+        disabled={isTogglingPRState}
+        class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-98 disabled:opacity-50 shrink-0"
+      >
+        {#if isTogglingPRState}
+          <RefreshCw class="w-3.5 h-3.5 animate-spin" />
+          <span>Đang mở lại...</span>
+        {:else}
+          <RotateCcw class="w-3.5 h-3.5" />
+          <span>Mở lại PR</span>
+        {/if}
+      </button>
     </div>
   {/if}
 
@@ -165,7 +217,33 @@
       placeholder="Nhập nhận xét hoặc phản hồi của bạn về PR này..."
       class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 resize-none font-sans"
     ></textarea>
-    <div class="flex items-center justify-end">
+    <div class="flex items-center justify-between flex-wrap gap-2">
+      <div>
+        {#if selectedPR.state === 'open'}
+          <button
+            type="button"
+            onclick={onCloseWithComment}
+            disabled={isTogglingPRState}
+            class="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-rose-300 dark:hover:border-rose-800 bg-white dark:bg-zinc-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-zinc-700 dark:text-zinc-300 hover:text-rose-600 dark:hover:text-rose-400 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+            title="Đóng Pull Request này kèm bình luận"
+          >
+            <XCircle class="w-3.5 h-3.5 text-rose-500/80" />
+            <span>{quickCommentText.trim() ? 'Đóng với bình luận' : 'Đóng PR'}</span>
+          </button>
+        {:else if !selectedPR.merged}
+          <button
+            type="button"
+            onclick={onReopenPR}
+            disabled={isTogglingPRState}
+            class="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-emerald-300 dark:hover:border-emerald-800 bg-white dark:bg-zinc-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-zinc-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+            title="Mở lại Pull Request này kèm bình luận"
+          >
+            <RotateCcw class="w-3.5 h-3.5 text-emerald-500" />
+            <span>{quickCommentText.trim() ? 'Mở lại & Bình luận' : 'Mở lại PR'}</span>
+          </button>
+        {/if}
+      </div>
+
       <button
         type="button"
         onclick={onPostQuickComment}

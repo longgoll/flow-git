@@ -17,6 +17,7 @@
     dirtyFilesCount: number;
     stagedFilesCount: number;
     conflictedFilesCount?: number;
+    openPRCount?: number;
     onChangeViewMode: (mode: ViewMode) => void;
   }
 
@@ -25,6 +26,7 @@
     dirtyFilesCount = 0,
     stagedFilesCount = 0,
     conflictedFilesCount = 0,
+    openPRCount = 0,
     onChangeViewMode,
   }: Props = $props();
 </script>
@@ -85,11 +87,24 @@
   </button>
   <button
     onclick={() => onChangeViewMode('pr')}
-    class="px-1.5 sm:px-2 py-1 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer {viewMode === 'pr' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs font-semibold border border-zinc-200 dark:border-zinc-700/60' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/40'}"
-    title="Pull Requests (Cloud Code Review - GitHub)"
+    class="px-1.5 sm:px-2 py-1 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer relative {viewMode === 'pr' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs font-semibold border border-zinc-200 dark:border-zinc-700/60' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/40'}"
+    title={openPRCount > 0 ? `Pull Requests (${openPRCount} PRs đang mở)` : 'Pull Requests (Cloud Code Review - GitHub)'}
   >
-    <GitPullRequest class="w-3.5 h-3.5 shrink-0" />
-    <span class="{viewMode === 'pr' ? 'inline' : 'hidden'} text-[11px]">PRs</span>
+    <div class="relative flex items-center shrink-0">
+      <GitPullRequest class="w-3.5 h-3.5 shrink-0 {openPRCount > 0 && viewMode !== 'pr' ? 'text-amber-500 dark:text-amber-400' : ''}" />
+      {#if openPRCount > 0}
+        <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-zinc-900 animate-pulse {viewMode === 'pr' ? 'hidden' : 'sm:hidden'}"></span>
+      {/if}
+    </div>
+    <span class="{viewMode === 'pr' || openPRCount > 0 ? 'inline' : 'hidden sm:inline'} text-[11px]">PRs</span>
+    {#if openPRCount > 0}
+      <span
+        class="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold flex items-center gap-1 shrink-0 {viewMode === 'pr' ? 'bg-amber-500/15 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 dark:border-amber-500/40' : 'bg-amber-500/20 dark:bg-amber-500/30 text-amber-800 dark:text-amber-200 border border-amber-500/40 dark:border-amber-500/50 shadow-xs'}"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-pulse"></span>
+        <span>{openPRCount}</span>
+      </span>
+    {/if}
   </button>
   {#if viewMode === 'compare'}
     <button

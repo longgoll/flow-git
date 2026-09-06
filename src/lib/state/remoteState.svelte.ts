@@ -1,11 +1,20 @@
 import type { AccountProfile, GitCredentials } from '../types';
 import { executeRemoteWithAuth, getActiveAccount, saveAccountAuth, smartSync } from '../api';
+import {
+  fetchGitHubPullRequests,
+  parseGitHubRemote,
+  getStoredGitHubToken,
+  saveGitHubToken,
+} from '../api/githubApi';
 
 export class RemoteState {
   activeAccount = $state<AccountProfile | null>(null);
   cachedCredentials = $state<GitCredentials | null>(null);
   isSyncing = $state<boolean>(false);
   isPushing = $state<boolean>(false);
+  openPRCount = $state<number>(0);
+  isCheckingPRs = $state<boolean>(false);
+  lastPRCheckRepo = $state<string>('');
 
   showAuthModal = $state<boolean>(false);
   authModalType = $state<'ssh_passphrase' | 'https' | 'token' | 'github_oauth' | string>('token');
@@ -200,5 +209,38 @@ export class RemoteState {
     this.showAuthModal = false;
     this.pendingRemoteAction = null;
     this.pendingSyncAfterAuth = false;
+  }
+
+  async refreshPRCount(remoteUrl?: string | null): Promise<number> {
+    if (!remoteUrl) {
+      this.openPRCount = 0;
+      return 0;
+    }
+    const parsed = parseGitHubRemote(remoteUrl);
+    if (!parsed) {
+      this.openPRCount = 0;
+      return 0;
+    }
+    try {
+      this.isCheckingPRs = true;
+      let token = this.activeAccount?.token || getStoredGitHubToken();
+      if (!token) {
+        const acc = await getActiveAccount('github').catch(() => null);
+        if (acc?.token) {
+          token = acc.token;
+          saveGitHubToken(acc.token);
+        }
+      }
+      const list = await fetchGitHubPullRequests(parsed.owner, parsed.repo, token, 'open');
+      const count = Array.isArray(list) ? list.length : 0;
+      this.openPRCount = count;
+      this.lastPRCheckRepo = `${parsed.owner}/${parsed.repo}`;
+      return count;
+    } catch (e) {
+      console.debug('Background PR count check skipped/failed:', e);
+      return this.openPRCount;
+    } finally {
+      this.isCheckingPRs = false;
+    }
   }
 }

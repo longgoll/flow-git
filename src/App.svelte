@@ -1180,15 +1180,17 @@
         onAbortOperation={handleAbortCurrentOperationAlert}
         onCreateBranchFromDetached={handleCreateBranchFromDetached}
       />
-      <RecentPushBanner
-        pushedBranch={recentPushedBranch}
-        targetBranch={repo.branches.some((b) => b.shorthand === "main") ? "main" : "master"}
-        onCompareAndPR={(b) => {
-          recentPushedBranch = null;
-          handleOpenCreatePR(b);
-        }}
-        onDismiss={() => (recentPushedBranch = null)}
-      />
+      {#if viewMode !== 'pr'}
+        <RecentPushBanner
+          pushedBranch={recentPushedBranch}
+          targetBranch={repo.branches.some((b) => b.shorthand === "main") ? "main" : "master"}
+          onCompareAndPR={(b) => {
+            recentPushedBranch = null;
+            handleOpenCreatePR(b);
+          }}
+          onDismiss={() => (recentPushedBranch = null)}
+        />
+      {/if}
       {#if viewMode === "graph"}
         {#if layoutMode === "three-column"}
           <ThreeColumnLayout
@@ -1523,7 +1525,7 @@
           remoteOriginUrl={originRemoteUrl}
           localBranches={repo.branches}
           onOpenCreatePR={() => handleOpenCreatePR()}
-          onCheckoutBranch={async (b) => {
+          onCheckoutBranch={async (b: string) => {
             await checkoutBranch(repo.currentRepoPath, b);
             await loadRepository(repo.currentRepoPath);
           }}

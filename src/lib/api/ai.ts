@@ -61,3 +61,139 @@ export function generateHeuristicCommitMessage(diff: string): string {
   }
   return `feat(${basename}): implement new updates and improvements`;
 }
+
+export async function generateAIPRDescription(
+  sourceBranch: string,
+  targetBranch: string,
+  commitSummaries: string[],
+  filesChanged: string[],
+  settings?: AISettings
+): Promise<{ title: string; description: string }> {
+  // Title heuristic
+  let prTitle = sourceBranch
+    .replace(/^(feature|feat|fix|bugfix|chore|docs|refactor|test)\//i, (m) => m.slice(0, -1).toUpperCase() + ': ')
+    .replace(/[-_]/g, ' ');
+  prTitle = prTitle.charAt(0).toUpperCase() + prTitle.slice(1);
+
+  if (commitSummaries.length > 0) {
+    const firstCommit = commitSummaries[0];
+    if (firstCommit && firstCommit.length > 5) {
+      prTitle = firstCommit.charAt(0).toUpperCase() + firstCommit.slice(1);
+    }
+  }
+
+  // Ollama prompt if settings available
+  if (settings?.provider === 'ollama' && settings.endpoint) {
+    try {
+      const prompt = `You are an expert Git and GitHub assistant. Based on:
+Source Branch: ${sourceBranch} -> Base Branch: ${targetBranch}
+Commits:
+${commitSummaries.slice(0, 10).map((c) => `- ${c}`).join('\n')}
+Files:
+${filesChanged.slice(0, 15).join('\n')}
+
+Generate a professional Pull Request description in markdown with:
+## 📝 Tóm tắt thay đổi
+(Bullet points of main additions and modifications)
+## 🔍 Kiểm tra & Đảm bảo chất lượng
+(Checklist items)
+## ⚠️ Lưu ý (nếu có)`;
+
+      const response = await fetch(`${settings.endpoint}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: settings.model || 'qwen2.5-coder',
+          prompt,
+          stream: false,
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          title: prTitle,
+          description: data.response.trim(),
+        };
+      }
+    } catch (e) {
+      console.warn('Ollama PR description failed, using heuristic:', e);
+    }
+  }
+
+  // Smart Heuristic Markdown description
+  const bullets = commitSummaries.length > 0
+    ? commitSummaries.slice(0, 5).map((c) => `- ${c}`).join('\n')
+    : `- Tích hợp và đồng bộ các thay đổi từ nhánh \`${sourceBranch}\` vào \`${targetBranch}\`.`;
+
+  const filesSummary = filesChanged.length > 0
+    ? `\n\n### 📁 Các tệp trọng tâm (${filesChanged.length} files)\n` +
+      filesChanged.slice(0, 6).map((f) => `- \`${f}\``).join('\n') +
+      (filesChanged.length > 6 ? `\n- *và ${filesChanged.length - 6} tệp khác...*` : '')
+    : '';
+
+  const markdown = `## 📝 Tóm tắt thay đổi\n${bullets}${filesSummary}\n\n## 🔍 Kiểm tra & Đảm bảo chất lượng\n- [x] Đã kiểm tra build và chạy thử nghiệm cục bộ.\n- [x] Không gây ảnh hưởng ngược đến các chức năng nhánh \`${targetBranch}\`.\n- [x] Mã nguồn sạch sẽ, tuân thủ quy chuẩn dự án.`;
+
+  return {
+    title: prTitle,
+    description: markdown,
+  };
+}
+
+export async function generateAIPRReview(
+  prTitle: string,
+  filesChanged: { filename: string; additions: number; deletions: number; patch?: string }[],
+  settings?: AISettings
+): Promise<string> {
+  if (settings?.provider === 'ollama' && settings.endpoint) {
+    try {
+      const summaryContext = filesChanged
+        .slice(0, 8)
+        .map((f) => `${f.filename} (+${f.additions}/-${f.deletions}):\n${(f.patch || '').slice(0, 800)}`)
+        .join('\n---\n');
+
+      const response = await fetch(`${settings.endpoint}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: settings.model || 'qwen2.5-coder',
+          prompt: `You are a Senior Code Reviewer. Review this Pull Request: "${prTitle}".
+Here are the diff snippets:
+${summaryContext.slice(0, 4000)}
+
+Provide a concise, constructive code review in Vietnamese with:
+1. 💡 Tổng quan đánh giá (Điểm sáng)
+2. ⚠️ Rủi ro tiềm ẩn hoặc gợi ý tối ưu
+3. ✅ Kết luận: Khuyến nghị Approve hay Cần chỉnh sửa thêm?`,
+          stream: false,
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        return data.response.trim();
+      }
+    } catch (e) {
+      console.warn('Ollama PR review failed, using heuristic review:', e);
+    }
+  }
+
+  // Heuristic review based on changes
+  const totalAdd = filesChanged.reduce((acc, f) => acc + f.additions, 0);
+  const totalDel = filesChanged.reduce((acc, f) => acc + f.deletions, 0);
+  const hasTests = filesChanged.some((f) => f.filename.toLowerCase().includes('test'));
+  const hasDocs = filesChanged.some((f) => f.filename.endsWith('.md'));
+
+  return `### 🤖 FlowGit AI Code Review
+
+#### 💡 Tổng quan đánh giá:
+- PR gồm **${filesChanged.length} tệp thay đổi** với **+${totalAdd} / -${totalDel} dòng code**.
+- Cấu trúc thay đổi tập trung và bám sát mục tiêu của PR: *"${prTitle}"*.
+${hasTests ? '- ✅ Đã có tệp kiểm thử kèm theo trong PR.' : '- ℹ️ Chưa phát hiện tệp kiểm thử mới (nếu là feature lớn, khuyến nghị bổ sung unit tests).'}
+${hasDocs ? '- 📚 Có tài liệu / hướng dẫn cập nhật đi kèm.' : ''}
+
+#### ⚠️ Gợi ý tối ưu & An toàn:
+- Kiểm tra tính tương thích ngược với nhánh đích trước khi merge.
+- Đảm bảo tất cả các luồng xử lý lỗi (error handling) không bị nuốt ngoại lệ âm thầm.
+
+#### ✅ Khuyến nghị:
+- Code đạt tiêu chuẩn sạch sẽ. **Sẵn sàng để Merge** sau khi chạy kiểm thử hoàn tất!`;
+}

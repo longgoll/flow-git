@@ -306,6 +306,51 @@ export interface GitHubPRComment {
   html_url: string;
 }
 
+export interface GitHubPRCommit {
+  sha: string;
+  node_id: string;
+  commit: {
+    author: {
+      name: string;
+      email: string;
+      date: string;
+    };
+    committer: {
+      name: string;
+      email: string;
+      date: string;
+    };
+    message: string;
+  };
+  author?: GitHubUser | null;
+  html_url: string;
+}
+
+export interface GitHubCheckRun {
+  id: number;
+  name: string;
+  status: 'queued' | 'in_progress' | 'completed';
+  conclusion: 'success' | 'failure' | 'neutral' | 'cancelled' | 'timed_out' | 'action_required' | 'skipped' | null;
+  html_url: string;
+  started_at?: string;
+  completed_at?: string;
+}
+
+export interface GitHubCommitChecks {
+  total_count: number;
+  check_runs: GitHubCheckRun[];
+  state: 'success' | 'failure' | 'pending' | 'none';
+}
+
+export interface GitHubBranchComparison {
+  status: 'ahead' | 'behind' | 'diverged' | 'identical';
+  ahead_by: number;
+  behind_by: number;
+  total_commits: number;
+  commits: GitHubPRCommit[];
+  files: GitHubPRFile[];
+}
+
 export interface SmartFilters {
   hideMerges: boolean;
   myCommits: boolean;

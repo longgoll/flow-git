@@ -10,13 +10,15 @@
     Sparkles,
     Key,
   } from 'lucide-svelte';
-  import type { BranchInfo, GitHubPullRequest } from '../types';
+  import type { BranchInfo, GitHubPullRequest, GitHubBranchComparison } from '../types';
   import {
     createGitHubPullRequest,
+    compareGitHubBranches,
     parseGitHubRemote,
     getStoredGitHubToken,
     saveGitHubToken,
   } from '../api/githubApi';
+  import { generateAIPRDescription } from '../api/ai';
   import { getActiveAccount } from '../api/auth';
   import { toast } from '../state/toastState.svelte';
 
@@ -65,6 +67,11 @@
   let isSubmitting = $state(false);
   let errorMessage = $state('');
 
+  // Branch Comparison & AI state
+  let branchComparison = $state<GitHubBranchComparison | null>(null);
+  let isComparing = $state(false);
+  let isGeneratingAI = $state(false);
+
   // Token state
   let patToken = $state(getStoredGitHubToken());
   let showTokenInput = $state(false);
@@ -109,8 +116,44 @@
 
       // Auto-fill title & description if blank
       initDefaultContent(sourceBranch, targetBranch);
+      runBranchComparison(sourceBranch, targetBranch);
     }
   });
+
+  async function runBranchComparison(src: string, tgt: string) {
+    if (!src || !tgt || src === tgt || !repoOwner || !repoName) {
+      branchComparison = null;
+      return;
+    }
+    try {
+      isComparing = true;
+      const currentToken = patToken.trim() || getStoredGitHubToken();
+      const comp = await compareGitHubBranches(repoOwner, repoName, tgt, src, currentToken);
+      branchComparison = comp;
+    } catch (e) {
+      console.warn('Could not compare branches for preview:', e);
+      branchComparison = null;
+    } finally {
+      isComparing = false;
+    }
+  }
+
+  async function handleAIGenerate() {
+    if (!sourceBranch || !targetBranch) return;
+    try {
+      isGeneratingAI = true;
+      const commitSummaries = branchComparison?.commits.map((c) => c.commit.message.split('\n')[0]) || [];
+      const files = branchComparison?.files.map((f) => f.filename) || [];
+      const res = await generateAIPRDescription(sourceBranch, targetBranch, commitSummaries, files);
+      title = res.title;
+      description = res.description;
+      toast.success('AI đã sinh mô tả PR!', 'Tiêu đề và nội dung markdown đã được cập nhật.');
+    } catch (err: any) {
+      toast.error('Lỗi sinh mô tả AI', err.message || String(err));
+    } finally {
+      isGeneratingAI = false;
+    }
+  }
 
   function initDefaultContent(src: string, tgt: string) {
     if (!title.trim() && src) {
@@ -253,7 +296,10 @@
             <div class="flex-1 relative">
               <select
                 bind:value={sourceBranch}
-                onchange={() => initDefaultContent(sourceBranch, targetBranch)}
+                onchange={() => {
+                  initDefaultContent(sourceBranch, targetBranch);
+                  runBranchComparison(sourceBranch, targetBranch);
+                }}
                 class="w-full pl-8 pr-3 py-2 text-xs font-mono font-bold rounded-lg bg-white dark:bg-zinc-900 border border-cyan-400 dark:border-cyan-600/70 text-cyan-900 dark:text-cyan-200 focus:ring-2 focus:ring-cyan-500/20 outline-hidden shadow-xs"
               >
                 {#each branchNames as b}
@@ -271,7 +317,10 @@
             <div class="flex-1 relative">
               <select
                 bind:value={targetBranch}
-                onchange={() => initDefaultContent(sourceBranch, targetBranch)}
+                onchange={() => {
+                  initDefaultContent(sourceBranch, targetBranch);
+                  runBranchComparison(sourceBranch, targetBranch);
+                }}
                 class="w-full pl-8 pr-3 py-2 text-xs font-mono font-bold rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/20 outline-hidden shadow-xs"
               >
                 {#each branchNames as b}
@@ -282,7 +331,33 @@
             </div>
           </div>
 
-          {#if sourceBranch === targetBranch}
+          <!-- Branch Comparison Preview Card -->
+          {#if isComparing}
+            <div class="p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-500 flex items-center justify-center gap-2">
+              <Loader2 class="w-3.5 h-3.5 animate-spin text-cyan-500" />
+              <span>Đang kiểm tra độ lệch commits giữa 2 nhánh...</span>
+            </div>
+          {:else if branchComparison}
+            {#if branchComparison.total_commits > 0}
+              <div class="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-medium">
+                  <Check class="w-3.5 h-3.5 stroke-[3]" />
+                  <span>Sẵn sàng hợp nhất:</span>
+                  <span class="font-mono font-bold">{branchComparison.total_commits} commits</span>
+                  <span>•</span>
+                  <span class="font-mono">{branchComparison.files?.length || 0} tệp thay đổi</span>
+                </div>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200">
+                  {branchComparison.status.toUpperCase()}
+                </span>
+              </div>
+            {:else}
+              <div class="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-[11px] flex items-center gap-2">
+                <AlertCircle class="w-3.5 h-3.5 shrink-0" />
+                <span>Nhánh <strong>{sourceBranch}</strong> chưa có commit mới nào so với <strong>{targetBranch}</strong>.</span>
+              </div>
+            {/if}
+          {:else if sourceBranch === targetBranch}
             <div class="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-[11px] flex items-center gap-2">
               <AlertCircle class="w-3.5 h-3.5 shrink-0" />
               <span>Nhánh nguồn và đích đang trùng nhau. Vui lòng chọn hai nhánh khác nhau.</span>
@@ -314,14 +389,31 @@
             <label for="pr-desc" class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
               Mô tả chi tiết (Markdown)
             </label>
-            <button
-              type="button"
-              onclick={() => initDefaultContent(sourceBranch, targetBranch)}
-              class="text-[11px] text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1 cursor-pointer"
-            >
-              <Sparkles class="w-3 h-3" />
-              Điền mẫu mặc định
-            </button>
+            <div class="flex items-center gap-3">
+              <button
+                type="button"
+                onclick={handleAIGenerate}
+                disabled={isGeneratingAI}
+                class="text-[11px] text-violet-600 dark:text-violet-400 hover:text-violet-500 flex items-center gap-1 cursor-pointer font-medium disabled:opacity-50"
+                title="Sử dụng FlowGit AI để sinh mô tả PR tự động"
+              >
+                {#if isGeneratingAI}
+                  <Loader2 class="w-3 h-3 animate-spin" />
+                  <span>Đang sinh mô tả...</span>
+                {:else}
+                  <Sparkles class="w-3 h-3" />
+                  <span>✨ AI viết mô tả</span>
+                {/if}
+              </button>
+
+              <button
+                type="button"
+                onclick={() => initDefaultContent(sourceBranch, targetBranch)}
+                class="text-[11px] text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                Điền mẫu mặc định
+              </button>
+            </div>
           </div>
           <textarea
             id="pr-desc"

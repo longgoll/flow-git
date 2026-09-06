@@ -1,4 +1,11 @@
-import type { GitHubPRComment, GitHubPRFile, GitHubPullRequest } from '../types';
+import type {
+  GitHubPRComment,
+  GitHubPRFile,
+  GitHubPullRequest,
+  GitHubPRCommit,
+  GitHubCommitChecks,
+  GitHubBranchComparison,
+} from '../types';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 const TOKEN_STORAGE_KEY = 'flowgit_github_pat';
@@ -276,6 +283,97 @@ export async function deleteGitHubBranch(
     headers: getHeaders(token),
   });
   return res.ok || res.status === 204;
+}
+
+export async function createGitHubIssueComment(
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  body: string,
+  token?: string
+): Promise<GitHubPRComment> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues/${issueNumber}/comments`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      ...getHeaders(token),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ body }),
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to post comment (${res.status}): ${errorText}`);
+  }
+  return await res.json();
+}
+
+export async function fetchGitHubPullRequestCommits(
+  owner: string,
+  repo: string,
+  pullNumber: number,
+  token?: string
+): Promise<GitHubPRCommit[]> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/commits?per_page=100`;
+  const res = await fetch(url, { headers: getHeaders(token) });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to fetch PR commits (${res.status}): ${errorText}`);
+  }
+  return await res.json();
+}
+
+export async function fetchGitHubCommitChecks(
+  owner: string,
+  repo: string,
+  ref: string,
+  token?: string
+): Promise<GitHubCommitChecks> {
+  try {
+    const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/commits/${ref}/check-runs`;
+    const res = await fetch(url, { headers: getHeaders(token) });
+    if (!res.ok) {
+      return { total_count: 0, check_runs: [], state: 'none' };
+    }
+    const data = await res.json();
+    const runs = (data.check_runs || []) as any[];
+
+    let state: 'success' | 'failure' | 'pending' | 'none' = 'none';
+    if (runs.length > 0) {
+      const hasFailure = runs.some((r) => r.conclusion === 'failure' || r.conclusion === 'timed_out');
+      const hasPending = runs.some((r) => r.status === 'in_progress' || r.status === 'queued');
+      if (hasFailure) {
+        state = 'failure';
+      } else if (hasPending) {
+        state = 'pending';
+      } else {
+        state = 'success';
+      }
+    }
+    return {
+      total_count: data.total_count || runs.length,
+      check_runs: runs,
+      state,
+    };
+  } catch {
+    return { total_count: 0, check_runs: [], state: 'none' };
+  }
+}
+
+export async function compareGitHubBranches(
+  owner: string,
+  repo: string,
+  base: string,
+  head: string,
+  token?: string
+): Promise<GitHubBranchComparison> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/compare/${encodeURIComponent(base)}...${encodeURIComponent(head)}`;
+  const res = await fetch(url, { headers: getHeaders(token) });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to compare branches (${res.status}): ${errorText}`);
+  }
+  return await res.json();
 }
 
 

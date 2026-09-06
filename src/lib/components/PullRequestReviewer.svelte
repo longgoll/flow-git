@@ -21,14 +21,32 @@
     Sparkles,
     RotateCcw,
     ArrowRight,
+    GitCommit,
+    Eye,
+    FileCode,
+    XCircle,
+    Clock,
+    Bot,
+    CheckCircle,
+    Loader2,
   } from 'lucide-svelte';
-  import type { BranchInfo, GitHubPRComment, GitHubPRFile, GitHubPullRequest } from '../types';
+  import type {
+    BranchInfo,
+    GitHubPRComment,
+    GitHubPRFile,
+    GitHubPullRequest,
+    GitHubPRCommit,
+    GitHubCommitChecks,
+  } from '../types';
   import {
     fetchGitHubPullRequests,
     fetchGitHubPullRequestFiles,
     fetchGitHubPullRequestComments,
     fetchGitHubPullRequestDetail,
     createGitHubInlineComment,
+    createGitHubIssueComment,
+    fetchGitHubPullRequestCommits,
+    fetchGitHubCommitChecks,
     submitGitHubPullRequestReview,
     mergeGitHubPullRequest,
     deleteGitHubBranch,
@@ -37,8 +55,11 @@
     getStoredGitHubToken,
   } from '../api/githubApi';
   import { getActiveAccount } from '../api/auth';
+  import { formatRelativeTime } from '../utils/timeUtils';
+  import { generateAIPRReview } from '../api/ai';
   import { toast } from '../state/toastState.svelte';
   import CreatePullRequestModal from './CreatePullRequestModal.svelte';
+  import MarkdownViewer from './MarkdownViewer.svelte';
 
   interface Props {
     remoteOriginUrl?: string | null;
@@ -81,11 +102,23 @@
   let searchQuery = $state('');
 
   // Selected PR Details state
-  let activeTab = $state<'conversation' | 'files'>('files');
+  let activeTab = $state<'conversation' | 'files' | 'commits'>('files');
   let prFiles = $state<GitHubPRFile[]>([]);
   let prComments = $state<GitHubPRComment[]>([]);
+  let prCommits = $state<GitHubPRCommit[]>([]);
+  let commitChecks = $state<GitHubCommitChecks | null>(null);
   let isLoadingDetails = $state(false);
   let selectedFileIndex = $state(0);
+
+  // Quick Comment & AI Review state
+  let quickCommentText = $state('');
+  let isPostingQuickComment = $state(false);
+  let isGeneratingReview = $state(false);
+  let aiReviewResult = $state<string | null>(null);
+
+  // Viewed Files & Diff Mode state
+  let viewedFiles = $state<Record<string, boolean>>({});
+  let diffMode = $state<'unified' | 'split'>('unified');
 
   // Review & Inline comment state
   let inlineCommentLine = $state<{ file: string; line: number } | null>(null);
@@ -168,6 +201,8 @@
     selectedPR = pr;
     inlineCommentLine = null;
     inlineCommentText = '';
+    quickCommentText = '';
+    aiReviewResult = null;
     selectedFileIndex = 0;
     mergeCommitTitle = `Merge pull request #${pr.number} from ${pr.head.ref}`;
     mergeCommitMessage = pr.title;
@@ -176,13 +211,17 @@
     }
     try {
       isLoadingDetails = true;
-      const [files, comments, detail] = await Promise.all([
+      const [files, comments, detail, commits, checks] = await Promise.all([
         fetchGitHubPullRequestFiles(repoOwner, repoName, pr.number, patToken).catch(() => []),
         fetchGitHubPullRequestComments(repoOwner, repoName, pr.number, patToken).catch(() => []),
         fetchGitHubPullRequestDetail(repoOwner, repoName, pr.number, patToken).catch(() => null),
+        fetchGitHubPullRequestCommits(repoOwner, repoName, pr.number, patToken).catch(() => []),
+        fetchGitHubCommitChecks(repoOwner, repoName, pr.head.sha, patToken).catch(() => null),
       ]);
       prFiles = files;
       prComments = comments;
+      prCommits = commits;
+      commitChecks = checks;
       if (detail) {
         selectedPR = { ...pr, ...detail };
       }
@@ -191,6 +230,52 @@
     } finally {
       isLoadingDetails = false;
     }
+  }
+
+  async function handlePostQuickComment() {
+    if (!selectedPR || !quickCommentText.trim()) return;
+    try {
+      isPostingQuickComment = true;
+      const newComment = await createGitHubIssueComment(
+        repoOwner,
+        repoName,
+        selectedPR.number,
+        quickCommentText.trim(),
+        patToken
+      );
+      prComments = [...prComments, newComment];
+      quickCommentText = '';
+      toast.success('Đã gửi nhận xét!', 'Bình luận đã được ghi nhận trên GitHub PR.');
+    } catch (err: any) {
+      toast.error('Không thể gửi bình luận', err.message || String(err));
+    } finally {
+      isPostingQuickComment = false;
+    }
+  }
+
+  async function handleGenerateAIReview() {
+    if (!selectedPR || prFiles.length === 0) return;
+    try {
+      isGeneratingReview = true;
+      aiReviewResult = null;
+      const review = await generateAIPRReview(selectedPR.title, prFiles);
+      aiReviewResult = review;
+      activeTab = 'conversation';
+      toast.success('AI Code Review hoàn tất!', 'Đã tạo bản tóm tắt và đánh giá cho PR.');
+    } catch (err: any) {
+      toast.error('Lỗi sinh AI Review', err.message || String(err));
+    } finally {
+      isGeneratingReview = false;
+    }
+  }
+
+  function isFileViewed(prNumber: number, filename: string): boolean {
+    return !!viewedFiles[`${prNumber}:${filename}`];
+  }
+
+  function toggleFileViewed(prNumber: number, filename: string) {
+    const key = `${prNumber}:${filename}`;
+    viewedFiles[key] = !viewedFiles[key];
   }
 
   async function handleConfirmMerge() {
@@ -420,6 +505,97 @@
     }
     return { label: 'M', bg: 'bg-amber-50 dark:bg-amber-950/60', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-300 dark:border-amber-800' };
   }
+
+  function getPRStatusBadge(pr: GitHubPullRequest) {
+    if (pr.merged || pr.merged_at) {
+      return {
+        label: 'MERGED',
+        bg: 'bg-purple-100 dark:bg-purple-950/80',
+        text: 'text-purple-800 dark:text-purple-300',
+        border: 'border-purple-300 dark:border-purple-800/60',
+        icon: GitMerge,
+      };
+    }
+    if (pr.draft) {
+      return {
+        label: 'DRAFT',
+        bg: 'bg-zinc-100 dark:bg-zinc-900',
+        text: 'text-zinc-600 dark:text-zinc-400',
+        border: 'border-dashed border-zinc-300 dark:border-zinc-700',
+        icon: FileCode,
+      };
+    }
+    if (pr.state === 'closed') {
+      return {
+        label: 'CLOSED',
+        bg: 'bg-rose-100 dark:bg-rose-950/80',
+        text: 'text-rose-800 dark:text-rose-300',
+        border: 'border-rose-300 dark:border-rose-800/60',
+        icon: XCircle,
+      };
+    }
+    return {
+      label: 'OPEN',
+      bg: 'bg-emerald-100 dark:bg-emerald-950/80',
+      text: 'text-emerald-800 dark:text-emerald-300',
+      border: 'border-emerald-300 dark:border-emerald-800/60',
+      icon: GitPullRequest,
+    };
+  }
+
+  interface SplitDiffRow {
+    isHeader: boolean;
+    headerContent?: string;
+    left?: {
+      type: 'del' | 'context' | 'empty';
+      lineNumber: number | null;
+      content: string;
+    };
+    right?: {
+      type: 'add' | 'context' | 'empty';
+      lineNumber: number | null;
+      content: string;
+    };
+  }
+
+  function parseSplitDiffRows(patch: string): SplitDiffRow[] {
+    const unifiedLines = parsePatchLines(patch);
+    const rows: SplitDiffRow[] = [];
+    let i = 0;
+    while (i < unifiedLines.length) {
+      const line = unifiedLines[i];
+      if (line.type === 'header') {
+        rows.push({ isHeader: true, headerContent: line.content });
+        i++;
+      } else if (line.type === 'context') {
+        rows.push({
+          isHeader: false,
+          left: { type: 'context', lineNumber: line.oldLineNumber, content: line.content },
+          right: { type: 'context', lineNumber: line.newLineNumber, content: line.content },
+        });
+        i++;
+      } else {
+        const dels: ParsedDiffLine[] = [];
+        const adds: ParsedDiffLine[] = [];
+        while (i < unifiedLines.length && (unifiedLines[i].type === 'del' || unifiedLines[i].type === 'add')) {
+          if (unifiedLines[i].type === 'del') dels.push(unifiedLines[i]);
+          else adds.push(unifiedLines[i]);
+          i++;
+        }
+        const maxLen = Math.max(dels.length, adds.length);
+        for (let k = 0; k < maxLen; k++) {
+          const d = dels[k];
+          const a = adds[k];
+          rows.push({
+            isHeader: false,
+            left: d ? { type: 'del', lineNumber: d.oldLineNumber, content: d.content } : undefined,
+            right: a ? { type: 'add', lineNumber: a.newLineNumber, content: a.content } : undefined,
+          });
+        }
+      }
+    }
+    return rows;
+  }
 </script>
 
 <div class="h-full w-full flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans select-none overflow-hidden">
@@ -591,32 +767,38 @@
           {#each filteredPRs as pr}
             {@const isSelected = selectedPR?.number === pr.number}
             {@const linked = isLocalLinked(pr)}
+            {@const statusBadge = getPRStatusBadge(pr)}
+            {@const StatusIcon = statusBadge.icon}
             <button
               type="button"
               onclick={() => selectPR(pr)}
               class="w-full p-3 text-left transition-colors cursor-pointer block {isSelected ? 'bg-violet-100/70 dark:bg-violet-950/30 border-l-2 border-violet-500' : 'hover:bg-zinc-100 dark:hover:bg-zinc-900/50'}"
             >
               <div class="flex items-start justify-between gap-2">
-                <span class="text-xs font-semibold text-zinc-900 dark:text-zinc-200 line-clamp-2">
-                  #{pr.number} {pr.title}
-                </span>
+                <div class="flex items-start gap-1.5 min-w-0 flex-1">
+                  <span class="px-1.5 py-0.2 rounded text-[10px] font-bold border flex items-center gap-1 shrink-0 mt-0.5 {statusBadge.bg} {statusBadge.text} {statusBadge.border}">
+                    <StatusIcon class="w-2.5 h-2.5" />
+                    <span>{statusBadge.label}</span>
+                  </span>
+                  <span class="text-xs font-semibold text-zinc-900 dark:text-zinc-200 line-clamp-2">
+                    #{pr.number} {pr.title}
+                  </span>
+                </div>
                 {#if linked}
                   <span class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 shrink-0" title="Nhánh này đã tồn tại dưới máy của bạn">
                     Local
-                  </span>
-                {:else}
-                  <span class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 shrink-0" title="Chỉ tồn tại trên GitHub Remote">
-                    Cloud
                   </span>
                 {/if}
               </div>
 
               <div class="mt-2 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
-                <span class="flex items-center gap-1.5">
-                  <User class="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
-                  {pr.user.login}
+                <span class="flex items-center gap-1 truncate">
+                  <User class="w-3 h-3 text-zinc-400 dark:text-zinc-500 shrink-0" />
+                  <span class="truncate">{pr.user.login}</span>
+                  <span>•</span>
+                  <span class="text-[10px]">{formatRelativeTime(pr.created_at)}</span>
                 </span>
-                <span class="font-mono text-[10px] flex items-center gap-1 text-zinc-500 dark:text-zinc-400">
+                <span class="font-mono text-[10px] flex items-center gap-1 text-zinc-500 dark:text-zinc-400 shrink-0">
                   <span class="text-violet-600 dark:text-violet-400 font-medium">{pr.head.ref}</span>
                   <span class="text-zinc-400">&rarr;</span>
                   <span class="text-zinc-600 dark:text-zinc-400">{pr.base.ref}</span>
@@ -630,13 +812,16 @@
 
     <!-- Right Panel: PR Review Studio -->
     {#if selectedPR}
+      {@const statusBadge = getPRStatusBadge(selectedPR)}
+      {@const StatusIcon = statusBadge.icon}
       <div class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-zinc-950">
         <!-- PR Header Details -->
         <div class="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100/70 dark:bg-zinc-900/40 flex items-start justify-between gap-4 shrink-0">
           <div class="space-y-1">
             <div class="flex items-center gap-2">
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold {selectedPR.state === 'open' ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60' : 'bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-800/60'}">
-                {selectedPR.state.toUpperCase()}
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1.5 border {statusBadge.bg} {statusBadge.text} {statusBadge.border}">
+                <StatusIcon class="w-3.5 h-3.5" />
+                <span>{statusBadge.label}</span>
               </span>
               <h1 class="text-sm font-bold text-zinc-900 dark:text-zinc-100">
                 #{selectedPR.number} {selectedPR.title}
@@ -644,7 +829,7 @@
             </div>
 
             <div class="flex items-center gap-3 text-xs text-zinc-600 dark:text-zinc-400">
-              <span>Bởi <strong class="text-zinc-900 dark:text-zinc-200">{selectedPR.user.login}</strong></span>
+              <span>Bởi <strong class="text-zinc-900 dark:text-zinc-200">{selectedPR.user.login}</strong> ({formatRelativeTime(selectedPR.created_at)})</span>
               <span>•</span>
               <span class="font-mono text-[11px] text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
                 <span>Nhánh:</span>
@@ -652,11 +837,48 @@
                 <span class="text-zinc-400">&rarr;</span>
                 <code class="px-1.5 py-0.5 rounded bg-zinc-200/70 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold">{selectedPR.base.ref}</code>
               </span>
+
+              <!-- CI / GitHub Actions Checks Status -->
+              {#if commitChecks && commitChecks.total_count > 0}
+                <span>•</span>
+                {#if commitChecks.state === 'success'}
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1" title="Tất cả bài kiểm thử CI đã vượt qua">
+                    <CheckCircle class="w-3 h-3" />
+                    <span>CI Passed ({commitChecks.total_count})</span>
+                  </span>
+                {:else if commitChecks.state === 'pending'}
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 flex items-center gap-1" title="Các bài kiểm tra CI đang chạy...">
+                    <Clock class="w-3 h-3 animate-spin" />
+                    <span>CI Running...</span>
+                  </span>
+                {:else if commitChecks.state === 'failure'}
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-300 dark:border-rose-800 flex items-center gap-1" title="Có bài kiểm tra CI bị lỗi!">
+                    <XCircle class="w-3 h-3" />
+                    <span>CI Failed</span>
+                  </span>
+                {/if}
+              {/if}
             </div>
           </div>
 
           <!-- Actions: Checkout to Local, Review, Open GitHub -->
           <div class="flex items-center gap-2 shrink-0">
+            <!-- AI Review PR Button -->
+            <button
+              onclick={handleGenerateAIReview}
+              disabled={isGeneratingReview || prFiles.length === 0}
+              class="px-2.5 py-1.5 rounded-lg bg-violet-50 dark:bg-violet-950/60 hover:bg-violet-100 dark:hover:bg-violet-900/60 border border-violet-200 dark:border-violet-800/60 text-violet-700 dark:text-violet-300 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
+              title="Sử dụng FlowGit AI phân tích nhanh các rủi ro và thay đổi trong PR này"
+            >
+              {#if isGeneratingReview}
+                <Loader2 class="w-3.5 h-3.5 animate-spin" />
+                <span>AI đang review...</span>
+              {:else}
+                <Sparkles class="w-3.5 h-3.5" />
+                <span>✨ AI Review PR</span>
+              {/if}
+            </button>
+
             {#if onCheckoutBranch}
               <button
                 onclick={handleCheckoutToLocal}
@@ -714,7 +936,7 @@
           </div>
         </div>
 
-        <!-- Tab Selector: Conversation vs Files Changed -->
+        <!-- Tab Selector: Files Changed vs Conversation vs Commits -->
         <div class="px-4 border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-100/40 dark:bg-zinc-900/20 flex items-center gap-4 text-xs shrink-0">
           <button
             onclick={() => (activeTab = 'files')}
@@ -736,6 +958,16 @@
               {prComments.length}
             </span>
           </button>
+          <button
+            onclick={() => (activeTab = 'commits')}
+            class="py-2.5 font-medium flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'commits' ? 'border-violet-500 text-violet-700 dark:text-violet-300 font-semibold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+          >
+            <GitCommit class="w-3.5 h-3.5" />
+            <span>Commits</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {activeTab === 'commits' ? 'bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 font-bold' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">
+              {prCommits.length}
+            </span>
+          </button>
         </div>
 
         <!-- Tab Body -->
@@ -746,15 +978,38 @@
           </div>
         {:else if activeTab === 'conversation'}
           <div class="flex-1 overflow-y-auto p-6 space-y-4 max-w-3xl">
+            <!-- AI Code Review Banner (if generated) -->
+            {#if aiReviewResult}
+              <div class="p-4 rounded-xl bg-violet-50/80 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/60 shadow-xs space-y-2.5 animate-in fade-in duration-200">
+                <div class="flex items-center justify-between border-b border-violet-200/60 dark:border-violet-800/40 pb-2">
+                  <div class="flex items-center gap-2 text-xs font-bold text-violet-900 dark:text-violet-200">
+                    <Bot class="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                    <span>FlowGit AI Reviewer</span>
+                  </div>
+                  <button
+                    type="button"
+                    onclick={() => (aiReviewResult = null)}
+                    class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-xs cursor-pointer"
+                  >
+                    Đóng
+                  </button>
+                </div>
+                <MarkdownViewer content={aiReviewResult} />
+              </div>
+            {/if}
+
             <!-- Author PR Description Card -->
             <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-800 space-y-2">
-              <div class="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800/60 pb-2">
-                <User class="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
-                <span class="font-medium text-zinc-900 dark:text-zinc-200">{selectedPR.user.login}</span>
-                <span>đã mở PR này:</span>
+              <div class="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800/60 pb-2">
+                <div class="flex items-center gap-2">
+                  <User class="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
+                  <span class="font-medium text-zinc-900 dark:text-zinc-200">{selectedPR.user.login}</span>
+                  <span>đã mở PR này</span>
+                </div>
+                <span class="text-[11px] text-zinc-400">{formatRelativeTime(selectedPR.created_at)}</span>
               </div>
-              <div class="text-xs text-zinc-800 dark:text-zinc-300 whitespace-pre-wrap font-sans leading-relaxed pt-1 select-text">
-                {selectedPR.body || 'Không có mô tả chi tiết.'}
+              <div class="pt-1 select-text">
+                <MarkdownViewer content={selectedPR.body || 'Không có mô tả chi tiết.'} />
               </div>
             </div>
 
@@ -768,13 +1023,17 @@
                   <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 space-y-1.5 select-text">
                     <div class="flex items-center justify-between text-xs">
                       <span class="font-medium text-cyan-700 dark:text-cyan-300">@{comment.user.login}</span>
-                      {#if comment.path && comment.line}
-                        <span class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">
-                          {comment.path}:{comment.line}
-                        </span>
-                      {/if}
+                      <div class="flex items-center gap-2 text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">
+                        {#if comment.path && comment.line}
+                          <span>{comment.path}:{comment.line}</span>
+                          <span>•</span>
+                        {/if}
+                        <span>{formatRelativeTime(comment.created_at)}</span>
+                      </div>
                     </div>
-                    <p class="text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">{comment.body}</p>
+                    <div class="pt-1">
+                      <MarkdownViewer content={comment.body} />
+                    </div>
                   </div>
                 {/each}
               </div>
@@ -826,6 +1085,90 @@
                 </div>
               </div>
             {/if}
+
+            <!-- Quick Comment Box directly at bottom of conversation -->
+            <div class="p-4 rounded-xl bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 shadow-xs space-y-2.5 mt-4">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
+                  <MessageSquare class="w-3.5 h-3.5 text-violet-500" />
+                  <span>Viết bình luận nhanh</span>
+                </span>
+                <span class="text-[11px] text-zinc-400 font-mono">Ctrl + Enter để gửi</span>
+              </div>
+              <textarea
+                bind:value={quickCommentText}
+                onkeydown={(e) => {
+                  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    handlePostQuickComment();
+                  }
+                }}
+                rows={3}
+                placeholder="Nhập nhận xét hoặc phản hồi của bạn về PR này..."
+                class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 resize-none font-sans"
+              ></textarea>
+              <div class="flex items-center justify-end">
+                <button
+                  type="button"
+                  onclick={handlePostQuickComment}
+                  disabled={isPostingQuickComment || !quickCommentText.trim()}
+                  class="px-4 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                >
+                  {#if isPostingQuickComment}
+                    <RefreshCw class="w-3.5 h-3.5 animate-spin" />
+                    <span>Đang gửi...</span>
+                  {:else}
+                    <Send class="w-3.5 h-3.5" />
+                    <span>Gửi bình luận</span>
+                  {/if}
+                </button>
+              </div>
+            </div>
+          </div>
+        {:else if activeTab === 'commits'}
+          <div class="flex-1 overflow-y-auto p-6 space-y-3 max-w-3xl">
+            {#if prCommits.length === 0}
+              <div class="p-8 text-center text-xs text-zinc-400">
+                Chưa có dữ liệu commits hoặc PR chưa tải xong.
+              </div>
+            {:else}
+              <div class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+                Danh sách Commits ({prCommits.length})
+              </div>
+              <div class="divide-y divide-zinc-200 dark:divide-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-xs">
+                {#each prCommits as commit}
+                  <div class="p-3.5 flex items-start justify-between gap-3 hover:bg-zinc-50 dark:hover:bg-zinc-850/50 transition-colors">
+                    <div class="flex items-start gap-3 min-w-0 flex-1">
+                      <div class="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0">
+                        <GitCommit class="w-4 h-4" />
+                      </div>
+                      <div class="space-y-1 min-w-0 flex-1">
+                        <div class="text-xs font-semibold text-zinc-900 dark:text-zinc-100 font-sans break-words">
+                          {commit.commit.message.split('\n')[0]}
+                        </div>
+                        <div class="flex items-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+                          <span>{commit.commit.author.name}</span>
+                          <span>•</span>
+                          <span>{formatRelativeTime(commit.commit.author.date)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                      <a
+                        href={commit.html_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        class="px-2 py-0.5 rounded font-mono text-[11px] bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:text-cyan-600 dark:hover:text-cyan-400 flex items-center gap-1"
+                        title="Xem commit trên GitHub"
+                      >
+                        <span>{commit.sha.slice(0, 7)}</span>
+                        <ExternalLink class="w-2.5 h-2.5" />
+                      </a>
+                    </div>
+                  </div>
+                {/each}
+              </div>
+            {/if}
           </div>
         {:else}
           <!-- Files Changed Split: File List & Diff Viewer -->
@@ -848,37 +1191,54 @@
                 {@const parts = file.filename.split('/')}
                 {@const basename = parts.pop() || file.filename}
                 {@const dirname = parts.join('/')}
-                <button
-                  type="button"
-                  onclick={() => (selectedFileIndex = idx)}
-                  class="w-full p-2.5 text-left text-xs transition-colors cursor-pointer flex items-center justify-between gap-2.5 {isSelected ? 'bg-violet-50 dark:bg-violet-950/50 text-violet-950 dark:text-violet-100 font-medium border-l-3 border-violet-600 shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900/40 border-l-3 border-transparent'}"
-                  title={file.filename}
-                >
-                  <div class="flex items-center gap-2 min-w-0 flex-1">
-                    <span class="w-4 h-4 rounded text-[10px] font-mono font-bold flex items-center justify-center shrink-0 border {badge.bg} {badge.text} {badge.border}">
-                      {badge.label}
-                    </span>
-                    <div class="min-w-0 flex-1 leading-tight">
-                      <div class="font-mono text-xs truncate font-medium {isSelected ? 'text-violet-950 dark:text-violet-100 font-semibold' : 'text-zinc-800 dark:text-zinc-200'}">
-                        {basename}
-                      </div>
-                      {#if dirname}
-                        <div class="font-mono text-[10px] text-zinc-400 dark:text-zinc-500 truncate">
-                          {dirname}/
+                {@const isViewed = isFileViewed(selectedPR.number, file.filename)}
+                <div class="flex items-center w-full transition-colors {isSelected ? 'bg-violet-50 dark:bg-violet-950/50 border-l-3 border-violet-600 shadow-xs' : 'hover:bg-zinc-100 dark:hover:bg-zinc-900/40 border-l-3 border-transparent'} {isViewed ? 'opacity-60' : ''}">
+                  <button
+                    type="button"
+                    onclick={() => (selectedFileIndex = idx)}
+                    class="p-2.5 text-left text-xs transition-colors cursor-pointer flex items-center justify-between gap-2.5 min-w-0 flex-1"
+                    title={file.filename}
+                  >
+                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                      <span class="w-4 h-4 rounded text-[10px] font-mono font-bold flex items-center justify-center shrink-0 border {badge.bg} {badge.text} {badge.border}">
+                        {badge.label}
+                      </span>
+                      <div class="min-w-0 flex-1 leading-tight">
+                        <div class="font-mono text-xs truncate font-medium {isSelected ? 'text-violet-950 dark:text-violet-100 font-semibold' : 'text-zinc-800 dark:text-zinc-200'}">
+                          {basename}
                         </div>
+                        {#if dirname}
+                          <div class="font-mono text-[10px] text-zinc-400 dark:text-zinc-500 truncate">
+                            {dirname}/
+                          </div>
+                        {/if}
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-1 text-[10px] font-mono shrink-0">
+                      {#if file.additions > 0}
+                        <span class="text-emerald-600 dark:text-emerald-400 font-semibold">+{file.additions}</span>
+                      {/if}
+                      {#if file.deletions > 0}
+                        <span class="text-rose-600 dark:text-rose-400 font-semibold">-{file.deletions}</span>
                       {/if}
                     </div>
-                  </div>
+                  </button>
 
-                  <div class="flex items-center gap-1 text-[10px] font-mono shrink-0">
-                    {#if file.additions > 0}
-                      <span class="text-emerald-600 dark:text-emerald-400 font-semibold">+{file.additions}</span>
+                  <!-- Mark as Viewed Checkbox -->
+                  <button
+                    type="button"
+                    onclick={() => { if (selectedPR) toggleFileViewed(selectedPR.number, file.filename); }}
+                    class="p-1.5 mr-2 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer shrink-0 transition-colors"
+                    title={isViewed ? 'Bỏ đánh dấu đã xem' : 'Đánh dấu đã xem'}
+                  >
+                    {#if isViewed}
+                      <CheckCircle class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 fill-emerald-100 dark:fill-emerald-950/60" />
+                    {:else}
+                      <div class="w-3.5 h-3.5 rounded border border-zinc-300 dark:border-zinc-700 hover:border-emerald-500"></div>
                     {/if}
-                    {#if file.deletions > 0}
-                      <span class="text-rose-600 dark:text-rose-400 font-semibold">-{file.deletions}</span>
-                    {/if}
-                  </div>
-                </button>
+                  </button>
+                </div>
               {/each}
             </div>
 
@@ -897,12 +1257,48 @@
               {#if prFiles[selectedFileIndex]}
                 {@const activeFile = prFiles[selectedFileIndex]}
                 {@const parsedLines = activeFile.patch ? parsePatchLines(activeFile.patch) : []}
-                <div class="mb-3 flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800">
-                  <div class="flex items-center gap-2">
+                {@const splitRows = activeFile.patch ? parseSplitDiffRows(activeFile.patch) : []}
+                {@const activeViewed = isFileViewed(selectedPR.number, activeFile.filename)}
+                <div class="mb-3 flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800 gap-3 flex-wrap">
+                  <div class="flex items-center gap-2 min-w-0">
                     <FileText class="w-4 h-4 text-violet-500 shrink-0" />
-                    <span class="font-bold text-zinc-900 dark:text-zinc-100 font-mono text-xs">{activeFile.filename}</span>
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100 font-mono text-xs truncate">{activeFile.filename}</span>
                   </div>
-                  <div class="flex items-center gap-2 text-xs">
+
+                  <div class="flex items-center gap-2 text-xs shrink-0">
+                    <!-- Diff Mode Toggle: Unified vs Split -->
+                    <div class="flex items-center gap-0.5 bg-zinc-100 dark:bg-zinc-900 p-0.5 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                      <button
+                        type="button"
+                        onclick={() => (diffMode = 'unified')}
+                        class="px-2 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer {diffMode === 'unified' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-bold shadow-xs' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+                      >
+                        Unified
+                      </button>
+                      <button
+                        type="button"
+                        onclick={() => (diffMode = 'split')}
+                        class="px-2 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer {diffMode === 'split' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-bold shadow-xs' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+                      >
+                        Split (2 cột)
+                      </button>
+                    </div>
+
+                    <!-- Mark as Viewed Button -->
+                    <button
+                      type="button"
+                      onclick={() => { if (selectedPR) toggleFileViewed(selectedPR.number, activeFile.filename); }}
+                      class="px-2.5 py-1 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-colors cursor-pointer {activeViewed ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300' : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-emerald-500'}"
+                    >
+                      {#if activeViewed}
+                        <CheckCircle class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span>Đã xem tệp</span>
+                      {:else}
+                        <Eye class="w-3.5 h-3.5" />
+                        <span>Đánh dấu đã xem</span>
+                      {/if}
+                    </button>
+
                     <span class="px-2 py-0.5 rounded-full text-[11px] font-mono bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                       +{activeFile.additions} dòng
                     </span>
@@ -913,7 +1309,49 @@
                 </div>
 
                 {#if parsedLines.length > 0}
-                  <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden shadow-xs">
+                  {#if diffMode === 'split'}
+                    <!-- Split Diff (Side-by-side) View -->
+                    <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden shadow-xs">
+                      {#each splitRows as row}
+                        {#if row.isHeader}
+                          <div class="px-3 py-1.5 bg-zinc-100/90 dark:bg-zinc-900/90 border-y border-zinc-200 dark:border-zinc-800 text-cyan-800 dark:text-cyan-400 text-[11px] font-mono font-medium flex items-center gap-2 select-none">
+                            <span class="px-1.5 py-0.2 rounded bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300 text-[10px] font-bold">Hunk</span>
+                            <span>{row.headerContent}</span>
+                          </div>
+                        {:else}
+                          <div class="grid grid-cols-2 divide-x divide-zinc-200 dark:divide-zinc-800 border-b border-zinc-100 dark:border-zinc-900/50 hover:bg-zinc-50/70 dark:hover:bg-zinc-900/40 transition-colors">
+                            <!-- Left Column: Old Lines / Deletions -->
+                            <div class="flex items-center text-[11px] font-mono min-h-[1.5rem] {row.left?.type === 'del' ? 'bg-rose-500/10 text-rose-950 dark:text-rose-200' : 'text-zinc-800 dark:text-zinc-300'}">
+                              <span class="w-10 px-1.5 py-0.5 text-right text-zinc-400 dark:text-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/40 select-none shrink-0 border-r border-zinc-200/60 dark:border-zinc-800/60 text-[10px]">
+                                {row.left?.lineNumber ?? ''}
+                              </span>
+                              <span class="w-4 text-center font-bold shrink-0 select-none {row.left?.type === 'del' ? 'text-rose-600 dark:text-rose-400' : 'text-transparent'}">
+                                {row.left?.type === 'del' ? '-' : ' '}
+                              </span>
+                              <span class="px-2 py-0.5 whitespace-pre-wrap break-all select-text leading-relaxed flex-1">
+                                {row.left?.content ?? ''}
+                              </span>
+                            </div>
+
+                            <!-- Right Column: New Lines / Additions -->
+                            <div class="flex items-center text-[11px] font-mono min-h-[1.5rem] {row.right?.type === 'add' ? 'bg-emerald-500/10 text-emerald-950 dark:text-emerald-200' : 'text-zinc-800 dark:text-zinc-300'}">
+                              <span class="w-10 px-1.5 py-0.5 text-right text-zinc-400 dark:text-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/40 select-none shrink-0 border-r border-zinc-200/60 dark:border-zinc-800/60 text-[10px]">
+                                {row.right?.lineNumber ?? ''}
+                              </span>
+                              <span class="w-4 text-center font-bold shrink-0 select-none {row.right?.type === 'add' ? 'text-emerald-600 dark:text-emerald-400' : 'text-transparent'}">
+                                {row.right?.type === 'add' ? '+' : ' '}
+                              </span>
+                              <span class="px-2 py-0.5 whitespace-pre-wrap break-all select-text leading-relaxed flex-1">
+                                {row.right?.content ?? ''}
+                              </span>
+                            </div>
+                          </div>
+                        {/if}
+                      {/each}
+                    </div>
+                  {:else}
+                    <!-- Unified Diff View -->
+                    <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden shadow-xs">
                     {#each parsedLines as line}
                       {@const isAdd = line.type === 'add'}
                       {@const isDel = line.type === 'del'}
@@ -1006,6 +1444,7 @@
                       {/if}
                     {/each}
                   </div>
+                {/if}
                 {:else}
                   <div class="p-6 text-center text-zinc-400 dark:text-zinc-500">
                     Tệp nhị phân hoặc không có diff chi tiết.

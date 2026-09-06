@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { CommitDetail as ICommitDetail, CommitNode, FocusBranchResult } from '../types';
+  import type { BranchInfo, CommitDetail as ICommitDetail, CommitNode, FocusBranchResult } from '../types';
   import CommitGraph from './CommitGraph.svelte';
   import CommitDetail from './CommitDetail.svelte';
   import { getFocusBranchInfo } from '../api/repo';
@@ -12,16 +12,24 @@
     X,
     Check,
     AlertTriangle,
+    GitPullRequest,
+    GitCompare,
+    ChevronDown,
   } from 'lucide-svelte';
 
   interface Props {
     repoPath: string;
     currentBranchName?: string;
+    branches?: BranchInfo[];
     selectedCommitId: string | null;
     selectedCommitIds?: string[];
     commitDetail: ICommitDetail | null;
     isDetailLoading: boolean;
     onSelectCommit: (commit: CommitNode) => void;
+    onSelectMultipleCommits?: (commitIds: string[]) => void;
+    onSquashCommits?: (commits: CommitNode[]) => void;
+    onCompareCommits?: (c1: CommitNode, c2: CommitNode) => void;
+    onOpenCreatePR?: (sourceBranch: string, targetBranch: string) => void;
     onCloseFocus: () => void;
     onSyncWithBase?: (baseBranch?: string) => Promise<void>;
   }
@@ -29,16 +37,23 @@
   let {
     repoPath = '',
     currentBranchName = '',
+    branches = [],
     selectedCommitId = null,
     selectedCommitIds = [],
     commitDetail = null,
     isDetailLoading = false,
     onSelectCommit,
+    onSelectMultipleCommits,
+    onSquashCommits,
+    onCompareCommits,
+    onOpenCreatePR,
     onCloseFocus,
     onSyncWithBase,
   }: Props = $props();
 
   let focusData = $state<FocusBranchResult | null>(null);
+  let selectedBase = $state<string | undefined>(undefined);
+  let showBaseDropdown = $state<boolean>(false);
   let isLoading = $state<boolean>(true);
   let isSyncing = $state<boolean>(false);
   let syncSuccess = $state<boolean>(false);
@@ -50,6 +65,30 @@
   let isResizing = $state<boolean>(false);
   let resizeStartY = 0;
   let resizeStartHeight = 0;
+
+  // Filter available base branches (exclude current branch)
+  let candidateBaseBranches = $derived.by(() => {
+    const list: string[] = [];
+    const added = new Set<string>();
+
+    const priorityCandidates = ['main', 'origin/main', 'master', 'origin/master', 'develop', 'origin/develop'];
+    for (const p of priorityCandidates) {
+      if (p !== currentBranchName && branches.some((b) => b.shorthand === p || b.name === p)) {
+        list.push(p);
+        added.add(p);
+      }
+    }
+
+    for (const b of branches) {
+      const name = b.shorthand || b.name;
+      if (name !== currentBranchName && !added.has(name)) {
+        list.push(name);
+        added.add(name);
+      }
+    }
+
+    return list;
+  });
 
   function handleStartResize(e: MouseEvent) {
     isResizing = true;
@@ -76,16 +115,16 @@
     loadFocus();
   });
 
-  async function loadFocus() {
+  async function loadFocus(customBase?: string) {
     if (!repoPath) return;
     isLoading = true;
     try {
-      const res = await getFocusBranchInfo(repoPath, currentBranchName || undefined);
+      const res = await getFocusBranchInfo(repoPath, currentBranchName || undefined, customBase);
       focusData = res;
+      selectedBase = res.base_branch;
       if (res.commits.length > 0 && !selectedCommitId) {
         onSelectCommit(res.commits[0]);
       }
-      // If only few commits in focus, allocate generous height for detail panel (files changed)
       if (res.commits.length <= 3) {
         detailHeight = Math.max(380, Math.round(window.innerHeight * 0.55));
       }
@@ -96,13 +135,19 @@
     }
   }
 
+  function handleSelectBaseBranch(branchName: string) {
+    showBaseDropdown = false;
+    selectedBase = branchName;
+    loadFocus(branchName);
+  }
+
   async function handleSync() {
     if (!onSyncWithBase) return;
     isSyncing = true;
     try {
       await onSyncWithBase(focusData?.base_branch);
       syncSuccess = true;
-      await loadFocus();
+      await loadFocus(selectedBase);
       setTimeout(() => (syncSuccess = false), 3000);
     } catch (e) {
       console.error(e);
@@ -110,11 +155,19 @@
       isSyncing = false;
     }
   }
+
+  function handleBranchComparison() {
+    if (!focusData || !onCompareCommits) return;
+    if (focusData.commits.length === 0) return;
+    const newest = focusData.commits[0];
+    const oldest = focusData.commits[focusData.commits.length - 1];
+    onCompareCommits(oldest, newest);
+  }
 </script>
 
 <div class="flex-1 flex flex-col w-full h-full min-h-0 bg-white dark:bg-zinc-950 overflow-hidden select-none font-sans">
   <!-- Top Focus Header Banner -->
-  <div class="px-4 py-2 border-b border-amber-300/70 dark:border-amber-900/50 bg-amber-50/60 dark:bg-zinc-900/50 flex items-center justify-between gap-4 shrink-0 shadow-xs">
+  <div class="px-4 py-2 border-b border-amber-300/70 dark:border-amber-900/50 bg-amber-50/60 dark:bg-zinc-900/50 flex items-center justify-between gap-4 shrink-0 shadow-xs relative z-20">
     <div class="flex items-center gap-3 flex-wrap min-w-0">
       <div class="w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-700 dark:text-amber-400 shrink-0">
         <Crosshair class="w-4 h-4" />
@@ -127,10 +180,46 @@
             Isolated Path
           </span>
         </div>
-        <div class="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 font-mono mt-0.5">
+        <div class="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 font-mono mt-0.5 relative">
           <span class="text-amber-800 dark:text-amber-300 font-semibold">{focusData?.branch_name || currentBranchName || 'HEAD'}</span>
           <span class="text-zinc-400 dark:text-zinc-500">relative to</span>
-          <span class="text-zinc-800 dark:text-zinc-200 bg-zinc-200/70 dark:bg-zinc-800 px-1.5 py-0.2 rounded border border-zinc-300 dark:border-zinc-700 font-semibold">{focusData?.base_branch || 'main'}</span>
+
+          <!-- Switchable Base Branch Dropdown Button -->
+          <div class="relative inline-block">
+            <button
+              onclick={() => (showBaseDropdown = !showBaseDropdown)}
+              class="inline-flex items-center gap-1 text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 px-2 py-0.5 rounded border border-zinc-300 dark:border-zinc-700 font-semibold cursor-pointer shadow-xs transition-colors"
+              title="Nhấp để đổi nhánh Base so sánh (main, origin/main, v.v.)"
+            >
+              <span>{focusData?.base_branch || 'main'}</span>
+              <ChevronDown class="w-3 h-3 text-zinc-400" />
+            </button>
+
+            {#if showBaseDropdown}
+              <!-- Backdrop -->
+              <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
+              <div
+                class="fixed inset-0 z-40"
+                onclick={() => (showBaseDropdown = false)}
+              ></div>
+
+              <!-- Menu -->
+              <div class="absolute left-0 top-full mt-1 w-48 max-h-56 overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl z-50 py-1 font-sans text-xs divide-y divide-zinc-100 dark:divide-zinc-800/60">
+                <div class="px-2.5 py-1 text-[10px] uppercase font-bold text-zinc-400">Select Base Branch</div>
+                {#each candidateBaseBranches as b}
+                  <button
+                    onclick={() => handleSelectBaseBranch(b)}
+                    class="w-full text-left px-2.5 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 font-mono text-xs flex items-center justify-between cursor-pointer {b === focusData?.base_branch ? 'text-amber-600 dark:text-amber-400 font-bold bg-amber-50/50 dark:bg-amber-950/30' : 'text-zinc-700 dark:text-zinc-300'}"
+                  >
+                    <span class="truncate">{b}</span>
+                    {#if b === focusData?.base_branch}
+                      <Check class="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+                    {/if}
+                  </button>
+                {/each}
+              </div>
+            {/if}
+          </div>
         </div>
       </div>
 
@@ -157,8 +246,30 @@
       {/if}
     </div>
 
-    <!-- Actions: 1-Click Sync & Exit -->
-    <div class="flex items-center gap-2 shrink-0">
+    <!-- Actions: Compare / Create PR / Sync / Exit -->
+    <div class="flex items-center gap-2 shrink-0 flex-wrap">
+      {#if onCompareCommits && focusData && focusData.commits.length > 0}
+        <button
+          onclick={handleBranchComparison}
+          class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/80 text-xs font-medium text-cyan-700 dark:text-cyan-300 hover:text-cyan-900 dark:hover:text-cyan-100 transition-all cursor-pointer shadow-xs"
+          title="So sánh toàn bộ thay đổi giữa các đầu commit của nhánh so với Base"
+        >
+          <GitCompare class="w-3.5 h-3.5 text-cyan-500" />
+          <span>Branch Diff</span>
+        </button>
+      {/if}
+
+      {#if onOpenCreatePR && focusData}
+        <button
+          onclick={() => onOpenCreatePR?.(focusData!.branch_name, focusData!.base_branch)}
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900 border border-purple-300 dark:border-purple-700/80 text-purple-800 dark:text-purple-200 text-xs font-semibold transition-all cursor-pointer shadow-xs hover:scale-102"
+          title="Tạo Pull Request từ nhánh này vào {focusData.base_branch}"
+        >
+          <GitPullRequest class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+          <span>Create PR</span>
+        </button>
+      {/if}
+
       {#if onSyncWithBase}
         <button
           onclick={handleSync}
@@ -171,10 +282,10 @@
             <span class="text-emerald-700 dark:text-emerald-300 font-bold">Synced!</span>
           {:else if focusData?.behind_count === 0}
             <Check class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Up to date with Base</span>
+            <span>Up to date</span>
           {:else}
             <RefreshCw class="w-3.5 h-3.5 {isSyncing ? 'animate-spin text-amber-600 dark:text-amber-400' : 'text-amber-700 dark:text-amber-400'}" />
-            <span>{isSyncing ? 'Syncing...' : `Rebase onto ${focusData?.base_branch || 'Base'}`}</span>
+            <span>{isSyncing ? 'Syncing...' : `Rebase (${focusData?.behind_count})`}</span>
           {/if}
         </button>
       {/if}
@@ -182,7 +293,7 @@
       <button
         onclick={onCloseFocus}
         class="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 transition-colors cursor-pointer shadow-xs"
-        title="Quay lại đồ thị đầy đủ"
+        title="Quay lại đồ thị đầy đủ (Exit Focus)"
       >
         <X class="w-3.5 h-3.5" />
         <span>Exit Focus</span>
@@ -205,6 +316,9 @@
           {selectedCommitIds}
           {repoPath}
           onSelectCommit={onSelectCommit}
+          onSelectMultipleCommits={onSelectMultipleCommits}
+          onSquashCommits={onSquashCommits}
+          onCompareCommits={onCompareCommits}
         />
       </div>
 
@@ -230,8 +344,13 @@
             {commitDetail}
             isLoading={isDetailLoading}
             isMaximized={isDetailMaximized}
+            {repoPath}
             onToggleMaximize={() => (isDetailMaximized = !isDetailMaximized)}
             onClose={() => (isDetailOpen = false)}
+            onSelectParent={(pid) => {
+              const parent = focusData?.commits.find((c) => c.id === pid);
+              if (parent) onSelectCommit(parent);
+            }}
           />
         </div>
       {/if}
@@ -240,9 +359,10 @@
         <AlertTriangle class="w-8 h-8 text-amber-500/50" />
         <span class="text-zinc-800 dark:text-zinc-300 font-semibold text-sm">No divergent commits found</span>
         <span class="max-w-sm text-zinc-500">
-          This branch is completely in sync with base, or there are no unmerged local commits.
+          This branch is completely in sync with {selectedBase || 'base'}, or there are no unmerged local commits.
         </span>
       </div>
     {/if}
   </div>
 </div>
+

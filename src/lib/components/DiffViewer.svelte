@@ -174,8 +174,8 @@
       <div class="h-full flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-600 gap-3 select-none">
         <FileCode class="w-12 h-12 opacity-30 stroke-[1.5]" />
         <div class="text-center">
-          <p class="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Select a file from the Working Tree</p>
-          <p class="text-[11px] text-zinc-400 dark:text-zinc-600 mt-0.5">Interactive line and hunk staging will appear here</p>
+          <p class="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Select a file to inspect differences</p>
+          <p class="text-[11px] text-zinc-400 dark:text-zinc-600 mt-0.5">Code diff and line modifications will appear here</p>
         </div>
       </div>
     {:else if diffDetail.is_binary}

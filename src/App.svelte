@@ -1286,11 +1286,16 @@
         <FocusView
           repoPath={repo.currentRepoPath}
           currentBranchName={repo.repoSummary?.current_branch}
+          branches={repo.branches}
           selectedCommitId={repo.selectedCommitId}
           selectedCommitIds={repo.selectedCommitIds}
           commitDetail={repo.commitDetail}
           isDetailLoading={repo.isDetailLoading}
           onSelectCommit={(c) => repo.handleSelectCommit(c)}
+          onSelectMultipleCommits={(ids) => (repo.selectedCommitIds = ids)}
+          onSquashCommits={handleOpenSquash}
+          onCompareCommits={handleCompareCommits}
+          onOpenCreatePR={(source) => handleOpenCreatePR(source)}
           onCloseFocus={() => (viewMode = "graph")}
           onSyncWithBase={async (baseBranch) => {
             if (!repo.currentRepoPath) return;

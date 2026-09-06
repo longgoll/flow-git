@@ -148,10 +148,11 @@ pub async fn compare_two_commits(
 pub async fn get_focus_branch_info(
     path: String,
     branch_name: Option<String>,
+    base_branch: Option<String>,
 ) -> AppResult<FocusBranchResult> {
     tokio::task::spawn_blocking(move || {
         let repo = git_open_repo(&path)?;
-        git_get_focus_branch_info(&repo, branch_name.as_deref())
+        git_get_focus_branch_info(&repo, branch_name.as_deref(), base_branch.as_deref())
     })
     .await
     .map_err(|e| AppError::Internal(e.to_string()))?

@@ -115,9 +115,9 @@ export async function compareTwoCommits(
   };
 }
 
-export async function getFocusBranchInfo(path: string, branchName?: string): Promise<FocusBranchResult> {
+export async function getFocusBranchInfo(path: string, branchName?: string, baseBranch?: string): Promise<FocusBranchResult> {
   if (isTauri) {
-    return await invoke<FocusBranchResult>('get_focus_branch_info', { path, branchName });
+    return await invoke<FocusBranchResult>('get_focus_branch_info', { path, branchName, baseBranch });
   }
   const history = getMockCommitHistory();
   return {

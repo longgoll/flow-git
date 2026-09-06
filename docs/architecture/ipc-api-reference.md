@@ -22,7 +22,7 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `get_file_content` | `path: String, file_path: String, commit_id: Option<String>` | `FileContentResponse` | Đọc nội dung tệp (hỗ trợ tự nhận diện mã hóa UTF-8 hoặc cờ báo tệp nhị phân). |
 | `get_remote_url` | `path: String, remote_name: Option<String>` | `Option<String>` | Lấy URL remote của repository (mặc định lấy remote `origin`). |
 | `nuke_file_from_history` | `path: String, target_file_path: String` | `bool` | Xóa vĩnh viễn một tệp (chứa mật khẩu, secret) khỏi toàn bộ lịch sử commit của repo. |
-| `get_focus_branch_info` | `path: String, branch_name: String` | `FocusBranchInfo` | Lấy thông tin các commit đặc thù chỉ thuộc về nhánh đang được Focus so với nhánh cơ sở. |
+| `get_focus_branch_info` | `path: String, branch_name: Option<String>, base_branch: Option<String>` | `FocusBranchResult` | Lấy thông tin các commit đặc thù thuộc về nhánh Focus so với Base branch (hỗ trợ chọn Base branch tùy chỉnh). |
 | `get_unpushed_stacked_commits` | `path: String` | `Vec<StackedCommitItem>` | Lấy chuỗi các commit chưa được push lên remote để quản lý Stacked Commits / Stacked PRs. |
 | `reorder_stacked_commits` | `path: String, new_order_ids: Vec<String>` | `bool` | Sắp xếp lại thứ tự của các commit trong chuỗi Stacked Commits bằng bộ Reorder Sequencer. |
 

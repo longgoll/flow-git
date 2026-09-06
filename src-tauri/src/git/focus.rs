@@ -17,6 +17,7 @@ pub struct FocusBranchResult {
 pub fn get_focus_branch_info(
     repo: &Repository,
     requested_branch: Option<&str>,
+    requested_base: Option<&str>,
 ) -> AppResult<FocusBranchResult> {
     // 1. Determine current branch and head commit
     let (branch_name, head_oid) = if let Some(b_name) = requested_branch {
@@ -31,16 +32,28 @@ pub fn get_focus_branch_info(
         (shorthand, target)
     };
 
-    // 2. Find a suitable base branch (upstream, or main/master, or origin/main)
+    // 2. Find a suitable base branch (requested_base, or upstream, or main/master, or origin/main)
     let mut base_branch_name = "main".to_string();
     let mut base_oid_opt: Option<Oid> = None;
 
-    // Check upstream tracking branch first
-    if let Ok(branch) = repo.find_branch(&branch_name, BranchType::Local) {
-        if let Ok(upstream) = branch.upstream() {
-            if let Some(target) = upstream.get().target() {
-                base_branch_name = upstream.name().ok().flatten().unwrap_or("upstream").to_string();
+    // Check explicitly requested base first
+    if let Some(req_base) = requested_base {
+        if let Ok(branch) = repo.find_branch(req_base, BranchType::Local).or_else(|_| repo.find_branch(req_base, BranchType::Remote)) {
+            if let Some(target) = branch.get().target() {
+                base_branch_name = req_base.to_string();
                 base_oid_opt = Some(target);
+            }
+        }
+    }
+
+    // Check upstream tracking branch if no explicit base requested
+    if base_oid_opt.is_none() {
+        if let Ok(branch) = repo.find_branch(&branch_name, BranchType::Local) {
+            if let Ok(upstream) = branch.upstream() {
+                if let Some(target) = upstream.get().target() {
+                    base_branch_name = upstream.name().ok().flatten().unwrap_or("upstream").to_string();
+                    base_oid_opt = Some(target);
+                }
             }
         }
     }

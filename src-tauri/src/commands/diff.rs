@@ -128,7 +128,7 @@ pub async fn discard_file_changes(
     path: String,
     file_path: String,
     state: State<'_, AppState>,
-) -> AppResult<()> {
+) -> AppResult<i64> {
     let store = state.trash_store.clone();
     tokio::task::spawn_blocking(move || {
         let repo = git_open_repo(&path)?;
@@ -142,7 +142,7 @@ pub async fn discard_file_changes(
 pub async fn discard_all_changes(
     path: String,
     state: State<'_, AppState>,
-) -> AppResult<usize> {
+) -> AppResult<Vec<i64>> {
     let store = state.trash_store.clone();
     tokio::task::spawn_blocking(move || {
         let repo = git_open_repo(&path)?;

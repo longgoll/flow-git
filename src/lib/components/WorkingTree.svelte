@@ -37,6 +37,7 @@
     onToggleIgnoreWhitespace?: () => void;
     onCommit: (message: string, amend: boolean, noVerify?: boolean) => Promise<void>;
     onOpenTrash: () => void;
+    trashCount?: number;
     onCreateBranch?: (baseBranch: string) => void;
     onAddToGitignore?: (pattern: string) => Promise<void>;
     onGenerateGitignore?: () => Promise<void>;
@@ -63,6 +64,7 @@
     onDiscardAll,
     onCommit,
     onOpenTrash,
+    trashCount = 0,
     onCreateBranch,
     onAddToGitignore,
     onGenerateGitignore,
@@ -174,11 +176,16 @@
 
       <button
         onclick={onOpenTrash}
-        class="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-[11px] font-medium transition-colors cursor-pointer"
+        class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-[11px] font-medium transition-colors cursor-pointer"
         title="Open Safe Discard 48h Trash Inspector"
       >
         <ShieldCheck class="w-3 h-3" />
         <span>Safe Discard</span>
+        {#if trashCount > 0}
+          <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-emerald-200 dark:bg-emerald-800/80 text-emerald-900 dark:text-emerald-200 shadow-2xs">
+            {trashCount}
+          </span>
+        {/if}
       </button>
     </div>
 

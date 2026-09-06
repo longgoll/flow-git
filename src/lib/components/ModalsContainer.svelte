@@ -204,6 +204,7 @@
   isLoading={safety.isTrashLoading}
   onClose={() => (safety.showTrashModal = false)}
   onRestore={(id) => safety.restoreTrash(repo.currentRepoPath, id, refreshWorkingTreeAndDiff)}
+  onRestoreAll={() => safety.restoreAllTrash(repo.currentRepoPath, refreshWorkingTreeAndDiff)}
   onDelete={(id) => safety.deleteTrash(repo.currentRepoPath, id)}
 />
 
@@ -268,7 +269,21 @@
   }}
   onStageAll={() => wt.stageAll(repo.currentRepoPath, refreshWorkingTreeAndDiff)}
   onUnstageAll={() => wt.unstageAll(repo.currentRepoPath, refreshWorkingTreeAndDiff)}
-  onDiscardAll={() => wt.discardAll(repo.currentRepoPath, refreshWorkingTreeAndDiff)}
+  onDiscardAll={async () => {
+    const ids = await wt.discardAll(repo.currentRepoPath, refreshWorkingTreeAndDiff);
+    await safety.refreshTrashSnapshots(repo.currentRepoPath);
+    toast.warning(
+      'Đã Discard tất cả thay đổi',
+      `${ids.length} tệp đã được sao lưu vào Thùng rác an toàn 48h.`,
+      {
+        label: 'Hoàn tác tất cả',
+        onClick: async () => {
+          await safety.restoreAllTrash(repo.currentRepoPath, refreshWorkingTreeAndDiff);
+          toast.success('Đã khôi phục tất cả', 'Các tệp đã được hoàn tác về Working Tree.');
+        },
+      }
+    );
+  }}
   onUndo={handleUndo}
   onRedo={handleRedo}
   onPush={handlePushCurrentBranch}

@@ -7,8 +7,9 @@
     FileText,
     X,
     FolderArchive,
+    Search,
+    CheckCheck,
   } from 'lucide-svelte';
-
 
   interface Props {
     isOpen: boolean;
@@ -16,6 +17,7 @@
     isLoading?: boolean;
     onClose: () => void;
     onRestore: (snapshotId: number) => Promise<void>;
+    onRestoreAll?: () => Promise<void>;
     onDelete: (snapshotId: number) => Promise<void>;
   }
 
@@ -25,19 +27,29 @@
     isLoading = false,
     onClose,
     onRestore,
+    onRestoreAll,
     onDelete,
   }: Props = $props();
 
   let selectedSnapshotId = $state<number | null>(null);
+  let searchQuery = $state('');
+
+  let filteredSnapshots = $derived(
+    searchQuery.trim()
+      ? snapshots.filter((s) =>
+          s.file_path.toLowerCase().includes(searchQuery.toLowerCase().trim())
+        )
+      : snapshots
+  );
 
   $effect(() => {
-    if (snapshots.length > 0 && selectedSnapshotId === null) {
-      selectedSnapshotId = snapshots[0].id;
+    if (filteredSnapshots.length > 0 && (!selectedSnapshotId || !filteredSnapshots.some(s => s.id === selectedSnapshotId))) {
+      selectedSnapshotId = filteredSnapshots[0].id;
     }
   });
 
   let selectedSnapshot = $derived(
-    snapshots.find((s) => s.id === selectedSnapshotId) || snapshots[0] || null
+    filteredSnapshots.find((s) => s.id === selectedSnapshotId) || filteredSnapshots[0] || null
   );
 
   function formatRelativeTime(timestamp: number): string {
@@ -93,21 +105,49 @@
         <div class="w-80 border-r border-zinc-200 dark:border-zinc-800/80 flex flex-col bg-zinc-50/50 dark:bg-zinc-950/50">
           <div class="p-3 border-b border-zinc-200 dark:border-zinc-800/60 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
             <span class="font-semibold text-zinc-800 dark:text-zinc-300">Snapshots ({snapshots.length})</span>
-            <span class="text-[10px] text-zinc-500 font-mono">Kept for 48 hours</span>
+            {#if snapshots.length > 1 && onRestoreAll}
+              <button
+                onclick={onRestoreAll}
+                class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/70 hover:bg-emerald-200 dark:hover:bg-emerald-900 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-[10px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                title="Restore all snapshots in trash"
+              >
+                <CheckCheck class="w-3 h-3" />
+                <span>Restore All</span>
+              </button>
+            {:else}
+              <span class="text-[10px] text-zinc-500 font-mono">Kept for 48h</span>
+            {/if}
           </div>
+
+          <!-- Quick Search Filter -->
+          {#if snapshots.length > 0}
+            <div class="p-2 border-b border-zinc-200/60 dark:border-zinc-800/60">
+              <div class="relative flex items-center">
+                <Search class="w-3.5 h-3.5 text-zinc-400 absolute left-2.5 pointer-events-none" />
+                <input
+                  type="text"
+                  bind:value={searchQuery}
+                  placeholder="Filter discarded files..."
+                  class="w-full pl-8 pr-2.5 py-1 text-xs rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:outline-hidden focus:border-cyan-500 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 transition-all font-mono"
+                />
+              </div>
+            </div>
+          {/if}
 
           <div class="flex-1 overflow-y-auto p-2 space-y-1">
             {#if isLoading}
               <div class="h-48 flex items-center justify-center text-xs text-zinc-500">
                 Loading snapshots...
               </div>
-            {:else if snapshots.length === 0}
+            {:else if filteredSnapshots.length === 0}
               <div class="h-48 flex flex-col items-center justify-center text-zinc-500 gap-2">
                 <FolderArchive class="w-8 h-8 opacity-40" />
-                <span class="text-xs">Trash is currently empty</span>
+                <span class="text-xs">
+                  {searchQuery ? 'No matching files found' : 'Trash is currently empty'}
+                </span>
               </div>
             {:else}
-              {#each snapshots as snap (snap.id)}
+              {#each filteredSnapshots as snap (snap.id)}
                 <button
                   onclick={() => (selectedSnapshotId = snap.id)}
                   class="w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer {selectedSnapshotId === snap.id ? 'bg-cyan-50 dark:bg-cyan-950/40 border-cyan-300 dark:border-cyan-700/50 shadow-xs' : 'bg-white dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800/60 hover:bg-zinc-100/80 dark:hover:bg-zinc-900/80 text-zinc-700 dark:text-zinc-300'}"
@@ -160,9 +200,19 @@
               </div>
             </div>
 
-            <!-- Preview Text / Diff -->
-            <div class="flex-1 p-4 overflow-auto font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50/70 dark:bg-zinc-950/90 whitespace-pre select-text">
-              {selectedSnapshot.diff_preview}
+            <!-- Preview Text / Diff with colored lines -->
+            <div class="flex-1 p-4 overflow-auto font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50/70 dark:bg-zinc-950/90 select-text leading-relaxed">
+              {#each selectedSnapshot.diff_preview.split('\n') as line}
+                {#if line.startsWith('+')}
+                  <div class="text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-1 rounded-xs">{line}</div>
+                {:else if line.startsWith('-')}
+                  <div class="text-rose-700 dark:text-rose-400 bg-rose-500/10 px-1 rounded-xs">{line}</div>
+                {:else if line.startsWith('@@')}
+                  <div class="text-cyan-600 dark:text-cyan-400 font-semibold bg-cyan-500/5 px-1 py-0.5 my-0.5 rounded-xs">{line}</div>
+                {:else}
+                  <div class="text-zinc-600 dark:text-zinc-400 px-1">{line}</div>
+                {/if}
+              {/each}
             </div>
           {:else}
             <div class="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-2">

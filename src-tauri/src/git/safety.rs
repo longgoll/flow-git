@@ -9,7 +9,7 @@ pub fn discard_file_changes(
     repo: &Repository,
     store: &TrashStore,
     file_path: &str,
-) -> AppResult<()> {
+) -> AppResult<i64> {
     let repo_path = repo
         .workdir()
         .map(|p| p.to_string_lossy().to_string())
@@ -61,7 +61,7 @@ pub fn discard_file_changes(
     };
 
     // 2. Save snapshot in SQLite Trash Store BEFORE discarding
-    let _ = store.save_snapshot(
+    let snapshot_id = store.save_snapshot(
         &repo_path,
         file_path,
         &content,
@@ -83,20 +83,20 @@ pub fn discard_file_changes(
         let _ = std::fs::remove_file(&full_path);
     }
 
-    Ok(())
+    Ok(snapshot_id)
 }
 
-pub fn discard_all_changes(repo: &Repository, store: &TrashStore) -> AppResult<usize> {
+pub fn discard_all_changes(repo: &Repository, store: &TrashStore) -> AppResult<Vec<i64>> {
     let status = get_working_tree_status(repo)?;
-    let mut count = 0;
+    let mut snapshot_ids = Vec::new();
 
     for item in status.unstaged.iter().chain(status.untracked.iter()) {
-        if let Ok(()) = discard_file_changes(repo, store, &item.path) {
-            count += 1;
+        if let Ok(id) = discard_file_changes(repo, store, &item.path) {
+            snapshot_ids.push(id);
         }
     }
 
-    Ok(count)
+    Ok(snapshot_ids)
 }
 
 pub fn restore_trash_snapshot(
@@ -118,6 +118,9 @@ pub fn restore_trash_snapshot(
 
     std::fs::write(&full_path, content)
         .map_err(|e| AppError::Internal(format!("Failed to restore file {file_path}: {e}")))?;
+
+    // Auto remove from trash store after successful restore
+    let _ = store.delete_snapshot(snapshot_id);
 
     Ok(())
 }
@@ -161,7 +164,8 @@ mod tests {
         std::fs::write(&file_path, "Modified line\nExtra line\n").unwrap();
 
         // 3. Discard file changes
-        discard_file_changes(&repo, &store, "hello.txt").unwrap();
+        let snap_id = discard_file_changes(&repo, &store, "hello.txt").unwrap();
+        assert!(snap_id > 0);
 
         // File on disk should be back to initial content
         let content_after = std::fs::read_to_string(&file_path).unwrap().replace("\r\n", "\n");
@@ -177,5 +181,9 @@ mod tests {
         restore_trash_snapshot(&repo, &store, trash_items[0].id).unwrap();
         let content_restored = std::fs::read_to_string(&file_path).unwrap().replace("\r\n", "\n");
         assert_eq!(content_restored, "Modified line\nExtra line\n");
+
+        // 6. Trash store should now be empty for this snapshot
+        let trash_items_after = list_trash_snapshots(&store, &repo_path).unwrap();
+        assert_eq!(trash_items_after.len(), 0);
     }
 }

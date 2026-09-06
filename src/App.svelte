@@ -187,9 +187,10 @@
       if (sessionId !== currentLoadSessionId) return;
       repo.showWelcomeScreen = false;
 
-      // Đồng bộ trạng thái Rebase & Conflicts từ Git backend
+      // Đồng bộ trạng thái Rebase, Conflicts & Safe Discard Trash từ Git backend
       await safety.checkRebaseStatus(path);
       await safety.loadConflictFiles(path);
+      await safety.refreshTrashSnapshots(path);
       if (sessionId !== currentLoadSessionId) return;
 
       // Đồng bộ vào Tab Workspace

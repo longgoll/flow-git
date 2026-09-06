@@ -102,17 +102,18 @@ export class WorkingTreeState {
     await onRefresh();
   }
 
-  async discardFile(repoPath: string, filePath: string, onRefresh: () => Promise<void>) {
-    if (!repoPath) return;
-    await discardFileChanges(repoPath, filePath);
+  async discardFile(repoPath: string, filePath: string, onRefresh: () => Promise<void>): Promise<number> {
+    if (!repoPath) return 0;
+    const snapId = await discardFileChanges(repoPath, filePath);
     await onRefresh();
+    return snapId;
   }
 
-  async discardAll(repoPath: string, onRefresh: () => Promise<void>): Promise<number> {
-    if (!repoPath) return 0;
-    const count = await discardAllChanges(repoPath);
+  async discardAll(repoPath: string, onRefresh: () => Promise<void>): Promise<number[]> {
+    if (!repoPath) return [];
+    const ids = await discardAllChanges(repoPath);
     await onRefresh();
-    return count;
+    return ids;
   }
 
   async createCommit(

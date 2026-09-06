@@ -71,12 +71,13 @@ impl TrashStore {
     ) -> AppResult<i64> {
         let now = Utc::now().timestamp();
         let conn = self.conn.lock().map_err(|_| AppError::Internal("DB lock poisoned".into()))?;
+        let normalized = normalize_repo_path(repo_path);
 
         conn.execute(
             "INSERT INTO trash_snapshots (repo_path, file_path, file_content, diff_preview, created_at, head_commit_sha, file_size)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![
-                repo_path,
+                normalized,
                 file_path,
                 content,
                 diff_preview,
@@ -92,6 +93,7 @@ impl TrashStore {
 
     pub fn list_snapshots(&self, repo_path: &str) -> AppResult<Vec<TrashSnapshotItem>> {
         let conn = self.conn.lock().map_err(|_| AppError::Internal("DB lock poisoned".into()))?;
+        let normalized = normalize_repo_path(repo_path);
 
         // Evict expired entries first
         let cutoff = Utc::now().timestamp() - (48 * 3600);
@@ -108,7 +110,7 @@ impl TrashStore {
             .map_err(|e| AppError::Internal(e.to_string()))?;
 
         let rows = stmt
-            .query_map(params![repo_path], |row| {
+            .query_map(params![normalized], |row| {
                 Ok(TrashSnapshotItem {
                     id: row.get(0)?,
                     repo_path: row.get(1)?,
@@ -166,6 +168,18 @@ impl TrashStore {
             .map_err(|e| AppError::Internal(e.to_string()))?;
         Ok(count)
     }
+}
+
+pub fn normalize_repo_path(path: &str) -> String {
+    let mut s = path.replace('\\', "/");
+    while s.ends_with('/') {
+        s.pop();
+    }
+    if s.len() >= 2 && s.as_bytes()[1] == b':' {
+        let first = s.chars().next().unwrap().to_lowercase().to_string();
+        s = format!("{}{}", first, &s[1..]);
+    }
+    s
 }
 
 fn dirs_or_local() -> PathBuf {

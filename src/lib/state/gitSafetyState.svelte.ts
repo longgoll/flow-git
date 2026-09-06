@@ -79,9 +79,27 @@ export class GitSafetyState {
     }
   }
 
+  async refreshTrashSnapshots(repoPath: string) {
+    if (!repoPath) return;
+    try {
+      this.trashSnapshots = await listTrashSnapshots(repoPath);
+    } catch (e) {
+      console.error('Failed to refresh trash snapshots:', e);
+    }
+  }
+
   async restoreTrash(repoPath: string, snapshotId: number, onRefresh: () => Promise<void>) {
     if (!repoPath) return;
     await restoreTrashSnapshot(repoPath, snapshotId);
+    this.trashSnapshots = await listTrashSnapshots(repoPath);
+    await onRefresh();
+  }
+
+  async restoreAllTrash(repoPath: string, onRefresh: () => Promise<void>) {
+    if (!repoPath || this.trashSnapshots.length === 0) return;
+    for (const snap of this.trashSnapshots) {
+      await restoreTrashSnapshot(repoPath, snap.id);
+    }
     this.trashSnapshots = await listTrashSnapshots(repoPath);
     await onRefresh();
   }

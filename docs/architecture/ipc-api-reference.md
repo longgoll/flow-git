@@ -68,8 +68,8 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `unstage_hunk` | `path: String, file_path: String, hunk_index: usize` | `bool` | Unstage một khối code cụ thể. |
 | `get_file_diff` | `path: String, file_path: String, is_staged: bool` | `FileDiffDetail` | Lấy chi tiết diff (hunks, dòng thêm/xóa) của file trong working tree. |
 | `get_commit_file_diff`| `path: String, commit_id: String, file_path: String` | `FileDiffDetail` | Lấy chi tiết diff của một file thuộc về một commit trong lịch sử. |
-| `discard_file_changes`| `path: String, file_path: String` | `bool` | **Safe Discard**: Sao lưu nội dung vào SQLite 48h trước khi khôi phục file về HEAD. |
-| `discard_all_changes` | `path: String` | `bool` | **Safe Discard All**: Sao lưu toàn bộ working tree vào SQLite trước khi xóa sạch thay đổi. |
+| `discard_file_changes`| `path: String, file_path: String` | `i64` | **Safe Discard**: Sao lưu nội dung vào SQLite 48h trước khi khôi phục file về HEAD, trả về snapshot ID phục vụ 1-Click Undo. |
+| `discard_all_changes` | `path: String` | `Vec<i64>` | **Safe Discard All**: Sao lưu toàn bộ working tree vào SQLite trước khi xóa sạch, trả về mảng snapshot IDs. |
 | `list_trash_snapshots`| `repo_path: Option<String>` | `Vec<TrashSnapshotItem>` | Liệt kê danh sách các bản chụp thùng rác còn hạn sử dụng (trong vòng 48h). |
 | `restore_trash_snapshot`| `snapshot_id: i64` | `bool` | Khôi phục nguyên vẹn 100% nội dung file đã lỡ tay discard. |
 | `delete_trash_snapshot` | `snapshot_id: i64` | `bool` | Xóa vĩnh viễn một bản snapshot khỏi thùng rác. |

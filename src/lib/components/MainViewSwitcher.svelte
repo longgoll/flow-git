@@ -294,24 +294,36 @@
     onStageHunk={(idx) => wt.stageHunk(repo.currentRepoPath, idx, refreshWorkingTreeAndDiff)}
     onUnstageHunk={(idx) => wt.unstageHunk(repo.currentRepoPath, idx, refreshWorkingTreeAndDiff)}
     onDiscardFile={async (f) => {
-      await wt.discardFile(repo.currentRepoPath, f, refreshWorkingTreeAndDiff);
+      const snapId = await wt.discardFile(repo.currentRepoPath, f, refreshWorkingTreeAndDiff);
+      await safety.refreshTrashSnapshots(repo.currentRepoPath);
       toast.warning(
         'Đã Discard thay đổi',
         `Tệp '${f}' đã được sao lưu an toàn trong Thùng rác 48h.`,
         {
-          label: 'Thùng rác',
-          onClick: () => safety.openTrash(repo.currentRepoPath),
+          label: 'Hoàn tác',
+          onClick: async () => {
+            if (snapId) {
+              await safety.restoreTrash(repo.currentRepoPath, snapId, refreshWorkingTreeAndDiff);
+              toast.success('Đã khôi phục', `Tệp '${f}' đã được hoàn tác về Working Tree.`);
+            } else {
+              safety.openTrash(repo.currentRepoPath);
+            }
+          },
         }
       );
     }}
     onDiscardAll={async () => {
-      await wt.discardAll(repo.currentRepoPath, refreshWorkingTreeAndDiff);
+      const snapIds = await wt.discardAll(repo.currentRepoPath, refreshWorkingTreeAndDiff);
+      await safety.refreshTrashSnapshots(repo.currentRepoPath);
       toast.warning(
         'Đã Discard tất cả thay đổi',
-        'Toàn bộ tệp đã được sao lưu vào Thùng rác an toàn 48h.',
+        `${snapIds.length} tệp đã được sao lưu vào Thùng rác an toàn 48h.`,
         {
-          label: 'Thùng rác',
-          onClick: () => safety.openTrash(repo.currentRepoPath),
+          label: 'Hoàn tác tất cả',
+          onClick: async () => {
+            await safety.restoreAllTrash(repo.currentRepoPath, refreshWorkingTreeAndDiff);
+            toast.success('Đã khôi phục tất cả', 'Các tệp đã được hoàn tác về Working Tree.');
+          },
         }
       );
     }}
@@ -352,6 +364,7 @@
       );
     }}
     onOpenTrash={() => safety.openTrash(repo.currentRepoPath)}
+    trashCount={safety.trashSnapshots.length}
   />
 {:else if viewMode === 'compare'}
   <ComparisonViewer
@@ -417,7 +430,23 @@
       await wt.unstageFile(repo.currentRepoPath, p, () => loadRepository(repo.currentRepoPath));
     }}
     onDiscardFile={async (p: string) => {
-      await wt.discardFile(repo.currentRepoPath, p, () => loadRepository(repo.currentRepoPath));
+      const snapId = await wt.discardFile(repo.currentRepoPath, p, () => loadRepository(repo.currentRepoPath));
+      await safety.refreshTrashSnapshots(repo.currentRepoPath);
+      toast.warning(
+        'Đã Discard thay đổi',
+        `Tệp '${p}' đã được sao lưu an toàn trong Thùng rác 48h.`,
+        {
+          label: 'Hoàn tác',
+          onClick: async () => {
+            if (snapId) {
+              await safety.restoreTrash(repo.currentRepoPath, snapId, () => loadRepository(repo.currentRepoPath));
+              toast.success('Đã khôi phục', `Tệp '${p}' đã được hoàn tác.`);
+            } else {
+              safety.openTrash(repo.currentRepoPath);
+            }
+          },
+        }
+      );
     }}
     onNukeFile={(p: string) => modalState.openNukeFile(p)}
   />

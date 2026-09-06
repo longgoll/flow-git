@@ -76,17 +76,18 @@ export async function unstageHunk(path: string, filePath: string, hunkIndex: num
   }
 }
 
-export async function discardFileChanges(path: string, filePath: string): Promise<void> {
+export async function discardFileChanges(path: string, filePath: string): Promise<number> {
   if (isTauri) {
-    await invoke('discard_file_changes', { path, filePath });
+    return await invoke<number>('discard_file_changes', { path, filePath });
   }
+  return Date.now();
 }
 
-export async function discardAllChanges(path: string): Promise<number> {
+export async function discardAllChanges(path: string): Promise<number[]> {
   if (isTauri) {
-    return await invoke<number>('discard_all_changes', { path });
+    return await invoke<number[]>('discard_all_changes', { path });
   }
-  return 0;
+  return [];
 }
 
 export async function listTrashSnapshots(path: string): Promise<TrashSnapshotItem[]> {

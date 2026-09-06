@@ -1,8 +1,130 @@
-# TRUNG TÂM GITHUB & ĐÁNH GIÁ PULL REQUESTS (PR HUB & REVIEWER)
-> **Chuẩn cộng tác:** Zero-Context-Switching – Không cần rời khỏi FlowGit để mở trình duyệt web  
-> **Tích hợp:** GitHub REST API v3 Client, Pull Request Reviewer, Diff Inspector, CI/CD Checks & Quick PR Banner
+<div align="center">
+
+# 🐙 GitHub Workspace & Pull Request Reviewer
+### Trung Tâm GitHub & Đánh Giá Pull Requests (PR Hub & Reviewer)
+
+> **Collaboration Standard:** Zero-Context-Switching – Never leave FlowGit to open a web browser  
+> **Integrations:** GitHub REST API v3 Client, Pull Request Reviewer, Diff Inspector, CI/CD Checks & Recent Push Banner  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 🧭 1. GitHub Workspace Overview
+
+In modern Git workflows, developers constantly juggle between Git GUIs and browser tabs:
+- Pushing code requires opening a browser to submit a PR.
+- Reviewing teammates' PRs requires toggling tabs to read code diffs.
+- Testing PR branches locally requires manual `gh pr checkout` or fetch commands.
+
+**FlowGit embeds a lightweight GitHub Workspace directly into the client:**
+1. **Pull Request Reviewer (`PullRequestReviewer.svelte`):** Browse PRs, inspect changed file trees, submit reviews and comments, verify CI/CD checks, and merge with 1 click.
+2. **Instant PR Creation (`CreatePullRequestModal.svelte`):** Select source and target branches, auto-populate title from commit messages, and create Draft PRs.
+3. **Recent Push Banner (`RecentPushBanner.svelte`):** Pops immediately following push operations, prompting 1-click PR creation.
+4. **Publish Repository (`PublishRepoModal.svelte`):** Publishes local repositories to GitHub in seconds.
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ GITHUB WORKSPACE WORKFLOW IN FLOWGIT                                                   │
+│                                                                                        │
+│  [Local Git Commits] ────► [Push to Origin] ────► [RecentPushBanner: "Create PR?"]     │
+│                                                              │                         │
+│                                                              ▼                         │
+│  ┌─────────────────────────────────┐       ┌────────────────────────────────────────┐ │
+│  │ CreatePullRequestModal.svelte   │       │ PullRequestReviewer.svelte             │ │
+│  │ ├── Base vs Head branch         │       │ ├── PR List (Open, Merged, All)        │ │
+│  │ ├── Auto Title & Description    │       │ ├── File Tree Diff & Monaco Diff View  │ │
+│  │ ├── Assign Reviewers & Labels   │──────►│ ├── CI/CD Status (GitHub Actions)      │ │
+│  │ └── Draft PR Support            │       │ ├── Review: Approve / Request Changes  │ │
+│  └─────────────────────────────────┘       │ ├── 1-Click "Checkout PR Branch"       │ │
+│                                            │ └── Merge: Merge / Squash / Rebase     │ │
+│                                            └────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🔍 2. Pull Request Reviewer
+
+Component: [`src/lib/components/PullRequestReviewer.svelte`](file:///f:/Dev/product/git-tool/src/lib/components/PullRequestReviewer.svelte)
+
+Accessible via the **"Pull Requests"** tab or `Ctrl + Shift + P`:
+
+### 2.1. PR List & Filtering
+- **Status Filters:** Open, Merged, Closed.
+- **Summary Metrics:** PR Number (`#124`), title, author with avatar, updated time, and `+` / `-` lines changed.
+- **Realtime Search:** Filter by PR title or author username.
+
+### 2.2. Conversation & Discussion Timeline
+- Rendered Markdown descriptions with task lists, tables, and code snippets.
+- Realtime comment thread with submission via `postGitHubPRComment`.
+
+### 2.3. CI/CD Checks Status
+- Queries GitHub Check Runs (`fetchGitHubPRChecks`):
+  - **Success:** Green checkmark for passing GitHub Actions workflows.
+  - **Pending:** Yellow spinning indicator.
+  - **Failure:** Red warning indicator cautioning against merging.
+
+### 2.4. File Diff Inspection & Reviews
+- File change tree with addition/deletion counters.
+- High-fidelity **Monaco Diff Editor** inspection.
+- **Submit Review Dialog:** Approve, Request Changes, or General Comment.
+
+### 2.5. 1-Click Checkout & Merge
+- **"Checkout PR Branch":** Automatically fetches PR branch and checks out locally.
+- **"Merge Pull Request":** Supports GitHub strategies (`Create a merge commit`, `Squash and merge`, `Rebase and merge`).
+
+---
+
+## 🚀 3. Fast PR Creation
+
+Component: [`src/lib/components/CreatePullRequestModal.svelte`](file:///f:/Dev/product/git-tool/src/lib/components/CreatePullRequestModal.svelte)
+
+- **Branch Selectors:** Select `base` (e.g., `main`) and `compare` branch.
+- **Ahead / Behind Calculation:** Automatically evaluates commit distance.
+- **Auto-generated Title:** Prefills with latest commit message.
+- **Draft PR Option:** Flags PRs as Draft to prevent premature merging.
+
+---
+
+## 🔔 4. Recent Push Banner
+
+Component: [`src/lib/components/RecentPushBanner.svelte`](file:///f:/Dev/product/git-tool/src/lib/components/RecentPushBanner.svelte)
+
+Immediately upon pushing local branches:
+- A non-intrusive banner prompts: *"You pushed `feat/auth-ui` to `origin` 10s ago. Create a Pull Request?"*
+- Clicking **"Create Pull Request"** opens the creation dialog with pre-filled parameters.
+
+---
+
+## 📦 5. Publish Repository to GitHub
+
+Component: [`src/lib/components/PublishRepoModal.svelte`](file:///f:/Dev/product/git-tool/src/lib/components/PublishRepoModal.svelte)
+
+For newly initialized local repos (`git init`):
+1. Click **"Publish to GitHub"** on the Toolbar.
+2. Select repository name, visibility (**Public** or **Private**), and description.
+3. FlowGit calls the GitHub API, configures the remote, and pushes `main` in under 3 seconds.
+
+---
+
+## 🔑 6. GitHub API Client
+
+File: [`src/lib/api/githubApi.ts`](file:///f:/Dev/product/git-tool/src/lib/api/githubApi.ts)
+
+- Secure PAT token handling in local encrypted SQLite.
+- `parseGitHubRemote`: Robust regex parsing owner and repo from HTTPS and SSH URLs.
+- Zero-dependency native fetch engine ensuring zero startup latency.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 🧭 1. TỔNG QUAN VỀ GITHUB PR HUB
 

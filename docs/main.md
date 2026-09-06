@@ -1,8 +1,125 @@
-# TÀI LIỆU ĐẶC TẢ KỸ THUẬT & THIẾT KẾ TRẢI NGHIỆM (UI/UX SPECIFICATION)
-# DỰ ÁN: NEXT-GEN TAURI V2 + RUST GIT CLIENT (FlowGit / RustGit GUI)
-> **Phiên bản chuẩn công nghệ 2026 (State-of-the-Art Edition)**
+<div align="center">
+
+# 📑 FlowGit Technical Specification & UX Design
+### Tài Liệu Đặc Tả Kỹ Thuật & Thiết Kế Trải Nghiệm (UI/UX Specification)
+
+> **Edition:** 2026 Next-Gen State-of-the-Art Edition  
+> **Platform:** Tauri v2 (Rust) + Svelte 5 (Runes) + Tailwind CSS v4 + Bits UI / Monaco Editor  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 1. Core Design Philosophy
+
+> **"Visual First – Zero Terminal Friction"**  
+> *(Prioritize visual intuition – Eliminate command-line burdens & tedious multi-step manual procedures)*
+
+The ultimate mission of FlowGit is to **transform complex, abstract, and error-prone Git operations into intuitive 1–2 click, drag-and-drop interactions and lucid visual graphs.** Developers from Juniors to Tech Leads benefit from:
+
+1. **Clear Big-Picture Visibility:** Immediately understand repository topology, branches, divergence levels, and merge conflict loci without guesswork.
+2. **Zero Flag Memorization:** Eliminate the need to recall arcane multi-step commands (`git rebase -i`, `git bisect`, `git reset --hard`, `git cherry-pick`, `git add -p`).
+3. **Absolute Safety (No-Fear Git):** Foresee outcomes before committing changes via **Ghost Preview** and maintain confidence with automated safety nets (**48-Hour Safe Discard** + **Time-Travel Undo `Ctrl + Z`**).
+4. **Extreme Performance:** Locked at **60 FPS** on enterprise repositories (> 50,000 commits) with zero main-thread UI jank.
+
+---
+
+## 2. Comparison: Multi-Step CLI vs Intuitive Visual UI
+
+| Complex / Error-Prone CLI Workflow | FlowGit Visual Experience |
+| :--- | :--- |
+| **Sync branch with latest `main`**<br>`git fetch origin`<br>`git checkout main`<br>`git pull`<br>`git checkout my-feature`<br>`git rebase main` (or merge) | **1-Click "Smart Sync with Upstream":**<br>Displays visual badge `Behind: 3 commits` right on branch. Click "Smart Sync", system fetches and rebases in the background without context switches. |
+| **Squash 5 commits into 1**<br>`git rebase -i HEAD~5`<br>Edit lines in Vim/Nano to `squash`... | **Select 5 nodes on graph ➔ Press `S` (or drag together):**<br>Opens an intuitive squash popup, lets you edit the consolidated message, and merges in under 2 seconds. |
+| **Pick 1 commit from another branch (Cherry-pick)**<br>`git log` find hash<br>`git checkout target`<br>`git cherry-pick <hash>` | **Drag & Drop commit node** directly from source branch onto the current HEAD branch tip with instant Ghost Preview simulation. |
+| **Split commit / Partial staging**<br>`git reset HEAD~1`<br>`git add -p` (answer y/n per terminal hunk)... | **Direct Monaco Diff Interaction:**<br>Click lines or hunk blocks ➔ Press `Space` or click "Stage Line/Hunk" to bundle into staged changes. |
+| **Trace bug introduction (Git Bisect)**<br>`git bisect start`<br>`git bisect bad`<br>`git bisect good <hash>`<br>Repeatedly test in terminal... | **Visual Bisect Wizard:**<br>Right-click broken commit ➔ *"Mark Bad 🐞"*, right-click known good commit ➔ *"Mark Good ✅"*. The system bisects the graph automatically and guides testing step-by-step. |
+| **Rename branch & update remote**<br>`git branch -m new-name`<br>`git push origin :old-name new-name`<br>`git push origin -u new-name` | **Double-click branch name** on sidebar or graph ➔ Enter new name ➔ FlowGit renames local branch and safely updates upstream remote. |
+
+---
+
+## 3. Visual Components & Interactive Subsystems
+
+### 📊 1. Living Interactive Graph Engine
+- **OffscreenCanvas + Web Worker Architecture:**
+  - Offloads entire graph canvas rendering to a dedicated Web Worker via `OffscreenCanvas`.
+  - Maintains **60 FPS** on massive repositories (> 50,000 commits) without competing for main-thread CPU time.
+  - Employs `$state.raw` in Svelte 5 to bypass reactive proxy overhead.
+- **Rich Visual Topology:**
+  - Author avatars, branch pill badges, relative timestamps (`15m ago`), CI/CD status badges (Green/Red icons).
+  - **Ahead / Behind Indicators:** Realtime `↑ 2  ↓ 5` indicators right on branch heads.
+- **Topological Lane Compaction:** Parallel lane routing algorithm powered by `rayon` keeps the graph horizontally compact.
+
+### 👻 2. Ghost Preview & Dry-Run Simulation
+- When dragging a commit or branch to Rebase, Merge, or Cherry-pick:
+  - Graph immediately draws **dotted Ghost lines** illustrating future topological state.
+  - **In-Memory Conflict Dry-Run:** Background simulation via `git2::Index` highlights conflicting nodes in amber with a warning: *"Anticipated 2 file conflicts"*.
+
+### 🎯 3. Visual Git Bisect Wizard
+- Step-by-step visual guidance:
+  - Progress bar: *"Narrowed down to ~3 candidate commits (est. 2 steps remaining)"*.
+  - Tested node pulses with high-contrast indicator, flanked by clear **"Pass ✅"** and **"Fail 🐞"** action buttons.
+
+### 🧹 4. Branch Hygiene & Topology Radar
+- Visual classification table for all repository branches:
+  - **Merged Branches:** Already merged into base ➔ 1-Click safe bulk deletion.
+  - **Stale Branches:** Inactive > 30 days ➔ Flags for review or archiving.
+  - **Diverged Branches:** Identifies branches that diverged from base.
+
+### 📦 5. Submodules & Git LFS Management
+- **Git Submodules Hub:** Auto-detects submodules from `.gitmodules` and `git2::Repository::submodules`. Provides 1-click update (`--init --recursive`), sync, and detached HEAD tracking.
+- **Git LFS Engine:** Identifies pointer files vs downloaded binary payloads. Supports file lock management (`git lfs locks`) and 1-click LFS object pulling.
+
+### 🔑 6. Interactive SSH & HTTPS Credential Modal
+- Intercepts SSH passphrase prompts and HTTPS `401 Unauthorized` errors.
+- Displays non-blocking credential modal with secure in-memory session caching.
+- Automatically retries the interrupted Git network operation upon successful authentication.
+
+### ⚡ 7. Monorepo Virtualization (> 100,000 Commits)
+- Streaming pagination API `get_paginated_commit_history(path, skip, limit)` in Rust.
+- Initial load renders first 500 commits in < 50ms.
+- Infinite scroll dynamically lazy-loads subsequent chunks with seamless Bezier spline lane continuation.
+
+---
+
+## 4. 2026 System Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ FRONTEND (Svelte 5 SPA + Tailwind CSS v4 + Bits UI / Monaco Editor)     │
+│ ├── Living Graph Engine: OffscreenCanvas + Web Worker (60 FPS Locked)   │
+│ ├── Big Data Optimization: $state.raw + Lazy-Load Chunk Virtualization  │
+│ ├── Interactive SSH / HTTPS Credential Prompt Modal                     │
+│ ├── Submodule Explorer & Git LFS Asset Manager Panel                    │
+│ ├── Ghost Preview Overlay & Drag-and-Drop Interaction Controller        │
+│ ├── 3-Way Merge Conflict Visual Resolver (4-Pane Split View)            │
+│ ├── Interactive Diff Viewer (Side-by-Side / Unified / Line Staging)     │
+│ ├── Visual Bisect Wizard & Branch Hygiene Radar Panel                   │
+│ └── Safe Recycle Bin (Trash Inspector) Panel                            │
+└────────────────────────────────────┬────────────────────────────────────┘
+                                     │ Tauri v2 IPC (Scoped Capabilities)
+┌────────────────────────────────────┴────────────────────────────────────┐
+│ BACKEND CORE (Rust)                                                     │
+│ ├── Git Engine Core: `git2-rs` & Credential Callbacks                   │
+│ ├── Monorepo Chunked Revwalk & Incremental Topological Lane Router      │
+│ ├── Submodule Inspector & LFS Pointer/Lock Processor                    │
+│ ├── Multi-threaded Lane Assignment & Routing Engine (`rayon`)           │
+│ ├── Dry-run In-Memory Simulation Engine (Ghost Preview & Conflict Test) │
+│ ├── Safe Discard Engine (SQLite `rusqlite` 48h Cache & Auto Eviction)   │
+│ ├── Reflog Time-Travel Undo Engine (`Ctrl + Z` / `Ctrl + Shift + Z`)    │
+│ ├── Realtime Debounced File System Watcher (`notify`)                   │
+│ └── Local AI Service (Conventional Commit Generator & Conflict Advisor) │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 1. TRIẾT LÝ THIẾT KẾ CỐT LÕI (CORE DESIGN PHILOSOPHY)
 
@@ -58,7 +175,7 @@ Mục tiêu tối thượng của sản phẩm là: **Biến mọi thao tác Git
   - **Stale Branches:** Không có commit mới > 30 ngày ➔ Cảnh báo để dev xem xét xoá hoặc lưu trữ.
   - **Diverged Branches:** Nhánh bị lệch hướng so với Base branch.
 
-### 📦 6. Git Submodules & Large File Storage (LFS) Management
+### 📦 5. Git Submodules & Large File Storage (LFS) Management
 - **Git Submodules Hub:**
   - Nhận diện tự động các submodules từ `.gitmodules` và `git2::Repository::submodules`.
   - Hiển thị danh sách submodules trên Sidebar/Panel: tên, đường dẫn, URL remote, trạng thái commit hiện tại (HEAD) so với commit được ghi nhận trong superproject (Index/WorkingTree), cảnh báo lệch phiên bản.
@@ -69,7 +186,7 @@ Mục tiêu tối thượng của sản phẩm là: **Biến mọi thao tác Git
   - Quản lý LFS Locks (`git lfs locks`) giúp lập trình viên game/đồ họa khóa file tránh xung đột tệp nhị phân không thể merge.
   - Cung cấp nút 1-click: `Fetch / Pull LFS Objects` cho toàn bộ hoặc từng tệp được chọn.
 
-### 🔑 7. Interactive SSH & HTTPS Credential Modal (Xác thực thông minh)
+### 🔑 6. Interactive SSH & HTTPS Credential Modal (Xác thực thông minh)
 - **Tự động bắt lỗi xác thực (Auth Interception):**
   - Khi thực hiện `Push`, `Pull`, `Fetch`, `Sync` gặp lỗi SSH Passphrase (ví dụ: `Enter passphrase for key ...`, `Permission denied (publickey)`) hoặc lỗi HTTPS `401 Unauthorized`.
   - Thay vì báo lỗi chung chung và dừng lại, ứng dụng hiển thị hộp thoại popup **"SSH / Remote Credentials Required"**.
@@ -78,7 +195,7 @@ Mục tiêu tối thượng của sản phẩm là: **Biến mọi thao tác Git
   - Tùy chọn lưu tạm trong phiên làm việc (In-memory Session Cache) được mã hóa, không lưu mật khẩu trần ra ổ đĩa.
   - Tự động thử lại thao tác Git vừa bị gián đoạn ngay sau khi xác thực thành công.
 
-### ⚡ 8. Monorepo Infinite Virtualization & Lazy-Loading (Phân trang > 100,000 Commits)
+### ⚡ 7. Monorepo Infinite Virtualization & Lazy-Loading (Phân trang > 100,000 Commits)
 - **Kiến trúc Tải phân đoạn (Chunked Streaming History):**
   - Hỗ trợ API `get_paginated_commit_history(path, skip, limit)` từ Rust backend.
   - Khởi tạo ban đầu tải nhanh 500 commit đầu tiên để người dùng tương tác ngay trong < 50ms.
@@ -89,11 +206,11 @@ Mục tiêu tối thượng của sản phẩm là: **Biến mọi thao tác Git
 
 ---
 
-## 6. KIẾN TRÚC KỸ THUẬT TIÊN TIẾN 2026 (2026 SYSTEM ARCHITECTURE)
+## 4. KIẾN TRÚC KỸ THUẬT TIÊN TIẾN 2026 (2026 SYSTEM ARCHITECTURE)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ FRONTEND (Svelte 5 SPA + Tailwind CSS v4 + Bits UI / shadcn-svelte)     │
+│ FRONTEND (Svelte 5 SPA + Tailwind CSS v4 + Bits UI / Monaco Editor)     │
 │ ├── Living Graph Engine: OffscreenCanvas + Web Worker (60 FPS Locked)   │
 │ ├── Big Data Optimization: $state.raw + Lazy-Load Chunk Virtualization  │
 │ ├── Interactive SSH / HTTPS Credential Prompt Modal                     │
@@ -118,74 +235,3 @@ Mục tiêu tối thượng của sản phẩm là: **Biến mọi thao tác Git
 │ └── Local AI Service (Conventional Commit Generator & Conflict Advisor) │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
-
----
-
-## 7. MỤC LỤC TÀI LIỆU CHUYÊN SÂU (DETAILED DOCUMENTATION SITEMAP)
-
-Hệ thống tài liệu của FlowGit đã được chuẩn hóa và phân tách thành các chuyên đề chi tiết:
-- 📖 **Tổng quan & Mục lục:** [`docs/README.md`](./README.md)
-- 🏗️ **Kiến trúc hệ thống:** [`docs/architecture/overview.md`](./architecture/overview.md)
-- 🎨 **Đồ thị OffscreenCanvas 60 FPS:** [`docs/architecture/offscreen-canvas-graph.md`](./architecture/offscreen-canvas-graph.md)
-- 🔌 **Tra cứu 70+ IPC Commands:** [`docs/architecture/ipc-api-reference.md`](./architecture/ipc-api-reference.md)
-- 🛡️ **Động cơ No-Fear Git (Safe Discard & Undo):** [`docs/architecture/safety-engine.md`](./architecture/safety-engine.md)
-- 📊 **Living Graph 60 FPS & DAG Mini-Map:** [`docs/features/commit-graph-and-dag.md`](./features/commit-graph-and-dag.md)
-- 🌲 **Working Tree, Diff & Staging:** [`docs/features/working-tree-and-diff.md`](./features/working-tree-and-diff.md)
-- 🌿 **Nhánh, Đa Remotes & Smart Sync:** [`docs/features/branches-and-remotes.md`](./features/branches-and-remotes.md)
-- 🔀 **Interactive Rebase & Squash:** [`docs/features/rebase-and-history-ops.md`](./features/rebase-and-history-ops.md)
-- ⚔️ **Conflict Resolver & Bisect Wizard:** [`docs/features/conflict-and-bisect.md`](./features/conflict-and-bisect.md)
-- 🐙 **GitHub PR Hub, Reviewer & Publish:** [`docs/features/github-and-pull-requests.md`](./features/github-and-pull-requests.md)
-- 📂 **Repository Explorer & File Tools:** [`docs/features/repo-explorer-and-file-tools.md`](./features/repo-explorer-and-file-tools.md)
-- 🥞 **Stacked Commits & Quick Hotfix:** [`docs/features/stacked-commits-and-hotfix.md`](./features/stacked-commits-and-hotfix.md)
-- 🏢 **Worktrees, LFS & Submodules:** [`docs/features/advanced-tools.md`](./features/advanced-tools.md)
-- 🔐 **Xác thực GitHub OAuth, SSH & Identity:** [`docs/features/auth-and-identity.md`](./features/auth-and-identity.md)
-- 🚨 **Tình huống biên & Bộ cảnh báo an toàn:** [`docs/features/edge-cases-and-guards.md`](./features/edge-cases-and-guards.md)
-- 📖 **User Guide (F1), Git Playbook & Pre-Commit Guard:** [`docs/features/onboarding-and-playbook.md`](./features/onboarding-and-playbook.md)
-- 🤖 **Trợ lý AI Cục bộ (Ollama / Local LLM):** [`docs/features/ai-assistant.md`](./features/ai-assistant.md)
-- 🆘 **FlowGit Playbook (Kịch bản giải cứu thực chiến):** [`docs/playbook/real-world-recipes.md`](./playbook/real-world-recipes.md)
-- ⌨️ **Sổ tay người dùng & Phím tắt:** [`docs/guides/user-manual.md`](./guides/user-manual.md)
-- 🛠️ **Hướng dẫn phát triển & Đóng gói:** [`docs/guides/development.md`](./guides/development.md)
-
----
-
-## 8. LỘ TRÌNH TRIỂN KHAI THEO GIAI ĐOẠN (IMPLEMENTATION ROADMAP)
-
-### 🚀 Phase 1: Foundation & High-Performance Visual Graph
-- [x] Khởi tạo dự án **Tauri v2 + Rust Backend + Svelte 5 SPA + Tailwind CSS v4 + Bits UI**.
-- [x] Cài đặt các crate Rust cốt lõi: `git2`, `tokio`, `rayon`, `notify`, `rusqlite`, `serde`.
-- [x] Tích hợp backend: Đọc commit history, branches, tags, HEAD và tính toán Lane Assignment đa luồng.
-- [x] Dựng **OffscreenCanvas Web Worker Living Commit Graph** mượt mà với Virtual Scrolling và ahead/behind badges (60 FPS).
-
-### 🛠️ Phase 2: Working Tree, Interactive Diff & Safe Discard
-- [x] Realtime Debounced File Watcher tự động cập nhật thay đổi file trong < 80ms.
-- [x] Diff Viewer trực quan (Side-by-Side, Unified, chọn từng dòng / hunk để stage bằng phím `Space`).
-- [x] Xây dựng **Safe Discard Engine** (SQLite lưu trữ uncommitted code 48h kèm Trash Inspector).
-- [x] Commit Box hỗ trợ gợi ý Conventional Commits và Stash Manager.
-
-### 🌿 Phase 3: Drag & Drop Workflow, Ghost Preview & Worktree
-- [x] Lập trình thao tác Kéo - Thả (Drag & Drop) commit/nhánh trên Canvas để Rebase, Squash, Cherry-pick.
-- [x] Xây dựng **Ghost Preview** (vẽ nét đứt mô phỏng và chạy Dry-run in-memory kiểm tra conflict).
-- [x] Tích hợp **1-Click Smart Sync with Upstream**.
-- [x] Tích hợp **Git Worktree Manager** trực quan và **Offline PR Preview** (So sánh 2 điểm).
-
-### ✨ Phase 4: Visual Bisect, 3-Way Conflict Resolver & Time Machine
-- [x] Bộ giải quyết xung đột **3-Way Merge Conflict Resolver** trực quan 4 khung hình.
-- [x] **Visual Git Bisect Wizard** (Truy vết lỗi bằng đồ thị từng bước).
-- [x] **Safe-Flight Time Machine (`Ctrl + Z`)**: Hoàn tác qua `git reflog` và SQLite Action Log.
-- [x] Command Palette (`Ctrl + K`) và hệ thống phím tắt 1 ký tự.
-- [x] Tích hợp Local AI (Ollama / Local LLM) hỗ trợ sinh Commit Message và gợi ý giải quyết Conflict.
-
-### 🏢 Phase 5: Git LFS, Submodules, SSH/HTTPS Auth & Monorepo Scaling (>100k Commits)
-- [x] Quản lý **Git Submodules**: Xem danh sách, tình trạng HEAD vs Index, đồng bộ và update đệ quy (`--init --recursive`).
-- [x] Hỗ trợ **Git LFS**: Nhận diện LFS attributes, theo dõi LFS file pointers, quản lý LFS Locks và kéo binary payloads.
-- [x] **Interactive SSH Passphrase & HTTPS Auth Modal**: Bắt tín hiệu yêu cầu credential khi Push/Pull/Fetch, mở modal nhập passphrase / PAT trực quan.
-- [x] **Monorepo Infinite Lazy-Loading Virtualization**: Phân trang commit history (`skip` / `limit`), tải lười khi cuộn đồ thị cho repo > 100,000 commits.
-
-### 💎 Phase 6: GitHub Integration, File Tools, Stacked Commits & In-App Guide (Hoàn thiện 100% Thực chiến)
-- [x] **GitHub Pull Request Reviewer & Creator (`PullRequestReviewer.svelte`, `CreatePullRequestModal.svelte`)**: Xem PRs, Monaco Diff, bình luận, CI/CD checks và merge 1-chạm.
-- [x] **Recent Push Banner & Publish Repo Modal**: Nhận diện tức thì sau push để mở PR và xuất bản repo mới lên GitHub.
-- [x] **Repository Explorer & Interactive Blame**: Duyệt cây file không cần checkout, Monaco code preview, blame gutter và file history timeline.
-- [x] **Comparison Viewer & History Nuker**: So sánh 2 mốc bất kỳ và tẩy xóa vĩnh viễn file bí mật khỏi toàn bộ lịch sử Git DAG.
-- [x] **Stacked Commits Flow & Quick Hotfix**: Kéo thả sắp xếp chuỗi commit chưa push và tạo nhánh hotfix độc lập từ `main`.
-- [x] **Interactive User Guide (`F1` / `?`) & In-App Git Playbook**: Bách khoa toàn thư hướng dẫn và bộ giải cứu sự cố Git tại chỗ (index.lock, wrong branch, heavy files).
-- [x] **Pre-Commit Safety Guard & Repo Alert Banner**: Tự động chặn commit lộ secret và thanh điều khiển rebase/merge/bisect dở dang.

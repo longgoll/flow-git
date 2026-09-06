@@ -1,8 +1,108 @@
-# HỆ THỐNG TRỢ GIÚP, SỔ TAY CỨU HỘ & BẢO VỆ TƯƠNG TÁC (ONBOARDING & PLAYBOOK)
-> **Mục tiêu:** Không để bất kỳ lập trình viên nào bị kẹt lại khi gặp sự cố Git  
-> **Các thành phần:** `UserGuideModal`, `GitPlaybookModal`, `PreCommitWarningModal`, `RepoAlertBanner`
+<div align="center">
+
+# 📖 Interactive Onboarding, Git Playbook & Pre-Commit Safety
+### Hệ Thống Trợ Giúp, Sổ Tay Cứu Hộ & Bảo Vệ Tương Tác (Onboarding & Playbook)
+
+> **Goal:** Ensure no developer ever gets stranded when facing complex Git issues  
+> **Components:** `UserGuideModal`, `GitPlaybookModal`, `PreCommitWarningModal`, `RepoAlertBanner`  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 🧭 1. In-App Guidance Philosophy
+
+When encountering challenging Git situations (stuck rebase conflicts, detached HEAD, committing to the wrong branch, stale `.git/index.lock`, or leaked credentials):
+- Developers often panic, searching StackOverflow for terminal commands.
+- Copying hazardous CLI commands (`git reset --hard`, `rm -f .git/index.lock`, `git rebase --skip`) risks irreversible data loss.
+
+**FlowGit packages complete operational rescue into intuitive 1-click workflows:**
+1. **Interactive User Guide (`UserGuideModal.svelte`):** Comprehensive knowledge base launched with `F1` or `?`.
+2. **Interactive Git Playbook (`GitPlaybookModal.svelte`):** Self-healing incident response with 1-click rescue buttons.
+3. **Pre-Commit Safety Guard (`PreCommitWarningModal.svelte`):** Proactive heuristic scanner intercepting secrets.
+4. **In-Progress Status Banner (`RepoAlertBanner.svelte`):** Fixed control banner pinned during Rebase, Merge, Bisect, or Detached HEAD states.
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ IN-APP RESCUE & SAFETY ARCHITECTURE                                                    │
+│                                                                                        │
+│  [Press F1 or "?"] ────────► [UserGuideModal.svelte] (Complete 2026 Reference)         │
+│                              ├── Real-World Recipes: Rebase, Time Machine, Worktrees...│
+│                              ├── Feature Deep-Dives: Living Graph, Safe Discard, AI... │
+│                              └── Shortcuts Cheat Sheet: Full Hotkeys Directory         │
+│                                                                                        │
+│  [Encounter Git Issue!] ───► [GitPlaybookModal.svelte] (1-Click Remediation)           │
+│                              ├── Stuck `.git/index.lock` ➔ 1-Click Clear Lock          │
+│                              ├── Committed to Wrong Branch ➔ 1-Click Move to New Branch│
+│                              ├── File > 50MB ➔ 1-Click Move to Git LFS                 │
+│                              └── Windows File Locks ➔ 1-Click Identify Culprit PID     │
+│                                                                                        │
+│  [In-Progress Operations] ──► [RepoAlertBanner.svelte] (Pinned to Top Bar)             │
+│                              ├── Rebasing: Step X/Y, Buttons: Continue, Skip, Abort    │
+│                              ├── Merging: Conflict counter, Button: Abort Merge        │
+│                              └── Detached HEAD: Warning, Button: Create Branch Here    │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📖 2. Interactive User Guide
+
+Component: [`src/lib/components/UserGuideModal.svelte`](file:///f:/Dev/product/git-tool/src/lib/components/UserGuideModal.svelte)  
+Trigger: `F1`, `?`, or Help Menu.
+
+Features three core interactive sections:
+1. **Real-World Recipes:** Battle-tested solutions for behind upstream branches, broken merges, accidental discards, and urgent hotfixes.
+2. **Feature Deep-Dives:** Explanations of OffscreenCanvas, SQLite Safe Discard, and Local AI generation.
+3. **Shortcuts Directory:** Full keyboard shortcuts list grouped by functional workflow.
+
+---
+
+## 🛠️ 3. On-The-Fly Incident Response (Git Playbook)
+
+Component: [`src/lib/components/GitPlaybookModal.svelte`](file:///f:/Dev/product/git-tool/src/lib/components/GitPlaybookModal.svelte)  
+Backend IPC: `is_index_locked`, `clear_index_lock`, `scan_heavy_files`, `check_file_locks`
+
+### 3.1. Stuck `.git/index.lock`
+- Detects if lock holder is dead; presents 1-click **"Clear Lock Now" (`clear_index_lock`)** to release repository in 1 second.
+
+### 3.2. Committed to Wrong Branch
+- Automatically spawns a new branch preserving the commit, rewinding the original branch via `git reset --soft HEAD~1`.
+
+### 3.3. Large Files Diagnostics
+- Scans for uncommitted files > 50MB and offers 1-click Git LFS tracking.
+
+---
+
+## 🛡️ 4. Pre-Commit Safety Guard
+
+Component: [`src/lib/components/PreCommitWarningModal.svelte`](file:///f:/Dev/product/git-tool/src/lib/components/PreCommitWarningModal.svelte)
+
+Heuristic security checks execute upon pressing `Ctrl + Enter`:
+1. **Secrets & API Keys:** Identifies patterns for OpenAI (`sk-proj-...`), GitHub (`ghp_...`), AWS (`AKIA...`), and RSA/SSH private keys.
+2. **Sensitive Configs:** Alerts on `.env`, `credentials.json`, `id_rsa`.
+3. **Dangling Debug Lines:** Warns on `console.log(secret)` or `debugger;`.
+4. Prompts confirmation before creating the commit.
+
+---
+
+## 🚨 5. In-Progress Operation Banner
+
+Component: [`src/lib/components/RepoAlertBanner.svelte`](file:///f:/Dev/product/git-tool/src/lib/components/RepoAlertBanner.svelte)
+
+- **Rebasing:** Shows current progress (`Step 3 / 8`) with **Continue**, **Skip**, and **Abort** buttons.
+- **Merging:** Conflict counter with 1-click **Abort Merge**.
+- **Detached HEAD:** Warns that commits will be lost without an anchored branch; provides **"Create Branch Here"**.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 🧭 1. TRIẾT LÝ HỖ TRỢ TRỰC QUAN TRONG ỨNG DỤNG
 

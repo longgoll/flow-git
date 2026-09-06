@@ -1,8 +1,115 @@
-# INTERACTIVE REBASE, KÉO - THẢ & BIÊN TẬP LỊCH SỬ
-> **Trực quan hóa:** Interactive Rebase Timeline kéo thả + Gộp commit (Squash) 1 giây  
-> **An toàn:** Revert không ghi đè lịch sử + Reset 3 chế độ bảo hiểm bởi Time Machine
+<div align="center">
+
+# 🔀 Interactive Rebase, Drag & Drop & History Operations
+### Interactive Rebase, Kéo - Thả & Biên Tập Lịch Sử
+
+> **Visuals:** Drag-and-drop Interactive Rebase timeline + 1-second 1-click Squash  
+> **Safety:** History-preserving Reverts + 3-mode Resets protected by Time Machine  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## ⏳ 1. Interactive Rebase Visual Editor (Timeline Rebase)
+
+Component: `src/lib/components/InteractiveRebaseModal.svelte`  
+Backend: `src-tauri/src/git/interactive_rebase.rs`
+
+### The Problem:
+`git rebase -i HEAD~N` in the terminal forces developers into crude text editors (Vim, Nano), requiring obscure shorthand letters (`p`, `r`, `s`, `f`, `d`) where accidental line deletions can corrupt branches.
+
+### FlowGit Timeline Interface:
+Right-click any base commit on the graph to open the visual timeline:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🔀 INTERACTIVE REBASE TIMELINE                                              │
+│                                                                             │
+│ ☰  [Pick ▼]   a1b2c3d  feat(auth): add GitHub device flow authentication   │
+│ ☰  [Reword ▼] 4e5f6g7  adjust button CSS padding                            │
+│ ☰  [Squash ▼] 8h9i0j1  wip: unit tests                                      │
+│ ☰  [Fixup ▼]  2k3l4m5  fix typo in readme                                   │
+│ ☰  [Drop ▼]   6n7o8p9  experimental code removal                            │
+│                                                                             │
+│ [Cancel]                                            [Execute Rebase Sequence]│
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Supported Actions:
+1. **Reorder via Drag & Drop:** Grab `☰` to change commit application order.
+2. **`Pick`:** Preserves commit as-is.
+3. **`Reword`:** Modifies commit message directly in UI without changing code.
+4. **`Squash`:** Melds commit into predecessor and consolidates commit messages.
+5. **`Fixup`:** Melds into predecessor while discarding current commit message.
+6. **`Drop`:** Completely purges commit from historical lineage.
+
+---
+
+## 🎯 2. Drag & Drop on Commit Graph
+
+Component: `src/lib/components/DropActionModal.svelte`
+
+FlowGit supports desktop-native drag-and-drop interaction:
+- **Action:** Drag any commit node on the canvas ➔ drop onto any target branch tip.
+- **Smart Action Modal:** Dropping presents three visual choices:
+  1. **Cherry-pick this Commit:** Applies only this commit to the target.
+  2. **Merge into Target Branch:** Performs a standard branch merge with a merge commit.
+  3. **Rebase onto Target Branch:** Places active feature commits atop the target tip.
+- **Dry-run Conflict Preview:** Potential conflicts display warning alerts before confirmation.
+
+---
+
+## 📦 3. 1-Second 1-Click Squash
+
+Component: `src/lib/components/SquashModal.svelte`
+
+### Enterprise Pain Point:
+Before opening PRs, developers often must squash 50–100 temporary commits (`fix typo`, `wip`) into a single feature commit. Doing this via terminal takes tens of minutes.
+
+### FlowGit Experience:
+1. Multi-select commit nodes on graph (`Shift` or `Ctrl` click).
+2. Press **`S`** (or right-click ➔ **"Squash Commits"**).
+3. SquashModal compiles selected commit messages into a clean bulleted list.
+4. Refine the final message (or click **"AI Generate"**) and click **"Squash Now"**.
+5. The entire sequence is squashed in **under 1 second**!
+
+---
+
+## ↩️ 4. Safe Revert Commit
+
+- Right-click any historical commit ➔ **"Revert Commit"**.
+- Uses `git2::Repository::revert` to create an inverse commit without rewriting history.
+- Ideal for shared remote branches (`main`, `develop`) without needing destructive force pushes.
+
+---
+
+## 🔄 5. Reset HEAD to Commit (3 Insured Modes)
+
+- **Soft Reset (`--soft`):** Moves HEAD back; retains changes in **Staged** area.
+- **Mixed Reset (`--mixed` - Default):** Moves HEAD back; keeps changes **Unstaged** in Working Tree.
+- **Hard Reset (`--hard`):** Discards changes from both Working Tree and Index.  
+  *(Protected: Unlike CLI Git, discarded files are captured in **Safe Discard 48h** and instantly undoable with **`Ctrl + Z`**).*
+
+---
+
+## 💣 6. Permanently Purge Secrets (History Nuker)
+
+Component: `src/lib/components/NukeHistoryModal.svelte`
+
+When credentials, secret keys, or 100MB+ binaries are committed:
+- Deleting in a subsequent commit leaves secrets in history.
+- Open **Nuke History Modal**, enter target file path.
+- FlowGit restructures the entire DAG (`nuke_file_from_history`), permanently erasing the file from all past commits.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## ⏳ 1. INTERACTIVE REBASE VISUAL EDITOR (TIMELINE REBASE)
 

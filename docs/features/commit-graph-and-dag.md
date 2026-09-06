@@ -1,8 +1,93 @@
-# ĐỒ THỊ ĐỘNG HỌC & BẢN ĐỒ CÂY PHÂN NHÁNH (LIVING GRAPH & DAG ENGINE)
-> **Hiệu năng:** Khóa cứng 60 FPS với > 100,000 Commits  
-> **Công nghệ:** HTML5 `OffscreenCanvas` + Dedicated Web Worker + Bezier Splines 2D
+<div align="center">
+
+# 📊 Living Commit Graph & DAG Map Engine
+### Đồ Thị Động Học & Bản Đồ Cây Phân Nhánh (Living Graph & DAG Engine)
+
+> **Performance:** Locked 60 FPS across 100,000+ Commits  
+> **Technology:** HTML5 `OffscreenCanvas` + Dedicated Web Worker + 2D Cubic Bezier Splines  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 📊 1. Living Commit Graph
+
+The Living Commit Graph is the beating heart of FlowGit, vividly visualizing branches, commits, tags, and parent-child lineages in realtime.
+
+```
+● [main] feat: automated billing integration ───────────────────────────┐
+│                                                                      │
+│   ● [feature/auth] feat(auth): add GitHub OAuth Device Flow support  │
+│  /│                                                                  │
+│ ● │ fix(token): handle expired JWT token refresh                     │
+│ │/                                                                   │
+● ┴ [v1.2.0] chore: release version v1.2.0                             │
+```
+
+### 1.1. OffscreenCanvas + Web Worker Architecture
+- **Legacy Git Client Bottlenecks:** Traditional tools render DOM nodes or inline SVGs directly on the main UI thread. Repositories with over 5,000 commits trigger catastrophic layout thrashing, reducing scroll frame rates below 15 FPS.
+- **FlowGit Architecture:**
+  - Offloads canvas rendering via **`transferControlToOffscreen()`** to **`graphWorker.ts`**.
+  - Worker computes coordinate matrices and draws smooth **Cubic Bezier Splines**.
+  - **Virtual Viewport Clipping:** Only renders rows within the active scrollport plus a 200px buffer.
+
+### 1.2. Parallel Topological Lane Compaction
+- Parallelized in Rust via `rayon` (`src-tauri/src/git/history.rs`).
+- Reclaims closed branch lanes immediately into an available pool, keeping graph width neatly contained between 3 and 8 lanes.
+
+### 1.3. Visual Badges & Indicators
+- **Ahead / Behind Badges (`↑ 2  ↓ 5`):** Tracks divergence relative to upstream remotes.
+- **Author Avatars:** GitHub avatars or initials with distinct developer color hashing.
+- **Tag & Branch Pills:** Differentiates Local branches (blue), Remote tracking branches (purple), HEAD (luminous outline), and Release Tags (gold).
+
+---
+
+## 🗺️ 2. DAG Canvas Map (Mini-Map Overview)
+
+Component: `src/lib/components/DagCanvasMap.svelte`
+
+For monorepos with dozens of concurrent branches, FlowGit provides a **DAG Mini-Map**:
+- Birds-eye overview of overall repository structure.
+- Click and drag the viewport rect to jump across months of history instantly.
+
+---
+
+## 🎯 3. Focus View (Branch Isolation)
+
+Component: `src/lib/components/FocusView.svelte`
+
+- Right-click any branch ➔ **"Focus This Branch"**:
+  - Hides unrelated commit lines from other team branches.
+  - Highlights the direct evolutionary lineage from base (`main`) to the branch tip.
+  - Consolidates file changes across the entire feature branch.
+
+---
+
+## 📚 4. Stacked Commits Flow
+
+Component: `src/lib/components/StackedCommitsFlow.svelte`
+
+Enables Google / Meta style Stacked Diffs workflows:
+- Visualizes unpushed local commit sequences (`get_unpushed_stacked_commits`).
+- Supports drag-and-drop commit reordering (`reorder_stacked_commits`) before PR publication.
+
+---
+
+## 👻 5. Ghost Preview on Drag & Drop
+
+- When dragging a commit node across the canvas:
+  - Dotted ghost connector lines simulate the proposed DAG topology.
+  - In-memory dry-run conflict checks highlight conflicting targets in glowing amber with instant warnings.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 📊 1. LIVING COMMIT GRAPH (ĐỒ THỊ ĐỘNG HỌC TRỰC QUAN)
 

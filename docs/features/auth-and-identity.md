@@ -1,8 +1,74 @@
-# XÁC THỰC BẢO MẬT & CHUYỂN ĐỔI DANH TÍNH (AUTH & IDENTITY)
-> **Bảo mật:** OAuth 2.0 Device Flow + Personal Access Token + SSH Key In-Memory Session  
-> **Ngăn chặn lỗi:** Chuyển đổi linh hoạt hồ sơ cá nhân và công ty (Local vs Global Identity)
+<div align="center">
+
+# 🔑 Authentication & Git Identity Switcher
+### Xác Thực Bảo Mật & Chuyển Đổi Danh Tính (Auth & Identity)
+
+> **Security:** OAuth 2.0 Device Flow + Personal Access Token + In-Memory SSH Key Cache  
+> **Identity Control:** Seamless toggling between personal and corporate Git identities (Local vs Global)  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 🔐 1. Intelligent Authentication Interception
+
+Component: `src/lib/components/AuthCredentialModal.svelte`  
+Tabs: `src/lib/components/auth/` (`DeviceFlowTab.svelte`, `TokenAuthTab.svelte`, `SshKeyTab.svelte`)  
+Backend: `src-tauri/src/git/auth.rs` & `src-tauri/src/storage/accounts.rs`
+
+### 1.1. Automated Error Interception
+When executing remote operations (`Push`, `Pull`, `Fetch`, `Smart Sync`), if errors occur:
+- `Permission denied (publickey)` (SSH passphrase required).
+- `HTTP 401 Unauthorized` / `Bad credentials` (HTTPS token required).
+
+Rather than halting with cryptic CLI error output, FlowGit intercepts the failure and displays an **"Authentication Required"** modal.
+
+---
+
+## 📱 2. Three Authentication Methods
+
+### 2.1. GitHub OAuth Device Flow (`DeviceFlowTab.svelte`)
+1. Click **"Login with GitHub"**.
+2. FlowGit generates a User Code (e.g., `ABCD-1234`) and verification URL `https://github.com/login/device`.
+3. Copies code to clipboard and opens browser.
+4. Rust backend polls in the background; upon browser authorization, FlowGit stores token, avatar, and username securely.
+
+### 2.2. Personal Access Token (PAT) (`TokenAuthTab.svelte`)
+- For GitHub, GitLab, Bitbucket, or self-hosted instances (Gitea).
+- Token permission verification (`repo`, `read:user`, `workflow`).
+- Encrypted SQLite local persistence.
+
+### 2.3. SSH Key & Passphrase Management (`SshKeyTab.svelte`)
+- Supports standard keys (`id_ed25519`, `id_rsa`).
+- Secure in-memory passphrase caching avoids repeated prompts during active sessions.
+
+---
+
+## 👤 3. Git Identity Switcher
+
+Component: `src/lib/components/IdentitySwitcherModal.svelte`  
+Backend: `src-tauri/src/git/identity.rs`
+
+### The Problem:
+Accidentally committing personal emails (`myname@gmail.com`) to corporate repos (`dev@corp.com`) can breach internal security compliance.
+
+### FlowGit Solution:
+- **StatusBar Visibility:** Displays active identity:  
+  `👤 John Doe <john@company.com> [Local Config]`
+- **1-Click Switching:**
+  - Click StatusBar to open Identity Switcher.
+  - Switch between presets: "Work", "Personal", "Open Source".
+  - Scope to **Repository (`.git/config`)** or **Global (`~/.gitconfig`)**.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 🔐 1. XÁC THỰC THÔNG MINH (AUTH CREDENTIAL MODAL)
 

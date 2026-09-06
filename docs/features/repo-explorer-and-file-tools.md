@@ -1,8 +1,127 @@
-# KHÁM PHÁ KHO LƯU TRỮ & BỘ CÔNG CỤ TỆP TIN CHUYÊN SÂU (REPO EXPLORER & FILE TOOLS)
-> **Phân hệ:** Khám phá cấu trúc cây, So sánh đa mốc thời gian, Truy vết Blame và Tẩy xóa lịch sử  
-> **Các thành phần:** `RepositoryExplorer`, `ComparisonViewer`, `FileHistoryModal`, `NukeHistoryModal`
+<div align="center">
+
+# 📂 Repository Explorer & Deep File Tooling
+### Khám Phá Kho Lưu Trữ & Bộ Công Cụ Tệp Tin Chuyên Sâu (Repo Explorer & File Tools)
+
+> **Subsystem:** Tree Exploration, Multi-Point Comparison, Interactive Blame & History Nuking  
+> **Components:** `RepositoryExplorer`, `ComparisonViewer`, `FileHistoryModal`, `NukeHistoryModal`  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 🧭 1. File Tooling Overview
+
+Beyond branch and commit lifecycle management, developers routinely require:
+1. **Tree Traversal without Checkout:** Browse directory structures at historical commits without dirtying the working directory.
+2. **Comparison Viewer:** Deep diff inspection between any two commits or branches (comparable to GitHub Compare `base...head` but 100% offline).
+3. **Interactive Line Blame:** Inspect who modified each line, when, and with what commit message.
+4. **File History Timeline:** Follow chronological mutations of a single file across years of history.
+5. **History Nuker:** Permanently eradicate `.env` credentials, API tokens, or 100MB+ binaries across 100% of Git history.
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ EXPLORATION & DEEP FILE TOOLING SUITE                                                  │
+│                                                                                        │
+│  ┌──────────────────────────────────────────────────────────────────────────────────┐  │
+│  │ RepositoryExplorer.svelte (Directory Tree & Monaco Code Preview)                 │  │
+│  │ ├── Browse directory tree at HEAD or arbitrary Commit OID (getTreeEntries)       │  │
+│  │ ├── Realtime file search & Monaco Syntax Highlighted Code Viewer                 │  │
+│  │ ├── Interactive Blame Toggle (Author per line, commit metadata hover tooltip)    │  │
+│  │ └── Context Menu: Copy Path, View File History, Nuke File from History           │  │
+│  └───────────────────────────────────┬──────────────────────────────────────────────┘  │
+│                                      │                                                 │
+│             ┌────────────────────────┼────────────────────────┐                        │
+│             ▼                        ▼                        ▼                        │
+│  ┌──────────────────────┐ ┌──────────────────────┐ ┌──────────────────────────────┐    │
+│  │ ComparisonViewer     │ │ FileHistoryModal     │ │ NukeHistoryModal             │    │
+│  │ ├── Compare 2 commits│ │ ├── Dedicated single │ │ ├── BFG / git-filter-repo    │    │
+│  │ ├── Changed files    │ │ │   file timeline    │ │ ├── Permanent file deletion  │    │
+│  │ └── Monaco Diff View │ │ └── Inline Blame/Diff│ │ │   across entire Git history│    │
+│  └──────────────────────┘ └──────────────────────┘ └──────────────────────────────┘    │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📂 2. Repository Explorer
+
+Component: [`src/lib/components/RepositoryExplorer.svelte`](file:///f:/Dev/product/git-tool/src/lib/components/RepositoryExplorer.svelte)  
+Backend IPC: `get_tree_entries`, `get_file_content`
+
+### 2.1. Tree Browsing Without Checkout
+- Switch seamlessly between the **active Working Tree** and **historical Tree at any commit OID**.
+- Expand subdirectories with animated folder/file icons (Code, JSON, Text, Binary, Folder).
+- **Realtime File Filter (`treeSearchQuery`):** Instant search filtering within the tree.
+
+### 2.2. Integrated Monaco Code Preview
+- Click any file: loaded via `get_file_content` into **Monaco Editor**:
+  - Full syntax highlighting for 50+ languages.
+  - Line numbers, minimap, and word wrap.
+  - Automated detection and warning flags for large binary files (`is_binary: true`).
+
+---
+
+## 🕵️ 3. Interactive Line Blame
+
+Component: [`src/lib/components/RepositoryExplorer.svelte`](file:///f:/Dev/product/git-tool/src/lib/components/RepositoryExplorer.svelte)  
+Backend IPC: `get_file_blame`
+
+Click **"Toggle Blame"** in the Monaco viewer:
+1. Backend runs multi-threaded `git2::Blame` returning `BlameHunkItem[]`.
+2. Dedicated gutter renders along the left margin:
+   - **Avatar & Author Name:** Highlights who modified the line.
+   - **Relative Time:** E.g., `2 days ago`, `3 months ago`.
+   - **Short SHA:** 7-character commit hash.
+3. **Interactive Features:**
+   - **Hover:** Displays commit message and full timestamp tooltip.
+   - **Click:** Fires `onSelectCommit(commitId)`, panning the Living Graph camera to focus the commit node.
+
+---
+
+## 📜 4. File History Timeline
+
+Component: [`src/lib/components/FileHistoryModal.svelte`](file:///f:/Dev/product/git-tool/src/lib/components/FileHistoryModal.svelte)  
+Backend IPC: `get_file_history`
+
+To investigate evolution of a critical file:
+1. Right-click file in Explorer ➔ **"View File History"**.
+2. Opens dedicated timeline filtered strictly to commits affecting this file (`git log --follow -p -- <file>`).
+3. Click any commit to view historical file content and predecessor diff.
+
+---
+
+## ⚖️ 5. Comparison Viewer (Compare Any 2 Commits)
+
+Component: [`src/lib/components/ComparisonViewer.svelte`](file:///f:/Dev/product/git-tool/src/lib/components/ComparisonViewer.svelte)  
+Backend IPC: `compare_two_commits`
+
+- Select any 2 commits or branches on graph or via Toolbar:
+  - `base_id`: Baseline commit (e.g., `main`).
+  - `target_id`: Target commit (e.g., `feature/payment`).
+- Displays changed files list with `+` / `-` line counters and opens **Monaco Diff Editor** in Split or Unified view without checking out branches.
+
+---
+
+## ☢️ 6. History Nuker (Permanent File Eradication)
+
+Component: [`src/lib/components/NukeHistoryModal.svelte`](file:///f:/Dev/product/git-tool/src/lib/components/NukeHistoryModal.svelte)  
+Backend IPC: `nuke_file_from_history`
+
+When secrets, passwords, or huge binaries are committed:
+1. Right-click sensitive file in Explorer ➔ **"Nuke File from History"**.
+2. Review security confirmation modal.
+3. Rust backend executes `nuke_file_from_history`, recursively traversing commit trees, removing all corresponding blobs, and rebuilding ancestor links consistently.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 🧭 1. TỔNG QUAN BỘ CÔNG CỤ TỆP TIN
 

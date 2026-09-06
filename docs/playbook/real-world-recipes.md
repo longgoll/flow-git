@@ -1,9 +1,153 @@
-# SỔ TAY THỰC CHIẾN & KỊCH BẢN CỨU HỘ (FLOWGIT PLAYBOOK)
-> **Mục tiêu:** Cung cấp công thức 1-2 click và Kéo - Thả (Drag & Drop) giải cứu mọi sự cố Git thường gặp trong thực tế.  
-> **Tra cứu nhanh trong ứng dụng:** Nhấn phím tắt **`F1`** hoặc **`Ctrl + /`** để mở trực tiếp trong FlowGit.  
-> **Nguyên tắc:** 100% thao tác qua giao diện đồ họa (Visual First – Zero Terminal Friction).
+<div align="center">
+
+# 🚑 FlowGit Playbook: Real-World Recipes & Emergency Rescues
+### Sổ Tay Thực Chiến & Kịch Bản Cứu Hộ (FlowGit Playbook)
+
+> **Mission:** 1–2 click & Drag-and-Drop recipes to rescue all common real-world Git predicaments.  
+> **In-App Quick Access:** Press **`F1`** or **`Ctrl + /`** to launch directly inside FlowGit.  
+> **Rule:** 100% Visual UI workflows (Visual First – Zero Terminal Friction).  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 📑 Quick Table of Contents
+
+- [Part I: Context Switching & Branching](#part-i-context-switching--branching)
+  - [Recipe 1: Accidentally committed directly to `main` instead of creating a feature branch](#-recipe-1-accidentally-committed-directly-to-main-instead-of-creating-a-feature-branch)
+  - [Recipe 2: Mid-work on 15 uncommitted files when called to fix an urgent P0 hotfix](#-recipe-2-mid-work-on-15-uncommitted-files-when-called-to-fix-an-urgent-p0-hotfix)
+  - [Recipe 3: Created branch from an outdated commit (forgot to pull); rebasing onto latest `main`](#-recipe-3-created-branch-from-an-outdated-commit-forgot-to-pull-rebasing-onto-latest-main)
+  - [Recipe 4: Experimenting with a risky idea (Spike) without fear of breaking code](#-recipe-4-experimenting-with-a-risky-idea-spike-without-fear-of-breaking-code)
+- [Part II: History & Undo Dilemmas](#part-ii-history--undo-dilemmas)
+  - [Recipe 5: Messy merge commit created; undoing merge to straighten history via Rebase](#-recipe-5-messy-merge-commit-created-undoing-merge-to-straighten-history-via-rebase)
+  - [Recipe 6: Accidentally discarded uncommitted changes written all morning](#-recipe-6-accidentally-discarded-uncommitted-changes-written-all-morning)
+  - [Recipe 7: Catastrophic mistaken Reset Hard or Rebase causing commits to disappear](#-recipe-7-catastrophic-mistaken-reset-hard-or-rebase-causing-commits-to-disappear)
+  - [Recipe 8: Accidentally pushed a broken commit to shared remote (Production)](#-recipe-8-accidentally-pushed-a-broken-commit-to-shared-remote-production)
+  - [Recipe 9: Typo in commit message or forgot to include a modified file (Amend Commit)](#-recipe-9-typo-in-commit-message-or-forgot-to-include-a-modified-file-amend-commit)
+  - [Recipe 10: Splitting a monolithic commit into clean logical commits](#-recipe-10-splitting-a-monolithic-commit-into-clean-logical-commits)
+  - [Recipe 11: Squashing small WIP / typo commits into a single commit before PR](#-recipe-11-squashing-small-wip--typo-commits-into-a-single-commit-before-pr)
+- [Part III: Teamwork & Conflicts](#part-iii-teamwork--conflicts)
+  - [Recipe 12: Cherry-picking a colleague's bug fix into your branch](#-recipe-12-cherry-picking-a-colleagues-bug-fix-into-your-branch)
+  - [Recipe 13: Overwhelmed during merge conflict resolution; aborting cleanly](#-recipe-13-overwhelmed-during-merge-conflict-resolution-aborting-cleanly)
+  - [Recipe 14: Local and remote branches diverged (1 Ahead, 1 Behind)](#-recipe-14-local-and-remote-branches-diverged-1-ahead-1-behind)
+  - [Recipe 15: Pruning stale branches after a sprint ends](#-recipe-15-pruning-stale-branches-after-a-sprint-ends)
+  - [Recipe 16: Offline self-review of Pull Request diff before submission](#-recipe-16-offline-self-review-of-pull-request-diff-before-submission)
+- [Part IV: Large Files & Secrets](#part-iv-large-files--secrets)
+  - [Recipe 17: Committed a large file (> 100MB) causing GitHub push rejection](#-recipe-17-committed-a-large-file--100mb-causing-github-push-rejection)
+  - [Recipe 18: Leaked API Keys / Tokens / Passwords in commit history](#-recipe-18-leaked-api-keys--tokens--passwords-in-commit-history)
+- [Part V: Debugging & Investigation](#part-v-debugging--investigation)
+  - [Recipe 19: Locating which of 50 recent commits introduced a regression (Visual Bisect)](#-recipe-19-locating-which-of-50-recent-commits-introduced-a-regression-visual-bisect)
+  - [Recipe 20: Who modified this line, when, and why? (Visual Blame)](#-recipe-20-who-modified-this-line-when-and-why-visual-blame)
+
+---
+
+## Part I: Context Switching & Branching
+
+### 🆘 Recipe 1: Accidentally committed directly to `main` instead of creating a feature branch
+- **Symptom:** You committed 2–3 changes directly to local `main` without pushing yet.
+- **Rescue in FlowGit (30s, 2 clicks):**
+  1. Right-click latest commit on canvas ➔ **"Create Branch Here"** ➔ name it `feature/my-task`.
+  2. Right-click previous clean commit of `main` ➔ **"Reset Current Branch (main) to Here"** ➔ choose **Hard**.
+  3. **Outcome:** `main` reverts to upstream state while your feature commits reside safely on `feature/my-task`.
+
+### 🆘 Recipe 2: Mid-work on 15 uncommitted files when called to fix an urgent P0 hotfix
+- **Symptom:** You have 15 unfinished files that cannot compile, but need to fix production immediately.
+- **Resolution in FlowGit:**
+  - **Option 1 (Recommended – Quick Hotfix Worktree):** Click **"Quick Hotfix"** on Toolbar (`Ctrl + H`). FlowGit spawns an isolated worktree pointing to `main`. Fix, test, and commit there without touching ongoing work.
+  - **Option 2 (Smart Stash):** Click **"Stash All"** in Working Tree, switch branch, fix bug, then return and click **"Pop Stash"**.
+
+### 🆘 Recipe 3: Created branch from an outdated commit (forgot to pull); rebasing onto latest `main`
+- **Symptom:** Your feature branch branched off a stale commit from a month ago.
+- **Resolution in FlowGit (Drag & Drop):**
+  1. Sync `main` (click **"Sync"** on Toolbar).
+  2. Drag your feature branch node and drop it directly onto the HEAD of `main`.
+  3. Select **"Rebase onto Target"** from the popup menu.
+
+### 🆘 Recipe 4: Experimenting with a risky idea (Spike) without fear of breaking code
+- **Symptom:** Want to test an experimental refactor without corrupting your active branch.
+- **Resolution in FlowGit:**
+  1. Right-click active commit ➔ **"Create Branch Here"** ➔ name `spike/try-algo`.
+  2. Experiment freely. If it fails, right-click `spike/try-algo` on Sidebar ➔ **"Delete Branch"**.
+
+---
+
+## Part II: History & Undo Dilemmas
+
+### 🆘 Recipe 5: Messy merge commit created; undoing merge to straighten history via Rebase
+- **Resolution in FlowGit:**
+  1. Right-click commit on `main` immediately before the merge ➔ **"Reset current branch to here"** ➔ **`Hard`**.
+  2. Checkout feature branch (`dev`), drag onto `main` ➔ **"Rebase dev onto main"**.
+  3. Right-click rebased branch in Sidebar ➔ Click orange **"Force Push (--force-with-lease)"**.
+
+### 🆘 Recipe 6: Accidentally discarded uncommitted changes written all morning
+- **Rescue in FlowGit (1-Click 100% Recovery):**
+  1. Click **Safe Trash (Trash Inspector 48h)** on Toolbar or bottom bar (`Ctrl + T`).
+  2. Find snapshot by file name or timestamp; preview diff.
+  3. Click green **"Restore"** button.
+
+### 🆘 Recipe 7: Catastrophic mistaken Reset Hard or Rebase causing commits to disappear
+- **Rescue in FlowGit:** Press **`Ctrl + Z`** once or open the **Time Machine Drawer** to jump to any recorded point in the SQLite Action Journal.
+
+### 🆘 Recipe 8: Accidentally pushed a broken commit to shared remote (Production)
+- **Resolution in FlowGit:** Right-click broken commit ➔ **"Revert this commit"** ➔ click **Push**.
+
+### 🆘 Recipe 9: Typo in commit message or forgot to include a modified file (Amend Commit)
+- **Resolution in FlowGit:** Stage missing file, check **"Amend Commit"** checkbox in Commit Box, update message if needed, click **"Commit (Amend)"**.
+
+### 🆘 Recipe 10: Splitting a monolithic commit into clean logical commits
+- **Resolution in FlowGit:** Right-click commit ➔ **"Reset current branch to here"** ➔ **`Mixed`**. Use Hunk Staging (`Space`) to incrementally stage and commit chunks.
+
+### 🆘 Recipe 11: Squashing small WIP / typo commits into a single commit before PR
+- **Resolution in FlowGit:** Select consecutive commits on graph ➔ press **`S`** (or open Interactive Rebase) ➔ edit combined message and confirm.
+
+---
+
+## Part III: Teamwork & Conflicts
+
+### 🆘 Recipe 12: Cherry-picking a colleague's bug fix into your branch
+- **Resolution in FlowGit:** Drag colleague's commit node and drop directly onto your current branch tip ➔ select **"Cherry-pick commit"**.
+
+### 🆘 Recipe 13: Overwhelmed during merge conflict resolution; aborting cleanly
+- **Resolution in FlowGit:** Click red **"Abort Merge / Rebase"** button on top alert banner or inside Conflict Resolver.
+
+### 🆘 Recipe 14: Local and remote branches diverged (1 Ahead, 1 Behind)
+- **Resolution in FlowGit:** Click **"Smart Sync"** on Toolbar. FlowGit inspects divergence and guides resolution.
+
+### 🆘 Recipe 15: Pruning stale branches after a sprint ends
+- **Resolution in FlowGit:** Click broom icon **"Clean Merged Branches"** on Sidebar; right-click remote ➔ **"Fetch & Prune"**.
+
+### 🆘 Recipe 16: Offline self-review of Pull Request diff before submission
+- **Resolution in FlowGit:** Open **PR Reviewer** (`Ctrl + Shift + P`), select Base (`main`) and Compare branch to inspect Monaco Split/Unified diffs.
+
+---
+
+## Part IV: Large Files & Secrets
+
+### 🆘 Recipe 17: Committed a large file (> 100MB) causing GitHub push rejection
+- **Resolution in FlowGit:** Open **Nuke History / Large Files Manager** from Tools menu ➔ click **"Purge File from History"** ➔ Force Push.
+
+### 🆘 Recipe 18: Leaked API Keys / Tokens / Passwords in commit history
+- **Resolution in FlowGit:** If unpushed, press **`Ctrl + Z`** and add to `.gitignore`. If pushed, rotate credentials immediately and run **History Nuker** to eradicate file from Git DAG.
+
+---
+
+## Part V: Debugging & Investigation
+
+### 🆘 Recipe 19: Locating which of 50 recent commits introduced a regression (Visual Bisect)
+- **Resolution in FlowGit:** Click **"Bisect"** on Toolbar. Mark current commit **Bad 🐞**, mark known good commit **Good ✅**. Test binary candidate steps with "Pass" / "Fail" buttons.
+
+### 🆘 Recipe 20: Who modified this line, when, and why? (Visual Blame)
+- **Resolution in FlowGit:** Open file in Diff Viewer ➔ click **"Toggle Blame"** to view author avatar, timestamp, and commit SHA per line.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 📑 MỤC LỤC NHANH
 

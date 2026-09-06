@@ -1,8 +1,117 @@
-# HƯỚNG DẪN PHÁT TRIỂN & ĐÓNG GÓI ỨNG DỤNG (DEVELOPMENT & BUILD GUIDE)
-> **Dành cho AI Agents & Lập trình viên:** Thiết lập môi trường, kiểm thử và đóng gói FlowGit  
-> **Cập nhật:** Chuẩn công nghệ 2026 – Tauri v2 Native Bridge & Svelte 5 Runes
+<div align="center">
+
+# 🛠️ Development & Build Guide
+### Hướng Dẫn Phát Triển & Đóng Gói Ứng Dụng
+
+> **Audience:** AI Agents & Developers – Environment setup, testing, and production builds  
+> **Standard:** 2026 State-of-the-Art – Tauri v2 Native Bridge & Svelte 5 Runes  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 🛠️ 1. Prerequisites
+
+To build and develop FlowGit locally (especially on Windows 10/11):
+1. **Node.js:** Version `>= 20.x` (LTS recommended) with bundled `npm`.
+2. **Rust Toolchain:** Version `>= 1.80` (Edition 2021/2024), installed via [rustup.rs](https://rustup.rs).
+3. **C++ Build Tools (Windows):** **Visual Studio C++ Build Tools** with "Desktop development with C++" and Windows SDK to compile `git2` (libgit2 C bindings).
+4. **Tauri v2 CLI:** Bundled via project npm scripts (`@tauri-apps/cli`).
+
+---
+
+## 🚀 2. Local Development
+
+### Install Dependencies:
+```bash
+# At root repository directory
+npm install
+```
+
+### Run in Live Reload Mode (Dev Mode):
+```bash
+npm run tauri dev
+```
+- Starts Vite dev server at `http://localhost:1420`, compiles the Rust backend, and opens the native Tauri v2 desktop window.
+- Svelte frontend changes (`src/`) update instantly via HMR.
+- Rust backend changes (`src-tauri/src/`) trigger automated binary recompilation.
+
+---
+
+## 🧪 3. Testing & Verification
+
+### 3.1. Frontend Typecheck (TypeScript & Svelte Check)
+```bash
+# Full TypeScript validation and Svelte 5 Runes syntax check
+npm run check
+```
+
+### 3.2. Rust Backend Unit Tests
+```bash
+cd src-tauri
+cargo test
+```
+*Note: Ensure all unit tests pass before opening pull requests or merging into main.*
+
+---
+
+## 📦 4. Production Build & Packaging
+
+To generate installer packages for end users:
+```bash
+npm run tauri build
+```
+
+Tauri v2 outputs optimized installer bundles:
+- **Windows MSI Installer (`.msi`):** `src-tauri/target/release/bundle/msi/`
+- **Windows NSIS Setup (`.exe`):** `src-tauri/target/release/bundle/nsis/`
+- **Standalone Binary:** `src-tauri/target/release/flowgit.exe`
+
+---
+
+## 📁 5. Project Layout
+
+```
+git-tool/
+├── .agents/skills/             # Specialized AI Skills (Tauri-Rust, Svelte 5 Canvas, Safety Engine)
+├── docs/                       # Comprehensive documentation suite
+├── src/                        # Frontend Svelte 5 SPA (100% Runes)
+│   ├── app.css                 # Tailwind CSS v4 setup (@tailwindcss/vite)
+│   ├── App.svelte              # Root component with 3-Column layout
+│   └── lib/
+│       ├── api/                # Tauri IPC wrappers & GitHub API Client (githubApi.ts)
+│       ├── components/         # 50+ UI Components (Graph, Diff, Modals, Explorer, PR Reviewer)
+│       ├── state/              # Class-based Svelte 5 Runes Stores (Repo, WorkingTree, Safety)
+│       ├── utils/              # Graph renderers, spline calculators & formatters
+│       └── workers/            # graphWorker.ts (Isolated 60 FPS OffscreenCanvas renderer)
+└── src-tauri/                  # Backend Rust Core (Tauri v2 Native Bridge)
+    ├── Cargo.toml              # Dependencies: git2, tokio, rayon, notify, rusqlite, serde
+    └── src/
+        ├── lib.rs              # 70+ Tauri IPC Command Handlers registration
+        ├── commands/           # Partitioned IPC handlers by domain
+        ├── git/                # libgit2 engine: history, lane compaction, simulation, LFS
+        ├── storage/            # Embedded SQLite: 48h trash, action journals, accounts
+        └── watcher/            # Realtime debounced file watcher (notify crate)
+```
+
+---
+
+## 🧭 6. Developer & AI Agent Guidelines
+
+1. **Svelte 5 Runes Only:** Never use deprecated Svelte 4 syntax (`export let`, `let:`, `$:`); use `$state`, `$state.raw`, `$derived`, `$effect`, and `$props`.
+2. **Big Data Efficiency:** Large commit arrays must use `$state.raw` to avoid reactive proxy overhead across tens of thousands of objects.
+3. **Rust Panic Prevention:** No `unwrap()` or `expect()` in runtime command handlers; always return `Result<T, AppError>`.
+4. **Locked 60 FPS:** Canvas drawing must delegate to `OffscreenCanvas` and `graphWorker.ts`, never blocking the main thread DOM.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 🛠️ 1. YÊU CẦU MÔI TRƯỜNG (PREREQUISITES)
 

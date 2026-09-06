@@ -1,8 +1,151 @@
-# KIẾN TRÚC TỔNG THỂ HỆ THỐNG FLOWGIT (SYSTEM ARCHITECTURE)
-> **Kiến trúc:** Tauri v2 Native Bridge + Svelte 5 Runes SPA + Rust Core Engine  
-> **Cập nhật:** Chuẩn công nghệ 2026 – Tối ưu hóa Monorepo & Concurrency
+<div align="center">
+
+# 🏗️ FlowGit System Architecture
+### Kiến Trúc Tổng Thể Hệ Thống FlowGit
+
+> **Architecture:** Tauri v2 Native Bridge + Svelte 5 Runes SPA + Rust Core Engine  
+> **Standard:** 2026 State-of-the-Art – Monorepo & Concurrency Optimization  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 🏗️ 1. High-Level Architecture Diagram
+
+FlowGit strictly decouples the user presentation layer (DOM rendering), multi-threaded graphic computing (Worker layer), network API client (GitHub integration), and the native business logic engine (Rust backend):
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│ FRONTEND (Svelte 5 SPA + Tailwind CSS v4 + Bits UI + Monaco Editor)                     │
+│                                                                                         │
+│  ┌─────────────────────────────────┐   ┌──────────────────────────────────────────────┐ │
+│  │ MAIN UI THREAD (DOM Rendering)  │   │ DEDICATED WEB WORKER (OffscreenCanvas)       │ │
+│  │ ├── 3-Column Split Layout       │   │ ├── Bezier Curves Spline Rendering (60 FPS) │ │
+│  │ ├── Sidebar & Repository Tree   │   │ ├── Multi-Lane Topological Routing           │ │
+│  │ ├── Monaco Diff & Code Editors  │◄──┼─ Matrix Coordinate Mapping (Screen <-> Graph)│ │
+│  │ ├── PR Reviewer & Explorer Hub  │   │ └── Virtual Viewport Caching                 │ │
+│  │ └── Svelte 5 Rune State Stores  │   └──────────────────────────────────────────────┘ │
+│  │     (Repo, WorkingTree, Safety) │                                                    │
+│  └────────────────┬────────────────┘                                                    │
+│                   │ REST API (HTTPS)                                                    │
+│                   ▼                                                                     │
+│  ┌─────────────────────────────────────────────────────────┐                            │
+│  │ GITHUB CLIENT LAYER (src/lib/api/githubApi.ts)          │                            │
+│  │ ├── Octokit-less Native Fetch Engine                    │                            │
+│  │ ├── Pull Request Review, Checks & Comments Management   │                            │
+│  │ └── Instant Push Detection & One-Click Publishing       │                            │
+│  └─────────────────────────────────────────────────────────┘                            │
+└───────────────────┼─────────────────────────────────────────────────────────────────────┘
+                    │ Tauri v2 IPC Channel (Scoped Capability Permissions, Zero-Copy JSON)
+┌───────────────────┴─────────────────────────────────────────────────────────────────────┐
+│ BACKEND CORE (Rust Native Engine - 70+ IPC Commands)                                    │
+│                                                                                         │
+│  ┌───────────────────────────────┐  ┌─────────────────────────────────────────────────┐ │
+│  │ TAURI IPC DISPATCHER LAYER    │  │ PARALLEL WORKERS & EVENT RUNTIME                │ │
+│  │ ├── src/commands/action.rs    │  │ ├── Tokio Async Runtime (Long-running Network)  │ │
+│  │ ├── src/commands/diff.rs      │  │ ├── Rayon Multi-thread Pool (Lane Compaction)   │ │
+│  │ ├── src/commands/repo.rs      │  │ └── Realtime File Watcher (`notify` crate)      │ │
+│  │ └── src/commands/auth.rs      │  └─────────────────────────────────────────────────┘ │
+│  └───────────────┬───────────────┘                                                      │
+│                  ▼                                                                      │
+│  ┌────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │ GIT2 CORE ENGINE (`libgit2-rs` Bindings)                                           │ │
+│  │ ├── Monorepo Chunked Revwalk (500 commits / chunk, lazy pagination)                │ │
+│  │ ├── In-Memory Simulation Engine (Dry-Run Conflict Check via `git2::Index`)         │ │
+│  │ ├── Submodules Inspector (`.gitmodules`) & Git LFS Pointer Parser                  │ │
+│  │ ├── Stacked Commits Sequencer & History Nuker Engine                               │ │
+│  │ └── Interactive Rebase Sequencer (`git2::Repository::rebase_init`)                │ │
+│  └───────────────────────────────┬────────────────────────────────────────────────────┘ │
+│                                  ▼                                                      │
+│  ┌────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │ LOCAL PERSISTENCE LAYER (`rusqlite` SQLite 3)                                      │ │
+│  │ ├── Safe Discard Trash Snapshots (Automatic 48-Hour TTL Eviction)                  │ │
+│  │ ├── Action History & Undo Journal (Reflog Time-Travel Synchronization)            │ │
+│  │ └── Secure Account Store (Personal Access Tokens & SSH Metadata)                   │ │
+│  └────────────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🎨 2. Frontend Architecture (Svelte 5 Runes)
+
+### 2.1. State Management via Svelte 5 Runes
+FlowGit uses class-based reactive state stores located in `src/lib/state/`:
+
+1. **`RepoState` (`src/lib/state/repoState.svelte.ts`):**
+   - Manages commits, branches, tags, stashes, HEAD pointers, and pagination flags.
+   - Employs **`$state.raw<CommitNode[]>`** for storing commit arrays containing tens of thousands of nodes. This prevents Svelte 5 from creating reactive proxies on each node property, reducing RAM consumption by over 80% and removing traversal latency.
+2. **`WorkingTreeState` (`src/lib/state/workingTreeState.svelte.ts`):**
+   - Manages modified files (`dirtyFiles`), staging states, active diff selection, and ignore rules.
+3. **`RemoteState` (`src/lib/state/remoteState.svelte.ts`):**
+   - Manages remotes (`origin`, `upstream`), authenticated accounts, and Ahead/Behind metrics.
+4. **`GitSafetyState` (`src/lib/state/gitSafetyState.svelte.ts`):**
+   - Controls the **Time Machine Drawer (`Ctrl + Z`)** and the **Safe Recycle Bin (Trash Inspector)**.
+5. **`ThemeState` (`src/lib/state/themeState.svelte.ts`):**
+   - Controls Dark/Light themes, accent palettes, and theme synchronization with Monaco Editor.
+6. **`ToastState` (`src/lib/state/toastState.svelte.ts`):**
+   - Global notification system for copyable error logs, conflict alerts, and sync progress.
+
+### 2.2. Monaco Editor & Monaco Diff Editor
+- `MonacoDiffEditor.svelte`: High-fidelity diff inspection between working tree and index or across two arbitrary commits (`ComparisonViewer`), with Split/Unified modes.
+- `MonacoEditor.svelte`: Historical code browsing in `RepositoryExplorer` featuring realtime Git Blame gutters.
+
+### 2.3. Isolated Graph Rendering (Worker + Canvas)
+- All coordinate calculations, Bezier cubic splines, and Canvas 2D calls run in **`src/lib/workers/graphWorker.ts`**.
+- Ensures the UI main thread never drops below **60 FPS**, even when scrolling through 100,000 commits.
+
+---
+
+## 🦀 3. Backend Architecture (Tauri v2 & Rust Core)
+
+### 3.1. Modular Rust Design
+The backend code in `src-tauri/src/` is partitioned cleanly:
+- **`commands/`:** Entry point for 70+ IPC commands. All handlers return `Result<T, AppError>`, avoiding panics (`unwrap()` / `expect()`).
+- **`git/`:** Direct `git2-rs` interactions including history walking, parallel lane allocation, dry-run simulation, rebase, blame, stacked commits, and LFS.
+- **`storage/`:** Embedded SQLite via `rusqlite` handling 48h Trash (`trash.rs`), action journals (`action_log.rs`), and account metadata (`accounts.rs`).
+- **`watcher/`:** Background file watcher (`notify`) that emits `repo-changed` events upon file system modifications.
+
+### 3.2. Concurrency and Async Workloads
+1. **Rayon Multi-Threading:**
+   - Lane allocation and topological compaction in `history.rs` run in parallel across all CPU cores via `rayon::par_iter()`.
+2. **Tokio Async Runtime:**
+   - Long-lived network operations (Fetch, Pull, Push, Clone, GitHub OAuth polling) run in asynchronous Tokio tasks to avoid locking Tauri IPC handlers.
+3. **In-Memory Git Index Simulation:**
+   - Before executing Rebase, Merge, or Cherry-pick operations, an in-memory `git2::Index` dry-run simulates the merge to detect conflicts safely without touching the actual working tree.
+
+---
+
+## ⚡ 4. Event Lifecycle & Realtime Synchronization
+
+```mermaid
+sequenceDiagram
+    participant OS as Operating System / Disk
+    participant Watcher as Rust Notify Watcher
+    participant IPC as Tauri v2 IPC Channel
+    participant Svelte as Svelte 5 Frontend
+    participant Worker as Graph Web Worker
+
+    OS->>Watcher: File modified in Repository
+    Watcher->>Watcher: Debounce 80ms (Filter noise)
+    Watcher->>IPC: Emit "repo-changed" event
+    IPC->>Svelte: Listen via listenRepoStatus()
+    Svelte->>IPC: Invoke get_status() & get_commit_history()
+    IPC-->>Svelte: Return Status & Commits ($state.raw)
+    Svelte->>Worker: Post commit array to Worker
+    Worker->>Worker: Compute Bezier Splines & Coordinates
+    Worker-->>Svelte: Direct draw to OffscreenCanvas (60 FPS)
+```
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 🏗️ 1. SƠ ĐỒ KHỐI TỔNG THỂ (HIGH-LEVEL ARCHITECTURE)
 
@@ -132,5 +275,3 @@ sequenceDiagram
     Worker->>Worker: Tính toán Bezier Splines & Tọa độ Nodes
     Worker-->>Svelte: Render trực tiếp lên OffscreenCanvas (60 FPS)
 ```
-
-Kiến trúc này giúp FlowGit giữ được tốc độ phản hồi tính bằng mili-giây, giao diện mượt mà và an toàn tối đa trên mọi nền tảng Windows, macOS và Linux.

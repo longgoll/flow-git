@@ -1,8 +1,100 @@
-# WORKING TREE, DIFF VIEWER & CƠ CHẾ STAGING TỪNG KHỐI
-> **Trực quan:** Monaco Diff Editor + Tương tác phím Space  
-> **Tốc độ:** Realtime File Watcher < 80ms không cần nhấn F5 làm mới
+<div align="center">
+
+# 🌲 Working Tree, Diff Viewer & Hunk Staging
+### Working Tree, Diff Viewer & Cơ Chế Staging Từng Khối
+
+> **Visuals:** Monaco Diff Editor + Spacebar interaction  
+> **Performance:** Realtime File Watcher < 80ms without manual F5 refreshes  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 🌲 1. Working Tree & File Status Management
+
+Component: `src/lib/components/WorkingTree.svelte`
+
+The Working Tree panel monitors all live file changes occurring inside your working directory:
+
+```
+┌───────────────────────────────────────────────────────────┐
+│ WORKING TREE                                [Stage All]   │
+│                                                           │
+│ ▼ STAGED CHANGES (2 files)                  [Unstage All] │
+│   ● M src/lib/components/Toolbar.svelte    [+12, -4]     │
+│   ● A src/lib/components/QuickHotfix.svelte [+85, -0]     │
+│                                                           │
+│ ▼ UNSTAGED CHANGES (3 files)                [Discard All] │
+│   ● M src-tauri/src/git/diff.rs             [+24, -2]     │
+│   ● D obsolete-file.ts                      [+0, -45]     │
+│   ● ? docs/new-guide.md (Untracked)                       │
+└───────────────────────────────────────────────────────────┘
+```
+
+### 1.1. Standardized Status Badges
+- **`M` (Modified - Yellow):** Modified compared to current HEAD.
+- **`A` (Added - Green):** Staged into Index ready for commit.
+- **`D` (Deleted - Red):** Removed from directory tree.
+- **`R` (Renamed - Purple):** Renamed or moved file paths.
+- **`?` (Untracked - Gray):** New file not yet tracked by Git.
+- **`!` (Conflicted - Pulsing Amber):** Unresolved merge conflict.
+
+### 1.2. Realtime File Watcher (< 80ms)
+- Backed by the **`notify`** crate in Rust (`src-tauri/src/watcher/mod.rs`), FlowGit captures saves from any external IDE (VS Code, Neovim, JetBrains) with an 80ms debounce.
+- You **never have to press F5 or Refresh** to see modified files.
+
+---
+
+## 🔍 2. Monaco Diff Editor
+
+Component: `src/lib/components/DiffViewer.svelte` & `MonacoDiffEditor.svelte`
+
+FlowGit integrates the core **Monaco Editor** engine powering VS Code:
+- **Split Mode (Side-by-Side):** Compares original on the left and modified on the right.
+- **Unified Mode:** Seamless inline single-column stream of changes.
+- **Comprehensive Syntax Highlighting:** Native language support for 50+ languages (TypeScript, Rust, Python, Go, C++, HTML, CSS, etc.).
+- **Ignore Whitespace & Line Endings:** Filters out Windows `CRLF` vs `LF` line-ending noise.
+
+---
+
+## 🎯 3. Hunk & Line Staging (Partial Staging)
+
+Eliminates tedious `git add -p` CLI interactions:
+1. Open any modified file in the Diff Viewer.
+2. Hover over any hunk: the block highlights with a **"Stage Hunk"** button.
+3. **`Space` Shortcut:** Press `Space` to Stage/Unstage the active hunk in 0.1s.
+4. **Line-by-Line Staging:** Highlight lines and click **"Stage Selected Lines"** to keep debug code uncommitted.
+
+---
+
+## ✍️ 4. Commit Box & Conventional Commits
+
+Component: `src/lib/components/CommitBox.svelte`
+
+- **Conventional Commit Quick Chips:** 1-Click prefix insertion:
+  - `feat:`, `fix:`, `docs:`, `refactor:`, `perf:`, `chore:`
+- **Local AI Integration:** Click **"AI Generate"** to let local Ollama models inspect staged diffs and suggest concise commit messages.
+- **Bypass Git Hooks (`--no-verify`):** Checkbox to bypass pre-commit hooks for urgent hotfixes.
+
+---
+
+## 🛡️ 5. Smart .gitignore Assistant
+
+- Right-click untracked files:
+  - **Ignore this file:** Appends filename to `.gitignore`.
+  - **Ignore extension:** Appends pattern (`*.log`, `*.tmp`).
+  - **Ignore parent folder:** Ignores enclosing directory.
+- 1-Click standard templates for Node.js, Rust, Python, Go, Java.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 🌲 1. WORKING TREE & QUẢN LÝ TẬP TIN THAY ĐỔI
 

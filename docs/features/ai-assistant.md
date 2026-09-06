@@ -1,8 +1,73 @@
-# TRỢ LÝ TRÍ TUỆ NHÂN TẠO CỤC BỘ (LOCAL AI ASSISTANT)
-> **Bảo mật tuyệt đối:** Hoạt động 100% trên Localhost qua Ollama / Local LLM  
-> **Không rò rỉ mã nguồn:** Phù hợp với tiêu chuẩn bảo mật nghiêm ngặt của Ngân hàng & Doanh nghiệp
+<div align="center">
+
+# 🤖 Local AI Assistant for Git
+### Trợ Lý Trí Tuệ Nhân Tạo Cục Bộ (Local AI Assistant)
+
+> **Zero-Leak Privacy:** 100% localhost inference via Ollama / Local LLM endpoints  
+> **Enterprise Compliant:** Safe for strict banking, financial, and confidential codebases  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 🤖 1. Local AI Overview
+
+Component: `src/lib/components/AIAssistantModal.svelte` & `CommitBox.svelte`
+
+FlowGit embeds an intelligent AI assistant tailored for day-to-day Git operations. Unlike cloud-based tools that risk leaking proprietary source code to external servers, FlowGit interfaces with local models running securely on your machine (**Ollama**, **LM Studio**, **LocalAI**).
+
+---
+
+## ✍️ 2. Conventional Commit Message Generation
+
+### Workflow:
+1. Stage your changes in the Working Tree.
+2. In the **Commit Box**, click **"AI Generate"** (or the magic spark icon ✨).
+3. FlowGit collects the staged diff, scrubs sensitive patterns, and queries the local LLM:
+   > *"Given the following git diff, generate a concise commit message strictly following the Conventional Commits format (feat, fix, refactor, perf) with a clear, descriptive summary."*
+4. The generated message auto-populates the input box within 1–2 seconds for your final review and commit.
+
+---
+
+## 🧠 3. Merge Conflict Advisor
+
+When resolving intricate logical conflicts in the **Conflict Resolver**:
+- Click **"Ask AI Assistant"**.
+- The model compares **Ours** and **Theirs** within the enclosing function context:
+  - Explains the semantic divergence between both branches.
+  - Proposes consolidated code blending both modifications safely without breaking runtime invariants.
+
+---
+
+## 🔍 4. Natural Language History Query
+
+Inside the **AI Assistant Modal** (`Ctrl + I`):
+- Ask natural language questions:
+  - *"Which commit introduced two-factor authentication?"*
+  - *"Explain the architectural changes in commit `7a8b9c` within the cart module."*
+- AI parses historical diff summaries and returns answers with clickable links that jump directly to the commit node on the canvas graph.
+
+---
+
+## ⚙️ 5. Local Model Configuration
+
+FlowGit connects to Ollama by default:
+- **API URL:** `http://localhost:11434/api/generate`
+- **Recommended Models:**
+  - `qwen2.5-coder:7b` (Exceptional code reasoning and syntax precision)
+  - `deepseek-coder:6.7b` (Fast, high-fidelity Conventional Commit generator)
+  - `llama3.2:3b` (Ultra-lightweight for laptops without dedicated GPUs)
+- Custom endpoint URLs and model names can be configured directly in `AIAssistantModal.svelte`.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 🤖 1. TỔNG QUAN TÍNH NĂNG AI TRONG FLOWGIT
 

@@ -1,8 +1,122 @@
-# HƯỚNG DẪN SỬ DỤNG & BẢNG TRA CỨU PHÍM TẮT (USER MANUAL)
-> **Dành cho Người Dùng:** Hướng dẫn làm chủ giao diện FlowGit và khai thác tối đa hiệu năng công việc  
-> **Cập nhật:** Chuẩn công nghệ 2026 – Đầy đủ GitHub Workspace, PR Reviewer, File Tools & In-App Guide
+<div align="center">
+
+# 📖 FlowGit User Manual & Shortcut Cheat Sheet
+### Hướng Dẫn Sử Dụng & Bảng Tra Cứu Phím Tắt Toàn Năng
+
+> **Audience:** End Users & Teams – Mastering FlowGit UI and maximizing productivity  
+> **Edition:** 2026 State-of-the-Art – GitHub Workspace, PR Reviewer, File Tools & In-App Guide  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 🖥️ 1. Screen Anatomy
+
+FlowGit features a standard Three-Column Split Layout supporting dynamic resizing and seamless toggling between horizontal and vertical layouts:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ [≡] FlowGit 2026   [📂 Open]  [🌿 Branch]  [⚡ Sync]  [🗑️ Trash]  [⏳ Undo]  [🔍 Ctrl+K] │  <- Toolbar
+├──────────────┬──────────────────────────────────────────┬──────────────────────────────┤
+│ SIDEBAR      │ LIVING COMMIT GRAPH / DAG MAP            │ WORKING TREE / DIFF VIEWER   │
+│              │                                          │                              │
+│ ▼ Branches   │ ● [main] feat: automated billing         │ ▼ Staged Files               │
+│   ● main     │ │                                        │   ● M src/App.svelte         │
+│   ● feat/auth│ ● [feat/auth] feat: OAuth device flow    │                              │
+│              │ │/                                       │ ▼ Unstaged Files             │
+│ ▼ Remotes    │ ● chore: release version v1.2.0          │   ● M src/lib/Toolbar.svelte │
+│   ● origin   │                                          │                              │
+│   ● upstream │                                          │ [Commit Message Input Box]   │
+│              │                                          │ [AI Generate ✨] [Commit]    │
+├──────────────┴──────────────────────────────────────────┴──────────────────────────────┤
+│ 👤 John Doe <john@company.com> [Local]  |  🌿 main  |  ↑ 0 ↓ 0  |  UTF-8  |  60 FPS     │  <- StatusBar
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+1. **Top Toolbar:** Houses 1-click core actions: Open Repo, Create Branch, Smart Sync, Quick Hotfix, Safe Trash, Time Machine, Pull Requests, Explorer, Command Palette, and Settings.
+2. **Left Sidebar:** Hierarchical tree: Local Branches, Remote Branches, Tags, Stashes, Remotes Hub, Submodules, and Git Worktrees.
+3. **Center Graph:** 60 FPS Living Commit Graph powered by a Web Worker. Supports virtualized scrolling, drag-and-drop actions, author avatars, and status badges.
+4. **Right Panel (Working Tree & Diff):** Changed files list, visual Diff Viewer (Split/Unified), single-line staging via `Space`, and AI-assisted Commit Box.
+5. **Bottom StatusBar:** Displays current Git committer (`user.name` / `user.email`), Ahead/Behind counts, Detached HEAD warnings, and live FPS counters.
+
+---
+
+## ⌨️ 2. Comprehensive Shortcuts Cheat Sheet
+
+### Navigation:
+| Shortcut | Action |
+| :--- | :--- |
+| **`Ctrl + K`** (or `Cmd + K`) | Opens **Command Palette** to search branches, commits, tags, or execute actions. |
+| **`F1`** or **`?`** | Opens **Interactive User Guide (Tutorials & best practices)**. |
+| **`Ctrl + /`** | Opens **Git Playbook Modal (On-the-fly emergency rescue wizard)**. |
+| **`Ctrl + B`** | Toggle Left Sidebar to maximize graph viewing space. |
+| **`Ctrl + E`** | Opens **Repository Explorer (Tree traversal & Monaco Code Viewer)**. |
+| **`Ctrl + Shift + P`** | Opens **GitHub Pull Request Reviewer**. |
+| **`Ctrl + H`** | Opens **Quick Hotfix Modal (Immediate patch branch from main)**. |
+| **`Ctrl + I`** | Opens **Local AI Assistant Modal**. |
+
+### Graph & Commit Operations:
+| Shortcut | Action |
+| :--- | :--- |
+| **`B`** | Opens **Create Branch** modal at selected commit. |
+| **`T`** | Opens **Create Release Tag** modal. |
+| **`S`** | **Squash Commits**: Select multiple commits ➔ press `S` to combine into one. |
+| **`Ctrl + C`** | Copies full commit SHA hash to Clipboard. |
+| **`Delete`** | Prompts deletion of selected branch or tag. |
+
+### Working Tree & Diff Viewer:
+| Shortcut | Action |
+| :--- | :--- |
+| **`Space`** | **Stage / Unstage Hunk**: Stages or unstages the focused code hunk. |
+| **`Ctrl + Enter`** | Immediately **Commits** staged changes (monitored by Pre-Commit Secret Guard). |
+| **`Ctrl + Shift + S`**| **Stage All**: Stages all dirty files (`git add -A`). |
+| **`Ctrl + Shift + U`**| **Unstage All**: Unstages all staged files. |
+
+### No-Fear Git Safety:
+| Shortcut | Action |
+| :--- | :--- |
+| **`Ctrl + Z`** | **Time Machine Undo**: Reverts the last Git operation to a safe historical state. |
+| **`Ctrl + Shift + Z`** (or `Ctrl + Y`)| **Time Machine Redo**: Replays previously undone operation. |
+| **`Ctrl + T`** | Opens **Safe Recycle Bin (Trash Inspector)** to restore discarded code. |
+
+---
+
+## 🐙 3. In-App GitHub PR Review Guide
+
+1. **Authenticate Account:** Open Identity Switcher or Settings ➔ enter GitHub Personal Access Token (PAT) or use Device Code Flow.
+2. **Open PR Reviewer:** Click the **"Pull Requests"** tab on Toolbar or press `Ctrl + Shift + P`.
+3. **Inspect Code Diff:** Click any PR ➔ select changed files to view inside **Monaco Diff Editor**.
+4. **Submit Feedback:** Write comments in the Discussion tab; click **Approve** or **Request Changes**.
+5. **Local Checkout & Testing:** Click **"Checkout PR Branch"** to test changes locally.
+6. **Merge PR:** Choose merge strategy (`Merge Commit`, `Squash`, `Rebase`) and confirm.
+
+---
+
+## 📂 4. Exploring Files & Nuking History
+
+1. **Repository Explorer:** Open Explorer (`Ctrl + E`), select any historical commit on the dropdown to browse files without checking out.
+2. **Blame Inspection:** Open any file ➔ click **"Toggle Blame"** to inspect author per line and jump to associated commits.
+3. **Compare Any 2 Commits:** Select two nodes on the graph to view complete file diffs.
+4. **Permanently Nuke Secrets (History Nuker):** Right-click `.env` or leaked credentials in Explorer ➔ choose **"Nuke File from History"** to purge from the entire Git DAG.
+
+---
+
+## 💡 5. Best Practices for Senior Developers & Tech Leads
+
+1. **Anticipate Conflicts via Ghost Preview:** Observe target node borders while dragging. An amber-rose glow indicates potential conflict; press `Escape` to cancel.
+2. **Leverage Safe Discard for Rapid Prototyping:** Experiment fearlessly by clicking "Discard All"; previous changes remain recoverable in the **Trash Inspector** for 48 hours.
+3. **Use Quick Hotfix & Worktrees:** Never stash ongoing feature work to fix urgent production bugs. Press `Ctrl + H` to spawn an isolated hotfix worktree instantly.
+4. **On-Demand Reference (`F1`):** Press `F1` anytime to launch the built-in guide with interactive step-by-step solutions.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 🖥️ 1. BỐ CỤC GIAO DIỆN CHÍNH (SCREEN ANATOMY)
 

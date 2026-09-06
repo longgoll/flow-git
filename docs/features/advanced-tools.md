@@ -1,8 +1,73 @@
-# CÔNG CỤ NÂNG CAO: WORKTREES, GIT LFS & SUBMODULES HUB
-> **Dành cho Dự án Doanh nghiệp:** Quản lý không gian làm việc song song, tệp đồ họa dung lượng lớn và đa kho mã nguồn phụ  
-> **Lưu ý:** Bộ công cụ Duyệt cây tệp tin, So sánh commit và Soi vết Blame đã được chuyển sang tài liệu chuyên sâu: [`repo-explorer-and-file-tools.md`](./repo-explorer-and-file-tools.md)
+<div align="center">
+
+# 🌲 Advanced Tools: Git Worktrees, LFS & Submodules
+### Công Cụ Nâng Cao: Worktrees, Git LFS & Submodules Hub
+
+> **Enterprise Workflows:** Parallel working directories, large graphic asset pipelines, and multi-repo architectures  
+> **Related Documentation:** Repository Explorer, Comparisons, and Blame reside in [`repo-explorer-and-file-tools.md`](./repo-explorer-and-file-tools.md)  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 🌲 1. Git Worktrees Manager
+
+Component: `src/lib/components/WorktreeManager.svelte` & `QuickHotfixModal.svelte`  
+Backend: `src-tauri/src/git/worktree.rs`
+
+### The Problem:
+You are modifying 20 files for `feature/dashboard` when production incurs a critical bug requiring an immediate patch. Stashing or switching branches causes:
+- Tedious stashing and popping prone to uncommitted code collisions.
+- Rebuilding `node_modules` or Rust `target/` directories, wasting 5–15 minutes.
+
+### FlowGit Worktrees Solution:
+FlowGit links separate branches to independent physical directories on disk (`git worktree add`):
+- **1-Click Worktree Creation:** Open **"Worktree Manager"** on Toolbar ➔ choose target branch and directory path.
+- **Complete Isolation:** Open the new directory to patch, test, and commit. Your primary working directory **remains 100% untouched**.
+- **Quick Hotfix Integration:** Click "Quick Hotfix" to spawn a temporary worktree from `main` that cleans itself up post-merge.
+
+---
+
+## 📦 2. Git Large File Storage (LFS) Engine
+
+Component: `src/lib/components/LfsManager.svelte`  
+Backend: `src-tauri/src/git/lfs.rs`
+
+### LFS Capabilities:
+1. **Pointer Text vs Binary Payload Discrimination:**
+   - Evaluates `.gitattributes` (`filter=lfs`).
+   - Clearly distinguishes between pointer metadata (130-byte text) and downloaded binary payloads.
+2. **LFS File Locking:**
+   - Crucial for Game Dev (Unity, Unreal) and Design (`.psd`, `.fbx`, `.blend`) where binary assets **cannot be merged automatically**.
+   - 1-Click **"Lock File"** (`lock_lfs_file`) on the remote server to prevent team collision.
+3. **1-Click LFS Pull (`pull_lfs_files`):**
+   - Downloads binary assets across the repository without complex CLI invocations.
+
+---
+
+## 🗂️ 3. Git Submodules Hub
+
+Component: `src/lib/components/SubmoduleManager.svelte`  
+Backend: `src-tauri/src/git/submodule.rs`
+
+### Multi-Repo Submodule Management:
+- **Configuration Parsing:** Automatically parses `.gitmodules` via `libgit2`.
+- **Status Radar:**
+  - Compares Submodule HEAD SHA with the commit SHA recorded in the Superproject Index.
+  - Highlights detached states and version drift warnings.
+- **1-Click Operations:**
+  - **`Update All (--init --recursive)`:** Clones and checks out all submodule trees recursively.
+  - **`Sync URLs`:** Synchronizes `.gitmodules` endpoint modifications into local Git configs.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 🌲 1. GIT WORKTREES MANAGER (KHÔNG GIAN LÀM VIỆC SONG SONG)
 

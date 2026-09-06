@@ -1,8 +1,147 @@
-# ĐỘNG CƠ AN TOÀN NO-FEAR GIT: SAFE DISCARD & TIME MACHINE
-> **Triết lý:** Tuyệt đối không bao giờ làm mất mã nguồn của lập trình viên.  
-> **Cơ chế:** SQLite 3 Bản địa + `git2` In-Memory Dry-Run + `git reflog` Đồng bộ hai chiều.
+<div align="center">
+
+# 🛡️ No-Fear Git Safety Engine: Safe Discard & Time Machine
+### Động Cơ An Toàn No-Fear Git: Safe Discard & Time Machine
+
+> **Philosophy:** Never lose a single line of developer code.  
+> **Mechanism:** Embedded SQLite 3 + `git2` In-Memory Dry-Run + Bidirectional `git reflog` Synchronization.  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 🛡️ 1. Overview of the No-Fear Git Philosophy
+
+Developers commonly experience three major points of anxiety when using Git:
+1. **Accidental "Discard Changes" clicks** in IDEs, causing an entire day of uncommitted work to vanish permanently.
+2. **Erroneous Rebase, Reset `--hard`, or reckless Merge operations**, causing branch divergence or lost commits.
+3. **Fear of Drag-and-Drop interactions**, unsure whether dropping will trigger destructive merge conflicts.
+
+FlowGit eliminates these concerns with **three reinforced defensive layers**:
+- **Layer 1 (Pre-Action):** In-Memory Dry-Run Simulation & Ghost Preview before execution.
+- **Layer 2 (During-Action):** Safe Discard Engine snapshotting uncommitted code into SQLite prior to deletion.
+- **Layer 3 (Post-Action):** Safe-Flight Time Machine (`Ctrl + Z`) enabling rollback of any historical Git action.
+
+---
+
+## 🗑️ 2. Safe Discard Engine (48-Hour Uncommitted Trash)
+
+### 2.1. SQLite Storage Architecture (`src-tauri/src/storage/trash.rs`)
+When a user clicks "Discard" on a file or selects "Discard All Changes", FlowGit **never** executes `git checkout -- <file>` immediately. Instead, it executes an atomic four-step sequence:
+
+```
+[User clicks Discard] 
+       │
+       ▼
+1. Read file contents directly from disk
+       │
+       ▼
+2. Write snapshot record into SQLite table `trash_snapshots`
+       │
+       ▼
+3. Only after SQLite commits successfully, invoke libgit2 to reset file to HEAD
+       │
+       ▼
+4. Display notification toast with "Undo / View in Trash" action button
+```
+
+### 2.2. Schema: `trash_snapshots`
+```sql
+CREATE TABLE IF NOT EXISTS trash_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    repo_path TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    original_content TEXT NOT NULL,
+    discarded_at INTEGER NOT NULL,      -- Unix timestamp
+    is_staged INTEGER DEFAULT 0,
+    file_hash TEXT                      -- SHA256 content deduplication hash
+);
+```
+
+### 2.3. 48-Hour TTL Auto-Eviction
+- On startup and whenever opening a repository, a background task automatically purges snapshots older than 48 hours:
+  ```sql
+  DELETE FROM trash_snapshots WHERE discarded_at < ?1;
+  ```
+- This prevents the trash store from inflating disk space while maintaining a reliable 2-day recovery safety net.
+
+### 2.4. Trash Inspector Interface (`TrashInspector.svelte`)
+- Accessible via the Trash icon on the toolbar:
+  - Search discarded files by name or timestamp.
+  - Preview saved code content directly inside Monaco Editor.
+  - Click **"Restore"** to reconstruct the exact file back into the Working Tree in < 10ms.
+
+---
+
+## ⏳ 3. Time Machine: Universal Undo (`Ctrl + Z`)
+
+### 3.1. SQLite Action Journal (`src-tauri/src/storage/action_log.rs`)
+Every action modifying Git pointers (Commit, Merge, Rebase, Cherry-Pick, Reset, Checkout, Switch Branch) is captured in `action_history`:
+
+```sql
+CREATE TABLE IF NOT EXISTS action_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    repo_path TEXT NOT NULL,
+    action_type TEXT NOT NULL,          -- 'commit', 'merge', 'rebase', 'reset', 'cherry-pick'
+    description TEXT NOT NULL,          -- Human-readable action description
+    before_ref TEXT NOT NULL,           -- Commit SHA before operation
+    after_ref TEXT NOT NULL,            -- Commit SHA after operation
+    created_at INTEGER NOT NULL,
+    undone INTEGER DEFAULT 0            -- Undo status flag
+);
+```
+
+### 3.2. Synchronized Undo via `git reflog`
+When the user presses **`Ctrl + Z`** (or `Ctrl + Shift + Z` to Redo):
+1. Locate the latest entry in `action_history` where `undone = 0`.
+2. Cross-verify the target `before_ref` against repository `git reflog`.
+3. Safely restore branch pointer to `before_ref`:
+   ```rust
+   let target_obj = repo.find_object(before_oid, None)?;
+   repo.reset(&target_obj, git2::ResetType::Mixed, None)?;
+   ```
+4. Set `undone = 1` in SQLite and trigger instant graph UI update.
+
+---
+
+## 👻 4. Dry-Run Simulation & Ghost Preview
+
+When dragging a commit or branch to drop onto another target:
+1. **Zero-Disk-Impact Check:**
+   - Evaluates merge trees completely in memory:
+     ```rust
+     let ancestor = repo.merge_base(source_oid, target_oid)?;
+     let mut in_memory_index = repo.merge_commits(&ancestor_commit, &source_commit, &target_commit, None)?;
+     ```
+2. **Early Conflict Identification:**
+   - If `in_memory_index.has_conflicts()` returns `true`, conflicting file paths are immediately gathered.
+   - Frontend highlights candidate drop targets with amber borders and displays: *"Warning: 3 files will conflict if dropped here"*.
+3. **Ghost Preview Rendering:**
+   - Web Worker renders dotted ghost splines projecting the post-action DAG geometry, giving the user complete certainty before dropping.
+
+---
+
+## 🔓 5. Index Lock Recovery
+
+### The Issue:
+When a Git CLI process is forcefully terminated or locked by an external editor, `.git/index.lock` persists, failing all subsequent Git commands with:  
+`Fatal: Unable to create '.git/index.lock': File exists.`
+
+### FlowGit Solution:
+1. Automatically verifies index lock presence via `is_index_locked`.
+2. If stale lock (> 10s without active write processes) is detected, displays prompt:  
+   *"Git Index is currently locked. Would you like FlowGit to clear it safely?"*
+3. Clicking **"Clear Lock"** (`clear_index_lock`) safely unlinks the stale lock and restores normal repository state.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 🛡️ 1. TỔNG QUAN TRIẾT LÝ NO-FEAR GIT
 

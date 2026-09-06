@@ -1,9 +1,143 @@
-# FLOWGIT - TÀI LIỆU TOÀN DIỆN DỰ ÁN (PROJECT DOCUMENTATION HUB)
-> **Phiên bản:** 2026 Next-Gen State-of-the-Art Edition  
-> **Kiến trúc:** Tauri v2 (Rust) + Svelte 5 (Runes) + Tailwind CSS v4 + Bits UI / Monaco Editor  
-> **Cập nhật:** Chuẩn công nghệ 2026 – Hoàn thiện 100% tất cả các phân hệ và công cụ nâng cao
+<div align="center">
+
+# 📚 FlowGit Documentation Hub
+### Trung Tâm Tài Liệu Toàn Diện Dự Án FlowGit
+
+> **Edition:** 2026 Next-Gen State-of-the-Art Edition  
+> **Architecture:** Tauri v2 (Rust) + Svelte 5 (Runes) + Tailwind CSS v4 + Bits UI / Monaco Editor  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 📌 Executive Summary
+
+**FlowGit** (Next-Gen Git Client) is a premier cross-platform Git client engineered around three core pillars:
+> **"Visual First – Zero Terminal Friction – No-Fear Git"**
+
+Unlike conventional Git tools that merely wrap terminal commands or freeze on enterprise-scale repositories, FlowGit transforms complex workflows (Interactive Rebase, 3-Way Conflict Resolution, Bisect, Worktrees, GitHub PR Reviews, Stacked Commits, LFS, and Submodules) into fluid drag-and-drop interactions. Every action is fortified by a **48-Hour Safe Discard Trash**, **Time-Travel Undo (`Ctrl + Z`)**, and an **OffscreenCanvas Web Worker** commit graph engine locked at 60 FPS.
+
+---
+
+## 📚 Documentation Sitemap
+
+The FlowGit documentation suite covers every architectural layer, feature set, and real-world operational guide:
+
+```
+docs/
+├── README.md                           # Documentation Hub & Sitemap (this file)
+├── main.md                             # Technical Specifications & UX Philosophy
+│
+├── architecture/                       # ARCHITECTURE & SYSTEM INTERNALS
+│   ├── overview.md                     # Architecture: Tauri v2 + Svelte 5 + Rust git2-rs
+│   ├── offscreen-canvas-graph.md       # Graph Engine: OffscreenCanvas Worker & Lane Compaction
+│   ├── safety-engine.md                # Safety Core: 48h Safe Discard (SQLite) & Time Machine
+│   └── ipc-api-reference.md            # IPC API: 70+ Tauri v2 Commands & Data Types
+│
+├── features/                           # IN-DEPTH FEATURE SPECIFICATIONS
+│   ├── commit-graph-and-dag.md         # Living Commit Graph, DAG Mini-Map, Ghost Preview
+│   ├── working-tree-and-diff.md        # Working Tree, Split/Unified Diff, Hunk/Line Staging
+│   ├── branches-and-remotes.md         # Branches, Multi-Remotes, Smart Sync, Pruning
+│   ├── rebase-and-history-ops.md       # Interactive Rebase Timeline, Drag-and-Drop, Squash
+│   ├── conflict-and-bisect.md          # 4-Pane 3-Way Conflict Resolver & Visual Bisect Wizard
+│   ├── github-and-pull-requests.md     # GitHub Workspace: PR Reviewer, Checks, Publish Repo
+│   ├── repo-explorer-and-file-tools.md # Tree Explorer, 2-Commit Comparison, Blame, History Nuker
+│   ├── stacked-commits-and-hotfix.md   # Stacked Commits Reordering & 1-Click Quick Hotfix
+│   ├── advanced-tools.md               # Git Worktrees, Git LFS Manager & Submodules Hub
+│   ├── auth-and-identity.md            # OAuth Device Flow, PAT, Identity Switcher
+│   ├── edge-cases-and-guards.md        # Index Lock Resolver, Windows File Locks, Heavy Files
+│   ├── onboarding-and-playbook.md      # In-App User Guide (F1), Git Playbook & Pre-Commit Guard
+│   └── ai-assistant.md                 # Local AI Assistant: Conventional Commits & Conflict Solver
+│
+├── playbook/                           # PRACTICAL PLAYBOOK
+│   └── real-world-recipes.md           # Emergency rescues & battle-tested team workflows
+│
+└── guides/                             # DEVELOPER & USER GUIDES
+    ├── user-manual.md                  # Comprehensive User Manual & Keyboard Shortcuts Cheat Sheet
+    ├── development.md                  # Environment Setup, Local Build & Packaging
+    └── version-management.md           # Version Management & Release Bumping
+```
+
+---
+
+## ⚡ Comparison: Traditional CLI vs FlowGit GUI
+
+| Git Workflow | Traditional Terminal CLI | Visual FlowGit Experience |
+| :--- | :--- | :--- |
+| **Sync branch with remote** | `git fetch origin`<br>`git checkout main`<br>`git pull`<br>`git checkout feat`<br>`git rebase main` | **1-Click "Smart Sync"**: Fetches and rebases in the background without checking out, displaying `↑ 2 ↓ 5` sync badges. |
+| **Review GitHub PR** | Open browser tabs or run CLI `gh pr checkout` | **Integrated PR Reviewer**: Browse PRs, review Monaco diffs, post comments, inspect CI/CD checks, and merge in 1 click. |
+| **Squash multiple commits** | `git rebase -i HEAD~N`<br>Edit lines in Vim to `squash`... | **Select nodes ➔ Press `S`**: Auto-combines commit messages into an editable modal, squashing in under 1 second. |
+| **Interactive Rebase** | Run `git rebase -i <base>` in terminal | **Interactive Rebase Modal**: Visual timeline with drag-and-drop reordering and intuitive buttons (`Pick`, `Reword`, `Drop`, `Squash`, `Fixup`). |
+| **Reorder unpushed commits** | Complex `git rebase -i @{u}` commands | **Stacked Commits Flow**: Drag-and-drop to reorder or click Up/Down arrows and save safely. |
+| **Cherry-pick commit** | Find SHA in `git log`, `git checkout target`, `git cherry-pick <SHA>` | **Drag commit node** directly onto target branch tip with instant Ghost Preview simulation. |
+| **Stage hunk or single line** | `git add -p` answering terminal prompts `y/n/s/e` | **Click line/hunk in Monaco Diff** ➔ Press `Space` or click "Stage Hunk/Line". |
+| **Resolve merge conflicts** | Manually edit raw conflict markers `<<<<<<<`, `=======`, `>>>>>>>` | **4-Pane Conflict Resolver**: Ours, Base, Theirs, and Result with 1-click hunk adoption buttons. |
+| **Locate regression bug (Bisect)** | Repeatedly run `git bisect start`, `git bisect bad`, `git bisect good` | **Visual Bisect Wizard**: Automatically divides graph, guiding step-by-step testing with "Pass" / "Fail" buttons. |
+| **Browse file tree at past commit** | `git checkout <sha>` polluting working tree | **Repository Explorer**: Browse file tree at any historical commit without checkout, backed by Monaco Editor. |
+| **Compare arbitrary commits/branches** | Terminal command `git diff <commitA>..<commitB>` | **Comparison Viewer**: Visual file change list with Split/Unified Monaco Diff inspection. |
+| **Nuke sensitive files (.env)** | Dangerous `git filter-branch` or external BFG tool | **History Nuker (Nuke File)**: 1-Click recursive scan to permanently purge credentials and sensitive files from entire history. |
+| **Urgent bug fix (Hotfix)** | `git stash`, switch branch, fix, return, `git stash pop` conflict | **Quick Hotfix / Git Worktrees**: Spawn isolated parallel working directories without touching ongoing uncommitted work. |
+| **Accidental discard of code** | Irreversible permanent data loss | **48-Hour Safe Discard Engine**: Open **Trash Inspector** and click "Restore" to recover 100% of discarded changes. |
+| **Erroneous operation (bad Reset/Rebase)** | Complex manual inspection of `git reflog` | **Press `Ctrl + Z`**: Instant time-travel rollback of branch state backed by SQLite Action Log. |
+| **Stuck `.git/index.lock` file** | Find process PID, run `rm -f .git/index.lock` | **Git Playbook Modal**: 1-Click diagnostic to safely terminate dangling processes and clear stale lock files. |
+
+---
+
+## 🏆 Technology Stack
+
+### Frontend:
+- **Framework:** Svelte 5 SPA (100% Runes: `$state`, `$state.raw`, `$derived`, `$effect`, `$props`).
+- **Reactive State Management:** Class-based Stores (`RepoState`, `WorkingTreeState`, `RemoteState`, `GitSafetyState`, `ThemeState`, `ToastState`, `LocaleState`).
+- **Styling:** Tailwind CSS v4 (`@tailwindcss/vite`, CSS variables, Dark/Light Mode).
+- **UI Primitives:** Bits UI, Lucide Svelte, HTML5 Canvas 2D API.
+- **Code & Diff Editor:** Monaco Editor & Monaco Diff Editor (Full Language Syntax Highlighting).
+- **Concurrency & Rendering:** Web Worker + `OffscreenCanvas` completely isolating graph drawing from UI main thread (60 FPS Locked).
+- **GitHub Integration:** Zero-dependency REST API Client (`src/lib/api/githubApi.ts`).
+
+### Backend:
+- **Framework:** Tauri v2 (Capability Scoped Permissions, 70+ IPC commands).
+- **Core Git Engine:** `git2` (libgit2 C bindings with zero CLI overhead).
+- **Multithreading:** `rayon` (parallel multi-core lane allocation and topological routing).
+- **Async Runtime:** `tokio` (asynchronous I/O and network operations).
+- **File System Watcher:** `notify` (realtime debounced file change monitoring).
+- **Local Database:** `rusqlite` (SQLite storage for 48h Safe Discard snapshots, Action Undo log, Account credentials).
+- **Local AI:** HTTP client interfacing with Ollama/Local LLM endpoints for Conventional Commits and conflict explanation.
+
+---
+
+## 🔗 Documentation Index
+- 📄 [main.md](./main.md): Master technical specifications and overall UI/UX philosophy.
+- 🏗️ [architecture/overview.md](./architecture/overview.md): System architecture and data flow.
+- 🎨 [architecture/offscreen-canvas-graph.md](./architecture/offscreen-canvas-graph.md): OffscreenCanvas Worker 60 FPS & Lane Compaction.
+- 🔌 [architecture/ipc-api-reference.md](./architecture/ipc-api-reference.md): Complete index of 70+ Tauri v2 IPC Commands.
+- 🛡️ [architecture/safety-engine.md](./architecture/safety-engine.md): 48-Hour Safe Discard & `Ctrl+Z` Time-Travel engine.
+- 📊 [features/commit-graph-and-dag.md](./features/commit-graph-and-dag.md): Living Commit Graph & DAG Mini-Map.
+- 🔍 [features/working-tree-and-diff.md](./features/working-tree-and-diff.md): Working Tree, Monaco Diff & Line Staging.
+- 🌿 [features/branches-and-remotes.md](./features/branches-and-remotes.md): Branches, Multi-Remotes, Smart Sync & Branch Cleanup.
+- 🔀 [features/rebase-and-history-ops.md](./features/rebase-and-history-ops.md): Interactive Rebase, Drag-and-Drop, Squash.
+- ⚔️ [features/conflict-and-bisect.md](./features/conflict-and-bisect.md): 4-Pane Conflict Resolver & Visual Bisect Wizard.
+- 🐙 [features/github-and-pull-requests.md](./features/github-and-pull-requests.md): GitHub PR Hub, Reviewer, CI Checks & Publish Repo.
+- 📂 [features/repo-explorer-and-file-tools.md](./features/repo-explorer-and-file-tools.md): Repository Explorer, Blame, Comparison & History Nuker.
+- 🥞 [features/stacked-commits-and-hotfix.md](./features/stacked-commits-and-hotfix.md): Stacked Commits & Quick Hotfix Workflow.
+- 🌲 [features/advanced-tools.md](./features/advanced-tools.md): Git Worktrees, Git LFS & Submodules Hub.
+- 🔑 [features/auth-and-identity.md](./features/auth-and-identity.md): GitHub OAuth Device Flow, PAT & Identity Switcher.
+- 🚨 [features/edge-cases-and-guards.md](./features/edge-cases-and-guards.md): Index Lock, Heavy Files & Windows File Locks.
+- 📖 [features/onboarding-and-playbook.md](./features/onboarding-and-playbook.md): Interactive User Guide (F1), Git Playbook & Pre-Commit Guard.
+- 🤖 [features/ai-assistant.md](./features/ai-assistant.md): Local AI Assistant for commit messages and conflict diagnosis.
+- 🚑 [playbook/real-world-recipes.md](./playbook/real-world-recipes.md): Emergency rescue scenarios & team best practices.
+- ⌨️ [guides/user-manual.md](./guides/user-manual.md): User manual & comprehensive keyboard shortcut cheat sheet.
+- 🛠️ [guides/development.md](./guides/development.md): Environment setup, building, and packaging guide.
+- 🏷️ [guides/version-management.md](./guides/version-management.md): Single source of truth versioning guide.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 📌 GIỚI THIỆU TỔNG QUAN (EXECUTIVE SUMMARY)
 
@@ -50,7 +184,8 @@ docs/
 │
 └── guides/                             # HƯỚNG DẪN DÀNH CHO DEV & USER
     ├── user-manual.md                  # Hướng dẫn sử dụng & Bảng tra cứu phím tắt toàn năng
-    └── development.md                  # Hướng dẫn thiết lập môi trường, Build và Đóng gói
+    ├── development.md                  # Hướng dẫn thiết lập môi trường, Build và Đóng gói
+    └── version-management.md           # Quản lý phiên bản & Quy trình bump version
 ```
 
 ---
@@ -82,7 +217,7 @@ docs/
 
 ### Frontend:
 - **Framework:** Svelte 5 SPA (100% Runes: `$state`, `$state.raw`, `$derived`, `$effect`, `$props`).
-- **Reactive State Management:** Class-based Stores (`RepoState`, `WorkingTreeState`, `RemoteState`, `GitSafetyState`, `ThemeState`, `ToastState`).
+- **Reactive State Management:** Class-based Stores (`RepoState`, `WorkingTreeState`, `RemoteState`, `GitSafetyState`, `ThemeState`, `ToastState`, `LocaleState`).
 - **Styling:** Tailwind CSS v4 (`@tailwindcss/vite`, CSS variables, Dark/Light Mode).
 - **UI Primitives:** Bits UI, Lucide Svelte, Canvas 2D API.
 - **Code Editor:** Monaco Editor & Monaco Diff Editor (Full Language Syntax Highlight).
@@ -122,3 +257,4 @@ docs/
 - 🚑 [playbook/real-world-recipes.md](./playbook/real-world-recipes.md): Sổ tay giải cứu các tình huống thực chiến.
 - ⌨️ [guides/user-manual.md](./guides/user-manual.md): Sổ tay người dùng và phím tắt toàn tập.
 - 🛠️ [guides/development.md](./guides/development.md): Hướng dẫn thiết lập môi trường, Build và Đóng gói.
+- 🏷️ [guides/version-management.md](./guides/version-management.md): Quản lý phiên bản & Quy trình bump version.

@@ -5,6 +5,7 @@
 **Visual First • Zero Terminal Friction • No-Fear Git**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Copyright: © 2026](https://img.shields.io/badge/Copyright-©_2026_FlowGit_Team-8A2BE2.svg)](LICENSE)
 [![Built with Tauri v2](https://img.shields.io/badge/Tauri-v2.2-orange.svg)](https://v2.tauri.app/)
 [![Frontend Svelte 5](https://img.shields.io/badge/Svelte-5%20Runes-ff3e00.svg)](https://svelte.dev/)
 [![Engine Rust 2024](https://img.shields.io/badge/Rust-2024%20Edition-black.svg)](https://www.rust-lang.org/)
@@ -14,6 +15,11 @@
 <br/>
 
 **[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+<br/>
+<br/>
+
+<img src="website/assets/flowgit_hero.png" alt="FlowGit Hero Interface" width="920" style="border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.35);" />
 
 <br/>
 
@@ -88,6 +94,16 @@ Most modern Git GUIs (GitKraken, GitHub Desktop, SourceTree) are built on heavy 
 
 ---
 
+### 📸 Visual Feature Showcase
+
+| 🛡️ 48-Hour Safe Discard Trash | ⚡ Side-by-Side Monaco Diff |
+| :---: | :---: |
+| <img src="website/assets/flowgit_trash.png" alt="48h Safe Discard Trash" width="460" /> | <img src="website/assets/flowgit_diff_split.png" alt="Monaco Diff Viewer" width="460" /> |
+| **⚔️ 4-Way Conflict Resolver** | **⏳ Reflog Time Machine (`Ctrl + Z`)** |
+| <img src="website/assets/flowgit_conflicts.png" alt="4-Way Conflict Resolver" width="460" /> | <img src="website/assets/flowgit_timemachine.png" alt="Reflog Time Machine" width="460" /> |
+
+---
+
 ## 🛠️ Technical Architecture
 
 ```
@@ -132,6 +148,8 @@ npm run tauri dev
 # Build standalone Windows installer (.exe & .msi)
 npm run tauri build
 ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on local setup, golden rules, and pull request workflow.
 Output files are generated in `src-tauri/target/release/bundle/nsis/`.
 
 ---
@@ -207,6 +225,16 @@ Hầu hết các phần mềm Git GUI hiện nay (GitKraken, GitHub Desktop, Sou
 
 ---
 
+### 📸 Hình Ảnh Giao Diện Tính Năng Thực Tế
+
+| 🛡️ Thùng Rác Safe Discard 48h | ⚡ Trình So Sánh Code Monaco Diff |
+| :---: | :---: |
+| <img src="website/assets/flowgit_trash.png" alt="Thùng rác Safe Discard 48h" width="460" /> | <img src="website/assets/flowgit_diff_split.png" alt="Monaco Diff Viewer" width="460" /> |
+| **⚔️ Trình Giải Quyết Xung Đột 4 Vùng** | **⏳ Cỗ Máy Thời Gian Hoàn Tác (`Ctrl + Z`)** |
+| <img src="website/assets/flowgit_conflicts.png" alt="Giải quyết xung đột 4 vùng" width="460" /> | <img src="website/assets/flowgit_timemachine.png" alt="Cỗ máy thời gian Time Machine" width="460" /> |
+
+---
+
 ## 🛠️ Kiến Trúc Kỹ Thuật
 
 FlowGit được chia thành 2 tầng xử lý cách ly để tối ưu hiệu năng tối đa:
@@ -244,6 +272,8 @@ npm run tauri dev
 npm run tauri build
 ```
 File cài đặt sau khi build sẽ nằm tại: `src-tauri/target/release/bundle/nsis/`.
+
+> Xem thêm [Hướng dẫn đóng góp (CONTRIBUTING.md)](CONTRIBUTING.md) để biết chi tiết cách thiết lập môi trường, quy chuẩn kiểm thử và gửi PR.
 
 ---
 

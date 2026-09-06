@@ -1,7 +1,202 @@
-# DANH MỤC TAURI V2 IPC COMMANDS & DATA TYPES (API REFERENCE)
-> **Phiên bản Backend:** Rust 2024 / Tauri v2 Native Bridge  
-> **Tổng số Commands:** 70+ Commands có Scoped Capability Permissions  
-> **Cập nhật:** Chuẩn công nghệ 2026 – Đã đồng bộ 100% với `src-tauri/src/lib.rs`
+<div align="center">
+
+# 🔌 Tauri v2 IPC Commands & Data Types Reference
+### Danh Mục Tauri v2 IPC Commands & Data Types (API Reference)
+
+> **Backend Engine:** Rust 2024 / Tauri v2 Native Bridge  
+> **Command Coverage:** 70+ Commands with Scoped Capability Permissions  
+> **Standard:** 2026 State-of-the-Art – 100% Synchronized with `src-tauri/src/lib.rs`  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
+
+---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard `invoke<T>(command_name, payload)` pattern, returning `Result<T, AppError>`. Below is the complete reference organized by functional domain.
+
+---
+
+## 📂 1. Repository & History Commands
+
+| Command Name | Parameters (Payload) | Return Type | Description |
+| :--- | :--- | :--- | :--- |
+| `open_repository` | `path: String` | `RepoSummary` | Opens local repository, verifies validity, and returns high-level metrics (HEAD, branch, dirty file count). |
+| `init_repository` | `path: String, bare: bool` | `RepoSummary` | Initializes new repository at target path (supports bare repos). |
+| `clone_repository` | `url: String, target_path: String` | `RepoSummary` | Clones a remote repository to local disk. |
+| `get_commit_history` | `path: String, max_count: usize` | `Vec<CommitNode>` | Fetches commit history with parallel topological lane allocation. |
+| `get_paginated_commit_history` | `path: String, skip: usize, limit: usize` | `PaginatedCommitHistory` | Paginated commit stream for monorepos (> 100k commits) supporting lazy-loading. |
+| `get_commit_info` | `path: String, commit_id: String` | `CommitDetail` | Retrieves full metadata for a commit (author, committer, message, files changed). |
+| `compare_two_commits` | `path: String, base_id: String, target_id: String` | `ComparisonResult` | Compares two arbitrary commits/branches for offline PR review. |
+| `get_tree_entries` | `path: String, commit_id: Option<String>, tree_path: Option<String>` | `Vec<TreeEntryItem>` | Traverses directory tree at specified commit or HEAD for Repository Explorer. |
+| `get_file_content` | `path: String, file_path: String, commit_id: Option<String>` | `FileContentResponse` | Reads file content with UTF-8 decoding and binary detection flags. |
+| `get_remote_url` | `path: String, remote_name: Option<String>` | `Option<String>` | Gets remote repository URL (defaults to `origin`). |
+| `nuke_file_from_history` | `path: String, target_file_path: String` | `bool` | Recursively removes sensitive files (passwords, secrets) across all history. |
+| `save_file_content` | `path: String, file_path: String, content: String` | `()` | Atomically persists edits from Monaco Editor to disk. |
+| `grep_repository_content` | `path: String, query: String, case_sensitive: Option<bool>, max_results: Option<usize>` | `Vec<FileGrepMatch>` | Fast multi-threaded full-text grep across repository files via Rayon. |
+| `open_in_external_editor` | `full_path: String, editor: Option<String>` | `()` | Opens file in external editor (Cursor, Antigravity, VS Code, Zed, Default). |
+| `reveal_in_file_manager` | `full_path: String` | `()` | Reveals file in native OS File Explorer. |
+| `get_focus_branch_info` | `path: String, branch_name: Option<String>, base_branch: Option<String>` | `FocusBranchResult` | Retrieves isolated commit stream belonging to Focus branch relative to Base. |
+| `get_unpushed_stacked_commits` | `path: String` | `Vec<StackedCommitItem>` | Lists unpushed commits in active branch for Stacked PR workflows. |
+| `reorder_stacked_commits` | `path: String, new_order_ids: Vec<String>` | `bool` | Reorders unpushed commits using the Reorder Sequencer. |
+
+---
+
+## 🌿 2. Branch, Tag, Stash & Sync Commands
+
+| Command Name | Parameters | Return Type | Description |
+| :--- | :--- | :--- | :--- |
+| `get_branches` | `path: String` | `Vec<BranchInfo>` | Lists local and remote branches with Ahead/Behind counts. |
+| `create_branch` | `path: String, branch_name: String, target_commit: Option<String>` | `BranchInfo` | Creates a new branch at target commit or HEAD. |
+| `rename_branch` | `path: String, old_name: String, new_name: String` | `bool` | Renames branch and synchronizes upstream references. |
+| `checkout_branch` | `path: String, branch_name: String` | `bool` | Switches active branch, checking dirty state beforehand. |
+| `delete_branch` | `path: String, branch_name: String, force: bool` | `bool` | Deletes a local branch (supports force deletion). |
+| `get_merged_branches` | `path: String, target_branch: Option<String>` | `Vec<String>` | Identifies local branches fully merged into base. |
+| `delete_merged_branches`| `path: String, branches: Vec<String>` | `usize` | 1-Click bulk cleanup of merged branches. |
+| `smart_sync` | `path: String, branch_name: Option<String>` | `SyncResult` | 1-Click sync: background fetch and rebase without checkout. |
+| `get_stashes` | `path: String` | `Vec<StashInfo>` | Lists all stored stash entries. |
+| `stash_save` | `path: String, message: Option<String>, include_untracked: bool` | `bool` | Stashes uncommitted working tree changes. |
+| `stash_apply` | `path: String, index: usize` | `bool` | Applies a stash entry without removing it. |
+| `stash_pop` | `path: String, index: usize` | `bool` | Applies and removes a stash entry. |
+| `stash_drop` | `path: String, index: usize` | `bool` | Drops a stash entry. |
+| `get_tags` | `path: String` | `Vec<TagInfo>` | Lists release tags with target commits and annotations. |
+| `create_tag` | `path: String, tag_name: String, target_commit: String, message: Option<String>` | `TagInfo` | Creates a Lightweight or Annotated tag. |
+| `delete_tag` | `path: String, tag_name: String` | `bool` | Deletes tag from repository. |
+
+---
+
+## 🔍 3. Working Tree, Diff, Safe Discard & Blame Commands
+
+| Command Name | Parameters | Return Type | Description |
+| :--- | :--- | :--- | :--- |
+| `get_status` | `path: String` | `WorkingTreeStatus` | Scans working tree status: Staged, Unstaged, Untracked, Conflicted files. |
+| `stage_file` | `path: String, file_path: String` | `bool` | Stages single file into Index. |
+| `unstage_file` | `path: String, file_path: String` | `bool` | Unstages single file from Index. |
+| `stage_all` | `path: String` | `bool` | Stages all changes (`git add -A`). |
+| `unstage_all` | `path: String` | `bool` | Unstages all files (`git reset HEAD`). |
+| `stage_hunk` | `path: String, file_path: String, hunk_index: usize` | `bool` | Stages specific hunk within file. |
+| `unstage_hunk` | `path: String, file_path: String, hunk_index: usize` | `bool` | Unstages specific hunk. |
+| `get_file_diff` | `path: String, file_path: String, is_staged: bool` | `FileDiffDetail` | Retrieves diff details (hunks, added/removed lines) for working tree file. |
+| `get_commit_file_diff`| `path: String, commit_id: String, file_path: String` | `FileDiffDetail` | Retrieves diff details of a file in a historical commit. |
+| `discard_file_changes`| `path: String, file_path: String` | `i64` | **Safe Discard**: Backs up file to SQLite 48h before restoring to HEAD; returns snapshot ID for 1-click restore. |
+| `discard_all_changes` | `path: String` | `Vec<i64>` | **Safe Discard All**: Backs up all files before discarding; returns array of snapshot IDs. |
+| `list_trash_snapshots`| `repo_path: Option<String>` | `Vec<TrashSnapshotItem>` | Lists all available snapshots in 48-hour trash. |
+| `restore_trash_snapshot`| `snapshot_id: i64` | `bool` | Restores 100% of discarded file content back to working tree. |
+| `delete_trash_snapshot` | `snapshot_id: i64` | `bool` | Permanently deletes a single snapshot from trash. |
+| `get_file_blame` | `path: String, file_path: String` | `Vec<BlameHunkItem>` | Line-by-line blame: author, email, timestamp, and commit SHA. |
+| `get_file_history` | `path: String, file_path: String, limit: usize` | `Vec<FileHistoryItem>` | Follows file modification timeline across history (`git log --follow`). |
+| `add_to_gitignore` | `repo_path: String, pattern: String` | `bool` | Appends rule to repository `.gitignore`. |
+| `generate_standard_gitignore`| `repo_path: String, template: String` | `bool` | Generates standard `.gitignore` for Node.js, Rust, Python, Go, etc. |
+
+---
+
+## 🌐 4. Remote Management Commands
+
+| Command Name | Parameters | Return Type | Description |
+| :--- | :--- | :--- | :--- |
+| `get_remotes` | `path: String` | `Vec<RemoteInfo>` | Lists configured remotes (`origin`, `upstream`) with fetch/push URLs. |
+| `add_remote` | `path: String, name: String, url: String` | `bool` | Adds a new remote. |
+| `remove_remote` | `path: String, name: String` | `bool` | Removes a configured remote. |
+| `set_remote_url` | `path: String, name: String, url: String` | `bool` | Updates remote URL endpoint. |
+| `fetch_remote` | `path: String, remote_name: Option<String>` | `bool` | Fetches updates from remote. |
+
+---
+
+## ⚡ 5. Actions, Safety Engine & Interactive Rebase Commands
+
+| Command Name | Parameters | Return Type | Description |
+| :--- | :--- | :--- | :--- |
+| `create_commit` | `path: String, message: String` | `String` | Creates new commit with staged changes and records into Action Undo Log. |
+| `simulate_drag_action` | `path: String, source_id: String, target_id: String, action_type: String` | `ConflictSimulationResult` | **Ghost Preview**: In-memory dry-run verifying potential conflicts before drop. |
+| `execute_cherry_pick_commit` | `path: String, commit_id: String` | `CherryPickResult` | Cherry-picks commit onto current HEAD. |
+| `execute_merge_commit` | `path: String, target_id: String` | `MergeResult` | Merges target branch or commit into current branch. |
+| `execute_rebase_branch` | `path: String, upstream_id: String` | `RebaseExecutionResult`| Rebases current branch onto specified upstream. |
+| `prepare_interactive_rebase` | `path: String, base_id: String` | `Vec<RebaseTodoItem>` | Fetches commit sequence from base for Interactive Rebase Timeline. |
+| `execute_interactive_rebase` | `path: String, base_id: String, todos: Vec<RebaseTodoItem>` | `RebaseExecutionResult` | Executes visual rebase sequence (`Pick`, `Reword`, `Drop`, `Squash`, `Fixup`). |
+| `continue_rebase_branch`| `path: String` | `RebaseExecutionResult` | Resumes rebase after conflicts are resolved. |
+| `check_is_rebasing` | `path: String` | `bool` | Checks if repo is currently in an in-progress rebase state. |
+| `get_repo_operation_state` | `path: String` | `RepoOperationState` | Inspects stuck repository operation state (Rebase, Merge, Cherry-Pick, Bisect). |
+| `skip_rebase_step` | `path: String` | `RebaseExecutionResult` | Skips current conflicting commit and proceeds with rebase. |
+| `abort_current_operation` | `path: String` | `bool` | Aborts in-progress operation and restores clean repository state. |
+| `revert_commit` | `path: String, commit_id: String` | `String` | Creates revert commit preserving historical integrity. |
+| `reset_to_commit` | `path: String, commit_id: String, mode: String` | `bool` | Resets HEAD to target commit (`soft`, `mixed`, or `hard`). |
+| `squash_commits` | `path: String, commit_ids: Vec<String>, message: String` | `String` | Squashes consecutive commits into single commit in < 1 second. |
+| `list_actions` | `repo_path: Option<String>` | `Vec<ActionRecord>` | Lists recorded actions from SQLite Action Journal. |
+| `undo_action` | `repo_path: String` | `bool` | **Time Machine Undo (`Ctrl + Z`)**: Reverts last action using reflog snapshot. |
+| `redo_action` | `repo_path: String` | `bool` | **Time Machine Redo (`Ctrl + Shift + Z`)**: Replays previously undone action. |
+| `time_travel_to` | `repo_path: String, action_id: i64` | `bool` | Time-travels repository state to arbitrary past action point. |
+
+---
+
+## ⚔️ 6. Conflict Resolution & Bisect Commands
+
+| Command Name | Parameters | Return Type | Description |
+| :--- | :--- | :--- | :--- |
+| `get_conflicted_files` | `path: String` | `Vec<String>` | Lists paths of currently conflicted files. |
+| `get_conflict_details` | `path: String, file_path: String` | `ConflictFileDetail` | Extracts 4-pane views: Ours, Base, Theirs, and conflict markers. |
+| `resolve_conflict_file` | `path: String, file_path: String, resolved_content: String` | `bool` | Overwrites resolved content and stages file into Index. |
+| `abort_merge_or_rebase`| `path: String` | `bool` | Aborts merge or rebase upon unwanted conflicts. |
+| `start_bisect` | `path: String, bad_id: String, good_id: String` | `BisectStatus` | Launches Visual Bisect Wizard between bad and known good commits. |
+| `bisect_step` | `path: String, is_good: bool` | `BisectStatus` | Reports test result (`Pass` or `Fail`) at current node to bisect further. |
+| `abort_bisect` | `path: String` | `bool` | Aborts bisect and returns HEAD to original reference. |
+| `get_bisect_status` | `path: String` | `BisectStatus` | Queries active bisect status and estimated steps remaining. |
+
+---
+
+## 🏢 7. Worktrees, LFS & Submodules Commands
+
+| Command Name | Parameters | Return Type | Description |
+| :--- | :--- | :--- | :--- |
+| `list_worktrees` | `path: String` | `Vec<WorktreeInfo>` | Lists all linked Git Worktrees. |
+| `create_worktree` | `path: String, name: String, target_path: String, branch_name: Option<String>` | `WorktreeInfo` | Creates new parallel worktree for isolated bug fixing. |
+| `delete_worktree` | `path: String, name: String` | `bool` | Cleans up and unlinks worktree directory. |
+| `get_submodules` | `path: String` | `Vec<SubmoduleInfo>` | Lists submodules with HEAD vs Index status and remote URLs. |
+| `update_submodules` | `path: String, recursive: bool, init: bool` | `bool` | Recursively updates submodules (`git submodule update --init --recursive`). |
+| `sync_submodules` | `path: String` | `bool` | Synchronizes submodule URLs from `.gitmodules`. |
+| `get_lfs_info` | `path: String` | `LfsSummary` | Scans LFS managed files, pointers, and active locks. |
+| `lock_lfs_file` | `path: String, file_path: String` | `bool` | Locks binary file on LFS server to prevent merge conflicts. |
+| `unlock_lfs_file` | `path: String, file_path: String, force: bool` | `bool` | Unlocks LFS file. |
+| `pull_lfs_files` | `path: String` | `bool` | Pulls binary payloads for LFS files. |
+
+---
+
+## 🔑 8. Auth, Identity & Multi-Account Commands
+
+| Command Name | Parameters | Return Type | Description |
+| :--- | :--- | :--- | :--- |
+| `start_github_device_login`| None | `DeviceCodeResponse` | Initiates GitHub OAuth Device Flow (returns User Code and URL). |
+| `check_github_device_login`| `device_code: String` | `DevicePollResult` | Polls authentication status from GitHub OAuth server. |
+| `verify_token_and_get_profile`| `provider: String, token: String` | `AccountProfile` | Verifies PAT and fetches user avatar, username, and email. |
+| `save_account_auth` | `profile: AccountProfile` | `bool` | Saves account profile into secure SQLite store. |
+| `get_active_account` | None | `Option<AccountProfile>` | Gets active default account for remote operations. |
+| `list_accounts` | None | `Vec<AccountProfile>` | Lists connected developer accounts. |
+| `delete_account` | `id: String` | `bool` | Removes saved account profile. |
+| `execute_remote_with_auth` | `command: String, args: Vec<String>` | `RemoteExecutionResult` | Executes remote operation with automated token credential injection. |
+| `get_current_repo_identity`| `path: String` | `CurrentRepoIdentity` | Retrieves local vs global Git identity (`user.name`, `user.email`). |
+| `set_repo_identity` | `path: String, name: String, email: String, is_global: bool` | `bool` | Sets Git committer identity locally or globally. |
+| `list_identity_profiles`| None | `Vec<IdentityProfile>` | Lists identity presets (Work, Personal, Open-Source). |
+| `save_identity_profile` | `profile: IdentityProfile` | `bool` | Saves new identity profile for 1-click switching. |
+| `delete_identity_profile`| `id: String` | `bool` | Deletes identity profile. |
+
+---
+
+## 🛡️ 9. Edge Cases & Safety Guards Commands
+
+| Command Name | Parameters | Return Type | Description |
+| :--- | :--- | :--- | :--- |
+| `is_index_locked` | `path: String` | `bool` | Detects presence of stale `.git/index.lock` file. |
+| `clear_index_lock` | `path: String` | `bool` | Safely removes `.git/index.lock` to release locked repository. |
+| `check_file_locks` | `path: String, files: Vec<String>` | `Vec<LockedFileInfo>` | Scans for external Windows/OS process file locks. |
+| `scan_heavy_files` | `path: String, size_threshold_mb: Option<u64>` | `Vec<HeavyFileInfo>` | Pre-commit scan preventing accidental commits of files > 50MB. |
+| `shelve_untracked_files`| `path: String, files: Vec<String>` | `bool` | Shelves conflicting untracked files into Safe Discard before branch switch. |
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rust) đều được chuẩn hóa theo mẫu `invoke<T>(command_name, payload)` và trả về kiểu `Result<T, AppError>`. Dưới đây là bảng tra cứu chi tiết phân theo từng phân khu chức năng.
 

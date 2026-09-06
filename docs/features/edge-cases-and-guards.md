@@ -1,8 +1,97 @@
-# XỬ LÝ TÌNH HUỐNG BIÊN & BỘ GIÁM SÁT AN TOÀN (EDGE CASES & GUARDS)
-> **Mục tiêu:** Dự đoán và xử lý tự động mọi sự cố thường gặp trên Windows & Enterprise Git  
-> **Cơ chế:** Repo Alert Banner + Heavy File Scanner + Index Lock Clearer + Process Diagnostics
+<div align="center">
+
+# 🚨 Edge Cases & Safety Guards
+### Xử Lý Tình Huống Biên & Bộ Giám Sát An Toàn (Edge Cases & Guards)
+
+> **Mission:** Automatically diagnose and prevent common pitfalls on Windows & Enterprise Git  
+> **Mechanisms:** In-Progress Alerts + Heavy File Scanner + Index Lock Clearer + Process Diagnostics  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## 🚨 1. Repository In-Progress Alert Banner
+
+Component: `src/lib/components/RepoAlertBanner.svelte`  
+Backend: `src-tauri/src/git/status.rs` & `src-tauri/src/git/edge_cases.rs`
+
+### The Problem:
+When interrupted during a Rebase, Merge, or Cherry-pick (due to conflict or app shutdown), repositories enter an in-progress locked state where subsequent checkout or commit actions fail.
+
+### FlowGit Solution:
+FlowGit constantly inspects `.git` markers:
+- `.git/rebase-merge` or `.git/rebase-apply`: In-progress Rebase.
+- `.git/MERGE_HEAD`: In-progress Merge.
+- `.git/CHERRY_PICK_HEAD`: In-progress Cherry-pick.
+
+When detected, a **prominent amber banner** pins to the top of the window with 1-click action buttons:
+1. **`Continue`:** Resumes process once conflicts are resolved.
+2. **`Skip`:** Skips the active problematic commit.
+3. **`Abort`:** Instantly rolls back the repository to its clean starting state.
+
+---
+
+## 🪤 2. Detached HEAD Trap Guard
+
+### The Danger:
+Checking out a commit SHA or Tag (instead of a named branch) places Git into a "Detached HEAD" state. Subsequent commits become dangling and can be lost when switching branches.
+
+### FlowGit Safety Net:
+- StatusBar and Graph header illuminate with a red warning: **"Detached HEAD Mode"**.
+- Displays an action button: **"Create Branch Here"**.
+- 1-Click to anchor commits safely to a new branch, ensuring zero work is ever orphaned.
+
+---
+
+## 🔒 3. Windows File Locking Diagnostics
+
+Command: `check_file_locks`
+
+### Windows Specific Behavior:
+On Windows, files held open by running processes (Visual Studio, Node.js, running web servers, Excel) cannot be overwritten or deleted, yielding cryptic `Permission Denied` or `EPERM` Git errors.
+
+### FlowGit Diagnostics:
+- Catches permission errors and scans files via `check_file_locks`.
+- Displays actionable diagnostics identifying the culprit process:  
+  *"File `bundle.js` is locked by `Node.js (PID 12480)`. Please terminate the process before continuing."*
+
+---
+
+## 🐘 4. Pre-Commit Heavy File Scanner
+
+Component: `src/lib/components/PreCommitWarningModal.svelte`  
+Backend: `src-tauri/src/git/edge_cases.rs`
+
+### The Danger:
+Accidentally committing `.zip`, `.mp4`, or large ML models (> 50MB) results in rejected pushes on GitHub. Fixing it requires complex history rewriting.
+
+### Preventive Scanner:
+- Automatically scans staged additions (`scan_heavy_files`) prior to commit.
+- If files > 50MB lack Git LFS tracking:
+  - Halts the commit and prompts:  
+    *"File `assets/demo.mp4` is 82 MB. Would you like FlowGit to track it with Git LFS?"*
+
+---
+
+## 🛡️ 5. Untracked File Collisions (Shelve Untracked)
+
+Command: `shelve_untracked_files`
+
+### The Scenario:
+Switching branches when an untracked local file shares a name with a tracked file on the target branch causes Git to abort checkout.
+
+### Solution:
+FlowGit offers 1-click **"Shelve to Safe Discard"**: moves conflicting untracked files into 48-hour SQLite storage, allowing seamless branch transitions with on-demand restoration.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## 🚨 1. BANNER TRẠNG THÁI REPO DỞ DANG (REPO IN-PROGRESS BANNER)
 

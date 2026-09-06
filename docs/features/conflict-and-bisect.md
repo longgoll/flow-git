@@ -1,8 +1,100 @@
-# GIẢI QUYẾT XUNG ĐỘT (3-WAY CONFLICT) & TRUY VẾT LỖI (GIT BISECT)
-> **Trực quan hóa:** 4 Khung hình Monaco Conflict Resolver + 1-Click Chọn khối code  
-> **Dò vết Bug:** Visual Bisect Wizard tự động chia đôi đồ thị theo thuật toán Binary Search
+<div align="center">
+
+# ⚔️ 3-Way Conflict Resolver & Visual Bisect Wizard
+### Giải Quyết Xung Đột (3-Way Conflict) & Truy Vết Lỗi (Git Bisect)
+
+> **Visuals:** 4-Pane Monaco Conflict Resolver + 1-Click Chunk Adoption  
+> **Investigation:** Visual Bisect Wizard automating Binary Search across the commit DAG  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## ⚔️ 1. 4-Pane 3-Way Merge Conflict Resolver
+
+Component: `src/lib/components/ConflictResolver.svelte`  
+Backend: `src-tauri/src/git/conflict.rs`
+
+### The Problem:
+Manual conflict resolution in typical code editors forces developers to parse noisy conflict markers (`<<<<<<< HEAD`, `=======`, `>>>>>>> incoming`), risking accidental deletions or syntax corruption.
+
+### 4-Pane Split Architecture:
+
+```
+┌───────────────────────────┬───────────────────────────┬───────────────────────────┐
+│ OURS (Current Branch)     │ BASE (Common Ancestor)    │ THEIRS (Incoming Branch)  │
+│                           │                           │                           │
+│ const API_URL =           │ const API_URL =           │ const API_URL =           │
+│   "https://api.v2.com";   │   "https://api.v1.com";   │   "https://api.prod.com"; │
+│                           │                           │                           │
+│ [Take Ours ◀]             │                           │ [▶ Take Theirs]           │
+├───────────────────────────┴───────────────────────────┴───────────────────────────┤
+│ RESULT (Consolidated Code - Editable Monaco Editor)                               │
+│                                                                                   │
+│ const API_URL = "https://api.v2.com";                                             │
+│                                                                                   │
+│ [Abort Merge / Rebase]                         [Mark as Resolved & Stage (Save)]  │
+└───────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Key Capabilities:
+1. **Clear Segregation:** Concurrently displays Ours, Base (ancestor before branching), Theirs, and the editable Result pane.
+2. **1-Click Chunk Adoption:**
+   - **Take Ours:** Adopts active branch code.
+   - **Take Theirs:** Adopts incoming code.
+   - **Take Base:** Reverts to base ancestor code.
+   - **Take Both:** Keeps both hunks sequentially.
+3. **Freeform Monaco Editing:** Edit the Result pane directly to combine logic as needed.
+4. **Automated Staging on Resolution:** "Mark as Resolved" persists changes and stages the file into Index.
+5. **Emergency Abort:** Instantly cancels the merge/rebase and returns repo to clean state.
+
+---
+
+## 🐞 2. Visual Git Bisect Wizard
+
+Component: `src/lib/components/BisectWizard.svelte`  
+Backend: `src-tauri/src/git/bisect.rs`
+
+### The Problem:
+A regression appears on production after 200 commits have been merged over the past month. Testing each commit sequentially would take days.
+
+### Binary Search Visualization:
+FlowGit applies binary search to reduce 200 candidate commits down to **just 7–8 verification steps**:
+
+```
+[Good Commit: v1.0.0] ──────────── (Step 1: Test midpoint commit) ──────────── [Bad Commit: HEAD]
+                                                │
+                                    ┌───────────┴───────────┐
+                                    ▼                       ▼
+                           [Code Passes (Good)]     [Code Fails (Bad)]
+```
+
+### Step-by-Step UI Execution:
+1. **Launch Wizard:**
+   - Right-click broken commit (HEAD) ➔ **"Mark as Bad 🐞"**.
+   - Right-click known functional historical commit ➔ **"Mark as Good ✅"**.
+   - Click **"Start Bisect Wizard"**.
+2. **Intelligent Midpoint Navigation:**
+   - FlowGit automatically checks out the exact mathematical midpoint.
+   - Progress bar displays: *"Narrowed down to ~6 candidate commits (est. 3 steps remaining)"*.
+   - Tested commit node pulses on the canvas.
+3. **Verify and Vote:**
+   - Test your build:
+     - If bug persists ➔ click **"Code Fails (Bad)"**.
+     - If build succeeds ➔ click **"Code Passes (Good)"**.
+4. **Culprit Identified:**
+   - FlowGit pinpoints the exact first commit that introduced the bug.
+   - Shows summary modal: Author, timestamp, commit message, and full code diff, complete with a 1-click **"Revert This Commit"** button.
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## ⚔️ 1. BỘ GIẢI QUYẾT XUNG ĐỘT 4 KHUNG HÌNH (3-WAY MERGE RESOLVER)
 

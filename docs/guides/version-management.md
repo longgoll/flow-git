@@ -1,8 +1,147 @@
-# Quy Trình Quản Lý Phiên Bản (Version Management)
+<div align="center">
 
-> **Nguồn sự thật duy nhất:** `package.json` → mọi nơi khác đọc từ đây.
+# 🏷️ Version Management & Release Guide
+### Quy Trình Quản Lý Phiên Bản (Version Management)
+
+> **Single Source of Truth:** `package.json` → Every other layer reads from here.  
+> **Standard:** 2026 State-of-the-Art – Zero hardcoding, automated sync via `npm run bump`  
+
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+
+</div>
 
 ---
+
+<a name="-english"></a>
+# 🇬🇧 English
+
+## Core Principle
+
+The project enforces **one single source of truth** for versioning:
+
+```
+📄 package.json  ←── EDIT ONLY HERE
+        │
+        ├──▶ tauri.conf.json    (Tauri v2 native: "version": "../package.json")
+        │        └──▶ Read automatically at app build time
+        │
+        ├──▶ Cargo.toml         (synced via npm run bump)
+        │
+        ├──▶ Frontend Svelte    (vite.config.ts define: APP_VERSION)
+        │        └──▶ Access via: APP_VERSION or import.meta.env.VITE_APP_VERSION
+        │
+        ├──▶ Website HTML       (fetches GitHub API /releases/latest → AUTOMATIC ✅)
+        │
+        └──▶ README badges      (shields.io pointing to GitHub release → AUTOMATIC ✅)
+```
+
+**Never** hardcode version strings (e.g. `"0.1.0"`) anywhere outside `package.json`.
+
+---
+
+## Accessing Version in Frontend Svelte
+
+```svelte
+<!-- In any .svelte component – zero imports needed -->
+<span>v{APP_VERSION}</span>
+
+<!-- Or explicitly via import.meta.env -->
+<span>v{import.meta.env.VITE_APP_VERSION}</span>
+```
+
+Both resolve to `version` in `package.json` at **compile-time**, injected by `vite.config.ts` → `define: { APP_VERSION }`.
+
+---
+
+## Release Workflow
+
+### Step 1 – Bump Version (2 Files Synced Automatically)
+
+```bash
+npm run bump 0.2.0
+```
+
+This script:
+- ✅ Updates `package.json` → `"version": "0.2.0"`
+- ✅ Updates `src-tauri/Cargo.toml` → `version = "0.2.0"`
+- ℹ️ `tauri.conf.json` does NOT need edits (reads `package.json` natively)
+- ℹ️ Frontend does NOT need edits (injected at build time by Vite)
+- ℹ️ Website does NOT need edits (fetches live GitHub API on page load)
+
+### Step 2 – Commit and Tag
+
+```bash
+git add package.json src-tauri/Cargo.toml
+git commit -m "chore: bump version to v0.2.0"
+git tag v0.2.0
+git push && git push origin v0.2.0
+```
+
+### Step 3 – Automated CI/CD Execution
+
+GitHub Actions (`release.yml`) automatically:
+1. Builds binaries for Windows, macOS (ARM + Intel), and Ubuntu.
+2. Digitally signs packages using Minisign private key.
+3. Publishes GitHub Release with `latest.json` for auto-updater.
+4. Generates release notes from `git log` between tags.
+
+---
+
+## Technical Mechanism
+
+### `tauri.conf.json` – Tauri v2 Native Path Reference
+
+```json
+{
+  "version": "../package.json"
+}
+```
+
+Tauri CLI v2 natively reads `version` from any linked `.json` path without extra plugins.
+
+### `vite.config.ts` – Compile-time Injection
+
+```ts
+import pkg from './package.json' assert { type: 'json' };
+
+export default defineConfig({
+  define: {
+    APP_VERSION: JSON.stringify(pkg.version),
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(pkg.version),
+  },
+});
+```
+
+`APP_VERSION` is replaced statically at build time (comparable to `#define` in C). Type declarations reside in `src/vite-env.d.ts`.
+
+### Auto-Updater – Tauri Plugin Updater v2
+
+- **Endpoint:** `https://github.com/longgoll/flow-git/releases/latest/download/latest.json`
+- **Signature:** Minisign (`flowgit.key`) – public key stored in `tauri.conf.json`
+- **Auto Check:** On startup (after 3s), then every **4 hours**
+- **Manual Check:** Toolbar → More Menu → "Check for Updates"
+
+---
+
+## Associated Files
+
+| File | Role |
+|---|---|
+| [`package.json`](../../package.json) | ⭐ Single source of truth |
+| [`scripts/bump-version.mjs`](../../scripts/bump-version.mjs) | Version synchronization script |
+| [`vite.config.ts`](../../vite.config.ts) | Injects `APP_VERSION` into frontend |
+| [`src/vite-env.d.ts`](../../src/vite-env.d.ts) | TypeScript definition for `APP_VERSION` |
+| [`src-tauri/tauri.conf.json`](../../src-tauri/tauri.conf.json) | References `"version": "../package.json"` |
+| [`src-tauri/Cargo.toml`](../../src-tauri/Cargo.toml) | Synced via `npm run bump` |
+| [`src/lib/state/updateState.svelte.ts`](../../src/lib/state/updateState.svelte.ts) | Auto-updater state & logic |
+| [`src/lib/components/UpdateModal.svelte`](../../src/lib/components/UpdateModal.svelte) | Update UI modal |
+| [`.github/workflows/release.yml`](../../.github/workflows/release.yml) | CI/CD build and publish |
+| [`website/main.js`](../../website/main.js) | Live version fetch via GitHub API |
+
+---
+
+<a name="-tiếng-việt"></a>
+# 🇻🇳 Tiếng Việt
 
 ## Nguyên tắc cốt lõi
 

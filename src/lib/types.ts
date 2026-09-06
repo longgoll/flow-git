@@ -590,4 +590,12 @@ export interface WorkspaceTab {
   mainRepoPath?: string;
   dirtyFilesCount?: number;
   lastActiveAt?: number;
+  // Per-tab isolated state:
+  selectedFilePath?: string | null;
+  selectedFileIsStaged?: boolean;
+  selectedCommitId?: string | null;
+  selectedCommitIds?: string[];
+  viewMode?: ViewMode;
+  searchQuery?: string;
+  recentPushedBranch?: string | null;
 }

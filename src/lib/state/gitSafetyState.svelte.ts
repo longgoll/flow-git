@@ -46,6 +46,23 @@ export class GitSafetyState {
   isConflictLoading = $state<boolean>(false);
   isRebasing = $state<boolean>(false);
 
+  reset() {
+    this.showTrashModal = false;
+    this.trashSnapshots = [];
+    this.isTrashLoading = false;
+    this.showTimeMachineDrawer = false;
+    this.actionRecords = [];
+    this.isActionLoading = false;
+    this.showBisectModal = false;
+    this.bisectStatus = null;
+    this.isBisectLoading = false;
+    this.conflictedFiles = [];
+    this.selectedConflictFile = null;
+    this.conflictFileDetail = null;
+    this.isConflictLoading = false;
+    this.isRebasing = false;
+  }
+
   // -------------------------------------------------------------
   // Safe Discard 48h Trash
   // -------------------------------------------------------------

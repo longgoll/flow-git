@@ -3,9 +3,15 @@ import type { WorkspaceTab } from '../types';
 const STORAGE_TABS_KEY = 'flowgit_workspace_tabs';
 const STORAGE_ACTIVE_TAB_KEY = 'flowgit_active_tab_id';
 
-function normalizePath(p: string): string {
+export function normalizePath(p: string): string {
   if (!p) return '';
   return p.replace(/\\/g, '/').replace(/\/+$/, '');
+}
+
+export function pathsEqual(a?: string | null, b?: string | null): boolean {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  return normalizePath(a).toLowerCase() === normalizePath(b).toLowerCase();
 }
 
 function extractNameFromPath(p: string): string {
@@ -101,14 +107,7 @@ export class WorkspaceTabState {
     return this.openTab({ path: norm, branch: branchName });
   }
 
-  openTab(params: {
-    path: string;
-    name?: string;
-    isWorktree?: boolean;
-    branch?: string;
-    mainRepoPath?: string;
-    dirtyFilesCount?: number;
-  }): WorkspaceTab {
+  openTab(params: Partial<WorkspaceTab> & { path: string }): WorkspaceTab {
     const norm = normalizePath(params.path);
     const existing = this.tabs.find((t) => t.id === norm);
 
@@ -118,6 +117,11 @@ export class WorkspaceTabState {
       if (params.isWorktree !== undefined) existing.isWorktree = params.isWorktree;
       if (params.mainRepoPath) existing.mainRepoPath = normalizePath(params.mainRepoPath);
       if (params.dirtyFilesCount !== undefined) existing.dirtyFilesCount = params.dirtyFilesCount;
+      if (params.selectedFilePath !== undefined) existing.selectedFilePath = params.selectedFilePath;
+      if (params.selectedFileIsStaged !== undefined) existing.selectedFileIsStaged = params.selectedFileIsStaged;
+      if (params.selectedCommitId !== undefined) existing.selectedCommitId = params.selectedCommitId;
+      if (params.viewMode !== undefined) existing.viewMode = params.viewMode;
+      if (params.recentPushedBranch !== undefined) existing.recentPushedBranch = params.recentPushedBranch;
       existing.lastActiveAt = Date.now();
 
       this.activeTabId = norm;
@@ -134,6 +138,13 @@ export class WorkspaceTabState {
       mainRepoPath: params.mainRepoPath ? normalizePath(params.mainRepoPath) : undefined,
       dirtyFilesCount: params.dirtyFilesCount || 0,
       lastActiveAt: Date.now(),
+      selectedFilePath: params.selectedFilePath,
+      selectedFileIsStaged: params.selectedFileIsStaged,
+      selectedCommitId: params.selectedCommitId,
+      selectedCommitIds: params.selectedCommitIds,
+      viewMode: params.viewMode,
+      searchQuery: params.searchQuery,
+      recentPushedBranch: params.recentPushedBranch,
     };
 
     this.tabs = [...this.tabs, newTab];
@@ -189,32 +200,15 @@ export class WorkspaceTabState {
     this.saveToStorage();
   }
 
-  updateTabMeta(
-    id: string,
-    meta: {
-      name?: string;
-      branch?: string;
-      dirtyFilesCount?: number;
-      isWorktree?: boolean;
-    },
-  ) {
+  updateTabMeta(id: string, meta: Partial<WorkspaceTab>) {
     const tab = this.tabs.find((t) => t.id === id);
     if (!tab) return;
 
-    if (meta.name !== undefined) tab.name = meta.name;
-    if (meta.branch !== undefined) tab.branch = meta.branch;
-    if (meta.dirtyFilesCount !== undefined) tab.dirtyFilesCount = meta.dirtyFilesCount;
-    if (meta.isWorktree !== undefined) tab.isWorktree = meta.isWorktree;
-
+    Object.assign(tab, meta);
     this.saveToStorage();
   }
 
-  updateActiveTabMeta(meta: {
-    name?: string;
-    branch?: string;
-    dirtyFilesCount?: number;
-    isWorktree?: boolean;
-  }) {
+  updateActiveTabMeta(meta: Partial<WorkspaceTab>) {
     if (!this.activeTabId) return;
     this.updateTabMeta(this.activeTabId, meta);
   }

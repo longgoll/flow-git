@@ -21,6 +21,22 @@ export class WorkingTreeState {
   isCommitLoading = $state<boolean>(false);
   ignoreWhitespace = $state<boolean>(false);
 
+  clearSelection() {
+    this.selectedFilePath = null;
+    this.selectedFileIsStaged = false;
+    this.fileDiffDetail = null;
+    this.isDiffLoading = false;
+  }
+
+  reset() {
+    this.workingTreeStatus = null;
+    this.selectedFilePath = null;
+    this.selectedFileIsStaged = false;
+    this.fileDiffDetail = null;
+    this.isDiffLoading = false;
+    this.isCommitLoading = false;
+  }
+
   async selectFile(repoPath: string, file: FileStatusItem, isStaged: boolean) {
     this.selectedFilePath = file.path;
     this.selectedFileIsStaged = isStaged;

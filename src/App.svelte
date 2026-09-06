@@ -23,7 +23,7 @@
   import { WorkingTreeState } from "./lib/state/workingTreeState.svelte";
   import { RemoteState } from "./lib/state/remoteState.svelte";
   import { GitSafetyState } from "./lib/state/gitSafetyState.svelte";
-  import { WorkspaceTabState } from "./lib/state/workspaceTabState.svelte";
+  import { WorkspaceTabState, pathsEqual } from "./lib/state/workspaceTabState.svelte";
   import { abortCurrentOperation, skipRebaseStep } from "./lib/api/action";
   import { getRemotes, fetchRemote } from "./lib/api/remote";
   import { getCurrentRepoIdentity } from "./lib/api/identity";
@@ -34,11 +34,13 @@
     ComparisonResult,
     ConflictSimulationResult,
     CurrentRepoIdentity,
+    FileStatusItem,
     LayoutMode,
     RemoteInfo,
     RepoOperationState,
     ViewMode,
     WorkspaceTab,
+    WorkingTreeStatus,
     WorktreeInfo,
   } from "./lib/types";
   import {
@@ -239,15 +241,48 @@
     }
   }
 
+  let currentLoadSessionId = 0;
+
+  function saveCurrentTabContext() {
+    const currentTab = tabState.activeTab;
+    if (!currentTab) return;
+    tabState.updateTabMeta(currentTab.id, {
+      selectedFilePath: wt.selectedFilePath,
+      selectedFileIsStaged: wt.selectedFileIsStaged,
+      selectedCommitId: repo.selectedCommitId,
+      selectedCommitIds: repo.selectedCommitIds,
+      viewMode: viewMode,
+      searchQuery: repo.searchQuery,
+      recentPushedBranch: recentPushedBranch,
+    });
+  }
+
   async function refreshWorkingTreeAndDiff() {
-    await repo.refreshWorkingTreeOnly(async (wtStatus) => {
+    await repo.refreshWorkingTreeOnly(async (wtStatus: WorkingTreeStatus) => {
       wt.workingTreeStatus = wtStatus;
       if (wt.selectedFilePath) {
-        await wt.loadFileDiff(
-          repo.currentRepoPath,
-          wt.selectedFilePath,
-          wt.selectedFileIsStaged,
-        );
+        const stillDirty =
+          wtStatus.staged?.some((f: FileStatusItem) => f.path === wt.selectedFilePath) ||
+          wtStatus.unstaged?.some((f: FileStatusItem) => f.path === wt.selectedFilePath) ||
+          wtStatus.untracked?.some((f: FileStatusItem) => f.path === wt.selectedFilePath);
+
+        if (stillDirty) {
+          await wt.loadFileDiff(
+            repo.currentRepoPath,
+            wt.selectedFilePath,
+            wt.selectedFileIsStaged,
+          );
+        } else {
+          if (wtStatus.staged?.length > 0) {
+            await wt.selectFile(repo.currentRepoPath, wtStatus.staged[0], true);
+          } else if (wtStatus.unstaged?.length > 0) {
+            await wt.selectFile(repo.currentRepoPath, wtStatus.unstaged[0], false);
+          } else if (wtStatus.untracked?.length > 0) {
+            await wt.selectFile(repo.currentRepoPath, wtStatus.untracked[0], false);
+          } else {
+            wt.clearSelection();
+          }
+        }
       }
       tabState.updateActiveTabMeta({
         dirtyFilesCount: wtStatus.total_dirty_count,
@@ -259,34 +294,86 @@
   let showInitRepoModal = $state(false);
   let initRepoPath = $state('');
 
-  async function loadRepository(path: string) {
+  async function loadRepository(path: string, restoreTabContext?: WorkspaceTab | null) {
+    const sessionId = ++currentLoadSessionId;
     try {
+      const tabContext =
+        restoreTabContext ||
+        tabState.tabs.find((t) => pathsEqual(t.path, path)) ||
+        null;
+
       originRemoteUrl = await getRemoteUrl(path).catch(() => null);
+      if (sessionId !== currentLoadSessionId) return;
+
       await loadRemotesList(path);
+      if (sessionId !== currentLoadSessionId) return;
+
       await loadIdentity(path);
-      await repo.loadRepo(path, (wtStatus) => {
-        wt.workingTreeStatus = wtStatus;
-        // Auto select first file if available
-        if (wtStatus?.staged && wtStatus.staged.length > 0) {
-          wt.selectFile(path, wtStatus.staged[0], true);
-        } else if (wtStatus?.unstaged && wtStatus.unstaged.length > 0) {
-          wt.selectFile(path, wtStatus.unstaged[0], false);
-        } else if (wtStatus?.untracked && wtStatus.untracked.length > 0) {
-          wt.selectFile(path, wtStatus.untracked[0], false);
-        }
-      });
+      if (sessionId !== currentLoadSessionId) return;
+
+      await repo.loadRepo(
+        path,
+        (wtStatus: WorkingTreeStatus) => {
+          if (sessionId !== currentLoadSessionId) return;
+          wt.workingTreeStatus = wtStatus;
+
+          const savedFile = tabContext?.selectedFilePath;
+          const savedIsStaged = tabContext?.selectedFileIsStaged;
+          let fileSelected = false;
+
+          if (savedFile) {
+            const inStaged = wtStatus.staged?.find((f: FileStatusItem) => f.path === savedFile);
+            const inUnstaged = wtStatus.unstaged?.find((f: FileStatusItem) => f.path === savedFile);
+            const inUntracked = wtStatus.untracked?.find((f: FileStatusItem) => f.path === savedFile);
+
+            if (savedIsStaged && inStaged) {
+              wt.selectFile(path, inStaged, true);
+              fileSelected = true;
+            } else if (!savedIsStaged && inUnstaged) {
+              wt.selectFile(path, inUnstaged, false);
+              fileSelected = true;
+            } else if (inUntracked) {
+              wt.selectFile(path, inUntracked, false);
+              fileSelected = true;
+            }
+          }
+
+          if (!fileSelected) {
+            if (wtStatus?.staged && wtStatus.staged.length > 0) {
+              wt.selectFile(path, wtStatus.staged[0], true);
+            } else if (wtStatus?.unstaged && wtStatus.unstaged.length > 0) {
+              wt.selectFile(path, wtStatus.unstaged[0], false);
+            } else if (wtStatus?.untracked && wtStatus.untracked.length > 0) {
+              wt.selectFile(path, wtStatus.untracked[0], false);
+            } else {
+              wt.clearSelection();
+            }
+          }
+        },
+        tabContext?.selectedCommitId,
+      );
+
+      if (sessionId !== currentLoadSessionId) return;
       repo.showWelcomeScreen = false;
 
       // Đồng bộ vào Tab Workspace
-      const isWt = repo.worktrees.some((w) => !w.is_main && w.path === path);
+      const isWt = repo.worktrees.some((w) => !w.is_main && pathsEqual(w.path, path));
       tabState.openTab({
         path,
         name: repo.repoSummary?.name,
         branch: repo.repoSummary?.current_branch,
         dirtyFilesCount: wt.workingTreeStatus?.total_dirty_count || 0,
         isWorktree: isWt,
+        recentPushedBranch: tabContext?.recentPushedBranch || null,
+        viewMode: tabContext?.viewMode || viewMode,
       });
+
+      recentPushedBranch = tabContext?.recentPushedBranch || null;
+      if (tabContext?.viewMode) {
+        viewMode = tabContext.viewMode;
+      }
     } catch (err: any) {
+      if (sessionId !== currentLoadSessionId) return;
       const msg = String(err?.message || err);
       if (
         msg.includes('could not find repository') ||
@@ -304,17 +391,46 @@
 
   // --- WORKSPACE TAB HANDLERS ---
   async function handleSelectTab(tab: WorkspaceTab) {
-    if (tab.path === repo.currentRepoPath) return;
+    if (!tab) return;
+    if (pathsEqual(tab.path, repo.currentRepoPath) && tabState.activeTabId === tab.id) {
+      return;
+    }
+
+    saveCurrentTabContext();
     tabState.switchTab(tab.id);
-    await loadRepository(tab.path);
+
+    // Dọn sạch trạng thái tạm thời để không hiển thị dữ liệu của repo trước
+    wt.clearSelection();
+    repo.selectedCommitId = null;
+    repo.selectedCommitIds = [];
+    repo.commitDetail = null;
+    safety.reset();
+    comparisonResult = null;
+    explorerInitialFilePath = null;
+    aiDiffContext = '';
+
+    // Khôi phục viewMode và push banner thuộc riêng tab này
+    recentPushedBranch = tab.recentPushedBranch || null;
+    if (tab.viewMode) {
+      viewMode = tab.viewMode;
+    }
+    if (tab.searchQuery !== undefined) {
+      repo.searchQuery = tab.searchQuery;
+    }
+
+    await loadRepository(tab.path, tab);
   }
 
   async function handleCloseTab(tabId: string) {
     const { nextTab } = tabState.closeTab(tabId);
     if (nextTab) {
-      await loadRepository(nextTab.path);
+      await handleSelectTab(nextTab);
     } else {
       repo.showWelcomeScreen = true;
+      repo.resetRepoData();
+      wt.reset();
+      safety.reset();
+      recentPushedBranch = null;
     }
   }
 
@@ -330,7 +446,7 @@
       isWorktree: !wtItem.is_main,
       mainRepoPath: repo.currentRepoPath,
     });
-    await loadRepository(tab.path);
+    await handleSelectTab(tab);
   }
 
   async function handleRevealInExplorer(path: string) {
@@ -371,7 +487,7 @@
   onMount(async () => {
     try {
       unlistenWatcher = await listenRepoStatus(async (_path) => {
-        if (repo.currentRepoPath) {
+        if (repo.currentRepoPath && pathsEqual(_path, repo.currentRepoPath)) {
           await refreshWorkingTreeAndDiff();
         }
       });
@@ -438,8 +554,8 @@
     } else if (e.ctrlKey && e.key === "Tab") {
       e.preventDefault();
       const target = e.shiftKey ? tabState.prevTab() : tabState.nextTab();
-      if (target && target.path !== repo.currentRepoPath) {
-        loadRepository(target.path);
+      if (target) {
+        handleSelectTab(target);
       }
     } else if (
       (e.ctrlKey || e.metaKey) &&
@@ -724,6 +840,7 @@
     repo.statusMessage = res.message;
     if (res.success && branch.shorthand !== "main" && branch.shorthand !== "master") {
       recentPushedBranch = branch.shorthand;
+      tabState.updateActiveTabMeta({ recentPushedBranch: branch.shorthand });
       toast.success(
         `Đã publish nhánh '${branch.shorthand}'`,
         `Bạn có muốn tạo Pull Request cho nhánh này không?`,
@@ -750,6 +867,7 @@
     repo.statusMessage = res.message;
     if (res.success && branch.shorthand !== "main" && branch.shorthand !== "master") {
       recentPushedBranch = branch.shorthand;
+      tabState.updateActiveTabMeta({ recentPushedBranch: branch.shorthand });
       toast.success(
         `Đã push nhánh '${branch.shorthand}'`,
         `Bạn có muốn tạo Pull Request vào nhánh chính không?`,
@@ -1291,9 +1409,13 @@
           targetBranch={repo.branches.some((b) => b.shorthand === "main") ? "main" : "master"}
           onCompareAndPR={(b) => {
             recentPushedBranch = null;
+            tabState.updateActiveTabMeta({ recentPushedBranch: null });
             handleOpenCreatePR(b);
           }}
-          onDismiss={() => (recentPushedBranch = null)}
+          onDismiss={() => {
+            recentPushedBranch = null;
+            tabState.updateActiveTabMeta({ recentPushedBranch: null });
+          }}
         />
       {/if}
       {#if viewMode === "graph"}

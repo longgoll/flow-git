@@ -116,9 +116,26 @@ export class RepoState {
     }
   }
 
-  async loadRepo(path: string, onAfterLoad?: (wtStatus: any) => void) {
+  resetRepoData() {
+    this.rawCommits = [];
+    this.repoSummary = null;
+    this.branches = [];
+    this.tags = [];
+    this.stashes = [];
+    this.worktrees = [];
+    this.selectedCommitId = null;
+    this.selectedCommitIds = [];
+    this.commitDetail = null;
+    this.isDetailLoading = false;
+    this.hasMoreCommits = false;
+  }
+
+  async loadRepo(path: string, onAfterLoad?: (wtStatus: any) => void, preferredCommitId?: string | null) {
     this.isLoading = true;
     this.statusMessage = `Opening repository at ${path}...`;
+    if (this.currentRepoPath !== path) {
+      this.resetRepoData();
+    }
     try {
       this.currentRepoPath = path;
       const summary = await openRepository(path);
@@ -156,9 +173,16 @@ export class RepoState {
       }
 
       if (this.rawCommits.length > 0) {
-        this.selectedCommitId = this.rawCommits[0].id;
-        this.selectedCommitIds = [this.rawCommits[0].id];
-        await this.loadCommitDetail(this.rawCommits[0].id);
+        const targetCommit = preferredCommitId && this.rawCommits.some((c) => c.id === preferredCommitId)
+          ? preferredCommitId
+          : this.rawCommits[0].id;
+        this.selectedCommitId = targetCommit;
+        this.selectedCommitIds = [targetCommit];
+        await this.loadCommitDetail(targetCommit);
+      } else {
+        this.selectedCommitId = null;
+        this.selectedCommitIds = [];
+        this.commitDetail = null;
       }
 
       this.saveRecentRepo(path);

@@ -11,10 +11,12 @@
 [![Engine Rust 2024](https://img.shields.io/badge/Rust-2024%20Edition-black.svg)](https://www.rust-lang.org/)
 [![Platform Windows](https://img.shields.io/badge/Platform-Windows%20x64-0078D6.svg)]()
 [![i18n Supported](https://img.shields.io/badge/i18n-English%20%7C%20Ti%E1%BA%BFng%20Vi%E1%BB%87t-success.svg)]()
+[![Support Ko-fi](https://img.shields.io/badge/Support-Ko--fi-ff5e5b.svg?logo=kofi&logoColor=white)](https://ko-fi.com/longgoll)
+[![Donate MoMo](https://img.shields.io/badge/Donate-MoMo-d82d8b.svg)](#-support-the-project)
 
 <br/>
 
-**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)**
+**[ 🇬🇧 Read in English ](#-english)** &nbsp;•&nbsp; **[ 🇻🇳 Đọc Tiếng Việt ](#-tiếng-việt)** &nbsp;•&nbsp; **[ 💖 Support / Ủng Hộ ](#-support-the-project)**
 
 <br/>
 <br/>
@@ -288,6 +290,30 @@ Dự án sở hữu kho 22 tài liệu đặc tả kỹ thuật chi tiết tại
 
 ---
 
+<a name="-support-the-project"></a>
+## 💖 Support the Project / Ủng Hộ Dự Án
+
+FlowGit is an open-source project built with passion to deliver the fastest, safest Git client experience. If FlowGit saves your time or helps your daily engineering workflow, buying the author a coffee is deeply appreciated!
+
+*FlowGit là dự án mã nguồn mở được phát triển với mong muốn mang lại trải nghiệm Git an toàn, trực quan và mượt mà nhất. Nếu FlowGit giúp công việc lập trình hàng ngày của bạn trở nên nhẹ nhàng hơn, một ly cà phê ủng hộ sẽ là nguồn động viên to lớn để tác giả tiếp tục duy trì và nâng cấp dự án!*
+
+<br/>
+
+<div align="center">
+
+| 🌍 Quốc Tế (International) | 🇻🇳 Việt Nam (Ví MoMo) |
+| :---: | :---: |
+| <br/><br/> [![Support on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/longgoll) <br/><br/> **[ko-fi.com/longgoll](https://ko-fi.com/longgoll)** <br/> *(PayPal / Credit Cards)* | <img src="website/assets/momo_qr.jpg" alt="MoMo QR Code" width="240" style="border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);" /> <br/> **Ví Điện Tử MoMo** <br/> STK: `*******154` <br/> Chủ TK: **LƯU HOÀNG LONG** |
+
+<br/>
+
+*🙏 Cảm ơn bạn rất nhiều vì đã tin tưởng và đồng hành cùng FlowGit! / Thank you so much for your generous support!*
+
+</div>
+
+---
+
 ## 📄 Bản Quyền (License)
 
 Dự án phát triển mã nguồn mở theo chuẩn giấy phép [MIT License](LICENSE).
+

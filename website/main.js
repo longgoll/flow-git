@@ -145,7 +145,21 @@ const translations = {
     linuxStepsTitle: "Lệnh Cài Đặt Linux Nhanh",
 
     // Footer
-    footerCopy: "© 2026 FlowGit. Phát hành theo giấy phép mã nguồn mở MIT."
+    footerCopy: "© 2026 FlowGit. Phát hành theo giấy phép mã nguồn mở MIT.",
+
+    // Sponsor
+    navSponsor: "Ủng hộ",
+    footerSponsor: "💖 Ủng hộ",
+    sponsorTag: "💖 Tiếp Lửa Dự Án • Support FlowGit",
+    sponsorTitlePrefix: "Đồng Hành &",
+    sponsorTitleHighlight: "Ủng Hộ FlowGit",
+    sponsorDesc: "FlowGit là dự án mã nguồn mở miễn phí 100%. Nếu FlowGit giúp công việc lập trình của bạn trở nên mượt mà và an tâm hơn, một ly cà phê ủng hộ sẽ tiếp thêm sức mạnh cho tác giả duy trì và phát triển dự án!",
+    sponsorKofiSub: "Dành cho bạn bè & cộng đồng quốc tế",
+    sponsorKofiText: "Mời tác giả một ly cà phê qua nền tảng Ko-fi chính thức, hỗ trợ thanh toán thuận tiện qua PayPal, thẻ Visa, Mastercard hoặc Apple Pay.",
+    sponsorMomoSub: "Dành cho cộng đồng lập trình viên Việt Nam",
+    sponsorAccName: "Chủ tài khoản:",
+    sponsorAccNum: "Số tài khoản:",
+    sponsorScanHint: "⚡ Mở app MoMo hoặc ứng dụng ngân hàng bất kỳ để quét mã VietQR chuyển tiền tức thì."
   },
   en: {
     navFeatures: "Features",
@@ -293,7 +307,21 @@ const translations = {
     linuxStepsTitle: "Quick Linux Setup Commands",
 
     // Footer
-    footerCopy: "© 2026 FlowGit. Released under the MIT Open Source License."
+    footerCopy: "© 2026 FlowGit. Released under the MIT Open Source License.",
+
+    // Sponsor
+    navSponsor: "Sponsor",
+    footerSponsor: "💖 Sponsor",
+    sponsorTag: "💖 Fuel the Project • Support FlowGit",
+    sponsorTitlePrefix: "Fuel &",
+    sponsorTitleHighlight: "Sponsor FlowGit",
+    sponsorDesc: "FlowGit is 100% free and open-source. If FlowGit makes your daily Git workflow safer and faster, buying the author a coffee helps power active ongoing development!",
+    sponsorKofiSub: "For global community & contributors",
+    sponsorKofiText: "Buy me a coffee on the official Ko-fi platform. Supports PayPal, Visa, Mastercard, and Apple Pay.",
+    sponsorMomoSub: "For Vietnamese developer community",
+    sponsorAccName: "Account Name:",
+    sponsorAccNum: "Account Number:",
+    sponsorScanHint: "⚡ Scan with MoMo or any banking app via VietQR instant transfer."
   }
 };
 

@@ -24,6 +24,7 @@
     showTags: boolean;
     showStashes: boolean;
     onOpenWorktrees?: () => void;
+    onSelectWorktree?: (wt: WorktreeInfo) => void;
     onOpenRemoteManager?: () => void;
     onFetchRemote?: (name: string) => Promise<void>;
     onPublishRepo?: () => void;
@@ -40,6 +41,7 @@
     showTags = $bindable(false),
     showStashes = $bindable(false),
     onOpenWorktrees,
+    onSelectWorktree,
     onOpenRemoteManager,
     onFetchRemote,
     onPublishRepo,
@@ -70,8 +72,12 @@
       <div class="mt-1 space-y-0.5 pl-1">
         {#each worktrees as wt (wt.path)}
           <button
-            onclick={onOpenWorktrees}
+            onclick={() => {
+              if (onSelectWorktree) onSelectWorktree(wt);
+              else if (onOpenWorktrees) onOpenWorktrees();
+            }}
             class="w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs transition-colors cursor-pointer text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-zinc-900/80 hover:text-zinc-950 dark:hover:text-white group"
+            title="Mở Worktree '{wt.name}' ({wt.path})"
           >
             <div class="flex items-center gap-2 truncate pr-1">
               <span class="w-1.5 h-1.5 rounded-full {wt.is_main ? 'bg-cyan-500 dark:bg-cyan-400' : 'bg-purple-500 dark:bg-purple-400'} shrink-0"></span>

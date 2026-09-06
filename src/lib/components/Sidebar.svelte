@@ -22,6 +22,7 @@
     onCreateBranch?: () => void;
     onCreateBranchFrom?: (branch: BranchInfo) => void;
     onOpenWorktrees?: () => void;
+    onSelectWorktree?: (wt: WorktreeInfo) => void;
     onOpenRemoteManager?: () => void;
     onFetchRemote?: (name: string) => Promise<void>;
     onPublishRepo?: () => void;
@@ -50,6 +51,7 @@
     onCreateBranch,
     onCreateBranchFrom,
     onOpenWorktrees,
+    onSelectWorktree,
     onOpenRemoteManager,
     onFetchRemote,
     onPublishRepo,
@@ -154,6 +156,7 @@
       bind:showTags
       bind:showStashes
       {onOpenWorktrees}
+      {onSelectWorktree}
       {onOpenRemoteManager}
       {onFetchRemote}
       {onPublishRepo}

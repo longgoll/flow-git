@@ -35,10 +35,12 @@
           title: 'Chọn thư mục Git Repository',
         });
         if (selected && typeof selected === 'string') {
+          onClose();
           onSelectRepo(selected);
         }
       } else {
         if (manualPath.trim()) {
+          onClose();
           onSelectRepo(manualPath.trim());
         }
       }
@@ -81,6 +83,7 @@
         : undefined;
 
       await cloneRepository(cloneUrl.trim(), cloneTargetPath.trim(), creds);
+      onClose();
       onSelectRepo(cloneTargetPath.trim());
     } catch (err: any) {
       const msg = err?.message || String(err);
@@ -349,7 +352,10 @@
                 {#each recentRepos as repoPath}
                   <button
                     type="button"
-                    onclick={() => onSelectRepo(repoPath)}
+                    onclick={() => {
+                      onClose();
+                      onSelectRepo(repoPath);
+                    }}
                     class="w-full px-3 py-2 rounded-lg bg-white dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-800 text-left transition-colors cursor-pointer group flex items-center justify-between shadow-2xs"
                   >
                     <div class="truncate mr-2">

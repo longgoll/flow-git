@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { AccountProfile, BranchInfo, LayoutMode, RepoSummary, ViewMode } from '../types';
+  import type { AccountProfile, BranchInfo, LayoutMode, RepoSummary, ViewMode, WorkspaceTab } from '../types';
   import {
     FolderOpen,
     GitBranch,
@@ -15,6 +15,7 @@
   import ToolbarSearchFilters from './toolbar/ToolbarSearchFilters.svelte';
   import ToolbarActions from './toolbar/ToolbarActions.svelte';
   import ToolbarMoreMenu from './toolbar/ToolbarMoreMenu.svelte';
+  import WorkspaceTabBar from './toolbar/WorkspaceTabBar.svelte';
 
   interface Props {
     repoSummary: RepoSummary | null;
@@ -32,6 +33,12 @@
     isSidebarOpen?: boolean;
     filterHideMerges?: boolean;
     filterMyCommits?: boolean;
+    workspaceTabs?: WorkspaceTab[];
+    activeTabId?: string | null;
+    onSelectTab?: (tab: WorkspaceTab) => void;
+    onCloseTab?: (id: string) => void;
+    onCloseOtherTabs?: (keepId: string) => void;
+    onRevealInExplorer?: (path: string) => void;
     onToggleSidebar?: () => void;
     onOpenRepo: () => void;
     onRefresh: () => void;
@@ -79,6 +86,12 @@
     layoutMode = 'horizontal',
     filterHideMerges = false,
     filterMyCommits = false,
+    workspaceTabs = [],
+    activeTabId = null,
+    onSelectTab,
+    onCloseTab,
+    onCloseOtherTabs,
+    onRevealInExplorer,
     activeAccount = null,
     onToggleSidebar,
     onOpenRepo,
@@ -124,7 +137,7 @@
 <svelte:window onclick={handleWindowClick} />
 
 <header class="relative z-40 h-12 border-b border-zinc-200 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md px-2 sm:px-3 flex items-center justify-between select-none shrink-0 gap-1 sm:gap-2 w-full max-w-full">
-  <!-- Left: Sidebar Toggle, App Logo & Unified Repo/Branch Breadcrumb -->
+  <!-- Left: Sidebar Toggle, App Logo & Unified Repo/Branch Breadcrumb or Tabs -->
   <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink">
     <!-- Sidebar Toggle Button -->
     {#if onToggleSidebar}
@@ -149,26 +162,40 @@
       <span class="text-sm font-bold text-zinc-800 dark:text-zinc-100 hidden 2xl:inline">FlowGit</span>
     </div>
 
-    <!-- Unified Repo & Branch Breadcrumb -->
-    <div class="flex items-center bg-zinc-100 dark:bg-zinc-900/90 hover:bg-zinc-200/80 dark:hover:bg-zinc-850/90 border border-zinc-200 dark:border-zinc-800/80 rounded-lg p-0.5 transition-all max-w-[140px] sm:max-w-[190px] lg:max-w-[240px] min-w-0 shrink group">
-      <button
-        onclick={onOpenRepo}
-        class="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-md hover:bg-zinc-200/70 dark:hover:bg-zinc-800/60 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer min-w-0 truncate"
-        title={repoSummary ? `Repository: ${repoSummary.name} (${repoSummary.path})` : 'Open Git Repository'}
-      >
-        <FolderOpen class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 shrink-0 group-hover:text-cyan-600 dark:group-hover:text-cyan-400" />
-        <span class="truncate font-mono text-[11px] max-w-[65px] sm:max-w-[95px] md:max-w-[125px]">
-          {repoSummary ? repoSummary.name : 'Open Repo...'}
-        </span>
-      </button>
-      {#if repoSummary?.current_branch}
-        <span class="text-zinc-400 dark:text-zinc-600 text-xs select-none">/</span>
-        <div class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-zinc-200/80 dark:bg-zinc-800/80 border border-zinc-300/80 dark:border-zinc-700/60 text-zinc-800 dark:text-zinc-200 text-[11px] font-medium font-mono min-w-0 shrink" title="Current Branch: {repoSummary.current_branch}">
-          <GitBranch class="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-          <span class="truncate max-w-[50px] sm:max-w-[70px] md:max-w-[90px]">{repoSummary.current_branch}</span>
-        </div>
-      {/if}
-    </div>
+    <!-- Unified Workspace Tabs or Fallback Breadcrumb -->
+    {#if workspaceTabs.length > 0 && onSelectTab && onCloseTab}
+      <WorkspaceTabBar
+        tabs={workspaceTabs}
+        {activeTabId}
+        {onSelectTab}
+        {onCloseTab}
+        {onCloseOtherTabs}
+        onOpenNewRepo={onOpenRepo}
+        {onOpenWorktrees}
+        {onRevealInExplorer}
+      />
+    {:else}
+      <!-- Unified Repo & Branch Breadcrumb Fallback -->
+      <div class="flex items-center bg-zinc-100 dark:bg-zinc-900/90 hover:bg-zinc-200/80 dark:hover:bg-zinc-850/90 border border-zinc-200 dark:border-zinc-800/80 rounded-lg p-0.5 transition-all max-w-[140px] sm:max-w-[190px] lg:max-w-[240px] min-w-0 shrink group">
+        <button
+          onclick={onOpenRepo}
+          class="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-md hover:bg-zinc-200/70 dark:hover:bg-zinc-800/60 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer min-w-0 truncate"
+          title={repoSummary ? `Repository: ${repoSummary.name} (${repoSummary.path})` : 'Open Git Repository'}
+        >
+          <FolderOpen class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 shrink-0 group-hover:text-cyan-600 dark:group-hover:text-cyan-400" />
+          <span class="truncate font-mono text-[11px] max-w-[65px] sm:max-w-[95px] md:max-w-[125px]">
+            {repoSummary ? repoSummary.name : 'Open Repo...'}
+          </span>
+        </button>
+        {#if repoSummary?.current_branch}
+          <span class="text-zinc-400 dark:text-zinc-600 text-xs select-none">/</span>
+          <div class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-zinc-200/80 dark:bg-zinc-800/80 border border-zinc-300/80 dark:border-zinc-700/60 text-zinc-800 dark:text-zinc-200 text-[11px] font-medium font-mono min-w-0 shrink" title="Current Branch: {repoSummary.current_branch}">
+            <GitBranch class="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span class="truncate max-w-[50px] sm:max-w-[70px] md:max-w-[90px]">{repoSummary.current_branch}</span>
+          </div>
+        {/if}
+      </div>
+    {/if}
 
     <!-- Main View Mode Switcher: Clean, Unified Segmented Control -->
     <ToolbarViewModes

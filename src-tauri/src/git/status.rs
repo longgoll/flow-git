@@ -137,10 +137,58 @@ pub fn get_working_tree_status(repo: &Repository) -> AppResult<WorkingTreeStatus
     opts.include_untracked(true)
         .recurse_untracked_dirs(true)
         .include_ignored(false)
-        .renames_head_to_index(true)
-        .renames_index_to_workdir(true);
+        .renames_head_to_index(true);
+    let maybe_statuses = match repo.statuses(Some(&mut opts)) {
+        Ok(s) => Ok(s),
+        Err(e) => {
+            let err_msg = e.message().to_lowercase();
+            if err_msg.contains("path too long") || err_msg.contains("filesystem") || err_msg.contains("exceed") {
+                // Tier 1 Fallback: do not recurse into untracked directories
+                let mut fallback_opts = StatusOptions::new();
+                fallback_opts
+                    .include_untracked(true)
+                    .recurse_untracked_dirs(false)
+                    .include_ignored(false)
+                    .renames_head_to_index(true)
+                    .renames_index_to_workdir(true);
+                match repo.statuses(Some(&mut fallback_opts)) {
+                    Ok(s) => Ok(s),
+                    Err(_) => {
+                        // Tier 2 Fallback: exclude untracked completely to avoid scanning deeply nested build files
+                        let mut fallback_tracked_only = StatusOptions::new();
+                        fallback_tracked_only
+                            .include_untracked(false)
+                            .include_ignored(false)
+                            .renames_head_to_index(true)
+                            .renames_index_to_workdir(true);
+                        repo.statuses(Some(&mut fallback_tracked_only))
+                    }
+                }
+            } else {
+                Err(e)
+            }
+        }
+    };
 
-    let statuses = repo.statuses(Some(&mut opts))?;
+    let statuses = match maybe_statuses {
+        Ok(s) => s,
+        Err(e) => {
+            let err_msg = e.message().to_lowercase();
+            if err_msg.contains("path too long") || err_msg.contains("filesystem") || err_msg.contains("exceed") {
+                eprintln!("[FlowGit] Bỏ qua lỗi path quá dài trong working tree: {}", e);
+                return Ok(WorkingTreeStatus {
+                    staged: Vec::new(),
+                    unstaged: Vec::new(),
+                    untracked: Vec::new(),
+                    conflicted: Vec::new(),
+                    total_dirty_count: 0,
+                    total_staged_count: 0,
+                    operation_state: get_repo_operation_state(repo).unwrap_or(RepoOperationState::Normal),
+                });
+            }
+            return Err(e.into());
+        }
+    };
 
     let mut staged = Vec::new();
     let mut unstaged = Vec::new();

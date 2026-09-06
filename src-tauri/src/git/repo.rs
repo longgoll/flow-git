@@ -77,7 +77,39 @@ pub fn get_repo_summary(repo: &Repository) -> AppResult<RepoSummary> {
                 }
                 (dirty, staged)
             }
-            Err(_) => (0, 0),
+            Err(e) => {
+                let err_msg = e.message().to_lowercase();
+                if err_msg.contains("path too long") || err_msg.contains("filesystem") {
+                    let mut fallback = StatusOptions::new();
+                    fallback.include_untracked(true);
+                    fallback.recurse_untracked_dirs(false);
+                    fallback.include_ignored(false);
+                    let st_result = repo.statuses(Some(&mut fallback)).or_else(|_| {
+                        let mut tracked_only = StatusOptions::new();
+                        tracked_only.include_untracked(false);
+                        tracked_only.include_ignored(false);
+                        repo.statuses(Some(&mut tracked_only))
+                    });
+                    if let Ok(st) = st_result {
+                        let mut dirty = 0;
+                        let mut staged = 0;
+                        for entry in st.iter() {
+                            let s = entry.status();
+                            if s.is_index_new() || s.is_index_modified() || s.is_index_deleted() || s.is_index_renamed() || s.is_index_typechange() {
+                                staged += 1;
+                            }
+                            if s.is_wt_new() || s.is_wt_modified() || s.is_wt_deleted() || s.is_wt_renamed() || s.is_wt_typechange() {
+                                dirty += 1;
+                            }
+                        }
+                        (dirty, staged)
+                    } else {
+                        (0, 0)
+                    }
+                } else {
+                    (0, 0)
+                }
+            }
         }
     } else {
         (0, 0)

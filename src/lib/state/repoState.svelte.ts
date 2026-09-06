@@ -129,7 +129,18 @@ export class RepoState {
         getBranches(path),
         getTags(path),
         getStashes(path),
-        getWorkingTreeStatus(path),
+        getWorkingTreeStatus(path).catch((e) => {
+          console.warn('[FlowGit] Bỏ qua lỗi working tree:', e);
+          return {
+            staged: [],
+            unstaged: [],
+            untracked: [],
+            conflicted: [],
+            total_dirty_count: 0,
+            total_staged_count: 0,
+            operation_state: 'normal' as any,
+          };
+        }),
         listWorktrees(path),
       ]);
 

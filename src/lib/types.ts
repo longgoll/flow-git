@@ -581,5 +581,13 @@ export interface DevicePollResult {
   error_message?: string;
 }
 
-
-
+export interface WorkspaceTab {
+  id: string;
+  path: string;
+  name: string;
+  branch?: string;
+  isWorktree: boolean;
+  mainRepoPath?: string;
+  dirtyFilesCount?: number;
+  lastActiveAt?: number;
+}

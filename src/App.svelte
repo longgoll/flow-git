@@ -23,6 +23,7 @@
   import { WorkingTreeState } from "./lib/state/workingTreeState.svelte";
   import { RemoteState } from "./lib/state/remoteState.svelte";
   import { GitSafetyState } from "./lib/state/gitSafetyState.svelte";
+  import { WorkspaceTabState } from "./lib/state/workspaceTabState.svelte";
   import { abortCurrentOperation, skipRebaseStep } from "./lib/api/action";
   import { getRemotes, fetchRemote } from "./lib/api/remote";
   import { getCurrentRepoIdentity } from "./lib/api/identity";
@@ -37,6 +38,8 @@
     RemoteInfo,
     RepoOperationState,
     ViewMode,
+    WorkspaceTab,
+    WorktreeInfo,
   } from "./lib/types";
   import {
     compareTwoCommits,
@@ -60,6 +63,7 @@
     renameBranch,
     resetToCommit,
     revertCommit,
+    revealInFileManager,
     squashCommits,
     stashPop,
     stashSave,
@@ -71,6 +75,7 @@
   const wt = new WorkingTreeState();
   const remote = new RemoteState();
   const safety = new GitSafetyState();
+  const tabState = new WorkspaceTabState();
 
   // Panels Visibility & Layout state
   let isSidebarOpen = $state<boolean>(true);
@@ -244,6 +249,10 @@
           wt.selectedFileIsStaged,
         );
       }
+      tabState.updateActiveTabMeta({
+        dirtyFilesCount: wtStatus.total_dirty_count,
+        branch: repo.repoSummary?.current_branch,
+      });
     });
   }
 
@@ -258,15 +267,25 @@
       await repo.loadRepo(path, (wtStatus) => {
         wt.workingTreeStatus = wtStatus;
         // Auto select first file if available
-        if (wtStatus.staged.length > 0) {
+        if (wtStatus?.staged && wtStatus.staged.length > 0) {
           wt.selectFile(path, wtStatus.staged[0], true);
-        } else if (wtStatus.unstaged.length > 0) {
+        } else if (wtStatus?.unstaged && wtStatus.unstaged.length > 0) {
           wt.selectFile(path, wtStatus.unstaged[0], false);
-        } else if (wtStatus.untracked.length > 0) {
+        } else if (wtStatus?.untracked && wtStatus.untracked.length > 0) {
           wt.selectFile(path, wtStatus.untracked[0], false);
         }
       });
       repo.showWelcomeScreen = false;
+
+      // Đồng bộ vào Tab Workspace
+      const isWt = repo.worktrees.some((w) => !w.is_main && w.path === path);
+      tabState.openTab({
+        path,
+        name: repo.repoSummary?.name,
+        branch: repo.repoSummary?.current_branch,
+        dirtyFilesCount: wt.workingTreeStatus?.total_dirty_count || 0,
+        isWorktree: isWt,
+      });
     } catch (err: any) {
       const msg = String(err?.message || err);
       if (
@@ -280,6 +299,45 @@
         toast.error('Lỗi mở repository', msg);
       }
       throw err;
+    }
+  }
+
+  // --- WORKSPACE TAB HANDLERS ---
+  async function handleSelectTab(tab: WorkspaceTab) {
+    if (tab.path === repo.currentRepoPath) return;
+    tabState.switchTab(tab.id);
+    await loadRepository(tab.path);
+  }
+
+  async function handleCloseTab(tabId: string) {
+    const { nextTab } = tabState.closeTab(tabId);
+    if (nextTab) {
+      await loadRepository(nextTab.path);
+    } else {
+      repo.showWelcomeScreen = true;
+    }
+  }
+
+  function handleCloseOtherTabs(keepId: string) {
+    tabState.closeOtherTabs(keepId);
+  }
+
+  async function handleSelectWorktree(wtItem: WorktreeInfo) {
+    const tab = tabState.openTab({
+      path: wtItem.path,
+      name: wtItem.name,
+      branch: wtItem.branch_name,
+      isWorktree: !wtItem.is_main,
+      mainRepoPath: repo.currentRepoPath,
+    });
+    await loadRepository(tab.path);
+  }
+
+  async function handleRevealInExplorer(path: string) {
+    try {
+      await revealInFileManager(path);
+    } catch (e: any) {
+      toast.error('Không thể mở File Explorer', e?.message || String(e));
     }
   }
 
@@ -299,6 +357,7 @@
       showInitRepoModal = false;
       initRepoPath = '';
       repo.showWelcomeScreen = false;
+      tabState.initDefaultTab(targetPath, defaultBranch);
       toast.success(
         'Khởi tạo Git thành công',
         `Đã tạo kho Git mới với nhánh ${defaultBranch || 'main'}`
@@ -320,9 +379,12 @@
       repo.initRecentRepos();
       await remote.initAccount();
 
-      const repoToOpen = repo.recentRepos[0] || "f:/Dev/product/git-tool";
+      // Khôi phục tab từ workspaceTabState hoặc repo gần đây
+      const initialTab = tabState.activeTab;
+      const repoToOpen = initialTab?.path || repo.recentRepos[0] || "f:/Dev/product/git-tool";
       try {
         await loadRepository(repoToOpen);
+        tabState.initDefaultTab(repoToOpen, repo.repoSummary?.current_branch);
       } catch {
         repo.showWelcomeScreen = true;
       }
@@ -373,6 +435,34 @@
     } else if ((e.ctrlKey || e.metaKey) && e.key === "2") {
       e.preventDefault();
       viewMode = "changes";
+    } else if (e.ctrlKey && e.key === "Tab") {
+      e.preventDefault();
+      const target = e.shiftKey ? tabState.prevTab() : tabState.nextTab();
+      if (target && target.path !== repo.currentRepoPath) {
+        loadRepository(target.path);
+      }
+    } else if (
+      (e.ctrlKey || e.metaKey) &&
+      (e.key === "w" || e.key === "W") &&
+      !["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName) &&
+      tabState.tabs.length > 1
+    ) {
+      e.preventDefault();
+      if (tabState.activeTabId) {
+        handleCloseTab(tabState.activeTabId);
+      }
+    } else if (
+      e.altKey &&
+      e.key >= "1" &&
+      e.key <= "9" &&
+      !["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName)
+    ) {
+      const idx = parseInt(e.key, 10) - 1;
+      if (idx >= 0 && idx < tabState.tabs.length) {
+        e.preventDefault();
+        const target = tabState.tabs[idx];
+        handleSelectTab(target);
+      }
     } else if (
       e.key === " " &&
       !["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName)
@@ -503,13 +593,29 @@
     await createWorktree(repo.currentRepoPath, name, targetPath, branchName);
     repo.worktrees = await listWorktrees(repo.currentRepoPath);
     repo.statusMessage = `Created worktree '${name}' successfully.`;
+
+    // Tự động mở Tab mới cho worktree vừa tạo
+    const tab = tabState.openTab({
+      path: targetPath,
+      name,
+      branch: branchName,
+      isWorktree: true,
+      mainRepoPath: repo.currentRepoPath,
+    });
+    showWorktreeModal = false;
+    await loadRepository(tab.path);
+    toast.success(`Đã tạo và mở Worktree '${name}'`, `Thư mục: ${targetPath}`);
   }
 
   async function handleDeleteWorktree(name: string) {
     if (!repo.currentRepoPath) return;
+    const targetWt = repo.worktrees.find((w) => w.name === name);
     await deleteWorktree(repo.currentRepoPath, name);
     repo.worktrees = await listWorktrees(repo.currentRepoPath);
     repo.statusMessage = `Removed worktree '${name}'.`;
+    if (targetWt) {
+      tabState.closeTab(targetWt.path);
+    }
   }
 
   // Branch Creation
@@ -1073,6 +1179,12 @@
     stagedFilesCount={wt.workingTreeStatus?.total_staged_count || 0}
     conflictedFilesCount={safety.conflictedFiles.length}
     {isSidebarOpen}
+    workspaceTabs={tabState.tabs}
+    activeTabId={tabState.activeTabId}
+    onSelectTab={handleSelectTab}
+    onCloseTab={handleCloseTab}
+    onCloseOtherTabs={handleCloseOtherTabs}
+    onRevealInExplorer={handleRevealInExplorer}
     activeAccount={remote.activeAccount}
     onToggleSidebar={() => (isSidebarOpen = !isSidebarOpen)}
     onOpenRepo={() => (repo.showWelcomeScreen = true)}
@@ -1122,6 +1234,7 @@
         stashes={repo.stashes}
         worktrees={repo.worktrees}
         isPushing={remote.isPushing}
+        onSelectWorktree={handleSelectWorktree}
         onSelectBranch={handleCheckoutBranch}
         onDeleteBranch={handleDeleteBranch}
         onRenameBranch={handleRenameBranch}
@@ -1560,7 +1673,8 @@
     onConfirmManualOpen={async () => {
       if (inputRepoPath.trim()) {
         showOpenDialog = false;
-        await loadRepository(inputRepoPath.trim());
+        const tab = tabState.openTab({ path: inputRepoPath.trim() });
+        await loadRepository(tab.path);
       }
     }}
     {showDropActionModal}
@@ -1581,7 +1695,13 @@
     onDeleteWorktree={handleDeleteWorktree}
     onOpenWorktreeFolder={(p) => {
       showWorktreeModal = false;
-      loadRepository(p);
+      const wtItem = repo.worktrees.find((w) => w.path === p);
+      if (wtItem) {
+        handleSelectWorktree(wtItem);
+      } else {
+        const tab = tabState.openTab({ path: p, isWorktree: true });
+        loadRepository(tab.path);
+      }
     }}
     showTrashModal={safety.showTrashModal}
     trashSnapshots={safety.trashSnapshots}
@@ -1691,7 +1811,15 @@
     showWelcomeScreen={repo.showWelcomeScreen}
     activeAccount={remote.activeAccount}
     recentRepos={repo.recentRepos}
-    onSelectRepo={(path) => loadRepository(path)}
+    onSelectRepo={async (path) => {
+      repo.showWelcomeScreen = false;
+      try {
+        const tab = tabState.openTab({ path });
+        await loadRepository(tab.path);
+      } catch (err: any) {
+        toast.error('Không thể mở repository', err?.message || String(err));
+      }
+    }}
     onOpenAuthFromWelcome={() => (remote.showAuthModal = true)}
     onCloseWelcome={() => (repo.showWelcomeScreen = false)}
     {showInitRepoModal}

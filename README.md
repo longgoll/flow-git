@@ -11,6 +11,7 @@
 [![Engine Rust 2024](https://img.shields.io/badge/Rust-2024%20Edition-black.svg)](https://www.rust-lang.org/)
 [![Platform Windows](https://img.shields.io/badge/Platform-Windows%20x64-0078D6.svg)]()
 [![i18n Supported](https://img.shields.io/badge/i18n-English%20%7C%20Ti%E1%BA%BFng%20Vi%E1%BB%87t-success.svg)]()
+[![Sponsor FlowGit](https://img.shields.io/badge/Sponsor-FlowGit-ea4aaa.svg?logo=github-sponsors&logoColor=white)](#-support-the-project)
 [![Support Ko-fi](https://img.shields.io/badge/Support-Ko--fi-ff5e5b.svg?logo=kofi&logoColor=white)](https://ko-fi.com/longgoll)
 [![Donate MoMo](https://img.shields.io/badge/Donate-MoMo-d82d8b.svg)](#-support-the-project)
 

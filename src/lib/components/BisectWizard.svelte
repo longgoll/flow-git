@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { BisectStatus, CommitNode } from '../types';
+  import { localeState } from '../state/localeState.svelte';
   import {
     Bug,
     CheckCircle2,
@@ -57,13 +58,13 @@
           </div>
           <div>
             <h3 class="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              Visual Git Bisect Wizard
+              {localeState.t('workflows.bisect.title')}
               <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
-                Binary Bug Hunter
+                {localeState.t('workflows.bisect.badge')}
               </span>
             </h3>
             <p class="text-xs text-zinc-500 dark:text-zinc-400">
-              Binary search pinpointing the exact commit that introduced a bug.
+              {localeState.t('workflows.bisect.subtitle')}
             </p>
           </div>
         </div>
@@ -83,7 +84,7 @@
           <div class="space-y-4">
             <div class="bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 space-y-3">
               <label for="bad-commit-select" class="block text-xs font-semibold text-rose-600 dark:text-rose-400">
-                1. Select Bad Commit (Where bug is currently present 🐞):
+                {localeState.t('workflows.bisect.selectBad')}
               </label>
               <select
                 id="bad-commit-select"
@@ -100,7 +101,7 @@
 
             <div class="bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 space-y-3">
               <label for="good-commit-select" class="block text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                2. Select Good Commit (Older commit known to work properly ✅):
+                {localeState.t('workflows.bisect.selectGood')}
               </label>
               <select
                 id="good-commit-select"
@@ -121,7 +122,7 @@
               class="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-semibold text-xs shadow-lg shadow-purple-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <Sparkles class="w-4 h-4" />
-              <span>Launch Bisect Wizard</span>
+              <span>{localeState.t('workflows.bisect.launchBtn')}</span>
             </button>
           </div>
         {:else if status?.culprit_commit_id}
@@ -133,16 +134,16 @@
 
             <div>
               <h4 class="text-sm font-bold text-emerald-800 dark:text-emerald-300">
-                First Bad Commit Pinpointed! 🎯
+                {localeState.t('workflows.bisect.pinpointedTitle')}
               </h4>
               <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                The exact commit that introduced the bug has been identified.
+                {localeState.t('workflows.bisect.pinpointedSubtitle')}
               </p>
             </div>
 
             <div class="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 text-left font-mono space-y-1 select-text shadow-xs">
               <div class="text-xs font-bold text-rose-600 dark:text-rose-400">
-                Culprit Commit: {status.culprit_commit_id.slice(0, 10)}
+                {localeState.t('workflows.bisect.culpritCommit', { sha: status.culprit_commit_id.slice(0, 10) })}
               </div>
               <div class="text-xs text-zinc-800 dark:text-zinc-300">
                 {commits.find((c) => c.id === status?.culprit_commit_id)?.summary || 'Culprit commit details'}
@@ -154,7 +155,7 @@
                 onclick={onAbortBisect}
                 class="px-5 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-xs font-medium text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-transparent cursor-pointer transition-colors"
               >
-                Reset & Return to Original HEAD
+                {localeState.t('workflows.bisect.resetHead')}
               </button>
             </div>
           </div>
@@ -164,9 +165,13 @@
             <!-- Progress Banner -->
             <div class="bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 space-y-2">
               <div class="flex items-center justify-between text-xs">
-                <span class="text-zinc-600 dark:text-zinc-400 font-medium">Bisect Progress:</span>
+                <span class="text-zinc-600 dark:text-zinc-400 font-medium">{localeState.t('workflows.bisect.progressLabel')}</span>
                 <span class="text-purple-600 dark:text-purple-400 font-mono font-bold">
-                  ~{status?.estimated_steps_remaining} step{status?.estimated_steps_remaining !== 1 ? 's' : ''} remaining ({status?.tested_commits_count}/{status?.total_commits_count} commits tested)
+                  {localeState.t('workflows.bisect.stepsRemainingDetail', {
+                    steps: status?.estimated_steps_remaining ?? 0,
+                    tested: status?.tested_commits_count ?? 0,
+                    total: status?.total_commits_count ?? 0,
+                  })}
                 </span>
               </div>
               <div class="w-full h-2 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
@@ -181,7 +186,7 @@
             <div class="bg-white dark:bg-zinc-950 border-2 border-purple-300 dark:border-purple-500/40 rounded-xl p-4 space-y-3 relative overflow-hidden shadow-xs">
               <div class="flex items-center justify-between">
                 <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
-                  Currently Testing Commit (Detached HEAD)
+                  {localeState.t('workflows.bisect.testingCommit')}
                 </span>
                 <span class="font-mono text-xs font-bold text-zinc-700 dark:text-zinc-300">
                   {status?.current_commit_id?.slice(0, 8)}
@@ -189,10 +194,10 @@
               </div>
 
               <div class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                {status?.current_commit_summary || 'Loading commit info...'}
+                {status?.current_commit_summary || localeState.t('workflows.bisect.loadingCommitInfo')}
               </div>
               <div class="text-xs text-zinc-500 dark:text-zinc-400">
-                Author: {status?.current_commit_author || 'Unknown'}
+                {localeState.t('workflows.bisect.author', { name: status?.current_commit_author || 'Unknown' })}
               </div>
             </div>
 
@@ -204,8 +209,8 @@
                 class="py-4 px-4 rounded-xl bg-emerald-50 dark:bg-emerald-600/20 hover:bg-emerald-100 dark:hover:bg-emerald-600/30 border border-emerald-300 dark:border-emerald-500/40 text-emerald-800 dark:text-emerald-300 font-bold text-xs flex flex-col items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-500/10 dark:shadow-emerald-950/50 cursor-pointer"
               >
                 <CheckCircle2 class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                <span>Code Chạy Tốt (Pass / Good ✅)</span>
-                <span class="text-[10px] font-normal text-emerald-600 dark:text-emerald-400/80">Không có lỗi ở commit này</span>
+                <span>{localeState.t('workflows.bisect.passGood')}</span>
+                <span class="text-[10px] font-normal text-emerald-600 dark:text-emerald-400/80">{localeState.t('workflows.bisect.passGoodDesc')}</span>
               </button>
 
               <button
@@ -214,8 +219,8 @@
                 class="py-4 px-4 rounded-xl bg-rose-50 dark:bg-rose-600/20 hover:bg-rose-100 dark:hover:bg-rose-600/30 border border-rose-300 dark:border-rose-500/40 text-rose-800 dark:text-rose-300 font-bold text-xs flex flex-col items-center justify-center gap-1.5 transition-all shadow-md shadow-rose-500/10 dark:shadow-rose-950/50 cursor-pointer"
               >
                 <Bug class="w-6 h-6 text-rose-600 dark:text-rose-400" />
-                <span>Code Bị Lỗi (Fail / Bad 🐞)</span>
-                <span class="text-[10px] font-normal text-rose-600 dark:text-rose-400/80">Lỗi xuất hiện ở commit này</span>
+                <span>{localeState.t('workflows.bisect.failBad')}</span>
+                <span class="text-[10px] font-normal text-rose-600 dark:text-rose-400/80">{localeState.t('workflows.bisect.failBadDesc')}</span>
               </button>
             </div>
 
@@ -226,7 +231,7 @@
                 class="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer transition-colors"
               >
                 <RotateCcw class="w-3.5 h-3.5" />
-                <span>Abort Bisect & Restore Original Branch</span>
+                <span>{localeState.t('workflows.bisect.abortAndRestore')}</span>
               </button>
             </div>
           </div>

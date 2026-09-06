@@ -6,6 +6,7 @@
     startGithubDeviceLogin,
   } from '../../api';
   import type { AccountProfile, DeviceCodeResponse, GitCredentials } from '../../types';
+  import { localeState } from '../../state/localeState.svelte';
 
   let {
     onSuccess = (_creds: GitCredentials, _profile: AccountProfile) => {},
@@ -49,7 +50,7 @@
       isStartingDeviceFlow = false;
       startDevicePolling(res.device_code, res.interval || 3);
     } catch (e: any) {
-      devicePollError = `Không thể khởi tạo đăng nhập GitHub: ${e?.message || e}`;
+      devicePollError = localeState.t('auth.device.initError', { error: e?.message || e });
       isStartingDeviceFlow = false;
     }
   }
@@ -84,7 +85,7 @@
         return true;
       } else if (res.status === 'expired' || res.status === 'error') {
         stopDevicePolling();
-        devicePollError = res.error_message || 'Xác thực thất bại hoặc đã hết hạn.';
+        devicePollError = res.error_message || localeState.t('auth.device.authFailedOrExpired');
         return false;
       }
     } catch (err: any) {
@@ -138,9 +139,9 @@
         </svg>
       </div>
       <div class="space-y-1">
-        <h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Đăng nhập tài khoản GitHub (OAuth)</h3>
+        <h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{localeState.t('auth.device.title')}</h3>
         <p class="text-xs text-neutral-500 dark:text-neutral-400 max-w-xs mx-auto">
-          Xác thực 1-click qua trình duyệt để hiển thị thông tin tài khoản và avatar.
+          {localeState.t('auth.device.desc')}
         </p>
       </div>
 
@@ -150,10 +151,10 @@
           <svg class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
-          Lưu ý về quyền với Private Repositories:
+          {localeState.t('auth.device.permNoticeTitle')}
         </span>
         <p class="text-[11px] text-neutral-700 dark:text-neutral-300 leading-relaxed">
-          Đăng nhập qua Web chỉ cấp quyền đọc hồ sơ. Nếu bạn đồng bộ với <strong>Repository Private</strong> và gặp lỗi <code class="text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/80 px-1 py-0.5 rounded">403 Write access not granted</code>, vui lòng chuyển sang tab <strong>Personal Token / PAT</strong> để cấp đủ quyền.
+          {localeState.t('auth.device.permNoticeDesc')}
         </p>
       </div>
 
@@ -171,12 +172,12 @@
       >
         {#if isStartingDeviceFlow}
           <div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-          <span>Đang kết nối GitHub...</span>
+          <span>{localeState.t('auth.device.connecting')}</span>
         {:else}
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
           </svg>
-          <span>Tiếp tục với GitHub (Sign in with GitHub)</span>
+          <span>{localeState.t('auth.device.signInWithGithub')}</span>
         {/if}
       </button>
     </div>
@@ -184,14 +185,14 @@
     <!-- Device Code Display -->
     <div class="space-y-4 py-2 text-center">
       <div class="space-y-1">
-        <span class="text-xs text-neutral-500 dark:text-neutral-400">Mã xác thực của bạn:</span>
+        <span class="text-xs text-neutral-500 dark:text-neutral-400">{localeState.t('auth.device.userCodeLabel')}</span>
         <div class="text-2xl font-mono font-bold tracking-widest text-indigo-600 dark:text-indigo-400 bg-neutral-100 dark:bg-neutral-950 py-3 px-4 rounded-xl border border-indigo-300 dark:border-indigo-500/30 select-all shadow-inner">
           {deviceFlowInfo.user_code}
         </div>
       </div>
 
       <p class="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
-        Bấm nút bên dưới để tự động sao chép mã và mở trang xác nhận trên GitHub.
+        {localeState.t('auth.device.openGithubPrompt')}
       </p>
 
       <button
@@ -200,9 +201,9 @@
         class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
       >
         {#if copyCodeSuccess}
-          <span class="text-emerald-300">✓ Đã copy mã! Đang mở GitHub...</span>
+          <span class="text-emerald-300">{localeState.t('auth.device.copiedCodeOpening')}</span>
         {:else}
-          <span>Sao chép mã & Mở GitHub</span>
+          <span>{localeState.t('auth.device.copyAndOpen')}</span>
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
             <polyline points="15 3 21 3 21 9"/>
@@ -217,8 +218,8 @@
             <img src={authSuccessProfile.avatar_url} alt="Avatar" class="w-8 h-8 rounded-full border border-emerald-400" />
           {/if}
           <div class="text-left">
-            <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300 block">✓ Xác thực thành công!</span>
-            <span class="text-[11px] text-emerald-600 dark:text-emerald-400/90">Xin chào @{authSuccessProfile.username}</span>
+            <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300 block">{localeState.t('auth.device.authSuccess')}</span>
+            <span class="text-[11px] text-emerald-600 dark:text-emerald-400/90">{localeState.t('auth.device.welcomeUser', { username: authSuccessProfile.username })}</span>
           </div>
         </div>
       {:else}
@@ -231,19 +232,19 @@
           >
             {#if isManualChecking}
               <div class="w-3.5 h-3.5 border-2 border-neutral-500 border-t-transparent rounded-full animate-spin"></div>
-              <span>Đang kiểm tra trạng thái...</span>
+              <span>{localeState.t('auth.device.checkingStatus')}</span>
             {:else}
               <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
-              <span>Tôi đã xác nhận trên Web (Kiểm tra ngay)</span>
+              <span>{localeState.t('auth.device.checkStatus')}</span>
             {/if}
           </button>
 
           {#if isPollingDevice}
             <div class="flex items-center justify-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 pt-1">
               <div class="w-3 h-3 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-              <span>Đang tự động kiểm tra xác thực...</span>
+              <span>{localeState.t('auth.device.autoPolling')}</span>
             </div>
           {/if}
         </div>

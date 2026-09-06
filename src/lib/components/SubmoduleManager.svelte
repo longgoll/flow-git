@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getSubmodules, updateSubmodules, syncSubmodules } from '../api';
+  import { localeState } from '../state/localeState.svelte';
   import type { SubmoduleInfo } from '../types';
 
   let {
@@ -105,12 +106,12 @@
           </div>
           <div>
             <h2 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-              Git Submodules Explorer
+              {localeState.t('submodules.title')}
               <span class="text-xs px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 font-normal border border-neutral-200 dark:border-transparent">
-                {submodules.length} {submodules.length === 1 ? 'module' : 'modules'}
+                {localeState.t('submodules.modulesCount', { count: submodules.length })}
               </span>
             </h2>
-            <p class="text-xs text-neutral-500 dark:text-neutral-400">Quản lý và đồng bộ các repository con lồng nhau</p>
+            <p class="text-xs text-neutral-500 dark:text-neutral-400">{localeState.t('submodules.description')}</p>
           </div>
         </div>
 
@@ -119,9 +120,9 @@
             onclick={() => handleSyncAll()}
             disabled={actionLoading !== null || isLoading}
             class="px-2.5 py-1 text-xs font-medium rounded-lg border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors disabled:opacity-50 cursor-pointer"
-            title="Đồng bộ URL trong .gitmodules vào config"
+            title={localeState.t('submodules.syncConfigTooltip')}
           >
-            Sync Config
+            {localeState.t('submodules.syncConfig')}
           </button>
           <button
             onclick={() => handleUpdateAll(true)}
@@ -131,11 +132,11 @@
             {#if actionLoading === 'all'}
               <span class="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
             {/if}
-            Update All (--init --recursive)
+            {localeState.t('submodules.updateAll')}
           </button>
           <button
             onclick={onClose}
-            aria-label="Đóng modal"
+            aria-label={localeState.t('submodules.closeModal')}
             class="p-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors cursor-pointer"
           >
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -158,7 +159,7 @@
         {#if isLoading}
           <div class="py-12 flex flex-col items-center justify-center gap-3 text-neutral-500 text-xs">
             <span class="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></span>
-            Đang quét danh sách submodules...
+            {localeState.t('submodules.scanning')}
           </div>
         {:else if submodules.length === 0}
           <div class="py-12 text-center text-neutral-500">
@@ -169,8 +170,8 @@
                 <rect width="8" height="8" x="13" y="13" rx="2"></rect>
               </svg>
             </div>
-            <p class="text-sm font-medium text-neutral-800 dark:text-neutral-300">Không có Git Submodules</p>
-            <p class="text-xs text-neutral-500 mt-1">Repository này hiện không chứa file .gitmodules nào.</p>
+            <p class="text-sm font-medium text-neutral-800 dark:text-neutral-300">{localeState.t('submodules.emptyTitle')}</p>
+            <p class="text-xs text-neutral-500 mt-1">{localeState.t('submodules.emptyDesc')}</p>
           </div>
         {:else}
           <div class="space-y-2.5">
@@ -181,13 +182,13 @@
                     <div class="flex items-center gap-2">
                       <span class="font-medium text-sm text-neutral-900 dark:text-neutral-200">{sub.name}</span>
                       {#if sub.status === 'clean'}
-                        <span class="px-2 py-0.5 text-[10px] font-medium rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 font-semibold">Clean</span>
+                        <span class="px-2 py-0.5 text-[10px] font-medium rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 font-semibold">{localeState.t('submodules.clean')}</span>
                       {:else if sub.status === 'modified'}
-                        <span class="px-2 py-0.5 text-[10px] font-medium rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 font-semibold">Modified</span>
+                        <span class="px-2 py-0.5 text-[10px] font-medium rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 font-semibold">{localeState.t('submodules.modified')}</span>
                       {:else if sub.status === 'uninitialized'}
-                        <span class="px-2 py-0.5 text-[10px] font-medium rounded-md bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-400 border border-red-200 dark:border-red-800/50 font-semibold">Uninitialized</span>
+                        <span class="px-2 py-0.5 text-[10px] font-medium rounded-md bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-400 border border-red-200 dark:border-red-800/50 font-semibold">{localeState.t('submodules.uninitialized')}</span>
                       {:else if sub.status === 'out_of_sync'}
-                        <span class="px-2 py-0.5 text-[10px] font-medium rounded-md bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 font-semibold">Out of Sync</span>
+                        <span class="px-2 py-0.5 text-[10px] font-medium rounded-md bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 font-semibold">{localeState.t('submodules.outOfSync')}</span>
                       {/if}
                     </div>
                     <div class="text-xs text-neutral-500 dark:text-neutral-400 font-mono mt-0.5 flex items-center gap-2 select-text">
@@ -204,21 +205,21 @@
                       {#if actionLoading === sub.name}
                         <span class="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                       {/if}
-                      Update
+                      {localeState.t('submodules.update')}
                     </button>
                   </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2 text-xs bg-white dark:bg-neutral-900/80 p-2.5 rounded-md border border-neutral-200 dark:border-neutral-800/50 font-mono text-neutral-600 dark:text-neutral-400">
                   <div>
-                    <span class="text-neutral-500 block text-[10px] font-sans">Remote URL</span>
+                    <span class="text-neutral-500 block text-[10px] font-sans">{localeState.t('submodules.remoteUrl')}</span>
                     <span class="truncate block text-neutral-900 dark:text-neutral-300 select-text" title={sub.url}>{sub.url || '(none)'}</span>
                   </div>
                   <div>
-                    <span class="text-neutral-500 block text-[10px] font-sans">Registered Commit (Index)</span>
+                    <span class="text-neutral-500 block text-[10px] font-sans">{localeState.t('submodules.registeredCommit')}</span>
                     <span class="text-indigo-600 dark:text-indigo-300 select-text font-semibold">{sub.index_oid?.slice(0, 8) || '(none)'}</span>
                     {#if sub.head_oid && sub.head_oid !== sub.index_oid}
-                      <span class="text-amber-600 dark:text-amber-400 text-[10px] block font-sans font-medium">HEAD: {sub.head_oid.slice(0, 8)} (diverged)</span>
+                      <span class="text-amber-600 dark:text-amber-400 text-[10px] block font-sans font-medium">{localeState.t('submodules.diverged', { head: sub.head_oid.slice(0, 8) })}</span>
                     {/if}
                   </div>
                 </div>

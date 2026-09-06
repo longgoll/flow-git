@@ -21,6 +21,7 @@
   } from '../api/edgeCases';
   import type { HeavyFileInfo } from '../types';
   import { toast } from '../state/toastState.svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     isOpen: boolean;
@@ -134,10 +135,10 @@
           </div>
           <div>
             <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              Sổ tay Cứu hộ Thực chiến (Git Emergency Playbook)
+              {localeState.t('assistant.playbook.title')}
             </h2>
             <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              Xử lý nhanh các tình huống kẹt Git, xung đột khóa tệp Windows và cứu dữ liệu khẩn cấp
+              {localeState.t('assistant.playbook.subtitle')}
             </p>
           </div>
         </div>
@@ -157,7 +158,7 @@
           class="px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer {activeTab === 'indexLock' ? 'bg-amber-100 dark:bg-amber-600/20 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40 font-semibold' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'}"
         >
           <Lock class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-          <span>Gỡ kẹt index.lock</span>
+          <span>{localeState.t('assistant.playbook.tabIndexLock')}</span>
           {#if hasIndexLock}
             <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
           {/if}
@@ -168,7 +169,7 @@
           class="px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer {activeTab === 'heavyFiles' ? 'bg-cyan-100 dark:bg-cyan-600/20 text-cyan-800 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/40 font-semibold' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'}"
         >
           <HardDrive class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-          <span>Tệp nặng (>50MB)</span>
+          <span>{localeState.t('assistant.playbook.tabHeavyFiles')}</span>
           {#if heavyFiles.length > 0}
             <span class="px-1.5 py-0.2 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-[10px] font-mono font-bold">
               {heavyFiles.length}
@@ -181,7 +182,7 @@
           class="px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer {activeTab === 'wrongBranch' ? 'bg-teal-100 dark:bg-teal-600/20 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-500/40 font-semibold' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'}"
         >
           <GitBranch class="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-          <span>Commit nhầm vào main</span>
+          <span>{localeState.t('assistant.playbook.tabWrongBranch')}</span>
         </button>
 
         <button

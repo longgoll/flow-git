@@ -12,6 +12,7 @@
     ArrowRight,
   } from 'lucide-svelte';
   import type { GitHubPullRequest } from '../../types';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     repoOwner: string;
@@ -54,13 +55,13 @@
       </div>
 
       <h2 class="text-base font-bold text-zinc-900 dark:text-zinc-100 mb-1.5">
-        Cloud Code Review Studio
+        {localeState.t('pullRequest.reviewer.launchpad.studioTitle')}
       </h2>
       <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-6">
         {#if repoOwner && repoName}
-          Kho lưu trữ <strong class="font-mono text-cyan-600 dark:text-cyan-400">{repoOwner}/{repoName}</strong> hiện chưa có Pull Request nào ở trạng thái <strong class="capitalize">{prFilter}</strong>.
+          {localeState.t('pullRequest.reviewer.launchpad.repoNoPRs', { owner: repoOwner, repo: repoName, filter: prFilter })}
         {:else}
-          Kết nối GitHub Remote để xem và thẩm định Pull Request trực tiếp trong FlowGit.
+          {localeState.t('pullRequest.reviewer.launchpad.connectPrompt')}
         {/if}
       </p>
 
@@ -70,7 +71,7 @@
         class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 active:scale-98 text-white text-xs font-semibold flex items-center gap-2 shadow-md shadow-cyan-600/20 cursor-pointer transition-all mb-8"
       >
         <Plus class="w-4 h-4" />
-        <span>Tạo Pull Request ngay</span>
+        <span>{localeState.t('pullRequest.reviewer.launchpad.createPRNow')}</span>
       </button>
 
       <!-- Feature Showcase Cards -->
@@ -78,40 +79,40 @@
         <div class="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 shadow-xs">
           <div class="flex items-center gap-2 text-xs font-semibold text-zinc-800 dark:text-zinc-200 mb-1">
             <FileText class="w-3.5 h-3.5 text-cyan-500 shrink-0" />
-            <span>Monaco Diff View</span>
+            <span>{localeState.t('pullRequest.reviewer.launchpad.cardMonacoTitle')}</span>
           </div>
           <p class="text-[11px] text-zinc-500 dark:text-zinc-400 leading-normal">
-            Soi từng dòng code thay đổi với bộ tô màu cú pháp và highlight chuẩn IDE.
+            {localeState.t('pullRequest.reviewer.launchpad.cardMonacoDesc')}
           </p>
         </div>
 
         <div class="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 shadow-xs">
           <div class="flex items-center gap-2 text-xs font-semibold text-zinc-800 dark:text-zinc-200 mb-1">
             <MessageSquare class="w-3.5 h-3.5 text-violet-500 shrink-0" />
-            <span>Inline Comments</span>
+            <span>{localeState.t('pullRequest.reviewer.launchpad.cardInlineTitle')}</span>
           </div>
           <p class="text-[11px] text-zinc-500 dark:text-zinc-400 leading-normal">
-            Nhận xét trực tiếp tại từng dòng code và thảo luận realtime với đồng đội.
+            {localeState.t('pullRequest.reviewer.launchpad.cardInlineDesc')}
           </p>
         </div>
 
         <div class="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 shadow-xs">
           <div class="flex items-center gap-2 text-xs font-semibold text-zinc-800 dark:text-zinc-200 mb-1">
             <GitMerge class="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-            <span>1-Click Merge</span>
+            <span>{localeState.t('pullRequest.reviewer.launchpad.cardMergeTitle')}</span>
           </div>
           <p class="text-[11px] text-zinc-500 dark:text-zinc-400 leading-normal">
-            Hợp nhất nhánh an toàn: Merge Commit, Squash hoặc Rebase kèm dọn dẹp nhánh.
+            {localeState.t('pullRequest.reviewer.launchpad.cardMergeDesc')}
           </p>
         </div>
 
         <div class="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 shadow-xs">
           <div class="flex items-center gap-2 text-xs font-semibold text-zinc-800 dark:text-zinc-200 mb-1">
             <Download class="w-3.5 h-3.5 text-amber-500 shrink-0" />
-            <span>Checkout Local</span>
+            <span>{localeState.t('pullRequest.reviewer.launchpad.cardCheckoutTitle')}</span>
           </div>
           <p class="text-[11px] text-zinc-500 dark:text-zinc-400 leading-normal">
-            Kéo nhánh PR về máy kiểm thử, chạy build và test độc lập không sợ conflict.
+            {localeState.t('pullRequest.reviewer.launchpad.cardCheckoutDesc')}
           </p>
         </div>
       </div>
@@ -123,10 +124,10 @@
         <Search class="w-5 h-5" />
       </div>
       <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-1">
-        Không tìm thấy PR phù hợp
+        {localeState.t('pullRequest.reviewer.launchpad.searchNoResultsTitle')}
       </h3>
       <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
-        Không có kết quả nào khớp với từ khóa "<strong class="text-zinc-700 dark:text-zinc-300">{searchQuery}</strong>" trong bộ lọc <span class="capitalize font-mono">{prFilter}</span>.
+        {localeState.t('pullRequest.reviewer.launchpad.searchNoResultsDesc', { query: searchQuery, filter: prFilter })}
       </p>
       <button
         type="button"
@@ -134,7 +135,7 @@
         class="px-3.5 py-1.5 rounded-lg bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-xs font-medium text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5 cursor-pointer transition-colors"
       >
         <RotateCcw class="w-3.5 h-3.5" />
-        <span>Xóa bộ lọc tìm kiếm</span>
+        <span>{localeState.t('pullRequest.reviewer.launchpad.clearSearchFilter')}</span>
       </button>
     </div>
   {:else}
@@ -144,10 +145,10 @@
         <GitPullRequest class="w-6 h-6" />
       </div>
       <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-1">
-        Sẵn sàng Review Pull Request
+        {localeState.t('pullRequest.reviewer.launchpad.readyToReviewTitle')}
       </h3>
       <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
-        Chọn một Pull Request từ danh sách bên trái ({filteredPRs.length} PRs) để xem mã nguồn, lịch sử thảo luận và gửi đánh giá.
+        {localeState.t('pullRequest.reviewer.launchpad.readyToReviewDesc', { count: filteredPRs.length })}
       </p>
       {#if filteredPRs.length > 0}
         <button
@@ -155,7 +156,7 @@
           onclick={() => onSelectPR(filteredPRs[0])}
           class="px-3.5 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs"
         >
-          <span>Xem PR mới nhất (#{filteredPRs[0].number})</span>
+          <span>{localeState.t('pullRequest.reviewer.launchpad.viewLatestPR', { number: filteredPRs[0].number })}</span>
           <ArrowRight class="w-3.5 h-3.5" />
         </button>
       {/if}

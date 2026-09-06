@@ -13,6 +13,7 @@
     Settings,
   } from 'lucide-svelte';
   import type { RemoteInfo, StashInfo, TagInfo, WorktreeInfo } from '../../types';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     worktrees?: WorktreeInfo[];
@@ -58,7 +59,7 @@
     >
       <div class="flex items-center gap-1.5">
         <FolderGit2 class="w-3.5 h-3.5 text-zinc-400" />
-        <span>Worktrees</span>
+        <span>{localeState.t('sidebar.worktrees')}</span>
         <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({worktrees.length})</span>
       </div>
       {#if showWorktrees}
@@ -77,7 +78,7 @@
               else if (onOpenWorktrees) onOpenWorktrees();
             }}
             class="w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs transition-colors cursor-pointer text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-zinc-900/80 hover:text-zinc-950 dark:hover:text-white group"
-            title="Mở Worktree '{wt.name}' ({wt.path})"
+            title={`Worktree '${wt.name}' (${wt.path})`}
           >
             <div class="flex items-center gap-2 truncate pr-1">
               <span class="w-1.5 h-1.5 rounded-full {wt.is_main ? 'bg-cyan-500 dark:bg-cyan-400' : 'bg-purple-500 dark:bg-purple-400'} shrink-0"></span>
@@ -101,7 +102,7 @@
       class="flex items-center gap-1.5 cursor-pointer flex-1 text-left"
     >
       <Globe class="w-3.5 h-3.5 text-zinc-400" />
-      <span>Remotes</span>
+      <span>{localeState.t('sidebar.remotes')}</span>
       <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({remotes.length})</span>
     </button>
     <div class="flex items-center gap-1">
@@ -109,7 +110,7 @@
         <button
           onclick={(e) => { e.stopPropagation(); onOpenRemoteManager(); }}
           class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-cyan-600 dark:hover:text-cyan-300 transition-colors cursor-pointer"
-          title="Quản lý Remotes (Thêm, sửa, xóa, đổi URL)"
+          title={localeState.t('sidebar.manageRemotesTitle')}
         >
           <Plus class="w-3 h-3" />
         </button>
@@ -140,7 +141,7 @@
               <button
                 onclick={() => onFetchRemote(remote.name)}
                 class="opacity-0 group-hover:opacity-100 p-0.5 rounded text-zinc-400 dark:text-zinc-500 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all cursor-pointer"
-                title={`Fetch từ ${remote.name}`}
+                title={localeState.t('sidebar.fetchRemoteTooltip', { name: remote.name })}
               >
                 <RefreshCw class="w-2.5 h-2.5" />
               </button>
@@ -149,7 +150,7 @@
               <button
                 onclick={onOpenRemoteManager}
                 class="opacity-0 group-hover:opacity-100 p-0.5 rounded text-zinc-400 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all cursor-pointer"
-                title="Cấu hình Remote"
+                title={localeState.t('sidebar.remoteConfig')}
               >
                 <Settings class="w-2.5 h-2.5" />
               </button>
@@ -159,16 +160,16 @@
       {/each}
       {#if remotes.length === 0}
         <div class="px-2 py-2 flex flex-col gap-2">
-          <div class="text-[11px] text-zinc-500 italic">Kho nội bộ (Chưa có remote)</div>
+          <div class="text-[11px] text-zinc-500 italic">{localeState.t('sidebar.noRemoteRepo')}</div>
           {#if onPublishRepo}
             <button
               type="button"
               onclick={onPublishRepo}
               class="w-full py-1.5 px-2.5 bg-indigo-100 dark:bg-indigo-600/20 hover:bg-indigo-200 dark:hover:bg-indigo-600/30 text-indigo-800 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-500/30 hover:border-indigo-400 dark:hover:border-indigo-500/50 rounded-lg text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
-              title="Xuất bản dự án này lên GitHub (chọn Công khai hoặc Riêng tư)"
+              title={localeState.t('sidebar.publishRepoTooltip')}
             >
               <CloudUpload class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-              <span>Xuất bản lên GitHub</span>
+              <span>{localeState.t('sidebar.publishRepoToGithub')}</span>
             </button>
           {/if}
         </div>
@@ -185,7 +186,7 @@
   >
     <div class="flex items-center gap-1.5">
       <Tag class="w-3.5 h-3.5 text-zinc-400" />
-      <span>Tags</span>
+      <span>{localeState.t('sidebar.tags')}</span>
       <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({tags.length})</span>
     </div>
     {#if showTags}
@@ -207,7 +208,7 @@
             <button
               onclick={(e) => { e.stopPropagation(); onDeleteTag(tag.name); }}
               class="opacity-0 group-hover:opacity-100 p-0.5 rounded text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all cursor-pointer"
-              title="Xóa Tag {tag.name}"
+              title={localeState.t('sidebar.deleteTagTooltip', { name: tag.name })}
             >
               <Trash2 class="w-3 h-3" />
             </button>
@@ -215,7 +216,7 @@
         </div>
       {/each}
       {#if tags.length === 0}
-        <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">No tags</div>
+        <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">{localeState.t('sidebar.noTagsFound')}</div>
       {/if}
     </div>
   {/if}
@@ -229,7 +230,7 @@
   >
     <div class="flex items-center gap-1.5">
       <Archive class="w-3.5 h-3.5 text-zinc-400" />
-      <span>Stashes</span>
+      <span>{localeState.t('sidebar.stashes')}</span>
       <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({stashes.length})</span>
     </div>
     {#if showStashes}
@@ -248,7 +249,7 @@
         </div>
       {/each}
       {#if stashes.length === 0}
-        <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">No stashes</div>
+        <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">{localeState.t('sidebar.noStashesFound')}</div>
       {/if}
     </div>
   {/if}

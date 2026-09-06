@@ -1,4 +1,4 @@
-import type { AccountProfile, GitCredentials } from '../types';
+import type { AccountProfile, GitCredentials, GitHubPullRequest } from '../types';
 import { executeRemoteWithAuth, getActiveAccount, saveAccountAuth, smartSync } from '../api';
 import {
   fetchGitHubPullRequests,
@@ -15,6 +15,16 @@ export class RemoteState {
   openPRCount = $state<number>(0);
   isCheckingPRs = $state<boolean>(false);
   lastPRCheckRepo = $state<string>('');
+  lastCreatedPR = $state<GitHubPullRequest | null>(null);
+  prRefreshTrigger = $state<number>(0);
+
+  triggerPRRefresh(newPR?: GitHubPullRequest) {
+    if (newPR) {
+      this.lastCreatedPR = newPR;
+      this.openPRCount = (this.openPRCount || 0) + 1;
+    }
+    this.prRefreshTrigger++;
+  }
 
   showAuthModal = $state<boolean>(false);
   authModalType = $state<'ssh_passphrase' | 'https' | 'token' | 'github_oauth' | string>('token');

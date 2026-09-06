@@ -27,6 +27,7 @@
   import GitPlaybookModal from './GitPlaybookModal.svelte';
   import CreatePullRequestModal from './CreatePullRequestModal.svelte';
   import { toast } from '../state/toastState.svelte';
+  import { localeState } from '../state/localeState.svelte';
   import type { ModalState } from '../state/modalState.svelte';
   import type { RepoState } from '../state/repoState.svelte';
   import type { WorkingTreeState } from '../state/workingTreeState.svelte';
@@ -118,7 +119,7 @@
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
           <GitFork class="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-          Open Git Repository
+          {localeState.t('modals.openRepo.title')}
         </h3>
         <button
           onclick={() => (modalState.showOpenDialog = false)}
@@ -129,13 +130,13 @@
       </div>
 
       <p class="text-xs text-zinc-600 dark:text-zinc-400">
-        Enter absolute directory path to a Git repository on your system:
+        {localeState.t('modals.openRepo.inputPrompt')}
       </p>
 
       <input
         type="text"
         bind:value={modalState.inputRepoPath}
-        placeholder="f:/Dev/product/git-tool"
+        placeholder={localeState.t('modals.openRepo.placeholder')}
         class="w-full bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs font-mono text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-cyan-500"
       />
 
@@ -144,7 +145,7 @@
           onclick={() => (modalState.showOpenDialog = false)}
           class="px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-transparent text-xs text-zinc-700 dark:text-zinc-300 cursor-pointer transition-colors"
         >
-          Cancel
+          {localeState.t('common.cancel')}
         </button>
         <button
           onclick={async () => {
@@ -156,7 +157,7 @@
           }}
           class="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-xs cursor-pointer shadow-lg shadow-cyan-600/30 transition-all"
         >
-          Open Repo
+          {localeState.t('modals.openRepo.openBtn')}
         </button>
       </div>
     </div>
@@ -539,11 +540,14 @@
   isOpen={modalState.showCreatePRModal}
   remoteOriginUrl={originRemoteUrl}
   branches={repo.branches}
+  activeAccount={remote.activeAccount}
+  onOpenAuth={() => (remote.showAuthModal = true)}
   initialSourceBranch={modalState.createPRSourceBranch || ''}
   onClose={() => modalState.closeCreatePR()}
-  onSuccess={async () => {
+  onSuccess={async (newPR) => {
     modalState.closeCreatePR();
     onChangeViewMode('pr');
+    remote.triggerPRRefresh(newPR);
     if (repo.currentRepoPath) {
       await loadRepository(repo.currentRepoPath);
     }

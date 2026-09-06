@@ -20,6 +20,7 @@
     ShieldCheck,
     ShieldAlert,
   } from 'lucide-svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     repoPath: string;
@@ -227,21 +228,21 @@
 
       <div>
         <div class="flex items-center gap-2">
-          <span class="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">Dev Focus Mode</span>
+          <span class="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">{localeState.t('graph.focusView.title')}</span>
           <span class="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-500/20 border border-amber-300/80 dark:border-amber-500/30 text-amber-900 dark:text-amber-300 font-mono font-medium">
-            Isolated Path
+            {localeState.t('graph.focusView.isolatedPath')}
           </span>
         </div>
         <div class="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 font-mono mt-0.5 relative">
           <span class="text-amber-800 dark:text-amber-300 font-semibold">{focusData?.branch_name || currentBranchName || 'HEAD'}</span>
-          <span class="text-zinc-400 dark:text-zinc-500">relative to</span>
+          <span class="text-zinc-400 dark:text-zinc-500">{localeState.t('graph.focusView.relativeTo')}</span>
 
           <!-- Switchable Base Branch Dropdown Button -->
           <div class="relative inline-block">
             <button
               onclick={() => (showBaseDropdown = !showBaseDropdown)}
               class="inline-flex items-center gap-1 text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 px-2 py-0.5 rounded border border-zinc-300 dark:border-zinc-700 font-semibold cursor-pointer shadow-xs transition-colors"
-              title="Nhấp để đổi nhánh Base so sánh (main, origin/main, v.v.)"
+              title={localeState.t('graph.focusView.changeBaseTooltip')}
             >
               <span>{focusData?.base_branch || 'main'}</span>
               <ChevronDown class="w-3 h-3 text-zinc-400" />
@@ -257,7 +258,7 @@
 
               <!-- Menu -->
               <div class="absolute left-0 top-full mt-1 w-48 max-h-56 overflow-y-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl z-50 py-1 font-sans text-xs divide-y divide-zinc-100 dark:divide-zinc-800/60">
-                <div class="px-2.5 py-1 text-[10px] uppercase font-bold text-zinc-400">Select Base Branch</div>
+                <div class="px-2.5 py-1 text-[10px] uppercase font-bold text-zinc-400">{localeState.t('graph.focusView.selectBaseBranch')}</div>
                 {#each candidateBaseBranches as b}
                   <button
                     onclick={() => handleSelectBaseBranch(b)}
@@ -278,20 +279,20 @@
       <!-- Ahead / Behind Stats -->
       {#if focusData}
         <div class="flex items-center gap-2 pl-3 border-l border-zinc-200 dark:border-zinc-800">
-          <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300/80 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs font-mono font-semibold" title="Commits you made ahead of base">
+          <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300/80 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs font-mono font-semibold" title={localeState.t('graph.focusView.aheadTooltip')}>
             <ArrowUpRight class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>{focusData.ahead_count} Ahead</span>
+            <span>{localeState.t('graph.focusView.ahead', { count: focusData.ahead_count })}</span>
           </div>
 
           {#if focusData.behind_count > 0}
-            <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-xs font-mono font-semibold" title="Commits on base you don't have yet">
+            <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-xs font-mono font-semibold" title={localeState.t('graph.focusView.behindTooltip')}>
               <ArrowDownLeft class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span>{focusData.behind_count} Behind</span>
+              <span>{localeState.t('graph.focusView.behind', { count: focusData.behind_count })}</span>
             </div>
           {:else}
-            <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-mono font-medium" title="Up to date with base branch">
+            <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-mono font-medium" title={localeState.t('graph.focusView.upToDateTooltip')}>
               <Check class="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-              <span>0 Behind</span>
+              <span>{localeState.t('graph.focusView.upToDate')}</span>
             </div>
           {/if}
         </div>
@@ -304,10 +305,10 @@
         <button
           onclick={handleBranchComparison}
           class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/80 text-xs font-medium text-cyan-700 dark:text-cyan-300 hover:text-cyan-900 dark:hover:text-cyan-100 transition-all cursor-pointer shadow-xs"
-          title="So sánh toàn bộ thay đổi giữa các đầu commit của nhánh so với Base"
+          title={localeState.t('graph.focusView.branchDiffTooltip')}
         >
           <GitCompare class="w-3.5 h-3.5 text-cyan-500" />
-          <span>Branch Diff</span>
+          <span>{localeState.t('graph.focusView.branchDiff')}</span>
         </button>
       {/if}
 
@@ -317,10 +318,10 @@
           onclick={handlePush}
           disabled={isPushing}
           class="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all cursor-pointer shadow-xs hover:scale-102 disabled:opacity-70"
-          title="Đẩy {focusData.ahead_count} commit(s) lên remote"
+          title={localeState.t('graph.focusView.pushTooltip', { count: focusData.ahead_count })}
         >
           <Upload class="w-3.5 h-3.5 {isPushing ? 'animate-bounce' : ''}" />
-          <span>{isPushing ? 'Pushing...' : `Push (${focusData.ahead_count})`}</span>
+          <span>{isPushing ? localeState.t('graph.focusView.pushing') : localeState.t('graph.focusView.push', { count: focusData.ahead_count })}</span>
         </button>
       {/if}
 
@@ -328,10 +329,10 @@
         <button
           onclick={() => onOpenCreatePR?.(focusData!.branch_name, focusData!.base_branch)}
           class="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900 border border-purple-300 dark:border-purple-700/80 text-purple-800 dark:text-purple-200 text-xs font-semibold transition-all cursor-pointer shadow-xs hover:scale-102"
-          title="Tạo Pull Request từ nhánh này vào {focusData.base_branch}"
+          title={localeState.t('graph.focusView.createPrTooltip', { base: focusData.base_branch })}
         >
           <GitPullRequest class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-          <span>Create PR</span>
+          <span>{localeState.t('graph.focusView.createPr')}</span>
         </button>
       {/if}
 
@@ -340,27 +341,27 @@
         {#if isDryRunning}
           <div
             class="flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-[10px] font-mono text-zinc-500"
-            title="Đang mô phỏng ngầm kiểm tra conflict..."
+            title={localeState.t('graph.focusView.simulatingTooltip')}
           >
             <RefreshCw class="w-3 h-3 animate-spin text-zinc-400" />
-            <span>Simulating...</span>
+            <span>{localeState.t('graph.focusView.simulating')}</span>
           </div>
         {:else if dryRunResult}
           {#if !dryRunResult.has_conflicts}
             <div
               class="flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-[11px] font-mono font-medium text-emerald-800 dark:text-emerald-300 shadow-xs"
-              title="Mô phỏng ngầm hoàn tất: Sạch 100%, không phát hiện xung đột khi rebase."
+              title={localeState.t('graph.focusView.cleanRebaseTooltip')}
             >
               <ShieldCheck class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Clean Rebase</span>
+              <span>{localeState.t('graph.focusView.cleanRebase')}</span>
             </div>
           {:else}
             <div
               class="flex items-center gap-1 px-2 py-1 rounded-md bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-[11px] font-mono font-medium text-rose-800 dark:text-rose-300 shadow-xs"
-              title="Xung đột dự kiến ở {dryRunResult.conflict_files.length} tệp: {dryRunResult.conflict_files.join(', ')}"
+              title={localeState.t('graph.focusView.conflictsTooltip', { count: dryRunResult.conflict_files.length, files: dryRunResult.conflict_files.join(', ') })}
             >
               <ShieldAlert class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
-              <span>{dryRunResult.conflict_files.length} Conflict(s)</span>
+              <span>{localeState.t('graph.focusView.conflicts', { count: dryRunResult.conflict_files.length })}</span>
             </div>
           {/if}
         {/if}
@@ -371,17 +372,17 @@
           onclick={handleSync}
           disabled={isSyncing || focusData?.behind_count === 0}
           class="flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-medium transition-all {focusData?.behind_count === 0 ? 'bg-zinc-100 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 cursor-default opacity-80' : 'bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/30 border-amber-300 dark:border-amber-500/40 text-amber-900 dark:text-amber-200 cursor-pointer shadow-xs'}"
-          title={focusData?.behind_count === 0 ? 'Nhánh của bạn đã đồng bộ mới nhất với base' : `Rebase ${focusData?.behind_count} commit(s) mới từ ${focusData?.base_branch}`}
+          title={focusData?.behind_count === 0 ? localeState.t('graph.focusView.syncedTooltip') : localeState.t('graph.focusView.rebaseTooltip', { count: focusData?.behind_count ?? 0, base: focusData?.base_branch ?? '' })}
         >
           {#if syncSuccess}
             <Check class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span class="text-emerald-700 dark:text-emerald-300 font-bold">Synced!</span>
+            <span class="text-emerald-700 dark:text-emerald-300 font-bold">{localeState.t('graph.focusView.synced')}</span>
           {:else if focusData?.behind_count === 0}
             <Check class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Up to date</span>
+            <span>{localeState.t('graph.focusView.upToDateBtn')}</span>
           {:else}
             <RefreshCw class="w-3.5 h-3.5 {isSyncing ? 'animate-spin text-amber-600 dark:text-amber-400' : 'text-amber-700 dark:text-amber-400'}" />
-            <span>{isSyncing ? 'Syncing...' : `Rebase (${focusData?.behind_count})`}</span>
+            <span>{isSyncing ? localeState.t('graph.focusView.syncing') : localeState.t('graph.focusView.rebaseBehind', { count: focusData?.behind_count ?? 0 })}</span>
           {/if}
         </button>
       {/if}
@@ -389,10 +390,10 @@
       <button
         onclick={onCloseFocus}
         class="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 transition-colors cursor-pointer shadow-xs"
-        title="Quay lại đồ thị đầy đủ (Exit Focus)"
+        title={localeState.t('graph.focusView.exitFocusTooltip')}
       >
         <X class="w-3.5 h-3.5" />
-        <span>Exit Focus</span>
+        <span>{localeState.t('graph.focusView.exitFocus')}</span>
       </button>
     </div>
   </div>
@@ -402,7 +403,7 @@
     {#if isLoading}
       <div class="h-full flex items-center justify-center text-zinc-500 text-xs gap-2">
         <div class="w-4 h-4 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin"></div>
-        <span>Calculating branch divergence...</span>
+        <span>{localeState.t('graph.focusView.calculating')}</span>
       </div>
     {:else if focusData && focusData.commits.length > 0}
       <div class="flex-1 min-h-[120px] relative overflow-hidden flex flex-col">
@@ -433,7 +434,7 @@
           tabindex="-1"
           onmousedown={handleStartResize}
           class="h-1.5 w-full bg-zinc-200/80 dark:bg-zinc-800/80 hover:bg-cyan-500 active:bg-cyan-600 cursor-row-resize transition-colors flex items-center justify-center shrink-0 group relative z-10 select-none {isResizing ? 'bg-cyan-500!' : ''}"
-          title="Kéo chuột để điều chỉnh độ cao panel chi tiết"
+          title={localeState.t('graph.focusView.resizeTooltip')}
         >
           <div class="w-10 h-0.5 rounded-full bg-zinc-400 dark:bg-zinc-600 group-hover:bg-white transition-colors"></div>
         </div>
@@ -459,9 +460,9 @@
     {:else}
       <div class="h-full flex flex-col items-center justify-center p-8 text-center text-zinc-500 text-xs gap-2">
         <AlertTriangle class="w-8 h-8 text-amber-500/50" />
-        <span class="text-zinc-800 dark:text-zinc-300 font-semibold text-sm">No divergent commits found</span>
+        <span class="text-zinc-800 dark:text-zinc-300 font-semibold text-sm">{localeState.t('graph.focusView.noDivergentTitle')}</span>
         <span class="max-w-sm text-zinc-500">
-          This branch is completely in sync with {selectedBase || 'base'}, or there are no unmerged local commits.
+          {localeState.t('graph.focusView.noDivergentDesc', { base: selectedBase || 'base' })}
         </span>
       </div>
     {/if}

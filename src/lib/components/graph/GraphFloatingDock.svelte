@@ -2,6 +2,7 @@
   import { Layers, GitCompare, Copy, X } from 'lucide-svelte';
   import { toast } from '../../state/toastState.svelte';
   import type { CommitNode } from '../../types';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     activeSelectedIds: string[];
@@ -34,7 +35,10 @@
 
   function handleCopyShas() {
     navigator.clipboard.writeText(activeSelectedIds.join('\n'));
-    toast.success('Copied SHAs', `Đã sao chép ${activeSelectedIds.length} mã commit SHA vào clipboard.`);
+    toast.success(
+      localeState.t('graph.floatingDock.copiedShasToast'),
+      localeState.t('graph.floatingDock.copiedShasToastDesc', { count: activeSelectedIds.length })
+    );
   }
 </script>
 
@@ -47,7 +51,7 @@
     <div class="flex items-center gap-2 text-xs font-mono">
       <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
       <span class="text-zinc-800 dark:text-zinc-200 font-semibold">
-        {activeSelectedIds.length} commits selected
+        {localeState.t('graph.floatingDock.commitsSelected', { count: activeSelectedIds.length })}
       </span>
     </div>
 
@@ -57,10 +61,10 @@
       <button
         onclick={handleSquash}
         class="px-2.5 py-1 rounded-lg text-xs bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-600/50 text-amber-800 dark:text-amber-300 font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102"
-        title="Gộp các commit được chọn thành 1 (S)"
+        title={localeState.t('graph.floatingDock.squashTooltip')}
       >
         <Layers class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-        <span>Squash (S)</span>
+        <span>{localeState.t('graph.floatingDock.squash')}</span>
       </button>
     {/if}
 
@@ -68,26 +72,26 @@
       <button
         onclick={handleCompare}
         class="px-2.5 py-1 rounded-lg text-xs bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-cyan-700 dark:text-cyan-300 font-medium flex items-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102 border border-zinc-200 dark:border-transparent"
-        title="So sánh thay đổi giữa 2 đầu commit"
+        title={localeState.t('graph.floatingDock.compareTooltip')}
       >
         <GitCompare class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-        <span>Compare Commits</span>
+        <span>{localeState.t('graph.floatingDock.compareCommits')}</span>
       </button>
     {/if}
 
     <button
       onclick={handleCopyShas}
       class="px-2.5 py-1 rounded-lg text-xs bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-medium flex items-center gap-1.5 transition-all cursor-pointer shadow-xs hover:scale-102 border border-zinc-200 dark:border-transparent"
-      title="Sao chép toàn bộ commit hashes"
+      title={localeState.t('graph.floatingDock.copyShasTooltip')}
     >
       <Copy class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-      <span>Copy SHAs</span>
+      <span>{localeState.t('graph.floatingDock.copyShas')}</span>
     </button>
 
     <button
       onclick={onDeselect}
       class="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-      title="Bỏ chọn (Esc)"
+      title={localeState.t('graph.floatingDock.deselectTooltip')}
     >
       <X class="w-3.5 h-3.5" />
     </button>

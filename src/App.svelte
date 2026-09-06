@@ -85,7 +85,7 @@
       selectedFileIsStaged: wt.selectedFileIsStaged,
       selectedCommitId: repo.selectedCommitId,
       selectedCommitIds: repo.selectedCommitIds,
-      viewMode: viewMode,
+      viewMode: viewMode === 'pr' ? 'graph' : viewMode,
       searchQuery: repo.searchQuery,
       recentPushedBranch: recentPushedBranch,
     });
@@ -213,12 +213,14 @@
         openPRCount: tabContext?.openPRCount ?? remote.openPRCount,
         isWorktree: isWt,
         recentPushedBranch: tabContext?.recentPushedBranch || null,
-        viewMode: tabContext?.viewMode || viewMode,
+        viewMode: tabContext?.viewMode === 'pr' ? 'graph' : (tabContext?.viewMode || 'graph'),
       });
 
       recentPushedBranch = tabContext?.recentPushedBranch || null;
-      if (tabContext?.viewMode) {
+      if (tabContext?.viewMode && tabContext.viewMode !== 'pr') {
         viewMode = tabContext.viewMode;
+      } else {
+        viewMode = 'graph';
       }
     } catch (err: any) {
       if (sessionId !== currentLoadSessionId) return;
@@ -261,8 +263,10 @@
     if (tab.openPRCount !== undefined) {
       remote.openPRCount = tab.openPRCount;
     }
-    if (tab.viewMode) {
+    if (tab.viewMode && tab.viewMode !== 'pr') {
       viewMode = tab.viewMode;
+    } else {
+      viewMode = 'graph';
     }
     if (tab.searchQuery !== undefined) {
       repo.searchQuery = tab.searchQuery;
@@ -331,6 +335,7 @@
       try {
         await loadRepository(repoToOpen);
         tabState.initDefaultTab(repoToOpen, repo.repoSummary?.current_branch);
+        viewMode = 'graph';
       } catch {
         repo.showWelcomeScreen = true;
       }
@@ -576,6 +581,7 @@
         {loadRepository}
         {refreshWorkingTreeAndDiff}
         handleCompareCommits={actions.compareCommits}
+        handleSwapComparison={actions.swapComparison}
         handleCherryPickCommit={actions.cherryPickCommit}
         handleRevertCommit={actions.revertCommit}
         handleResetToCommit={actions.resetToCommit}

@@ -15,6 +15,7 @@
   import type { GitHubCommitChecks, GitHubPullRequest } from '../../types';
   import { getPRStatusBadge } from './prDiffUtils';
   import { formatRelativeTime } from '../../utils/timeUtils';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     selectedPR: GitHubPullRequest;
@@ -63,10 +64,10 @@
     </div>
 
     <div class="flex items-center gap-3 text-xs text-zinc-600 dark:text-zinc-400 flex-wrap">
-      <span>Bởi <strong class="text-zinc-900 dark:text-zinc-200">{selectedPR.user.login}</strong> ({formatRelativeTime(selectedPR.created_at)})</span>
+      <span>{localeState.t('pullRequest.reviewer.header.byAuthor', { name: selectedPR.user.login, time: formatRelativeTime(selectedPR.created_at) })}</span>
       <span>•</span>
       <span class="font-mono text-[11px] text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
-        <span>Nhánh:</span>
+        <span>{localeState.t('pullRequest.reviewer.header.branchPrefix')}</span>
         <code class="px-1.5 py-0.5 rounded bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 font-semibold">{selectedPR.head.ref}</code>
         <span class="text-zinc-400">&rarr;</span>
         <code class="px-1.5 py-0.5 rounded bg-zinc-200/70 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold">{selectedPR.base.ref}</code>
@@ -76,19 +77,19 @@
       {#if commitChecks && commitChecks.total_count > 0}
         <span>•</span>
         {#if commitChecks.state === 'success'}
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1" title="Tất cả bài kiểm thử CI đã vượt qua">
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1" title={localeState.t('pullRequest.reviewer.header.ciPassedTooltip')}>
             <CheckCircle class="w-3 h-3" />
-            <span>CI Passed ({commitChecks.total_count})</span>
+            <span>{localeState.t('pullRequest.reviewer.header.ciPassed', { count: commitChecks.total_count })}</span>
           </span>
         {:else if commitChecks.state === 'pending'}
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 flex items-center gap-1" title="Các bài kiểm tra CI đang chạy...">
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 flex items-center gap-1" title={localeState.t('pullRequest.reviewer.header.ciRunningTooltip')}>
             <Clock class="w-3 h-3 animate-spin" />
-            <span>CI Running...</span>
+            <span>{localeState.t('pullRequest.reviewer.header.ciRunning')}</span>
           </span>
         {:else if commitChecks.state === 'failure'}
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-300 dark:border-rose-800 flex items-center gap-1" title="Có bài kiểm tra CI bị lỗi!">
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-300 dark:border-rose-800 flex items-center gap-1" title={localeState.t('pullRequest.reviewer.header.ciFailedTooltip')}>
             <XCircle class="w-3 h-3" />
-            <span>CI Failed</span>
+            <span>{localeState.t('pullRequest.reviewer.header.ciFailed')}</span>
           </span>
         {/if}
       {/if}
@@ -102,14 +103,14 @@
       onclick={onAIReview}
       disabled={isGeneratingReview || prFilesCount === 0}
       class="px-2.5 py-1.5 rounded-lg bg-violet-50 dark:bg-violet-950/60 hover:bg-violet-100 dark:hover:bg-violet-900/60 border border-violet-200 dark:border-violet-800/60 text-violet-700 dark:text-violet-300 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
-      title="Sử dụng FlowGit AI phân tích nhanh các rủi ro và thay đổi trong PR này"
+      title={localeState.t('pullRequest.reviewer.header.aiReviewTooltip')}
     >
       {#if isGeneratingReview}
         <Loader2 class="w-3.5 h-3.5 animate-spin" />
-        <span>AI đang review...</span>
+        <span>{localeState.t('pullRequest.reviewer.header.aiReviewing')}</span>
       {:else}
         <Sparkles class="w-3.5 h-3.5" />
-        <span>✨ AI Review PR</span>
+        <span>{localeState.t('pullRequest.reviewer.header.aiReviewBtn')}</span>
       {/if}
     </button>
 
@@ -117,10 +118,10 @@
       <button
         onclick={onCheckout}
         class="px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-750 border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-        title="Tải nhánh PR này về máy để chạy và kiểm thử độc lập"
+        title={localeState.t('pullRequest.reviewer.header.checkoutToLocalTooltip')}
       >
         <Download class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-        <span>Checkout to Local</span>
+        <span>{localeState.t('pullRequest.reviewer.header.checkoutToLocal')}</span>
       </button>
     {/if}
 
@@ -128,10 +129,10 @@
       <button
         onclick={onOpenMergeModal}
         class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-98"
-        title="Hợp nhất Pull Request vào nhánh chính"
+        title={localeState.t('pullRequest.reviewer.header.mergeTooltip')}
       >
         <GitMerge class="w-3.5 h-3.5" />
-        <span>Merge</span>
+        <span>{localeState.t('pullRequest.reviewer.header.mergeBtn')}</span>
       </button>
 
       <button
@@ -139,17 +140,17 @@
         class="px-3 py-1.5 rounded-lg bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-98"
       >
         <CheckCircle2 class="w-3.5 h-3.5" />
-        <span>Submit Review</span>
+        <span>{localeState.t('pullRequest.reviewer.header.submitReview')}</span>
       </button>
 
       <button
         onclick={onOpenCloseModal}
         disabled={isTogglingPRState}
         class="px-2.5 py-1.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-zinc-200 dark:border-zinc-700 hover:border-rose-300 dark:hover:border-rose-800/60 text-zinc-700 dark:text-zinc-300 hover:text-rose-600 dark:hover:text-rose-400 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
-        title="Đóng Pull Request này mà không hợp nhất (Close PR)"
+        title={localeState.t('pullRequest.reviewer.header.closePRTooltip')}
       >
         <XCircle class="w-3.5 h-3.5 text-rose-500/80" />
-        <span>Đóng PR</span>
+        <span>{localeState.t('pullRequest.reviewer.header.closePR')}</span>
       </button>
     {:else}
       {#if !selectedPR.merged}
@@ -157,14 +158,14 @@
           onclick={onReopenPR}
           disabled={isTogglingPRState}
           class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-98 disabled:opacity-50"
-          title="Mở lại Pull Request đã đóng (Reopen PR)"
+          title={localeState.t('pullRequest.reviewer.header.reopenPRTooltip')}
         >
           {#if isTogglingPRState}
             <Loader2 class="w-3.5 h-3.5 animate-spin" />
-            <span>Đang mở lại...</span>
+            <span>{localeState.t('pullRequest.reviewer.header.reopening')}</span>
           {:else}
             <RotateCcw class="w-3.5 h-3.5" />
-            <span>Mở lại PR</span>
+            <span>{localeState.t('pullRequest.reviewer.header.reopenPR')}</span>
           {/if}
         </button>
       {/if}
@@ -172,10 +173,10 @@
       <button
         onclick={onOpenReviewModal}
         class="px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-        title="Gửi bình luận vào PR đã đóng"
+        title={localeState.t('pullRequest.reviewer.header.addCommentTooltip')}
       >
         <MessageSquare class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-        <span>Thêm bình luận</span>
+        <span>{localeState.t('pullRequest.reviewer.header.addComment')}</span>
       </button>
     {/if}
 
@@ -184,7 +185,7 @@
       target="_blank"
       rel="noreferrer"
       class="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors cursor-pointer"
-      title="Mở trên GitHub.com"
+      title={localeState.t('pullRequest.reviewer.header.openOnGitHubTooltip')}
     >
       <ExternalLink class="w-4 h-4" />
     </a>

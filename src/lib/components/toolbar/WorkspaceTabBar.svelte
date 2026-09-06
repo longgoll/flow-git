@@ -14,6 +14,7 @@
     Check,
   } from 'lucide-svelte';
   import { toast } from '../../state/toastState.svelte';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     tabs: WorkspaceTab[];
@@ -106,7 +107,7 @@
   async function copyTabPath(path: string) {
     try {
       await navigator.clipboard.writeText(path);
-      toast.success('Đã sao chép đường dẫn thư mục!');
+      toast.success(localeState.t('tabBar.copiedPathToast'));
     } catch {
       toast.info(`Path: ${path}`);
     }
@@ -176,7 +177,7 @@
           {#if tab.openPRCount && tab.openPRCount > 0}
             <span
               class="flex items-center gap-0.5 px-1 py-0.2 rounded-full text-[9px] font-mono font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shrink-0"
-              title="{tab.openPRCount} Pull Requests đang mở"
+              title={localeState.t('tabBar.openPrsTooltip', { count: tab.openPRCount })}
             >
               <span class="w-1 h-1 rounded-full bg-amber-500 shrink-0 animate-pulse"></span>
               <span>{tab.openPRCount} PR</span>
@@ -186,7 +187,7 @@
           {#if tab.dirtyFilesCount && tab.dirtyFilesCount > 0}
             <span
               class="w-1.5 h-1.5 rounded-full bg-amber-500 ring-2 ring-amber-500/20 shrink-0 animate-pulse"
-              title="{tab.dirtyFilesCount} tệp thay đổi chưa commit"
+              title={localeState.t('tabBar.dirtyFilesTooltip', { count: tab.dirtyFilesCount })}
             ></span>
           {/if}
 
@@ -198,7 +199,7 @@
                 onCloseTab(tab.id);
               }}
               class="p-0.5 rounded hover:bg-zinc-300/80 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all shrink-0 {isActive ? 'opacity-70 hover:opacity-100' : 'opacity-0 group-hover:opacity-100'}"
-              title="Đóng tab (Ctrl+W)"
+              title={localeState.t('tabBar.closeTabTooltip')}
             >
               <X class="w-3 h-3" />
             </button>
@@ -215,7 +216,7 @@
         type="button"
         onclick={handleToggleTabsList}
         class="p-1 rounded-md hover:bg-zinc-200/80 dark:hover:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer shrink-0 flex items-center gap-0.5 text-[10px] font-mono px-1.5"
-        title="Xem danh sách tất cả {tabs.length} tabs đang mở"
+        title={localeState.t('tabBar.viewAllTabsTooltip', { count: tabs.length })}
       >
         <span>{tabs.length}</span>
         <ChevronDown class="w-3 h-3" />
@@ -226,7 +227,7 @@
       type="button"
       onclick={handleToggleNewMenu}
       class="p-1 rounded-md hover:bg-zinc-200/80 dark:hover:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer shrink-0"
-      title="Mở thêm Repository hoặc Git Worktree song song"
+      title={localeState.t('tabBar.openMoreTabsTooltip')}
     >
       <Plus class="w-3.5 h-3.5" />
     </button>
@@ -244,7 +245,7 @@
     onclick={(e) => e.stopPropagation()}
   >
     <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-      Thêm Workspace Tab
+      {localeState.t('tabBar.addTabTitle')}
     </div>
 
     <button
@@ -259,8 +260,8 @@
         <FolderPlus class="w-4 h-4" />
       </div>
       <div>
-        <div class="font-medium text-zinc-900 dark:text-zinc-100">Mở Repository khác...</div>
-        <div class="text-[10px] text-zinc-500 dark:text-zinc-400">Mở dự án từ máy hoặc clone mới</div>
+        <div class="font-medium text-zinc-900 dark:text-zinc-100">{localeState.t('tabBar.openOtherRepo')}</div>
+        <div class="text-[10px] text-zinc-500 dark:text-zinc-400">{localeState.t('tabBar.openOtherRepoDesc')}</div>
       </div>
     </button>
 
@@ -277,8 +278,8 @@
           <GitFork class="w-4 h-4" />
         </div>
         <div>
-          <div class="font-medium text-zinc-900 dark:text-zinc-100">Tạo Git Worktree song song...</div>
-          <div class="text-[10px] text-zinc-500 dark:text-zinc-400">Checkout nhánh khác ra thư mục mới</div>
+          <div class="font-medium text-zinc-900 dark:text-zinc-100">{localeState.t('tabBar.createParallelWorktree')}</div>
+          <div class="text-[10px] text-zinc-500 dark:text-zinc-400">{localeState.t('tabBar.createParallelWorktreeDesc')}</div>
         </div>
       </button>
     {/if}
@@ -296,8 +297,8 @@
     onclick={(e) => e.stopPropagation()}
   >
     <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center justify-between">
-      <span>Các Tab đang mở</span>
-      <span class="font-mono text-[9px]">{tabs.length} tabs</span>
+      <span>{localeState.t('tabBar.openTabsTitle')}</span>
+      <span class="font-mono text-[9px]">{localeState.t('tabBar.tabsCount', { count: tabs.length })}</span>
     </div>
 
     {#each tabs as t (t.id)}
@@ -357,7 +358,7 @@
         class="w-full px-3 py-1.5 flex items-center gap-2 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left cursor-pointer"
       >
         <ExternalLink class="w-3.5 h-3.5 text-zinc-400" />
-        <span>Mở trong File Explorer</span>
+        <span>{localeState.t('tabBar.revealInExplorer')}</span>
       </button>
     {/if}
 
@@ -369,7 +370,7 @@
       class="w-full px-3 py-1.5 flex items-center gap-2 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left cursor-pointer"
     >
       <Copy class="w-3.5 h-3.5 text-zinc-400" />
-      <span>Sao chép đường dẫn</span>
+      <span>{localeState.t('tabBar.copyFolderPath')}</span>
     </button>
 
     {#if tabs.length > 1}
@@ -384,7 +385,7 @@
         class="w-full px-3 py-1.5 flex items-center gap-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 text-left cursor-pointer"
       >
         <X class="w-3.5 h-3.5" />
-        <span>Đóng tab này</span>
+        <span>{localeState.t('tabBar.closeTab')}</span>
       </button>
 
       {#if onCloseOtherTabs}
@@ -396,7 +397,7 @@
           }}
           class="w-full px-3 py-1.5 flex items-center gap-2 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left cursor-pointer"
         >
-          <span>Đóng các tab khác</span>
+          <span>{localeState.t('tabBar.closeOtherTabs')}</span>
         </button>
       {/if}
     {/if}

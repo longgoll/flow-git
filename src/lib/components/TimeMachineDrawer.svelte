@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ActionRecord } from '../types';
+  import { localeState } from '../state/localeState.svelte';
   import {
     History,
     Undo2,
@@ -31,20 +32,20 @@
 
   function formatTime(timestamp: number): string {
     const elapsed = Math.floor(Date.now() / 1000) - timestamp;
-    if (elapsed < 60) return `${Math.max(1, elapsed)}s ago`;
-    if (elapsed < 3600) return `${Math.floor(elapsed / 60)}m ago`;
-    if (elapsed < 86400) return `${Math.floor(elapsed / 3600)}h ago`;
-    return `${Math.floor(elapsed / 86400)}d ago`;
+    if (elapsed < 60) return localeState.t('timeMachine.secondsAgo', { count: Math.max(1, elapsed) });
+    if (elapsed < 3600) return localeState.t('timeMachine.minutesAgo', { count: Math.floor(elapsed / 60) });
+    if (elapsed < 86400) return localeState.t('timeMachine.hoursAgo', { count: Math.floor(elapsed / 3600) });
+    return localeState.t('timeMachine.daysAgo', { count: Math.floor(elapsed / 86400) });
   }
 
   function getSeverityBadge(severity: string) {
     switch (severity.toLowerCase()) {
       case 'destructive':
-        return { label: 'Destructive', bg: 'bg-rose-100 dark:bg-rose-500/20 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-500/30' };
+        return { label: localeState.t('timeMachine.destructiveBadge'), bg: 'bg-rose-100 dark:bg-rose-500/20 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-500/30' };
       case 'moderate':
-        return { label: 'History Rewrite', bg: 'bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-500/30' };
+        return { label: localeState.t('timeMachine.moderateBadge'), bg: 'bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-500/30' };
       default:
-        return { label: 'Safe', bg: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30' };
+        return { label: localeState.t('timeMachine.safeBadge'), bg: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30' };
     }
   }
 </script>
@@ -60,13 +61,13 @@
           </div>
           <div>
             <h3 class="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              Safe-Flight Time Machine
+              {localeState.t('timeMachine.title')}
               <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-cyan-100 dark:bg-cyan-500/20 text-cyan-800 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/30 font-semibold">
                 Ctrl + Z
               </span>
             </h3>
             <p class="text-[11px] text-zinc-500 dark:text-zinc-400">
-              Zero-risk instant undo for any Git operation.
+              {localeState.t('timeMachine.description')}
             </p>
           </div>
         </div>
@@ -87,7 +88,7 @@
           class="py-2 px-3 rounded-lg bg-cyan-50 dark:bg-cyan-600/20 hover:bg-cyan-100 dark:hover:bg-cyan-600/30 border border-cyan-200 dark:border-cyan-500/40 text-cyan-800 dark:text-cyan-300 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
         >
           <Undo2 class="w-3.5 h-3.5" />
-          <span>Undo (Ctrl + Z)</span>
+          <span>{localeState.t('timeMachine.undoBtn')}</span>
         </button>
 
         <button
@@ -96,7 +97,7 @@
           class="py-2 px-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-300 border border-zinc-200 dark:border-transparent font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
         >
           <Redo2 class="w-3.5 h-3.5" />
-          <span>Redo (Ctrl+Shift+Z)</span>
+          <span>{localeState.t('timeMachine.redoBtn')}</span>
         </button>
       </div>
 
@@ -105,7 +106,7 @@
         {#if actions.length === 0}
           <div class="py-12 text-center text-xs text-zinc-500 space-y-2">
             <ShieldCheck class="w-8 h-8 mx-auto opacity-40 text-emerald-500" />
-            <p>No recorded Git state changes in session yet.</p>
+            <p>{localeState.t('timeMachine.noChanges')}</p>
           </div>
         {:else}
           {#each actions as action}
@@ -136,7 +137,7 @@
                   class="flex items-center gap-1 text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-medium cursor-pointer transition-colors"
                 >
                   <RotateCcw class="w-3 h-3" />
-                  <span>Time Travel</span>
+                  <span>{localeState.t('timeMachine.timeTravelBtn')}</span>
                 </button>
               </div>
             </div>

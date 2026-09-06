@@ -18,6 +18,7 @@
     X as CloseIcon,
   } from 'lucide-svelte';
   import type { BranchInfo } from '../../types';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     branches: BranchInfo[];
@@ -75,7 +76,7 @@
       class="flex items-center gap-1.5 cursor-pointer flex-1 text-left"
     >
       <GitBranch class="w-3.5 h-3.5 text-zinc-400" />
-      <span>Local Branches</span>
+      <span>{localeState.t('sidebar.localBranches')}</span>
       <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({localBranches.length})</span>
     </button>
     <div class="flex items-center gap-1">
@@ -83,7 +84,7 @@
         <button
           onclick={(e) => { e.stopPropagation(); onCreateBranch(); }}
           class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-cyan-600 dark:hover:text-cyan-300 transition-colors cursor-pointer"
-          title="Tạo nhánh mới (New Branch)"
+          title={localeState.t('sidebar.createBranch')}
         >
           <Plus class="w-3 h-3" />
         </button>
@@ -92,7 +93,7 @@
         <button
           onclick={(e) => { e.stopPropagation(); onFetchPrune(); }}
           class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-cyan-600 dark:hover:text-cyan-300 transition-colors cursor-pointer"
-          title="Fetch & Đồng bộ tất cả nhánh"
+          title={localeState.t('sidebar.fetchPruneAll')}
         >
           <RefreshCw class="w-3 h-3" />
         </button>
@@ -101,7 +102,7 @@
         <button
           onclick={(e) => { e.stopPropagation(); onCleanMergedBranches(); }}
           class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-          title="Dọn dẹp các nhánh đã merge (Clean Merged Branches)"
+          title={localeState.t('sidebar.cleanMergedBranches')}
         >
           <Trash2 class="w-3 h-3" />
         </button>
@@ -143,19 +144,19 @@
                   if (e.key === 'Escape') onRenameCancel();
                 }}
                 class="w-full px-1.5 py-0.5 text-[11px] font-mono bg-white dark:bg-zinc-900 text-zinc-900 dark:text-cyan-200 border border-cyan-500 rounded outline-hidden focus:ring-1 focus:ring-cyan-400"
-                placeholder="New branch name..."
+                placeholder={localeState.t('sidebar.renameBranchPlaceholder')}
               />
               <button
                 onclick={() => onRenameConfirm(branch)}
                 class="p-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900 border border-emerald-300 dark:border-emerald-600/50 cursor-pointer"
-                title="Lưu tên mới (Enter)"
+                title={localeState.t('sidebar.saveNewNameTooltip')}
               >
                 <Check class="w-3 h-3" />
               </button>
               <button
                 onclick={onRenameCancel}
                 class="p-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-300 dark:hover:bg-zinc-700 cursor-pointer"
-                title="Hủy (Esc)"
+                title={localeState.t('sidebar.cancelRenameTooltip')}
               >
                 <CloseIcon class="w-3 h-3" />
               </button>
@@ -168,7 +169,7 @@
                 onStartRename(branch);
               }}
               class="flex items-center gap-2 truncate pr-1 flex-1 text-left cursor-pointer"
-              title="Nhấp đúp để đổi tên nhánh (Double-click to rename)"
+              title={localeState.t('sidebar.doubleClickToRename')}
             >
               {#if branch.is_head}
                 <Check class="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -186,7 +187,7 @@
                 onclick={(e) => { e.stopPropagation(); onPublishBranch?.(branch); }}
                 disabled={isPushing}
                 class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-cyan-100 dark:bg-cyan-950/80 hover:bg-cyan-200 dark:hover:bg-cyan-900 border border-cyan-300 dark:border-cyan-700/60 text-cyan-800 dark:text-cyan-300 hover:text-cyan-950 dark:hover:text-white text-[10px] font-medium transition-all cursor-pointer shadow-xs disabled:opacity-50"
-                title={`Publish nhánh "${branch.shorthand}" lên remote origin (git push -u origin ${branch.shorthand})`}
+                title={localeState.t('sidebar.publishBranchTooltip', { branch: branch.shorthand })}
               >
                 <CloudUpload class="w-3 h-3 text-cyan-600 dark:text-cyan-400 {isPushing ? 'animate-bounce' : ''}" />
                 <span class="text-[9px] font-mono font-semibold">Publish</span>
@@ -222,8 +223,8 @@
                     ? 'flex p-1 rounded bg-emerald-100 dark:bg-emerald-950/70 hover:bg-emerald-200 dark:hover:bg-emerald-900/90 border border-emerald-300 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-200 cursor-pointer shadow-xs'
                     : 'opacity-0 group-hover:opacity-25 hidden group-hover:flex p-1 rounded text-zinc-400 dark:text-zinc-500 cursor-not-allowed'} transition-all"
                   title={branch.ahead_count > 0
-                    ? `Push ${branch.ahead_count} commit mới lên ${branch.upstream_name || 'origin'}`
-                    : `Đã đồng bộ mới nhất (Không có commit nào để push)`}
+                    ? localeState.t('sidebar.pushNewCommitsTooltip', { count: branch.ahead_count, upstream: branch.upstream_name || 'origin' })
+                    : localeState.t('sidebar.pushSyncedTooltip')}
                 >
                   <Upload class="w-3 h-3" />
                 </button>
@@ -233,7 +234,7 @@
                 <button
                   onclick={(e) => { e.stopPropagation(); onFetchBranch(branch); }}
                   class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-cyan-100 dark:hover:bg-cyan-950/60 text-zinc-400 dark:text-zinc-500 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all cursor-pointer"
-                  title={`Đồng bộ / Fetch nhánh ${branch.shorthand}`}
+                  title={localeState.t('sidebar.syncFetchBranchTooltip', { branch: branch.shorthand })}
                 >
                   <RefreshCw class="w-3 h-3" />
                 </button>
@@ -248,7 +249,7 @@
                 onOpenContextMenu(branch, Math.min(rect.right, window.innerWidth - 220), Math.min(rect.bottom + 4, window.innerHeight - 260));
               }}
               class="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-400 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 transition-all cursor-pointer"
-              title="Tùy chọn nhánh"
+              title={localeState.t('sidebar.branchOptions')}
             >
               <MoreVertical class="w-3 h-3" />
             </button>
@@ -257,7 +258,7 @@
               {#if isProtectedBranch(branch)}
                 <div
                   class="opacity-0 group-hover:opacity-100 p-0.5 text-amber-500/80 dark:text-amber-400/70 shrink-0"
-                  title="Nhánh cốt lõi (Protected Branch)"
+                  title={localeState.t('sidebar.protectedBranchTitle')}
                 >
                   <Shield class="w-3 h-3" />
                 </div>
@@ -265,7 +266,7 @@
               <button
                 onclick={(e) => { e.stopPropagation(); onDeleteBranch(branch); }}
                 class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-950/60 text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 transition-all cursor-pointer shrink-0"
-                title={`Xóa nhánh ${branch.shorthand}${isProtectedBranch(branch) ? ' (Cần gõ tên xác nhận)' : ''}`}
+                title={localeState.t('sidebar.deleteBranchConfirmTooltip', { branch: branch.shorthand, protected: isProtectedBranch(branch) ? localeState.t('sidebar.needsTypedConfirmation') : '' })}
               >
                 <Trash2 class="w-3 h-3" />
               </button>
@@ -274,7 +275,7 @@
         </div>
       {/each}
       {#if localBranches.length === 0}
-        <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">No local branches</div>
+        <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">{localeState.t('sidebar.noLocalBranches')}</div>
       {/if}
     </div>
   {/if}
@@ -288,7 +289,7 @@
       class="flex items-center gap-1.5 cursor-pointer flex-1 text-left"
     >
       <Globe class="w-3.5 h-3.5 text-zinc-400" />
-      <span>Remote Branches</span>
+      <span>{localeState.t('sidebar.remoteBranches')}</span>
       <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({remoteBranches.length})</span>
     </button>
     <div class="flex items-center gap-1">
@@ -296,7 +297,7 @@
         <button
           onclick={(e) => { e.stopPropagation(); onFetchPrune(); }}
           class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-purple-600 dark:hover:text-purple-300 transition-colors cursor-pointer"
-          title="Fetch & Prune (Dọn dẹp các nhánh remote đã bị xóa)"
+          title={localeState.t('sidebar.fetchPruneTooltip')}
         >
           <RefreshCw class="w-3 h-3" />
         </button>
@@ -326,7 +327,7 @@
             {#if isProtectedBranch(branch)}
               <div
                 class="opacity-0 group-hover:opacity-100 p-0.5 text-purple-600/70 dark:text-purple-400/60 shrink-0"
-                title="Nhánh Remote cốt lõi (Protected Upstream Branch)"
+                title={localeState.t('sidebar.protectedUpstreamBranchTitle')}
               >
                 <Lock class="w-3 h-3" />
               </div>
@@ -334,7 +335,7 @@
             <button
               onclick={(e) => { e.stopPropagation(); onDeleteBranch(branch); }}
               class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-950/60 text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 transition-all cursor-pointer shrink-0"
-              title={`Xóa reference remote ${branch.shorthand}${isProtectedBranch(branch) ? ' (Cần gõ tên xác nhận)' : ''}`}
+              title={localeState.t('sidebar.deleteRemoteRefTooltip', { branch: branch.shorthand, protected: isProtectedBranch(branch) ? localeState.t('sidebar.needsTypedConfirmation') : '' })}
             >
               <Trash2 class="w-3 h-3" />
             </button>
@@ -342,7 +343,7 @@
         </div>
       {/each}
       {#if remoteBranches.length === 0}
-        <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">No remote branches</div>
+        <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">{localeState.t('sidebar.noRemoteBranches')}</div>
       {/if}
     </div>
   {/if}

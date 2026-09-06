@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { localeState } from '../state/localeState.svelte';
   import { GitBranch, X, GitPullRequest } from 'lucide-svelte';
 
   interface Props {
@@ -25,7 +26,7 @@
         <GitBranch class="w-3.5 h-3.5" />
       </div>
       <div class="truncate text-zinc-800 dark:text-zinc-200">
-        Nhánh <code class="font-mono text-amber-900 dark:text-amber-300 font-bold bg-amber-100/80 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">{pushedBranch}</code> vừa có commit mới được push lên remote.
+        {localeState.t('banners.recentPushPrefix')}<code class="font-mono text-amber-900 dark:text-amber-300 font-bold bg-amber-100/80 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">{pushedBranch}</code>{localeState.t('banners.recentPushSuffix')}
       </div>
     </div>
 
@@ -33,15 +34,15 @@
       <button
         onclick={() => onCompareAndPR(pushedBranch)}
         class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-98"
-        title="Tạo Pull Request từ {pushedBranch} vào {targetBranch}"
+        title={localeState.t('banners.compareAndPrTooltip', { source: pushedBranch, target: targetBranch })}
       >
         <GitPullRequest class="w-3.5 h-3.5" />
-        <span>Compare & pull request</span>
+        <span>{localeState.t('banners.compareAndPr')}</span>
       </button>
       <button
         onclick={onDismiss}
         class="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors cursor-pointer"
-        title="Bỏ qua (Dismiss)"
+        title={localeState.t('banners.dismiss')}
       >
         <X class="w-4 h-4" />
       </button>

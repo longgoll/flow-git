@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { DiffLine, FileDiffDetail } from '../types';
+  import { localeState } from '../state/localeState.svelte';
   import MonacoDiffEditor from './MonacoDiffEditor.svelte';
   import {
     Columns2,
@@ -56,7 +57,7 @@
       {#if diffDetail}
         <span class="font-bold text-zinc-900 dark:text-zinc-100 truncate">{diffDetail.path}</span>
         {#if diffDetail.old_path}
-          <span class="text-zinc-500 text-[11px] truncate">renamed from {diffDetail.old_path}</span>
+          <span class="text-zinc-500 text-[11px] truncate">{localeState.t('diff.renamedFrom', { path: diffDetail.old_path })}</span>
         {/if}
 
         <div class="flex items-center gap-1.5 ml-2 text-[11px] font-mono">
@@ -68,7 +69,7 @@
           {/if}
         </div>
       {:else}
-        <span class="text-zinc-400 dark:text-zinc-500 italic">No file selected</span>
+        <span class="text-zinc-400 dark:text-zinc-500 italic">{localeState.t('diff.noFileSelected')}</span>
       {/if}
     </div>
 
@@ -80,18 +81,18 @@
           <button
             onclick={() => (diffEngine = 'monaco')}
             class="px-2 py-0.5 rounded flex items-center gap-1 text-[11px] transition-colors cursor-pointer {diffEngine === 'monaco' ? 'bg-white dark:bg-cyan-950/80 text-cyan-800 dark:text-cyan-300 border border-zinc-200 dark:border-cyan-800/60 font-medium shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
-            title="Monaco VS Code Rich Diff (Syntax highlighting & Minimap)"
+            title={localeState.t('diff.vsCodeTooltip')}
           >
             <Sparkles class="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
-            <span>VS Code</span>
+            <span>{localeState.t('diff.vsCodeEngine')}</span>
           </button>
           <button
             onclick={() => (diffEngine = 'hunks')}
             class="px-2 py-0.5 rounded flex items-center gap-1 text-[11px] transition-colors cursor-pointer {diffEngine === 'hunks' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white font-medium shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
-            title="Hunk Staging Mode (Interactive staging)"
+            title={localeState.t('diff.hunksTooltip')}
           >
             <ListOrdered class="w-3 h-3" />
-            <span>Hunks</span>
+            <span>{localeState.t('diff.hunksEngine')}</span>
           </button>
         </div>
 
@@ -102,18 +103,18 @@
           <button
             onclick={() => (viewMode = 'unified')}
             class="px-2 py-0.5 rounded flex items-center gap-1 text-[11px] transition-colors cursor-pointer {viewMode === 'unified' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white font-medium shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
-            title="Unified View"
+            title={localeState.t('diff.unifiedTooltip')}
           >
             <AlignJustify class="w-3 h-3" />
-            <span>Unified</span>
+            <span>{localeState.t('diff.unifiedMode')}</span>
           </button>
           <button
             onclick={() => (viewMode = 'split')}
             class="px-2 py-0.5 rounded flex items-center gap-1 text-[11px] transition-colors cursor-pointer {viewMode === 'split' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white font-medium shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
-            title="Side-by-Side Split View"
+            title={localeState.t('diff.splitTooltip')}
           >
             <Columns2 class="w-3 h-3" />
-            <span>Split</span>
+            <span>{localeState.t('diff.splitMode')}</span>
           </button>
         </div>
 
@@ -127,9 +128,9 @@
             }
           }}
           class="px-2 py-0.5 rounded-lg flex items-center gap-1 text-[11px] transition-colors cursor-pointer border {ignoreWhitespace ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700/60 font-medium' : 'bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'}"
-          title="Bỏ qua khoảng trắng và định dạng ký tự xuống dòng (Ignore Whitespace & Line Endings - CRLF/LF)"
+          title={localeState.t('diff.ignoreSpaceTooltip')}
         >
-          <span>Ignore Space</span>
+          <span>{localeState.t('diff.ignoreSpace')}</span>
         </button>
 
         <div class="h-4 w-px bg-zinc-200 dark:bg-zinc-800"></div>
@@ -141,7 +142,7 @@
             class="px-2.5 py-1 rounded bg-white dark:bg-zinc-800 hover:bg-amber-100 dark:hover:bg-amber-950/60 hover:text-amber-800 dark:hover:text-amber-300 hover:border-amber-300 dark:hover:border-amber-700/50 border border-zinc-200 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300 text-[11px] flex items-center gap-1 cursor-pointer transition-all"
           >
             <Minus class="w-3 h-3 text-amber-500 dark:text-amber-400" />
-            <span>Unstage File</span>
+            <span>{localeState.t('diff.unstageFile')}</span>
           </button>
         {:else}
           <button
@@ -149,12 +150,12 @@
             class="px-2.5 py-1 rounded bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-[11px] flex items-center gap-1 font-medium cursor-pointer transition-all"
           >
             <Plus class="w-3 h-3" />
-            <span>Stage File</span>
+            <span>{localeState.t('diff.stageFile')}</span>
           </button>
           <button
             onclick={onDiscardFile}
             class="p-1 rounded bg-white dark:bg-zinc-900 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 dark:hover:text-rose-400 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 text-[11px] cursor-pointer transition-all"
-            title="Safe Discard File (48h protected)"
+            title={localeState.t('diff.discardFileTooltip')}
           >
             <Trash2 class="w-3.5 h-3.5" />
           </button>
@@ -168,25 +169,25 @@
     {#if isLoading}
       <div class="h-full flex flex-col items-center justify-center text-zinc-500 gap-2">
         <div class="w-6 h-6 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"></div>
-        <span class="text-xs">Generating deep interactive diff...</span>
+        <span class="text-xs">{localeState.t('diff.generatingDiff')}</span>
       </div>
     {:else if !diffDetail}
       <div class="h-full flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-600 gap-3 select-none">
         <FileCode class="w-12 h-12 opacity-30 stroke-[1.5]" />
         <div class="text-center">
-          <p class="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Select a file to inspect differences</p>
-          <p class="text-[11px] text-zinc-400 dark:text-zinc-600 mt-0.5">Code diff and line modifications will appear here</p>
+          <p class="text-xs font-semibold text-zinc-600 dark:text-zinc-400">{localeState.t('diff.selectFilePrompt')}</p>
+          <p class="text-[11px] text-zinc-400 dark:text-zinc-600 mt-0.5">{localeState.t('diff.selectFileDesc')}</p>
         </div>
       </div>
     {:else if diffDetail.is_binary}
       <div class="h-full flex flex-col items-center justify-center text-zinc-500 gap-2 select-none">
         <Binary class="w-10 h-10 text-cyan-600 dark:text-cyan-400 opacity-60" />
-        <span class="text-xs font-medium text-zinc-700 dark:text-zinc-300">Binary file changes cannot be displayed as text</span>
+        <span class="text-xs font-medium text-zinc-700 dark:text-zinc-300">{localeState.t('diff.binaryNotice')}</span>
       </div>
     {:else if diffDetail.hunks.length === 0}
       <div class="h-full flex flex-col items-center justify-center text-zinc-500 gap-2 select-none">
         <Check class="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
-        <span class="text-xs text-zinc-600 dark:text-zinc-400">No differences found</span>
+        <span class="text-xs text-zinc-600 dark:text-zinc-400">{localeState.t('diff.noDifferences')}</span>
       </div>
     {:else if diffEngine === 'monaco' && (diffDetail.original_content !== undefined && diffDetail.original_content !== null || diffDetail.modified_content !== undefined && diffDetail.modified_content !== null)}
       <div class="w-full h-full">
@@ -213,7 +214,7 @@
                     class="px-2 py-0.5 rounded bg-white dark:bg-zinc-900/80 hover:bg-amber-100 dark:hover:bg-amber-950/80 hover:text-amber-800 dark:hover:text-amber-300 border border-zinc-200 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300 text-[10px] flex items-center gap-1 cursor-pointer transition-colors"
                   >
                     <Minus class="w-2.5 h-2.5 text-amber-500 dark:text-amber-400" />
-                    <span>Unstage Hunk</span>
+                    <span>{localeState.t('diff.unstageHunk')}</span>
                   </button>
                 {:else}
                   <button
@@ -221,7 +222,7 @@
                     class="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 border border-emerald-300 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-[10px] flex items-center gap-1 font-medium cursor-pointer transition-colors"
                   >
                     <Plus class="w-2.5 h-2.5" />
-                    <span>Stage Hunk</span>
+                    <span>{localeState.t('diff.stageHunk')}</span>
                   </button>
                 {/if}
               </div>
@@ -261,10 +262,10 @@
                               onUnstageHunk?.(hunk.hunk_index);
                             }}
                             class="px-1 py-0.5 text-[9px] rounded bg-amber-100 dark:bg-amber-950/70 hover:bg-amber-200 dark:hover:bg-amber-900 text-amber-800 dark:text-amber-300 flex items-center gap-0.5 cursor-pointer"
-                            title="Unstage hunk chứa dòng này"
+                            title={localeState.t('diff.unstageHunkTooltip')}
                           >
                             <Minus class="w-2.5 h-2.5" />
-                            <span>Unstage</span>
+                            <span>{localeState.t('workingTree.unstage')}</span>
                           </button>
                         {:else}
                           <button
@@ -273,10 +274,10 @@
                               onStageHunk?.(hunk.hunk_index);
                             }}
                             class="px-1 py-0.5 text-[9px] rounded bg-emerald-100 dark:bg-emerald-950/80 hover:bg-emerald-200 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-300 flex items-center gap-0.5 cursor-pointer font-medium"
-                            title="Stage hunk chứa dòng này"
+                            title={localeState.t('diff.stageHunkTooltip')}
                           >
                             <Plus class="w-2.5 h-2.5" />
-                            <span>Stage</span>
+                            <span>{localeState.t('workingTree.stage')}</span>
                           </button>
                         {/if}
                       {/if}
@@ -285,10 +286,10 @@
                         onclick={(e) => {
                           e.stopPropagation();
                           navigator.clipboard.writeText(line.content);
-                          toast.info('Copied', 'Đã sao chép nội dung dòng code.');
+                          toast.info(localeState.t('common.success'), localeState.t('diff.copiedLineToast'));
                         }}
                         class="p-0.5 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
-                        title="Sao chép dòng code"
+                        title={localeState.t('diff.copyLineTooltip')}
                       >
                         <Copy class="w-2.5 h-2.5" />
                       </button>

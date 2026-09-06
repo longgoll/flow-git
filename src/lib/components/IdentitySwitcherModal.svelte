@@ -16,6 +16,7 @@
     RefreshCw,
   } from 'lucide-svelte';
   import { toast } from '../state/toastState.svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     isOpen: boolean;
@@ -167,10 +168,10 @@
           </div>
           <div>
             <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              Chuyển đổi Hồ sơ Tác giả Git (Identity Switcher)
+              {localeState.t('modals.identitySwitcher.title')}
             </h2>
             <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              Chuyển nhanh giữa tài khoản Công ty và Cá nhân để tránh commit nhầm email
+              {localeState.t('modals.identitySwitcher.subtitle')}
             </p>
           </div>
         </div>
@@ -187,22 +188,22 @@
       <div class="px-6 py-3.5 bg-zinc-50 dark:bg-zinc-950/40 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
         <div>
           <span class="text-[11px] uppercase tracking-wider text-zinc-500 font-bold">
-            Tác giả hiện tại (Repo Local):
+            {localeState.t('modals.identitySwitcher.currentAuthorLabel')}
           </span>
           <div class="flex items-center gap-2 mt-0.5">
             <span class="text-xs font-semibold text-zinc-900 dark:text-zinc-200">
-              {currentRepoIdentity?.name || 'Chưa cấu hình'}
+              {currentRepoIdentity?.name || localeState.t('modals.identitySwitcher.notConfigured')}
             </span>
             <span class="text-xs text-teal-600 dark:text-teal-400 font-mono">
               &lt;{currentRepoIdentity?.email || 'no-email'}&gt;
             </span>
             {#if currentRepoIdentity?.is_local}
               <span class="px-1.5 py-0.5 rounded text-[10px] bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60 font-mono font-semibold">
-                Local .git/config
+                {localeState.t('modals.identitySwitcher.localConfigBadge')}
               </span>
             {:else}
               <span class="px-1.5 py-0.5 rounded text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-mono border border-zinc-200 dark:border-transparent">
-                Kế thừa Global
+                {localeState.t('modals.identitySwitcher.inheritGlobalBadge')}
               </span>
             {/if}
           </div>
@@ -213,31 +214,31 @@
           class="px-2.5 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-xs text-zinc-800 dark:text-zinc-200 font-medium flex items-center gap-1.5 transition-colors cursor-pointer border border-zinc-200 dark:border-transparent"
         >
           <Plus class="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-          <span>Tạo hồ sơ</span>
+          <span>{localeState.t('modals.identitySwitcher.createProfileBtn')}</span>
         </button>
       </div>
 
       <!-- Add New Profile Form (Collapsible) -->
       {#if showAddForm}
         <div class="px-6 py-4 bg-zinc-50 dark:bg-zinc-950/90 border-b border-zinc-200 dark:border-zinc-800 space-y-3 animate-in slide-in-from-top duration-150">
-          <h3 class="text-xs font-bold text-zinc-800 dark:text-zinc-300">Thêm hồ sơ mới</h3>
+          <h3 class="text-xs font-bold text-zinc-800 dark:text-zinc-300">{localeState.t('modals.identitySwitcher.addFormTitle')}</h3>
           <div class="grid grid-cols-3 gap-2">
             <input
               type="text"
               bind:value={newLabel}
-              placeholder="Tên nhãn (vd: Open Source)"
+              placeholder={localeState.t('modals.identitySwitcher.labelPlaceholder')}
               class="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-hidden font-sans"
             />
             <input
               type="text"
               bind:value={newName}
-              placeholder="Họ và tên Git"
+              placeholder={localeState.t('modals.identitySwitcher.namePlaceholder')}
               class="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-hidden font-sans"
             />
             <input
               type="email"
               bind:value={newEmail}
-              placeholder="Email commit"
+              placeholder={localeState.t('modals.identitySwitcher.emailPlaceholder')}
               class="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-hidden font-sans"
             />
           </div>
@@ -246,13 +247,13 @@
               onclick={() => (showAddForm = false)}
               class="px-3 py-1 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 text-xs cursor-pointer"
             >
-              Hủy
+              {localeState.t('common.cancel')}
             </button>
             <button
               onclick={handleSaveNewProfile}
               class="px-3 py-1 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold cursor-pointer transition-colors shadow-xs"
             >
-              Lưu hồ sơ
+              {localeState.t('modals.identitySwitcher.saveProfileBtn')}
             </button>
           </div>
         </div>
@@ -263,7 +264,7 @@
         {#if isLoading}
           <div class="py-12 flex flex-col items-center justify-center text-zinc-500 gap-2">
             <RefreshCw class="w-6 h-6 animate-spin text-teal-600 dark:text-teal-400" />
-            <span class="text-xs font-mono">Đang tải danh sách hồ sơ tác giả...</span>
+            <span class="text-xs font-mono">{localeState.t('modals.identitySwitcher.loadingProfiles')}</span>
           </div>
         {:else}
           {#each profiles as profile (profile.id)}
@@ -285,7 +286,7 @@
                     {#if isCurrent}
                       <span class="px-2 py-0.5 rounded-full text-[10px] bg-teal-100 dark:bg-teal-500/20 text-teal-800 dark:text-teal-300 font-bold flex items-center gap-1 border border-teal-200 dark:border-teal-500/30">
                         <Check class="w-2.5 h-2.5" />
-                        Đang chọn
+                        {localeState.t('modals.identitySwitcher.activeBadge')}
                       </span>
                     {/if}
                   </div>
@@ -304,14 +305,14 @@
                     onclick={() => handleApplyProfile(profile)}
                     class="px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-600/20 hover:bg-teal-100 dark:hover:bg-teal-600/30 text-teal-800 dark:text-teal-300 text-xs font-semibold border border-teal-200 dark:border-teal-500/40 transition-colors cursor-pointer"
                   >
-                    Áp dụng
+                    {localeState.t('modals.identitySwitcher.applyBtn')}
                   </button>
                 {/if}
 
                 <button
                   onclick={() => handleDeleteProfile(profile.id)}
                   class="p-1.5 rounded-lg text-zinc-400 dark:text-zinc-600 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
-                  title="Xóa hồ sơ này"
+                  title={localeState.t('modals.identitySwitcher.deleteProfileTooltip')}
                 >
                   <Trash2 class="w-3.5 h-3.5" />
                 </button>
@@ -329,14 +330,14 @@
             bind:checked={applyGlobal}
             class="rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-teal-600 focus:ring-0 cursor-pointer"
           />
-          <span>Áp dụng toàn cục (`git config --global`)</span>
+          <span>{localeState.t('modals.identitySwitcher.applyGlobalCheckbox')}</span>
         </label>
 
         <button
           onclick={onClose}
           class="px-4 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 text-xs font-medium cursor-pointer transition-colors border border-zinc-200 dark:border-transparent"
         >
-          Đóng
+          {localeState.t('common.close')}
         </button>
       </div>
     </div>

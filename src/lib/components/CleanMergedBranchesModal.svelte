@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Trash2, X, Check, ShieldAlert, GitBranch } from 'lucide-svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     isOpen: boolean;
@@ -60,7 +61,7 @@
       <div class="px-5 py-3.5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/40">
         <div class="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-sm">
           <Trash2 class="w-4 h-4" />
-          <span>Dọn dẹp các nhánh đã merge (Clean Merged Branches)</span>
+          <span>{localeState.t('modals.cleanMerged.title')}</span>
         </div>
         <button
           onclick={onClose}
@@ -72,14 +73,14 @@
 
       <div class="p-5 space-y-4">
         <div class="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
-          FlowGit đã phát hiện <strong class="text-zinc-900 dark:text-white">{mergedBranches.length}</strong> nhánh local đã được gộp hoàn toàn vào nhánh chính (<code class="text-cyan-700 dark:text-cyan-300 font-mono">main</code>/<code class="text-cyan-700 dark:text-cyan-300 font-mono">master</code>).
+          {localeState.t('modals.cleanMerged.subtitle', { count: mergedBranches.length, main: 'main/master' })}
         </div>
 
         {#if mergedBranches.length === 0}
           <div class="p-6 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-center space-y-2">
             <GitBranch class="w-6 h-6 text-emerald-600 dark:text-emerald-400 mx-auto" />
-            <div class="text-xs font-bold text-emerald-700 dark:text-emerald-300">Không có nhánh rác!</div>
-            <p class="text-[11px] text-zinc-500">Tất cả các nhánh local hiện tại đều chứa commit đang phát triển hoặc chưa merge.</p>
+            <div class="text-xs font-bold text-emerald-700 dark:text-emerald-300">{localeState.t('modals.cleanMerged.noMergedBranches')}</div>
+            <p class="text-[11px] text-zinc-500">{localeState.t('modals.cleanMerged.noMergedBranchesDesc')}</p>
           </div>
         {:else}
           <!-- Selection List -->
@@ -90,9 +91,9 @@
                 onclick={toggleAll}
                 class="hover:text-zinc-900 dark:hover:text-white font-medium cursor-pointer"
               >
-                {selectedBranches.length === mergedBranches.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                {selectedBranches.length === mergedBranches.length ? localeState.t('modals.cleanMerged.deselectAll') : localeState.t('modals.cleanMerged.selectAll')}
               </button>
-              <span class="text-[11px] font-mono">Đã chọn: {selectedBranches.length} / {mergedBranches.length}</span>
+              <span class="text-[11px] font-mono">{localeState.t('modals.cleanMerged.selectedCount', { selected: selectedBranches.length, total: mergedBranches.length })}</span>
             </div>
 
             <div class="max-h-52 overflow-y-auto space-y-1 p-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl">
@@ -120,7 +121,7 @@
           <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800/80 flex items-start gap-2.5 text-[11px] text-zinc-600 dark:text-zinc-400">
             <ShieldAlert class="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
             <span>
-              Chỉ các nhánh đã được tích hợp trọn vẹn vào lịch sử của nhánh chính mới được xóa. Nhánh remote trên GitHub/GitLab vẫn được giữ nguyên.
+              {localeState.t('modals.cleanMerged.safeNote')}
             </span>
           </div>
         {/if}
@@ -132,7 +133,7 @@
             onclick={onClose}
             class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
-            Đóng
+            {localeState.t('common.close')}
           </button>
           {#if mergedBranches.length > 0}
             <button
@@ -141,7 +142,7 @@
               disabled={selectedBranches.length === 0 || isLoading}
               class="px-4 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-rose-600/20"
             >
-              {isLoading ? 'Đang dọn...' : `Xóa ${selectedBranches.length} nhánh đã chọn`}
+              {isLoading ? localeState.t('modals.cleanMerged.deleting') : localeState.t('modals.cleanMerged.deleteBtn', { count: selectedBranches.length })}
             </button>
           {/if}
         </div>

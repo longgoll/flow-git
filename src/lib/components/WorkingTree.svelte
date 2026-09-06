@@ -15,6 +15,7 @@
     Folder,
     AlertTriangle,
   } from 'lucide-svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     status: WorkingTreeStatus | null;
@@ -171,16 +172,16 @@
     <div class="p-3 border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-100/60 dark:bg-zinc-900/40 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <FolderGit2 class="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-        <span class="font-bold text-xs text-zinc-900 dark:text-zinc-100">Working Tree</span>
+        <span class="font-bold text-xs text-zinc-900 dark:text-zinc-100">{localeState.t('workingTree.title')}</span>
       </div>
 
       <button
         onclick={onOpenTrash}
         class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-[11px] font-medium transition-colors cursor-pointer"
-        title="Open Safe Discard 48h Trash Inspector"
+        title={localeState.t('workingTree.openSafeDiscardTrash')}
       >
         <ShieldCheck class="w-3 h-3" />
-        <span>Safe Discard</span>
+        <span>{localeState.t('workingTree.safeDiscard')}</span>
         {#if trashCount > 0}
           <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-emerald-200 dark:bg-emerald-800/80 text-emerald-900 dark:text-emerald-200 shadow-2xs">
             {trashCount}
@@ -200,19 +201,19 @@
             </div>
             <div class="flex-1 min-w-0">
               <div class="text-[11px] font-semibold text-amber-800 dark:text-amber-300 flex items-center justify-between">
-                <span>Trợ lý Gitignore Thông Minh</span>
+                <span>{localeState.t('workingTree.smartGitignoreTitle')}</span>
                 <span class="text-[10px] font-mono text-amber-700 dark:text-amber-400/80 font-normal">
-                  {totalUntracked.toLocaleString()} tệp untracked
+                  {localeState.t('workingTree.untrackedFilesDetected', { count: totalUntracked.toLocaleString() })}
                 </span>
               </div>
               <p class="text-[10px] text-zinc-600 dark:text-zinc-400 mt-0.5 leading-relaxed">
                 {#if detectedHeavyFolders.length > 0}
-                  Phát hiện thư mục nặng chưa được ignore:
+                  {localeState.t('workingTree.heavyFoldersDetected')}
                   {#each detectedHeavyFolders as folder, idx}
                     <code class="text-amber-700 dark:text-amber-300 font-mono font-bold">{folder}/</code>{idx < detectedHeavyFolders.length - 1 ? ', ' : ''}
                   {/each}
                 {:else}
-                  Working Tree có tới {totalUntracked.toLocaleString()} tệp untracked. Khuyên nghị thêm .gitignore để app mượt 60 FPS.
+                  {localeState.t('workingTree.heavyFoldersRecommend', { count: totalUntracked.toLocaleString() })}
                 {/if}
               </p>
             </div>
@@ -224,10 +225,10 @@
               <button
                 onclick={() => onAddToGitignore?.(`${folder}/`)}
                 class="px-2 py-1 rounded-md bg-amber-100 dark:bg-amber-500/20 hover:bg-amber-200 dark:hover:bg-amber-500/30 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30 text-[10px] font-medium transition-colors flex items-center gap-1 cursor-pointer"
-                title="Thêm {folder}/ vào file .gitignore"
+                title={localeState.t('workingTree.ignoreFolderTooltip', { folder })}
               >
                 <Plus class="w-2.5 h-2.5" />
-                <span>Bỏ qua {folder}/</span>
+                <span>{localeState.t('workingTree.ignoreFolder', { folder })}</span>
               </button>
             {/each}
 
@@ -235,10 +236,10 @@
               <button
                 onclick={onGenerateGitignore}
                 class="px-2.5 py-1 rounded-md bg-cyan-100 dark:bg-cyan-950/60 hover:bg-cyan-200 dark:hover:bg-cyan-900/80 text-cyan-800 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800/50 text-[10px] font-medium transition-colors flex items-center gap-1 cursor-pointer"
-                title="Tự động phát hiện công nghệ và tạo file .gitignore chuẩn"
+                title={localeState.t('workingTree.generateGitignoreTooltip')}
               >
                 <FileCode class="w-2.5 h-2.5" />
-                <span>Tạo .gitignore chuẩn</span>
+                <span>{localeState.t('workingTree.generateStandardGitignore')}</span>
               </button>
             {/if}
           </div>
@@ -258,7 +259,7 @@
                 <ChevronRight class="w-3.5 h-3.5 text-rose-500" />
               {/if}
               <AlertTriangle class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
-              <span>Conflicted Files</span>
+              <span>{localeState.t('workingTree.conflictedFiles')}</span>
               <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-200 dark:bg-rose-900/80 font-mono font-bold text-rose-800 dark:text-rose-200">
                 {status?.conflicted.length || 0}
               </span>
@@ -287,10 +288,10 @@
                     <button
                       onclick={(e) => { e.stopPropagation(); onStageFile(item.path); }}
                       class="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-medium flex items-center gap-1 shadow-xs cursor-pointer"
-                      title="Đánh dấu đã giải quyết (Mark Resolved / Stage)"
+                      title={localeState.t('workingTree.markResolved')}
                     >
                       <Plus class="w-2.5 h-2.5" />
-                      <span>Stage</span>
+                      <span>{localeState.t('workingTree.stage')}</span>
                     </button>
                   </div>
                 </div>
@@ -312,7 +313,7 @@
             {:else}
               <ChevronRight class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
             {/if}
-            <span class="text-emerald-600 dark:text-emerald-400 font-semibold">Staged Changes</span>
+            <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{localeState.t('workingTree.stagedChanges')}</span>
             <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({status?.staged.length || 0})</span>
           </button>
 
@@ -320,10 +321,10 @@
             <button
               onclick={onUnstageAll}
               class="text-[10px] font-mono px-2 py-0.5 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 flex items-center gap-1 cursor-pointer transition-colors"
-              title="Unstage all files"
+              title={localeState.t('workingTree.unstageAll')}
             >
               <Minus class="w-2.5 h-2.5" />
-              <span>Unstage All</span>
+              <span>{localeState.t('workingTree.unstageAll')}</span>
             </button>
           {/if}
         </div>
@@ -350,7 +351,7 @@
                   <button
                     onclick={(e) => { e.stopPropagation(); onUnstageFile(item.path); }}
                     class="p-1 rounded bg-zinc-200 dark:bg-zinc-800 hover:bg-amber-100 dark:hover:bg-amber-950/60 hover:text-amber-800 dark:hover:text-amber-300 text-zinc-600 dark:text-zinc-400 cursor-pointer"
-                    title="Unstage file"
+                    title={localeState.t('workingTree.unstageFile')}
                   >
                     <Minus class="w-3 h-3" />
                   </button>
@@ -359,7 +360,7 @@
             {/each}
 
             {#if (status?.staged.length || 0) === 0}
-              <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">No staged changes</div>
+              <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">{localeState.t('workingTree.noStaged')}</div>
             {/if}
           </div>
         {/if}
@@ -377,7 +378,7 @@
             {:else}
               <ChevronRight class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
             {/if}
-            <span class="text-amber-600 dark:text-amber-400 font-semibold">Changes</span>
+            <span class="text-amber-600 dark:text-amber-400 font-semibold">{localeState.t('workingTree.unstagedChanges')}</span>
             <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({status?.unstaged.length || 0})</span>
           </button>
 
@@ -386,15 +387,15 @@
               <button
                 onclick={onStageAll}
                 class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 flex items-center gap-1 cursor-pointer transition-colors"
-                title="Stage all changes"
+                title={localeState.t('workingTree.stageAll')}
               >
                 <Plus class="w-2.5 h-2.5" />
-                <span>Stage All</span>
+                <span>{localeState.t('workingTree.stageAll')}</span>
               </button>
               <button
                 onclick={onDiscardAll}
                 class="text-[10px] font-mono p-1 rounded bg-white dark:bg-zinc-900 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 dark:hover:text-rose-400 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 cursor-pointer transition-colors"
-                title="Discard all changes (48h Safe Protected)"
+                title={localeState.t('workingTree.discardAllProtected')}
               >
                 <Trash2 class="w-2.5 h-2.5" />
               </button>
@@ -424,14 +425,14 @@
                   <button
                     onclick={(e) => { e.stopPropagation(); onStageFile(item.path); }}
                     class="p-1 rounded bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200 dark:hover:bg-emerald-900/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/40 cursor-pointer"
-                    title="Stage file"
+                    title={localeState.t('workingTree.stageFile')}
                   >
                     <Plus class="w-3 h-3" />
                   </button>
                   <button
                     onclick={(e) => { e.stopPropagation(); onDiscardFile(item.path); }}
                     class="p-1 rounded bg-zinc-200 dark:bg-zinc-800 hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-700 dark:hover:text-rose-400 text-zinc-600 dark:text-zinc-400 cursor-pointer"
-                    title="Safe Discard file"
+                    title={localeState.t('workingTree.discardFile')}
                   >
                     <Trash2 class="w-3 h-3" />
                   </button>
@@ -440,7 +441,7 @@
             {/each}
 
             {#if (status?.unstaged.length || 0) === 0}
-              <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">No unstaged changes</div>
+              <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">{localeState.t('workingTree.noUnstaged')}</div>
             {/if}
           </div>
         {/if}

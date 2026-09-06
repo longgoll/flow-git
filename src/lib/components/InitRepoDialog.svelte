@@ -1,5 +1,6 @@
 <script lang="ts">
   import { FolderGit2, Sparkles, AlertCircle, ArrowRight, X } from 'lucide-svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   let {
     isOpen = false,
@@ -55,20 +56,20 @@
           </div>
           <div>
             <h2 class="text-base font-semibold text-neutral-900 dark:text-white tracking-wide flex items-center gap-2">
-              Khởi tạo Git Repository?
+              {localeState.t('modals.initRepo.title')}
               <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-mono font-normal">
                 git init
               </span>
             </h2>
             <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-              Thư mục này chưa có cấu trúc Git repository.
+              {localeState.t('modals.initRepo.subtitle')}
             </p>
           </div>
         </div>
         <button
           onclick={onCancel}
           class="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-          title="Đóng"
+          title={localeState.t('common.close')}
           disabled={isSubmitting}
         >
           <X class="w-4 h-4" />
@@ -80,7 +81,7 @@
         <!-- Path preview box -->
         <div class="bg-neutral-50 dark:bg-neutral-950/70 border border-neutral-200 dark:border-neutral-800/80 rounded-xl p-3.5 flex flex-col gap-1">
           <span class="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
-            Thư mục đích
+            {localeState.t('modals.initRepo.targetFolder')}
           </span>
           <div class="flex items-center gap-2 text-sm text-cyan-700 dark:text-cyan-200 font-mono break-all select-text">
             <span class="text-neutral-400 dark:text-neutral-500">📁</span>
@@ -93,22 +94,22 @@
         <div class="p-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl flex items-start gap-2.5 text-xs text-emerald-800 dark:text-emerald-300/90 leading-relaxed">
           <span class="text-base leading-none">🔒</span>
           <div>
-            <strong class="text-emerald-700 dark:text-emerald-300 font-medium">100% Cục bộ & Riêng tư:</strong>
+            <strong class="text-emerald-700 dark:text-emerald-300 font-medium">{localeState.t('modals.initRepo.privateNoticeTitle')}</strong>
             <p class="text-neutral-600 dark:text-neutral-400 text-[11px] mt-0.5">
-              Repository này sẽ được tạo hoàn toàn offline trên máy tính cá nhân của bạn và <strong>chưa đẩy lên bất kỳ đâu trên Internet</strong>. Bạn có thể xuất bản lên GitHub (chọn Công khai hoặc Riêng tư) bất kỳ lúc nào sau khi khởi tạo.
+              {localeState.t('modals.initRepo.privateNoticeDesc')}
             </p>
           </div>
         </div>
 
         <p class="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed">
-          FlowGit sẽ khởi tạo một Git repository cục bộ mới (<code class="bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded text-cyan-700 dark:text-cyan-300 font-mono text-[11px]">.git/</code>) tại thư mục này để bạn có thể bắt đầu theo dõi lịch sử code, tạo commit và quản lý branch.
+          {localeState.t('modals.initRepo.explanation')}
         </p>
 
         <!-- Branch input -->
         <div class="space-y-1.5">
           <label for="init-branch-input" class="text-xs font-medium text-neutral-700 dark:text-neutral-300 flex items-center justify-between">
-            <span>Tên nhánh mặc định (Default Branch):</span>
-            <span class="text-[10px] text-neutral-500 font-mono">Tiêu chuẩn: main</span>
+            <span>{localeState.t('modals.initRepo.defaultBranchLabel')}</span>
+            <span class="text-[10px] text-neutral-500 font-mono">{localeState.t('modals.initRepo.standardHint')}</span>
           </label>
           <input
             id="init-branch-input"
@@ -135,7 +136,7 @@
           disabled={isSubmitting}
           class="px-4 py-2 text-xs font-medium text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors border border-transparent hover:border-neutral-300 dark:hover:border-neutral-700 cursor-pointer"
         >
-          Chọn thư mục khác
+          {localeState.t('modals.initRepo.chooseOtherFolder')}
         </button>
         <button
           onclick={handleConfirm}
@@ -144,10 +145,10 @@
         >
           {#if isSubmitting}
             <div class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-            <span>Đang khởi tạo...</span>
+            <span>{localeState.t('modals.initRepo.initializing')}</span>
           {:else}
             <Sparkles class="w-3.5 h-3.5" />
-            <span>Khởi tạo Git ngay</span>
+            <span>{localeState.t('modals.initRepo.initBtn')}</span>
             <ArrowRight class="w-3.5 h-3.5 opacity-70" />
           {/if}
         </button>

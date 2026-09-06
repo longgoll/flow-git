@@ -12,6 +12,7 @@
     AlertTriangle,
   } from 'lucide-svelte';
   import { toast } from '../state/toastState.svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     isOpen: boolean;
@@ -41,7 +42,7 @@
       todos = await prepareInteractiveRebase(repoPath, ontoCommit.id);
     } catch (err: any) {
       console.error('Failed to prepare interactive rebase:', err);
-      toast.error('Lỗi nạp danh sách commit rebase', err?.message || err);
+      toast.error(localeState.t('workflows.rebase.toastErrorLoad'), err?.message || err);
     } finally {
       isLoading = false;
     }
@@ -80,46 +81,41 @@
     try {
       const res = await executeInteractiveRebase(repoPath, ontoCommit.id, todos);
       if (res.status === 'completed') {
-        toast.success('Interactive Rebase hoàn tất', res.message);
+        toast.success(localeState.t('workflows.rebase.toastSuccess'), res.message);
         onSuccess?.(res);
         onClose();
       } else if (res.status === 'conflict') {
-        toast.warning('Xung đột Rebase', res.message);
+        toast.warning(localeState.t('workflows.rebase.toastConflict'), res.message);
         onSuccess?.(res);
         onClose();
       }
     } catch (err: any) {
-      toast.error('Interactive Rebase thất bại', err?.message || err);
+      toast.error(localeState.t('workflows.rebase.toastFailed'), err?.message || err);
     } finally {
       isExecuting = false;
     }
   }
 
-  const ACTION_CONFIGS: Record<string, { label: string; color: string; desc: string }> = {
+  const ACTION_CONFIGS: Record<string, { label: string; color: string }> = {
     pick: {
       label: 'Pick',
       color: 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/60',
-      desc: 'Giữ nguyên commit',
     },
     reword: {
       label: 'Reword',
       color: 'bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700/60',
-      desc: 'Sửa commit message',
     },
     squash: {
       label: 'Squash',
       color: 'bg-blue-50 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700/60',
-      desc: 'Gộp vào commit trước',
     },
     fixup: {
       label: 'Fixup',
       color: 'bg-cyan-50 dark:bg-cyan-950/80 text-cyan-800 dark:text-cyan-300 border-cyan-300 dark:border-cyan-700/60',
-      desc: 'Gộp không giữ message',
     },
     drop: {
       label: 'Drop',
       color: 'bg-rose-50 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-700/60',
-      desc: 'Xóa bỏ commit',
     },
   };
 </script>
@@ -149,10 +145,10 @@
           </div>
           <div>
             <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              Interactive Rebase Timeline (`git rebase -i`)
+              {localeState.t('workflows.rebase.title')}
             </h2>
             <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              Tái cấu trúc, sắp xếp thứ tự, gộp (squash) hoặc sửa commit lên gốc:
+              {localeState.t('workflows.rebase.subtitle')}
               <span class="font-mono text-cyan-600 dark:text-cyan-300 font-bold ml-1">{ontoCommit.short_id}</span>
               <span class="text-zinc-400 dark:text-zinc-500 truncate max-w-xs inline-block align-bottom ml-1">({ontoCommit.summary})</span>
             </p>
@@ -170,12 +166,12 @@
       <!-- Action Legend / Quick Info -->
       <div class="px-6 py-2.5 bg-zinc-100/60 dark:bg-zinc-950/40 border-b border-zinc-200 dark:border-zinc-800/80 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400 font-mono">
         <div class="flex items-center gap-2 flex-wrap">
-          <span>Thao tác:</span>
-          <span class="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 text-[10px]">Pick: Giữ</span>
-          <span class="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 text-[10px]">Reword: Sửa lời</span>
-          <span class="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50 text-[10px]">Squash: Gộp</span>
-          <span class="px-1.5 py-0.5 rounded bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800/50 text-[10px]">Fixup: Nuốt</span>
-          <span class="px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 text-[10px]">Drop: Xóa</span>
+          <span>{localeState.t('workflows.rebase.operations')}</span>
+          <span class="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 text-[10px]">Pick: {localeState.t('workflows.rebase.pickDesc')}</span>
+          <span class="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 text-[10px]">Reword: {localeState.t('workflows.rebase.rewordDesc')}</span>
+          <span class="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50 text-[10px]">Squash: {localeState.t('workflows.rebase.squashDesc')}</span>
+          <span class="px-1.5 py-0.5 rounded bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800/50 text-[10px]">Fixup: {localeState.t('workflows.rebase.fixupDesc')}</span>
+          <span class="px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 text-[10px]">Drop: {localeState.t('workflows.rebase.dropDesc')}</span>
         </div>
         <span class="text-zinc-500 font-mono text-[11px] shrink-0">{todos.length} commits</span>
       </div>
@@ -185,11 +181,11 @@
         {#if isLoading}
           <div class="py-12 flex flex-col items-center justify-center text-zinc-500 gap-2">
             <RefreshCw class="w-6 h-6 animate-spin text-amber-500 dark:text-amber-400" />
-            <span class="text-xs font-mono">Đang chuẩn bị danh sách todo timeline...</span>
+            <span class="text-xs font-mono">{localeState.t('workflows.rebase.loadingTodos')}</span>
           </div>
         {:else if todos.length === 0}
           <div class="py-12 text-center text-zinc-500 text-xs font-mono">
-            Không tìm thấy commit nào giữa HEAD và commit đích được chọn.
+            {localeState.t('workflows.rebase.emptyTodos')}
           </div>
         {:else}
           <div class="space-y-2 font-mono">
@@ -205,7 +201,7 @@
                       onclick={() => moveUp(index)}
                       disabled={index === 0}
                       class="p-1 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white disabled:opacity-20 cursor-pointer disabled:cursor-default transition-colors border border-zinc-200 dark:border-transparent"
-                      title="Chuyển lên trước (Áp dụng sớm hơn)"
+                      title={localeState.t('workflows.rebase.moveUpTooltip')}
                     >
                       <ArrowUp class="w-3 h-3" />
                     </button>
@@ -213,7 +209,7 @@
                       onclick={() => moveDown(index)}
                       disabled={index === todos.length - 1}
                       class="p-1 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white disabled:opacity-20 cursor-pointer disabled:cursor-default transition-colors border border-zinc-200 dark:border-transparent"
-                      title="Chuyển xuống sau (Áp dụng trễ hơn)"
+                      title={localeState.t('workflows.rebase.moveDownTooltip')}
                     >
                       <ArrowDown class="w-3 h-3" />
                     </button>
@@ -225,11 +221,11 @@
                     onchange={(e) => setAction(index, e.currentTarget.value)}
                     class="px-2 py-1.5 rounded-lg text-xs font-bold border transition-colors outline-hidden cursor-pointer {ACTION_CONFIGS[item.action]?.color || 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700'}"
                   >
-                    <option value="pick">pick (Giữ)</option>
-                    <option value="reword">reword (Sửa text)</option>
-                    <option value="squash">squash (Gộp + msg)</option>
-                    <option value="fixup">fixup (Gộp gọn)</option>
-                    <option value="drop">drop (Xóa)</option>
+                    <option value="pick">pick ({localeState.t('workflows.rebase.pickDesc')})</option>
+                    <option value="reword">reword ({localeState.t('workflows.rebase.rewordDesc')})</option>
+                    <option value="squash">squash ({localeState.t('workflows.rebase.squashDesc')})</option>
+                    <option value="fixup">fixup ({localeState.t('workflows.rebase.fixupDesc')})</option>
+                    <option value="drop">drop ({localeState.t('workflows.rebase.dropDesc')})</option>
                   </select>
                 </div>
 
@@ -249,7 +245,7 @@
                       type="text"
                       bind:value={item.summary}
                       class="mt-1 w-full px-2 py-1 text-xs font-sans bg-white dark:bg-zinc-900 border border-amber-500 rounded text-zinc-900 dark:text-zinc-100 outline-hidden select-text"
-                      placeholder="Nhập commit message mới..."
+                      placeholder={localeState.t('workflows.rebase.rewordPlaceholder')}
                     />
                   {:else}
                     <p class="text-xs text-zinc-800 dark:text-zinc-300 font-sans truncate mt-0.5 {item.action === 'drop' ? 'line-through text-zinc-400 dark:text-zinc-600' : ''}">
@@ -264,7 +260,7 @@
                     <button
                       onclick={() => setAction(index, 'drop')}
                       class="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
-                      title="Đánh dấu xóa commit này (Drop)"
+                      title={localeState.t('workflows.rebase.dropTooltip')}
                     >
                       <Trash2 class="w-3.5 h-3.5" />
                     </button>
@@ -272,7 +268,7 @@
                     <button
                       onclick={() => setAction(index, 'pick')}
                       class="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors cursor-pointer"
-                      title="Khôi phục commit (Pick)"
+                      title={localeState.t('workflows.rebase.restoreTooltip')}
                     >
                       <Check class="w-3.5 h-3.5" />
                     </button>
@@ -288,7 +284,7 @@
       <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 flex items-center justify-between">
         <div class="flex items-center gap-1.5 text-xs text-zinc-500 font-mono">
           <AlertTriangle class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-          <span>Nếu có xung đột, FlowGit sẽ tự động kích hoạt Conflict Resolver.</span>
+          <span>{localeState.t('workflows.rebase.conflictWarning')}</span>
         </div>
 
         <div class="flex items-center gap-3">
@@ -296,7 +292,7 @@
             onclick={onClose}
             class="px-4 py-2 rounded-xl text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 text-xs font-medium cursor-pointer transition-colors"
           >
-            Hủy
+            {localeState.t('common.cancel')}
           </button>
           <button
             onclick={handleStartRebase}
@@ -305,10 +301,10 @@
           >
             {#if isExecuting}
               <RefreshCw class="w-4 h-4 animate-spin" />
-              <span>Đang Rebase...</span>
+              <span>{localeState.t('workflows.rebase.rebasing')}</span>
             {:else}
               <GitFork class="w-4 h-4" />
-              <span>Bắt đầu Rebase ({todos.filter(t => t.action !== 'drop').length} commits)</span>
+              <span>{localeState.t('workflows.rebase.startRebaseWithCount', { count: todos.filter(t => t.action !== 'drop').length })}</span>
             {/if}
           </button>
         </div>

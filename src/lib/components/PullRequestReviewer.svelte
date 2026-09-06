@@ -11,6 +11,7 @@
     GitCommit,
   } from 'lucide-svelte';
   import type {
+    AccountProfile,
     BranchInfo,
     GitHubPRComment,
     GitHubPRFile,
@@ -38,6 +39,8 @@
   import { getActiveAccount } from '../api/auth';
   import { generateAIPRReview } from '../api/ai';
   import { toast } from '../state/toastState.svelte';
+  import { localeState } from '../state/localeState.svelte';
+  import type { RemoteState } from '../state/remoteState.svelte';
   import CreatePullRequestModal from './CreatePullRequestModal.svelte';
 
   // Subcomponents
@@ -52,8 +55,11 @@
   import PRCloseModal from './pr-reviewer/PRCloseModal.svelte';
 
   interface Props {
+    remote?: RemoteState;
     remoteOriginUrl?: string | null;
     localBranches?: BranchInfo[];
+    activeAccount?: AccountProfile | null;
+    onOpenAuth?: () => void;
     onCheckoutBranch?: (branchName: string) => Promise<void>;
     onOpenCreatePR?: () => void;
     onClose?: () => void;
@@ -61,8 +67,11 @@
   }
 
   let {
+    remote,
     remoteOriginUrl = '',
     localBranches = [],
+    activeAccount = null,
+    onOpenAuth,
     onCheckoutBranch,
     onOpenCreatePR,
     onClose,
@@ -74,7 +83,6 @@
   let repoOwner = $state('');
   let repoName = $state('');
   let patToken = $state(getStoredGitHubToken());
-  let showTokenInput = $state(false);
   let showLocalCreatePRModal = $state(false);
   let activeAccountUsername = $state('');
 
@@ -133,45 +141,101 @@
     selectedPR.user.login.toLowerCase() === activeAccountUsername.toLowerCase()
   );
 
-  // Sync state with detected remote
+  // Sync state with detected remote & auto reload on repo switch
   $effect(() => {
     if (parsedRemote) {
+      const ownerChanged = repoOwner !== parsedRemote.owner || repoName !== parsedRemote.repo;
       repoOwner = parsedRemote.owner;
       repoName = parsedRemote.repo;
-    }
-  });
-
-  onMount(async () => {
-    if (!patToken) {
-      try {
-        const activeAcc = await getActiveAccount('github');
-        if (activeAcc?.token) {
-          patToken = activeAcc.token;
-          saveGitHubToken(activeAcc.token);
-        }
-        if (activeAcc?.username) {
-          activeAccountUsername = activeAcc.username;
-        }
-      } catch (err) {
-        console.warn('Could not load active account token', err);
+      if (ownerChanged && repoOwner && repoName) {
+        loadPullRequests();
       }
-    } else {
-      try {
-        const activeAcc = await getActiveAccount('github');
-        if (activeAcc?.username) {
-          activeAccountUsername = activeAcc.username;
-        }
-      } catch {}
-    }
-    if (repoOwner && repoName) {
-      loadPullRequests();
     }
   });
 
-  async function loadPullRequests() {
+  // React to external PR creation trigger (e.g. from modal or command)
+  $effect(() => {
+    const trigger = remote?.prRefreshTrigger;
+    if (trigger && trigger > 0) {
+      const created = remote?.lastCreatedPR;
+      if (created) {
+        remote.lastCreatedPR = null;
+        if (!prList.some((p) => p.id === created.id)) {
+          prList = [created, ...prList];
+        }
+        selectPR(created);
+      }
+      loadPullRequests(true);
+    }
+  });
+
+  // Sync token & account when activeAccount changes
+  $effect(() => {
+    if (activeAccount?.token) {
+      patToken = activeAccount.token;
+      saveGitHubToken(activeAccount.token);
+    }
+    if (activeAccount?.username) {
+      activeAccountUsername = activeAccount.username;
+    }
+  });
+
+  onMount(() => {
+    (async () => {
+      if (!patToken) {
+        try {
+          const activeAcc = await getActiveAccount('github');
+          if (activeAcc?.token) {
+            patToken = activeAcc.token;
+            saveGitHubToken(activeAcc.token);
+          }
+          if (activeAcc?.username) {
+            activeAccountUsername = activeAcc.username;
+          }
+        } catch (err) {
+          console.warn('Could not load active account token', err);
+        }
+      } else {
+        try {
+          const activeAcc = await getActiveAccount('github');
+          if (activeAcc?.username) {
+            activeAccountUsername = activeAcc.username;
+          }
+        } catch {}
+      }
+
+      if (repoOwner && repoName) {
+        loadPullRequests();
+      }
+    })();
+
+    // Auto-refresh when returning to window (e.g. user created or modified PR in browser)
+    const onWindowFocus = () => {
+      if (repoOwner && repoName && !isLoadingPRs) {
+        loadPullRequests(true);
+      }
+    };
+    window.addEventListener('focus', onWindowFocus);
+
+    // Periodic gentle refresh every 30s while viewing PR page
+    const pollInterval = setInterval(() => {
+      if (repoOwner && repoName && !isLoadingPRs) {
+        loadPullRequests(true);
+      }
+    }, 30000);
+
+    return () => {
+      window.removeEventListener('focus', onWindowFocus);
+      clearInterval(pollInterval);
+    };
+  });
+
+  async function loadPullRequests(isBackground = false) {
     if (!repoOwner || !repoName) return;
     try {
-      isLoadingPRs = true;
+      if (!isBackground) {
+        isLoadingPRs = true;
+      }
       if (!patToken) {
         try {
           const activeAcc = await getActiveAccount('github');
@@ -185,13 +249,25 @@
       prList = list;
       const openCount = prFilter === 'open' ? list.length : list.filter((p) => p.state === 'open').length;
       onPRCountChange?.(openCount);
+      if (remote) {
+        remote.openPRCount = openCount;
+      }
       if (list.length > 0 && !selectedPR) {
         selectPR(list[0]);
+      } else if (selectedPR) {
+        const currentInList = list.find((p) => p.id === selectedPR?.id);
+        if (currentInList && (currentInList.state !== selectedPR.state || currentInList.title !== selectedPR.title)) {
+          selectedPR = { ...selectedPR, ...currentInList };
+        }
       }
     } catch (err: any) {
-      toast.error('Lỗi tải Pull Requests', err.message || String(err));
+      if (!isBackground) {
+        toast.error(localeState.t('pullRequest.reviewer.loadPRError'), err.message || String(err));
+      }
     } finally {
-      isLoadingPRs = false;
+      if (!isBackground) {
+        isLoadingPRs = false;
+      }
     }
   }
 
@@ -224,7 +300,7 @@
         selectedPR = { ...pr, ...detail };
       }
     } catch (err: any) {
-      toast.error('Lỗi tải chi tiết PR', err.message || String(err));
+      toast.error(localeState.t('pullRequest.reviewer.loadDetailError'), err.message || String(err));
     } finally {
       isLoadingDetails = false;
     }
@@ -243,9 +319,12 @@
       );
       prComments = [...prComments, newComment];
       quickCommentText = '';
-      toast.success('Đã gửi nhận xét!', 'Bình luận đã được ghi nhận trên GitHub PR.');
+      toast.success(
+        localeState.t('pullRequest.reviewer.commentSuccess'),
+        localeState.t('pullRequest.reviewer.commentSuccessDesc')
+      );
     } catch (err: any) {
-      toast.error('Không thể gửi bình luận', err.message || String(err));
+      toast.error(localeState.t('pullRequest.reviewer.commentError'), err.message || String(err));
     } finally {
       isPostingQuickComment = false;
     }
@@ -259,9 +338,12 @@
       const review = await generateAIPRReview(selectedPR.title, prFiles);
       aiReviewResult = review;
       activeTab = 'conversation';
-      toast.success('AI Code Review hoàn tất!', 'Đã tạo bản tóm tắt và đánh giá cho PR.');
+      toast.success(
+        localeState.t('pullRequest.reviewer.aiReviewSuccess'),
+        localeState.t('pullRequest.reviewer.aiReviewSuccessDesc')
+      );
     } catch (err: any) {
-      toast.error('Lỗi sinh AI Review', err.message || String(err));
+      toast.error(localeState.t('pullRequest.reviewer.aiReviewError'), err.message || String(err));
     } finally {
       isGeneratingReview = false;
     }
@@ -288,26 +370,48 @@
       );
 
       toast.success(
-        'Hợp nhất Pull Request thành công!',
-        `PR #${selectedPR.number} đã được merge vào nhánh '${selectedPR.base.ref}'.`
+        localeState.t('pullRequest.reviewer.mergeSuccess'),
+        localeState.t('pullRequest.reviewer.mergeSuccessDesc', {
+          number: selectedPR.number,
+          branch: selectedPR.base.ref,
+        })
       );
 
       if (deleteBranchAfterMerge && selectedPR.head.ref) {
         try {
           await deleteGitHubBranch(repoOwner, repoName, selectedPR.head.ref, patToken);
-          toast.info(`Đã xóa nhánh remote '${selectedPR.head.ref}'.`);
+          toast.info(
+            localeState.t('pullRequest.reviewer.branchDeletedInfo', {
+              branch: selectedPR.head.ref,
+            })
+          );
         } catch (delErr) {
           console.warn('Could not delete remote branch after merge', delErr);
         }
       }
 
       showMergeModal = false;
-      await loadPullRequests();
       if (selectedPR) {
-        selectedPR = { ...selectedPR, state: 'closed', merged: true };
+        const mergedPR: GitHubPullRequest = {
+          ...selectedPR,
+          state: 'closed',
+          merged: true,
+          merged_at: new Date().toISOString(),
+        };
+        selectedPR = mergedPR;
+        if (prFilter === 'open') {
+          prList = prList.filter((p) => p.id !== mergedPR.id);
+        } else {
+          prList = prList.map((p) => (p.id === mergedPR.id ? mergedPR : p));
+        }
       }
+      if (remote) {
+        remote.openPRCount = Math.max(0, (remote.openPRCount || 1) - 1);
+      }
+      onPRCountChange?.(Math.max(0, (remote?.openPRCount ?? prList.filter((p) => p.state === 'open').length)));
+      await loadPullRequests(true);
     } catch (err: any) {
-      toast.error('Không thể merge Pull Request', err.message || String(err));
+      toast.error(localeState.t('pullRequest.reviewer.mergeError'), err.message || String(err));
     } finally {
       isMerging = false;
     }
@@ -328,29 +432,36 @@
         patToken
       );
       selectedPR = updated;
-      toast.success(
-        targetState === 'closed' ? 'Đã đóng Pull Request' : 'Đã mở lại Pull Request',
-        `PR #${selectedPR.number} hiện ở trạng thái ${targetState}.`
-      );
       showCloseModal = false;
-      await loadPullRequests();
+      if (prFilter === 'open' && targetState === 'closed') {
+        prList = prList.filter((p) => p.id !== updated.id);
+      } else {
+        prList = prList.map((p) => (p.id === updated.id ? updated : p));
+      }
+      const newOpenCount = prList.filter((p) => p.state === 'open').length;
+      if (remote) {
+        remote.openPRCount = newOpenCount;
+      }
+      onPRCountChange?.(newOpenCount);
+      toast.success(
+        targetState === 'closed'
+          ? localeState.t('pullRequest.reviewer.prClosed')
+          : localeState.t('pullRequest.reviewer.prReopened'),
+        localeState.t('pullRequest.reviewer.prStateUpdated', {
+          number: selectedPR.number,
+          state: targetState,
+        })
+      );
       if (comment && comment.trim()) {
         quickCommentText = '';
       }
+      await loadPullRequests(true);
       await selectPR(updated);
     } catch (err: any) {
-      toast.error('Thao tác thất bại', err.message || String(err));
+      toast.error(localeState.t('pullRequest.reviewer.opFailed'), err.message || String(err));
     } finally {
       isTogglingPRState = false;
     }
-  }
-
-  function handleSaveToken(token: string) {
-    patToken = token;
-    saveGitHubToken(token);
-    showTokenInput = false;
-    toast.success('Đã lưu Token GitHub', 'Token của bạn đã được cập nhật.');
-    loadPullRequests();
   }
 
   let filteredPRs = $derived.by(() => {
@@ -368,9 +479,14 @@
     if (!selectedPR || !onCheckoutBranch) return;
     try {
       await onCheckoutBranch(selectedPR.head.ref);
-      toast.success('Đã chuyển sang nhánh PR', `Đang đứng tại nhánh '${selectedPR.head.ref}'.`);
+      toast.success(
+        localeState.t('pullRequest.reviewer.checkoutSuccess'),
+        localeState.t('pullRequest.reviewer.checkoutSuccessDesc', {
+          branch: selectedPR.head.ref,
+        })
+      );
     } catch (err: any) {
-      toast.error('Không thể checkout nhánh PR', err.message || String(err));
+      toast.error(localeState.t('pullRequest.reviewer.checkoutError'), err.message || String(err));
     }
   }
 
@@ -395,9 +511,12 @@
       prComments = [...prComments, newComment];
       inlineCommentLine = null;
       inlineCommentText = '';
-      toast.success('Đã gửi nhận xét inline', 'Bình luận đã được ghi nhận trên GitHub PR.');
+      toast.success(
+        localeState.t('pullRequest.reviewer.inlineCommentSuccess'),
+        localeState.t('pullRequest.reviewer.commentSuccessDesc')
+      );
     } catch (err: any) {
-      toast.error('Không thể gửi bình luận', err.message || String(err));
+      toast.error(localeState.t('pullRequest.reviewer.commentError'), err.message || String(err));
     } finally {
       isPostingComment = false;
     }
@@ -417,14 +536,20 @@
       );
       showReviewModal = false;
       reviewBody = '';
-      toast.success('Đã gửi Review thành công', `Đã gửi đánh giá (${reviewEvent}) cho PR #${selectedPR.number}.`);
+      toast.success(
+        localeState.t('pullRequest.reviewer.reviewSuccess'),
+        localeState.t('pullRequest.reviewer.reviewSuccessDesc', {
+          event: reviewEvent,
+          number: selectedPR.number,
+        })
+      );
       loadPullRequests();
     } catch (err: any) {
       let errMsg = err.message || String(err);
       if (errMsg.includes('Can not approve your own pull request') || errMsg.includes('cannot approve your own pull request')) {
-        errMsg = 'Bạn là tác giả của PR này nên không thể tự Approve. Vui lòng chọn mục "Comment" để gửi nhận xét.';
+        errMsg = localeState.t('pullRequest.reviewer.cannotApproveOwnPR');
       }
-      toast.error('Không thể gửi Review', errMsg);
+      toast.error(localeState.t('pullRequest.reviewer.reviewError'), errMsg);
     } finally {
       isSubmittingReview = false;
     }
@@ -439,13 +564,13 @@
         <GitPullRequest class="w-4 h-4" />
       </div>
       <div class="flex items-center gap-2">
-        <span class="text-xs font-semibold text-zinc-800 dark:text-zinc-200">Cloud Code Review</span>
+        <span class="text-xs font-semibold text-zinc-800 dark:text-zinc-200">{localeState.t('pullRequest.reviewer.cloudCodeReview')}</span>
         {#if repoOwner && repoName}
           <span class="text-xs font-mono px-2 py-0.5 rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-cyan-700 dark:text-cyan-300">
             {repoOwner}/{repoName}
           </span>
         {:else}
-          <span class="text-xs text-amber-600 dark:text-amber-400">Chưa xác định GitHub Remote (origin)</span>
+          <span class="text-xs text-amber-600 dark:text-amber-400">{localeState.t('pullRequest.reviewer.unidentifiedRemote')}</span>
         {/if}
       </div>
     </div>
@@ -461,36 +586,43 @@
           }
         }}
         class="px-2.5 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
-        title="Tạo Pull Request mới lên GitHub"
+        title={localeState.t('pullRequest.reviewer.createPRTitle')}
       >
         <Plus class="w-3.5 h-3.5" />
-        <span>Tạo Pull Request</span>
+        <span>{localeState.t('pullRequest.reviewer.createPR')}</span>
       </button>
 
-      {#if !patToken}
+      {#if activeAccount || activeAccountUsername}
         <button
-          onclick={() => (showTokenInput = true)}
+          onclick={() => onOpenAuth?.()}
+          class="px-2 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+          title={localeState.t('toolbar.signedInAs', { username: activeAccount?.username || activeAccountUsername, provider: 'GitHub' })}
+        >
+          {#if activeAccount?.avatar_url}
+            <img src={activeAccount.avatar_url} alt="Avatar" class="w-4 h-4 rounded-full border border-zinc-300 dark:border-zinc-600 shrink-0" />
+          {:else}
+            <span class="w-4 h-4 rounded-full bg-cyan-600/20 text-cyan-700 dark:text-cyan-300 flex items-center justify-center text-[9px] font-bold shrink-0">
+              {(activeAccount?.username || activeAccountUsername).slice(0, 2).toUpperCase()}
+            </span>
+          {/if}
+          <span class="font-medium text-xs">@{activeAccount?.username || activeAccountUsername}</span>
+        </button>
+      {:else if onOpenAuth}
+        <button
+          onclick={onOpenAuth}
           class="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-800/50 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+          title={localeState.t('toolbar.signInTitle')}
         >
           <Key class="w-3.5 h-3.5" />
-          <span>Nhập GitHub Token (PAT)</span>
-        </button>
-      {:else}
-        <button
-          onclick={() => (showTokenInput = !showTokenInput)}
-          class="px-2.5 py-1 rounded-lg bg-white dark:bg-zinc-850 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-          title="Thay đổi GitHub Personal Access Token"
-        >
-          <Key class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span>Token đã kết nối</span>
+          <span>{localeState.t('toolbar.signIn')} GitHub</span>
         </button>
       {/if}
 
       <button
-        onclick={loadPullRequests}
+        onclick={() => loadPullRequests(false)}
         disabled={isLoadingPRs}
         class="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer disabled:opacity-50"
-        title="Tải lại danh sách PRs"
+        title={localeState.t('pullRequest.reviewer.refreshTitle')}
       >
         <RefreshCw class="w-3.5 h-3.5 {isLoadingPRs ? 'animate-spin text-violet-600 dark:text-violet-400' : ''}" />
       </button>
@@ -499,7 +631,7 @@
         <button
           onclick={onClose}
           class="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer"
-          title="Đóng giao diện PR Review"
+          title={localeState.t('pullRequest.reviewer.closeReviewTitle')}
         >
           <X class="w-4 h-4" />
         </button>
@@ -516,12 +648,9 @@
       {isLoadingPRs}
       bind:searchQuery
       bind:prFilter
-      {showTokenInput}
-      bind:patToken
       onSelectPR={selectPR}
       onFilterChange={(f) => { prFilter = f; loadPullRequests(); }}
       onSearchChange={(q) => { searchQuery = q; }}
-      onSaveToken={handleSaveToken}
       onOpenCreatePR={() => {
         if (onOpenCreatePR) {
           onOpenCreatePR();
@@ -560,7 +689,7 @@
             class="py-2.5 font-medium flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'files' ? 'border-violet-500 text-violet-700 dark:text-violet-300 font-semibold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
           >
             <FileText class="w-3.5 h-3.5" />
-            <span>Files Changed</span>
+            <span>{localeState.t('pullRequest.reviewer.tabFiles')}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {activeTab === 'files' ? 'bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 font-bold' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">
               {prFiles.length}
             </span>
@@ -570,7 +699,7 @@
             class="py-2.5 font-medium flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'conversation' ? 'border-violet-500 text-violet-700 dark:text-violet-300 font-semibold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
           >
             <MessageSquare class="w-3.5 h-3.5" />
-            <span>Description & Conversation</span>
+            <span>{localeState.t('pullRequest.reviewer.tabConversation')}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {activeTab === 'conversation' ? 'bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 font-bold' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">
               {prComments.length}
             </span>
@@ -580,7 +709,7 @@
             class="py-2.5 font-medium flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'commits' ? 'border-violet-500 text-violet-700 dark:text-violet-300 font-semibold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
           >
             <GitCommit class="w-3.5 h-3.5" />
-            <span>Commits</span>
+            <span>{localeState.t('pullRequest.reviewer.tabCommits')}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {activeTab === 'commits' ? 'bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 font-bold' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">
               {prCommits.length}
             </span>
@@ -591,7 +720,7 @@
         {#if isLoadingDetails}
           <div class="flex-1 flex flex-col items-center justify-center text-xs text-zinc-500 gap-2">
             <RefreshCw class="w-5 h-5 animate-spin text-violet-600 dark:text-violet-400" />
-            <span>Đang tải tệp thay đổi và thảo luận từ GitHub...</span>
+            <span>{localeState.t('pullRequest.reviewer.loadingDetails')}</span>
           </div>
         {:else if activeTab === 'conversation'}
           <PRConversationTab
@@ -674,6 +803,8 @@
   isOpen={showLocalCreatePRModal}
   {remoteOriginUrl}
   branches={localBranches}
+  {activeAccount}
+  {onOpenAuth}
   onClose={() => (showLocalCreatePRModal = false)}
   onSuccess={async (newPR) => {
     showLocalCreatePRModal = false;

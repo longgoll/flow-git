@@ -7,6 +7,7 @@
     X,
   } from 'lucide-svelte';
   import type { GraphViewMode } from '../../types';
+  import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     displayCount: number;
@@ -35,21 +36,21 @@
   <!-- Left: Status & Commit Counts -->
   <div class="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
     <span class="font-mono text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">
-      {displayCount}
       {#if displayCount !== totalCount}
-        <span class="text-zinc-400">/{totalCount}</span>
+        {localeState.t('graph.headerControls.commitsCount', { display: displayCount, total: totalCount })}
+      {:else}
+        {localeState.t('graph.headerControls.commitsCountSimple', { count: displayCount })}
       {/if}
-      commits
     </span>
 
     {#if lockedLane !== null}
       <span class="px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 font-mono text-[10px] font-medium flex items-center gap-1 animate-in fade-in duration-100">
         <Eye class="w-2.5 h-2.5 text-indigo-600 dark:text-indigo-400" />
-        <span>Locked Lane {lockedLane}</span>
+        <span>{localeState.t('graph.headerControls.lockedLane', { lane: lockedLane })}</span>
         <button
           onclick={onUnlockLane}
           class="p-0.5 rounded hover:bg-indigo-200/60 dark:hover:bg-indigo-800/60 transition-colors cursor-pointer"
-          title="Bỏ khóa tiêu điểm"
+          title={localeState.t('graph.headerControls.unlockLaneTooltip')}
         >
           <X class="w-2.5 h-2.5" />
         </button>
@@ -63,19 +64,19 @@
       <button
         onclick={() => onToggleViewMode('micro')}
         class="px-2 py-0.5 rounded text-[11px] transition-all flex items-center gap-1.5 cursor-pointer {viewMode === 'micro' ? 'bg-white dark:bg-zinc-900 text-cyan-600 dark:text-cyan-400 font-semibold shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
-        title="Micro DAG View: Xem chi tiết toàn bộ các commit"
+        title={localeState.t('graph.headerControls.microDagTooltip')}
       >
         <GitCompare class="w-3 h-3" />
-        <span>Micro DAG</span>
+        <span>{localeState.t('graph.headerControls.microDag')}</span>
       </button>
 
       <button
         onclick={() => onToggleViewMode('macro')}
         class="px-2 py-0.5 rounded text-[11px] transition-all flex items-center gap-1.5 cursor-pointer {viewMode === 'macro' ? 'bg-white dark:bg-zinc-900 text-cyan-600 dark:text-cyan-400 font-semibold shadow-xs' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
-        title="Macro Map View: Ẩn commit lẻ, chỉ hiển thị PR, Merge commits, Tags và Head"
+        title={localeState.t('graph.headerControls.macroMapTooltip')}
       >
         <Globe class="w-3 h-3" />
-        <span>Macro Map</span>
+        <span>{localeState.t('graph.headerControls.macroMap')}</span>
       </button>
     </div>
 
@@ -83,10 +84,10 @@
     <button
       onclick={onToggleAutoCapsule}
       class="px-2 py-0.5 rounded-md border text-[11px] flex items-center gap-1.5 shadow-xs transition-all cursor-pointer {autoCapsule ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700/60 text-emerald-700 dark:text-emerald-300 font-semibold' : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500'}"
-      title="Tự động nén các chuỗi commit phụ thành viên nang [+N commits]"
+      title={localeState.t('graph.headerControls.capsulesTooltip')}
     >
       <Sparkles class="w-3 h-3 {autoCapsule ? 'text-emerald-500' : 'text-zinc-400'}" />
-      <span>Capsules {autoCapsule ? 'ON' : 'OFF'}</span>
+      <span>{autoCapsule ? localeState.t('graph.headerControls.capsulesOn') : localeState.t('graph.headerControls.capsulesOff')}</span>
     </button>
   </div>
 </div>

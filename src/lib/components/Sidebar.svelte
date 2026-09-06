@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { BranchInfo, RemoteInfo, RepoSummary, StashInfo, TagInfo, WorktreeInfo } from '../types';
   import { FolderGit2, PanelLeftClose } from 'lucide-svelte';
+  import { localeState } from '../state/localeState.svelte';
   import SidebarBranchTree from './sidebar/SidebarBranchTree.svelte';
   import SidebarSections from './sidebar/SidebarSections.svelte';
   import SidebarContextMenu from './sidebar/SidebarContextMenu.svelte';
@@ -112,13 +113,13 @@
     <div class="flex items-center justify-between text-zinc-700 dark:text-zinc-300 font-medium text-xs">
       <div class="flex items-center gap-1.5 truncate">
         <FolderGit2 class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 shrink-0" />
-        <span class="truncate font-semibold text-zinc-900 dark:text-zinc-100">{repoSummary?.name || 'No Repository'}</span>
+        <span class="truncate font-semibold text-zinc-900 dark:text-zinc-100">{repoSummary?.name || localeState.t('sidebar.noRepo')}</span>
       </div>
       {#if onCloseSidebar}
         <button
           onclick={onCloseSidebar}
           class="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 transition-colors cursor-pointer"
-          title="Thu gọn sidebar (Ctrl + B)"
+          title={localeState.t('sidebar.collapseSidebar')}
         >
           <PanelLeftClose class="w-3.5 h-3.5" />
         </button>
@@ -131,12 +132,12 @@
       <div class="mt-2 flex items-center gap-2">
         <div class="flex items-center gap-1 text-[10px] text-zinc-600 dark:text-zinc-400 font-mono">
           <span class="w-1.5 h-1.5 rounded-full {repoSummary.dirty_files_count > 0 ? 'bg-amber-500 dark:bg-amber-400' : 'bg-emerald-500 dark:bg-emerald-400'}"></span>
-          <span>{repoSummary.dirty_files_count} unstaged</span>
+          <span>{repoSummary.dirty_files_count} {localeState.t('statusBar.unstaged')}</span>
         </div>
         {#if repoSummary.staged_files_count > 0}
           <span class="text-zinc-400 dark:text-zinc-600">•</span>
           <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium font-mono">
-            {repoSummary.staged_files_count} staged
+            {repoSummary.staged_files_count} {localeState.t('statusBar.staged')}
           </div>
         {/if}
       </div>

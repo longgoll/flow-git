@@ -11,6 +11,7 @@
     Monitor,
   } from 'lucide-svelte';
   import { themeState } from '../state/themeState.svelte';
+  import { localeState } from '../state/localeState.svelte';
   import ToolbarViewModes from './toolbar/ToolbarViewModes.svelte';
   import ToolbarSearchFilters from './toolbar/ToolbarSearchFilters.svelte';
   import ToolbarActions from './toolbar/ToolbarActions.svelte';
@@ -146,7 +147,7 @@
       <button
         onclick={onToggleSidebar}
         class="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-850 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer shrink-0"
-        title={isSidebarOpen ? 'Thu gọn Sidebar (Ctrl+B)' : 'Mở rộng Sidebar (Ctrl+B)'}
+        title={isSidebarOpen ? localeState.t('toolbar.collapseSidebar') : localeState.t('toolbar.expandSidebar')}
       >
         {#if isSidebarOpen}
           <PanelLeftClose class="w-4 h-4" />
@@ -271,7 +272,7 @@
     <button
       onclick={() => themeState.toggleTheme()}
       class="flex items-center gap-1.5 p-1 sm:px-1.5 sm:py-1 rounded-md border border-transparent hover:border-zinc-200 dark:hover:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all cursor-pointer shrink-0"
-      title="Đổi giao diện: Sáng / Tối ({themeState.theme === 'system' ? 'Theo hệ thống' : themeState.isDark ? 'Đang bật Chế độ Tối' : 'Đang bật Chế độ Sáng'})"
+      title={localeState.t('toolbar.themeToggle', { mode: themeState.theme === 'system' ? localeState.t('toolbar.themeSystem') : themeState.isDark ? localeState.t('toolbar.themeDark') : localeState.t('toolbar.themeLight') })}
     >
       {#if themeState.theme === 'system'}
         <Monitor class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
@@ -290,7 +291,7 @@
       <button
         onclick={onOpenAuth}
         class="flex items-center gap-1.5 p-1 sm:px-1.5 sm:py-1 rounded-md border transition-all cursor-pointer group shrink-0 {activeAccount ? 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200/80 dark:hover:bg-zinc-750' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'}"
-        title={activeAccount ? `Logged in as @${activeAccount.username} (${activeAccount.provider})` : 'Sign in with GitHub / Remote Auth'}
+        title={activeAccount ? localeState.t('toolbar.signedInAs', { username: activeAccount.username, provider: activeAccount.provider }) : localeState.t('toolbar.signInTitle')}
       >
         {#if activeAccount?.avatar_url}
           <img src={activeAccount.avatar_url} alt="Avatar" class="w-4 h-4 rounded-full border border-zinc-300 dark:border-zinc-600 shrink-0" />
@@ -300,7 +301,7 @@
           </svg>
         {/if}
         <span class="text-xs font-medium hidden 2xl:inline truncate max-w-[80px]">
-          {activeAccount ? `@${activeAccount.username}` : 'Sign in'}
+          {activeAccount ? `@${activeAccount.username}` : localeState.t('toolbar.signIn')}
         </span>
       </button>
     {/if}

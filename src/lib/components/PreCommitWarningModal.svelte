@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ShieldAlert, AlertTriangle, Package, X, CheckCircle, ArrowRight } from 'lucide-svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   export interface RiskyFileItem {
     path: string;
@@ -33,13 +34,13 @@
         </div>
         <div>
           <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-            Phát hiện Tệp Rủi ro Trước khi Commit
+            {localeState.t('safety.preCommit.title')}
             <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40">
-              {riskyFiles.length} tệp
+              {localeState.t('safety.preCommit.riskyFilesCount', { count: riskyFiles.length })}
             </span>
           </h2>
           <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-            Các tệp dưới đây có thể chứa thông tin bí mật hoặc định dạng tệp lớn không nên lưu trực tiếp vào Git history.
+            {localeState.t('safety.preCommit.subtitle')}
           </p>
         </div>
       </div>
@@ -78,7 +79,7 @@
           </div>
 
           <span class="px-2 py-0.5 rounded text-[10px] font-mono shrink-0 {item.type === 'secret' ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 font-semibold' : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40 font-semibold'}">
-            {item.type === 'secret' ? 'Bí mật / Token' : 'File nhị phân'}
+            {item.type === 'secret' ? localeState.t('safety.preCommit.secretType') : localeState.t('safety.preCommit.binaryType')}
           </span>
         </div>
       {/each}
@@ -86,7 +87,7 @@
       <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 flex items-center gap-2.5">
         <CheckCircle class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
         <span>
-          <strong>Lời khuyên an toàn:</strong> Bấm <strong class="text-emerald-700 dark:text-emerald-300">"Bỏ Stage các tệp này"</strong> để loại chúng ra khỏi commit hiện tại mà không làm mất nội dung trên máy của bạn.
+          {localeState.t('safety.preCommit.safeTip')}
         </span>
       </div>
     </div>
@@ -98,7 +99,7 @@
         onclick={onCancel}
         class="px-3.5 py-1.5 rounded-xl text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
       >
-        Hủy bỏ
+        {localeState.t('common.cancel')}
       </button>
 
       <div class="flex items-center gap-2">
@@ -106,9 +107,9 @@
           type="button"
           onclick={onConfirmCommit}
           class="px-3.5 py-1.5 rounded-xl text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 hover:border-rose-300 dark:hover:border-rose-700/60 transition-colors cursor-pointer"
-          title="Bỏ qua cảnh báo và tiếp tục commit các tệp này"
+          title={localeState.t('safety.preCommit.bypassTitle')}
         >
-          Vẫn Commit (Bypass)
+          {localeState.t('safety.preCommit.bypassAndCommit')}
         </button>
 
         <button
@@ -116,7 +117,7 @@
           onclick={() => onUnstageRisky(riskyFiles.map((f) => f.path))}
           class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 active:scale-98 transition-all cursor-pointer"
         >
-          <span>Bỏ Stage {riskyFiles.length} tệp rủi ro</span>
+          <span>{localeState.t('safety.preCommit.unstageRisky', { count: riskyFiles.length })}</span>
           <ArrowRight class="w-3.5 h-3.5" />
         </button>
       </div>

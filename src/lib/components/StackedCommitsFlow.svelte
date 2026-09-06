@@ -16,6 +16,7 @@
     Upload,
     Anchor,
   } from 'lucide-svelte';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     repoPath: string;
@@ -138,13 +139,13 @@
 
       <div>
         <div class="flex items-center gap-2">
-          <span class="text-sm font-bold text-zinc-900 dark:text-zinc-100">Stacked Commits Flow</span>
+          <span class="text-sm font-bold text-zinc-900 dark:text-zinc-100">{localeState.t('graph.stackedCommits.title')}</span>
           <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300 font-mono">
-            Graphite / Sapling Style
+            {localeState.t('graph.stackedCommits.badge')}
           </span>
         </div>
         <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
-          Kéo thả sắp xếp thứ tự các commit cục bộ chưa push. Mọi thao tác đều được bảo vệ với Undo (Ctrl+Z).
+          {localeState.t('graph.stackedCommits.subtitle')}
         </p>
       </div>
     </div>
@@ -153,7 +154,7 @@
     <div class="flex items-center gap-3">
       <div class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-400 text-xs font-mono">
         <ShieldCheck class="w-3.5 h-3.5" />
-        <span>No-Fear Safe Rebase</span>
+        <span>{localeState.t('graph.stackedCommits.safeRebase')}</span>
       </div>
 
       {#if hasChanges}
@@ -163,14 +164,14 @@
           class="px-3.5 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium shadow-md shadow-indigo-950/60 transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
         >
           <Check class="w-3.5 h-3.5" />
-          <span>{isSaving ? 'Applying...' : 'Apply Reorder'}</span>
+          <span>{isSaving ? localeState.t('graph.stackedCommits.applying') : localeState.t('graph.stackedCommits.applyReorder')}</span>
         </button>
       {/if}
 
       <button
         onclick={onClose}
         class="p-1.5 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer"
-        title="Đóng Stacked Commits"
+        title={localeState.t('graph.stackedCommits.closeTooltip')}
       >
         <X class="w-4 h-4" />
       </button>
@@ -180,7 +181,7 @@
   {#if statusMessage}
     <div class="px-5 py-2 bg-indigo-50 dark:bg-indigo-950/30 border-b border-indigo-200 dark:border-indigo-900/40 text-xs font-mono text-indigo-800 dark:text-indigo-200 flex items-center justify-between">
       <span>{statusMessage}</span>
-      <button onclick={() => (statusMessage = '')} class="text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 text-[10px] cursor-pointer">Dismiss</button>
+      <button onclick={() => (statusMessage = '')} class="text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 text-[10px] cursor-pointer">{localeState.t('graph.stackedCommits.dismiss')}</button>
     </div>
   {/if}
 
@@ -189,13 +190,13 @@
     {#if isLoading}
       <div class="h-64 flex items-center justify-center text-zinc-500 text-xs gap-2">
         <div class="w-4 h-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
-        <span>Loading unpushed stacked commits...</span>
+        <span>{localeState.t('graph.stackedCommits.loading')}</span>
       </div>
     {:else if commits.length > 0}
       <div class="space-y-4">
         <div class="text-[11px] font-mono text-zinc-500 uppercase tracking-wider flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800/80">
-          <span>Recent Unpushed Commits (Stack Order: HEAD at top)</span>
-          <span class="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold">{commits.length} unpushed</span>
+          <span>{localeState.t('graph.stackedCommits.recentUnpushed')}</span>
+          <span class="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold">{localeState.t('graph.stackedCommits.unpushedCount', { count: commits.length })}</span>
         </div>
 
         <!-- Visual Stack Spine Container -->
@@ -220,7 +221,7 @@
               >
                 <!-- Drag Handle (Active only when >= 2 commits) -->
                 {#if commits.length > 1}
-                  <div class="pt-1 text-zinc-400 group-hover:text-indigo-600 dark:text-zinc-600 dark:group-hover:text-indigo-400 cursor-grab active:cursor-grabbing shrink-0" title="Kéo để đổi thứ tự commit trong ngăn xếp">
+                  <div class="pt-1 text-zinc-400 group-hover:text-indigo-600 dark:text-zinc-600 dark:group-hover:text-indigo-400 cursor-grab active:cursor-grabbing shrink-0" title={localeState.t('graph.stackedCommits.dragTooltip')}>
                     <GripVertical class="w-4 h-4" />
                   </div>
                 {/if}
@@ -263,7 +264,7 @@
                       onclick={() => moveCommit(idx, 'up')}
                       disabled={idx === 0}
                       class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
-                      title="Đẩy commit lên trên"
+                      title={localeState.t('graph.stackedCommits.moveUp')}
                     >
                       <ArrowUp class="w-3.5 h-3.5" />
                     </button>
@@ -271,7 +272,7 @@
                       onclick={() => moveCommit(idx, 'down')}
                       disabled={idx === commits.length - 1}
                       class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
-                      title="Đẩy commit xuống dưới"
+                      title={localeState.t('graph.stackedCommits.moveDown')}
                     >
                       <ArrowDown class="w-3.5 h-3.5" />
                     </button>
@@ -291,14 +292,14 @@
             <div class="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700/80 bg-zinc-50/70 dark:bg-zinc-900/30 p-3.5 flex items-center justify-between text-xs text-zinc-500">
               <div class="flex items-center gap-2">
                 <Anchor class="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
-                <span class="font-medium text-zinc-700 dark:text-zinc-300">Upstream Base (Synced & Safe)</span>
+                <span class="font-medium text-zinc-700 dark:text-zinc-300">{localeState.t('graph.stackedCommits.upstreamBase')}</span>
                 {#if currentBranch}
                   <span class="font-mono text-[11px] px-2 py-0.5 rounded-md bg-zinc-200/70 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-medium">origin/{currentBranch}</span>
                 {/if}
               </div>
               <span class="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                 <Check class="w-3 h-3" />
-                <span>Base Anchor</span>
+                <span>{localeState.t('graph.stackedCommits.baseAnchor')}</span>
               </span>
             </div>
           </div>
@@ -312,9 +313,9 @@
                 <Sparkles class="w-4 h-4" />
               </div>
               <div>
-                <h4 class="text-xs font-bold text-zinc-900 dark:text-zinc-100">Commit sẵn sàng push</h4>
+                <h4 class="text-xs font-bold text-zinc-900 dark:text-zinc-100">{localeState.t('graph.stackedCommits.readyPushTitle')}</h4>
                 <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 leading-relaxed">
-                  Bạn đang có <strong>1 commit</strong> cục bộ chưa đưa lên remote. Tính năng kéo thả sắp xếp (Reorder Stack) sẽ tự động kích hoạt khi có từ 2 commits trở lên.
+                  {localeState.t('graph.stackedCommits.readyPushDesc')}
                 </p>
               </div>
             </div>
@@ -324,23 +325,23 @@
                 class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
               >
                 <Upload class="w-3.5 h-3.5" />
-                <span>Push lên Remote</span>
+                <span>{localeState.t('graph.stackedCommits.pushToRemote')}</span>
               </button>
             {/if}
           </div>
         {:else}
           <div class="mt-4 p-3 rounded-lg bg-zinc-100/60 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 text-xs text-zinc-600 dark:text-zinc-400 flex items-center gap-2">
             <Sparkles class="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-            <span>Kéo thả các thẻ hoặc sử dụng mũi tên để sắp xếp lại thứ tự commit, sau đó bấm <strong>Apply Reorder</strong> ở trên.</span>
+            <span>{localeState.t('graph.stackedCommits.reorderTip')}</span>
           </div>
         {/if}
       </div>
     {:else}
       <div class="h-64 flex flex-col items-center justify-center text-center p-8 text-zinc-500 text-xs gap-3">
         <Box class="w-10 h-10 text-zinc-400 dark:text-zinc-600" />
-        <span class="text-zinc-800 dark:text-zinc-300 font-semibold text-sm">All commits are pushed</span>
+        <span class="text-zinc-800 dark:text-zinc-300 font-semibold text-sm">{localeState.t('graph.stackedCommits.allCommitsPushedTitle')}</span>
         <span class="max-w-sm text-zinc-500 leading-relaxed">
-          There are currently no unpushed local commits on this branch to reorder or squash. Create new commits to manage them in this stacked flow!
+          {localeState.t('graph.stackedCommits.allCommitsPushedDesc')}
         </span>
       </div>
     {/if}

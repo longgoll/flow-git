@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { CommitDetail, CommitNode, ConflictSimulationResult, FileDiffDetail } from '../types';
+  import { localeState } from '../state/localeState.svelte';
   import CommitGraph from './CommitGraph.svelte';
   import DiffViewer from './DiffViewer.svelte';
   import { getCommitFileDiff } from '../api/diff';
@@ -136,9 +137,9 @@
   <!-- Column 1: Commits List & Graph (35%) -->
   <div class="w-[36%] min-w-[320px] max-w-[500px] h-full flex flex-col min-h-0 overflow-hidden bg-white/60 dark:bg-zinc-950/60">
     <div class="h-8 px-3 border-b border-zinc-200 dark:border-zinc-800/80 flex items-center justify-between bg-zinc-100/70 dark:bg-zinc-900/60 shrink-0 select-none">
-      <span class="text-[11px] font-semibold tracking-wide text-zinc-600 dark:text-zinc-400 uppercase">Commits & Graph</span>
+      <span class="text-[11px] font-semibold tracking-wide text-zinc-600 dark:text-zinc-400 uppercase">{localeState.t('diff.commitsAndGraph')}</span>
       <span class="text-[10px] font-mono text-cyan-700 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800/60 px-1.5 py-0.5 rounded">
-        {commits.length} commits
+        {localeState.t('diff.commitsCount', { count: commits.length })}
       </span>
     </div>
 
@@ -170,7 +171,7 @@
     {#if isDetailLoading}
       <div class="h-full flex items-center justify-center text-zinc-500 text-xs gap-2">
         <div class="w-4 h-4 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"></div>
-        <span>Loading commit...</span>
+        <span>{localeState.t('diff.loadingCommit')}</span>
       </div>
     {:else if commitDetail}
       <!-- Commit Metadata Card -->
@@ -180,7 +181,7 @@
           <button
             onclick={copyHash}
             class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white font-mono text-[11px] transition-colors cursor-pointer"
-            title="Click to copy full commit SHA"
+            title={localeState.t('diff.copyShaTooltip')}
           >
             <GitCommit class="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
             <span>{commitDetail.short_id}</span>
@@ -218,7 +219,7 @@
       <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
         <div class="p-2 border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-100/40 dark:bg-zinc-900/30 flex items-center justify-between gap-2 shrink-0">
           <div class="flex items-center gap-1.5">
-            <span class="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Changed Files</span>
+            <span class="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">{localeState.t('diff.changedFiles')}</span>
             <span class="text-[10px] font-mono bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-1.5 py-0.2 rounded-full">
               {commitDetail.files_changed.length}
             </span>
@@ -231,7 +232,7 @@
               <input
                 type="text"
                 bind:value={fileSearchQuery}
-                placeholder="Filter files..."
+                placeholder={localeState.t('diff.filterFilesPlaceholder')}
                 class="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded pl-6 pr-2 py-0.5 text-[11px] text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-cyan-500"
               />
             </div>
@@ -272,13 +273,13 @@
               onclick={() => (fileDisplayLimit += 150)}
               class="w-full py-2 mt-1 rounded bg-white dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-[11px] font-mono text-cyan-700 dark:text-cyan-400 text-center transition-colors cursor-pointer border border-zinc-200 dark:border-zinc-800"
             >
-              Show more files (+150)... ({renderedFiles.length}/{visibleFiles.length})
+              {localeState.t('diff.showMoreFiles', { rendered: renderedFiles.length, total: visibleFiles.length })}
             </button>
           {/if}
 
           {#if visibleFiles.length === 0}
             <div class="p-4 text-center text-xs text-zinc-400 dark:text-zinc-600 italic">
-              {fileSearchQuery ? 'No matching files found' : 'No changes in this commit'}
+              {fileSearchQuery ? localeState.t('diff.noMatchingFiles') : localeState.t('diff.noChangesInCommit')}
             </div>
           {/if}
         </div>
@@ -286,7 +287,7 @@
     {:else}
       <div class="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-400 dark:text-zinc-600 text-xs">
         <GitCommit class="w-8 h-8 mb-2 opacity-40 text-zinc-400 dark:text-zinc-500" />
-        <span>Select a commit on the left to inspect its modified files</span>
+        <span>{localeState.t('diff.selectCommitPrompt')}</span>
       </div>
     {/if}
   </div>

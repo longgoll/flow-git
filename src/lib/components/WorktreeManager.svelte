@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { BranchInfo, WorktreeInfo } from '../types';
   import { FolderGit2, Plus, Trash2, FolderOpen, GitBranch, X, Lock } from 'lucide-svelte';
+  import { localeState } from '../state/localeState.svelte';
 
 
   interface Props {
@@ -67,8 +68,8 @@
             <FolderGit2 class="w-4 h-4" />
           </div>
           <div>
-            <h3 class="text-sm font-bold text-zinc-900 dark:text-zinc-100">Git Worktree Manager</h3>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400">Work on multiple branches simultaneously with dedicated working directories</p>
+            <h3 class="text-sm font-bold text-zinc-900 dark:text-zinc-100">{localeState.t('modals.worktree.title')}</h3>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">{localeState.t('modals.worktree.subtitle')}</p>
           </div>
         </div>
 
@@ -79,7 +80,7 @@
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-xs cursor-pointer shadow-lg shadow-cyan-600/20 transition-colors"
             >
               <Plus class="w-3.5 h-3.5" />
-              <span>New Worktree</span>
+              <span>{localeState.t('modals.worktree.newWorktree')}</span>
             </button>
           {/if}
           <button
@@ -103,35 +104,35 @@
         {#if isCreating}
           <div class="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700/80 rounded-xl p-4 space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-cyan-700 dark:text-cyan-400 uppercase tracking-wide">Add New Linked Worktree</span>
+              <span class="text-xs font-bold text-cyan-700 dark:text-cyan-400 uppercase tracking-wide">{localeState.t('modals.worktree.formTitle')}</span>
               <button
                 onclick={() => (isCreating = false)}
                 class="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 text-xs cursor-pointer"
               >
-                Cancel
+                {localeState.t('common.cancel')}
               </button>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label for="wt-name-input" class="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Worktree Identifier Name</label>
+                <label for="wt-name-input" class="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">{localeState.t('modals.worktree.nameLabel')}</label>
                 <input
                   id="wt-name-input"
                   type="text"
                   bind:value={newName}
-                  placeholder="e.g. feature-login"
+                  placeholder={localeState.t('modals.worktree.namePlaceholder')}
                   class="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-cyan-500 select-text"
                 />
               </div>
 
               <div>
-                <label for="wt-branch-select" class="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Target Branch (Optional)</label>
+                <label for="wt-branch-select" class="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">{localeState.t('modals.worktree.targetBranchLabel')}</label>
                 <select
                   id="wt-branch-select"
                   bind:value={selectedBranch}
                   class="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-cyan-500 cursor-pointer"
                 >
-                  <option value="" class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">(Create from current HEAD)</option>
+                  <option value="" class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">{localeState.t('modals.worktree.fromCurrentHead')}</option>
                   {#each branches as b}
                     <option value={b.shorthand} class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">{b.shorthand}</option>
                   {/each}
@@ -140,12 +141,12 @@
             </div>
 
             <div>
-              <label for="wt-path-input" class="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Destination Directory Path</label>
+              <label for="wt-path-input" class="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">{localeState.t('modals.worktree.directoryPathLabel')}</label>
               <input
                 id="wt-path-input"
                 type="text"
                 bind:value={newPath}
-                placeholder="e.g. F:/Dev/worktrees/feature-login"
+                placeholder={localeState.t('modals.worktree.pathPlaceholder')}
                 class="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-xs font-mono text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-cyan-500 select-text"
               />
             </div>
@@ -155,14 +156,14 @@
                 onclick={() => (isCreating = false)}
                 class="px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer border border-zinc-300 dark:border-transparent"
               >
-                Cancel
+                {localeState.t('common.cancel')}
               </button>
               <button
                 onclick={handleCreateSubmit}
                 disabled={isSubmitting}
                 class="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-xs cursor-pointer shadow-lg shadow-cyan-600/25 transition-colors disabled:opacity-50"
               >
-                {isSubmitting ? 'Creating Worktree...' : 'Create Worktree'}
+                {isSubmitting ? localeState.t('modals.worktree.creating') : localeState.t('modals.worktree.createBtn')}
               </button>
             </div>
           </div>
@@ -177,7 +178,7 @@
         {:else if worktrees.length === 0}
           <div class="py-12 flex flex-col items-center justify-center text-zinc-500 gap-2">
             <FolderGit2 class="w-8 h-8 text-zinc-400 dark:text-zinc-600" />
-            <span class="text-sm font-medium">No worktrees registered</span>
+            <span class="text-sm font-medium">{localeState.t('modals.worktree.noWorktrees')}</span>
           </div>
         {:else}
           <div class="space-y-2.5">
@@ -188,7 +189,7 @@
                     <span class="font-bold text-xs text-zinc-900 dark:text-zinc-100">{wt.name}</span>
                     {#if wt.is_main}
                       <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-cyan-100 dark:bg-cyan-500/20 text-cyan-800 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/40 font-mono">
-                        MAIN WORKTREE
+                        {localeState.t('modals.worktree.currentHeadBadge')}
                       </span>
                     {:else}
                       <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 font-mono">
@@ -206,7 +207,7 @@
                     {#if wt.is_locked}
                       <span class="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400">
                         <Lock class="w-3 h-3" />
-                        Locked
+                        {localeState.t('modals.worktree.lockedBadge')}
                       </span>
                     {/if}
                   </div>
@@ -217,7 +218,7 @@
                 <div class="flex items-center gap-2">
                   <button
                     onclick={() => onOpenWorktree(wt.path)}
-                    title="Open Worktree in FlowGit"
+                    title={localeState.t('modals.worktree.openFolder')}
                     class="p-2 rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white cursor-pointer transition-colors border border-zinc-200 dark:border-transparent shadow-xs"
                   >
                     <FolderOpen class="w-3.5 h-3.5" />
@@ -226,7 +227,7 @@
                   {#if !wt.is_main}
                     <button
                       onclick={() => onDeleteWorktree(wt.name)}
-                      title="Remove linked worktree"
+                      title={localeState.t('modals.worktree.removeBtn')}
                       class="p-2 rounded-lg bg-white dark:bg-zinc-800 hover:bg-rose-50 dark:hover:bg-rose-900/50 text-zinc-500 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400 cursor-pointer transition-colors border border-zinc-200 dark:border-transparent shadow-xs"
                     >
                       <Trash2 class="w-3.5 h-3.5" />
@@ -245,7 +246,7 @@
           onclick={onClose}
           class="px-4 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-xs font-medium text-zinc-800 dark:text-zinc-300 cursor-pointer transition-colors border border-zinc-200 dark:border-transparent"
         >
-          Close
+          {localeState.t('common.close')}
         </button>
       </div>
     </div>

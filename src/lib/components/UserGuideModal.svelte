@@ -12,6 +12,7 @@
     ShieldCheck,
   } from 'lucide-svelte';
   import { guideItems, shortcuts } from '../data/guideData';
+  import { localeState } from '../state/localeState.svelte';
 
   interface Props {
     isOpen: boolean;
@@ -67,13 +68,13 @@
           </div>
           <div>
             <h2 class="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              FlowGit Playbook & Real-World Recipes
+              {localeState.t('assistant.guide.title')}
               <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-500/20 border border-cyan-200 dark:border-cyan-500/30 text-cyan-800 dark:text-cyan-300 font-mono font-semibold">
-                Sổ tay Thực chiến
+                FlowGit
               </span>
             </h2>
             <p class="text-[11px] text-zinc-500 dark:text-zinc-400">
-              Hướng dẫn xử lý các tình huống làm việc nhóm và khai thác toàn bộ sức mạnh của FlowGit
+              {localeState.t('assistant.guide.subtitle')}
             </p>
           </div>
         </div>
@@ -85,7 +86,7 @@
             <input
               type="text"
               bind:value={searchQuery}
-              placeholder="Tìm kiếm kịch bản, từ khóa..."
+              placeholder={localeState.t('assistant.guide.searchPlaceholder')}
               class="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-lg text-xs text-zinc-900 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-cyan-500 transition-colors select-text"
             />
           </div>
@@ -107,7 +108,7 @@
           class="px-4 py-2.5 text-xs font-semibold flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'recipes' ? 'border-cyan-600 dark:border-cyan-400 text-cyan-800 dark:text-cyan-300 font-bold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
         >
           <Lightbulb class="w-3.5 h-3.5" />
-          <span>🎯 Kịch bản Thực chiến (Team Recipes)</span>
+          <span>{localeState.t('assistant.guide.tabRecipes')}</span>
         </button>
 
         <button
@@ -115,7 +116,7 @@
           class="px-4 py-2.5 text-xs font-semibold flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'features' ? 'border-cyan-600 dark:border-cyan-400 text-cyan-800 dark:text-cyan-300 font-bold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
         >
           <Briefcase class="w-3.5 h-3.5" />
-          <span>🛠️ Chi tiết Công cụ (Features)</span>
+          <span>{localeState.t('assistant.guide.tabFeatures')}</span>
         </button>
 
         <button
@@ -123,7 +124,7 @@
           class="px-4 py-2.5 text-xs font-semibold flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'shortcuts' ? 'border-cyan-600 dark:border-cyan-400 text-cyan-800 dark:text-cyan-300 font-bold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
         >
           <Keyboard class="w-3.5 h-3.5" />
-          <span>⌨️ Bảng Phím tắt Nhanh</span>
+          <span>{localeState.t('assistant.guide.tabShortcuts')}</span>
         </button>
       </div>
 
@@ -210,7 +211,7 @@
                 <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 space-y-1.5">
                   <div class="flex items-center gap-2 text-xs font-bold text-rose-700 dark:text-rose-400">
                     <AlertTriangle class="w-4 h-4" />
-                    <span>Vấn đề thực tế (Pain point)</span>
+                    <span>{localeState.t('assistant.guide.problemHeading')}</span>
                   </div>
                   <p class="text-xs text-rose-900 dark:text-rose-200/90 leading-relaxed">
                     {selectedItem.problem}
@@ -220,7 +221,7 @@
                 <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 space-y-1.5">
                   <div class="flex items-center gap-2 text-xs font-bold text-emerald-700 dark:text-emerald-400">
                     <CheckCircle2 class="w-4 h-4" />
-                    <span>Giải pháp từ FlowGit</span>
+                    <span>{localeState.t('assistant.guide.solutionHeading')}</span>
                   </div>
                   <p class="text-xs text-emerald-900 dark:text-emerald-200/90 leading-relaxed">
                     {selectedItem.solution}
@@ -232,7 +233,7 @@
               <div class="space-y-3 pt-2">
                 <h3 class="text-sm font-bold text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
                   <Play class="w-4 h-4 text-cyan-600 dark:text-cyan-400 fill-current" />
-                  <span>Các bước thực hiện trên ứng dụng</span>
+                  <span>{localeState.t('assistant.guide.stepsHeading')}</span>
                 </h3>
 
                 <div class="space-y-3">

@@ -3,6 +3,7 @@
   import { saveAccountAuth, verifyTokenAndGetProfile } from '../../api';
   import { saveGitHubToken } from '../../api/githubApi';
   import type { AccountProfile, GitCredentials } from '../../types';
+  import { localeState } from '../../state/localeState.svelte';
 
   let {
     onSuccess = (_creds: GitCredentials, _profile: AccountProfile) => {},
@@ -53,7 +54,7 @@
         );
       }, 500);
     } catch (err: any) {
-      tokenValidationError = err?.message || 'Token không hợp lệ hoặc không có quyền truy cập.';
+      tokenValidationError = err?.message || localeState.t('auth.token.invalidToken');
     } finally {
       isValidatingToken = false;
     }
@@ -68,10 +69,10 @@
         <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
         </svg>
-        <span>Quyền cần cấp cho Token (Recommended Scopes):</span>
+        <span>{localeState.t('auth.token.scopesTitle')}</span>
       </div>
       <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30">
-        Full Read/Write
+        {localeState.t('auth.token.fullAccessBadge')}
       </span>
     </div>
 
@@ -80,23 +81,23 @@
       <div class="p-2 rounded-lg bg-white dark:bg-neutral-950/70 border border-neutral-200 dark:border-neutral-800 flex items-start gap-2 shadow-xs">
         <span class="font-mono text-emerald-700 dark:text-emerald-400 font-bold text-[11px] bg-emerald-50 dark:bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-500/30">repo</span>
         <div class="text-[11px] text-neutral-700 dark:text-neutral-300">
-          <span class="font-medium text-neutral-900 dark:text-neutral-200 block">Quyền Push, Pull & Sync</span>
-          <span class="text-neutral-500 dark:text-neutral-400 text-[10px]">Bắt buộc cho Private Repos (tránh lỗi 403)</span>
+          <span class="font-medium text-neutral-900 dark:text-neutral-200 block">{localeState.t('auth.token.repoScopeTitle')}</span>
+          <span class="text-neutral-500 dark:text-neutral-400 text-[10px]">{localeState.t('auth.token.repoScopeDesc')}</span>
         </div>
       </div>
 
       <div class="p-2 rounded-lg bg-white dark:bg-neutral-950/70 border border-neutral-200 dark:border-neutral-800 flex items-start gap-2 shadow-xs">
         <span class="font-mono text-indigo-700 dark:text-indigo-400 font-bold text-[11px] bg-indigo-50 dark:bg-indigo-950/80 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/30">read:user</span>
         <div class="text-[11px] text-neutral-700 dark:text-neutral-300">
-          <span class="font-medium text-neutral-900 dark:text-neutral-200 block">Thông tin hồ sơ & Avatar</span>
-          <span class="text-neutral-500 dark:text-neutral-400 text-[10px]">Hiển thị Username và Avatar</span>
+          <span class="font-medium text-neutral-900 dark:text-neutral-200 block">{localeState.t('auth.token.userScopeTitle')}</span>
+          <span class="text-neutral-500 dark:text-neutral-400 text-[10px]">{localeState.t('auth.token.userScopeDesc')}</span>
         </div>
       </div>
     </div>
 
     <div class="text-[11px] text-neutral-600 dark:text-neutral-300 pt-1 flex items-center gap-1.5 border-t border-indigo-100 dark:border-neutral-800/80">
       <span class="text-emerald-600 dark:text-emerald-400">✨</span>
-      <span>Nút <strong>"Tạo Token 1-Click ↗"</strong> bên dưới đã <strong>tự động tích sẵn 2 quyền này</strong> cho bạn trên GitHub.</span>
+      <span>{localeState.t('auth.token.oneClickScopeTip')}</span>
     </div>
   </div>
 
@@ -106,25 +107,25 @@
       onclick={() => (tokenProvider = 'github')}
       class="flex-1 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer {tokenProvider === 'github' ? 'bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-600 text-neutral-900 dark:text-neutral-100 shadow-xs font-semibold' : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800/40'}"
     >
-      GitHub Personal Access Token
+      {localeState.t('auth.token.tabGithubPat')}
     </button>
     <button
       type="button"
       onclick={() => (tokenProvider = 'gitlab')}
       class="flex-1 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer {tokenProvider === 'gitlab' ? 'bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-600 text-neutral-900 dark:text-neutral-100 shadow-xs font-semibold' : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800/40'}"
     >
-      GitLab Token / Self-hosted
+      {localeState.t('auth.token.tabGitlabToken')}
     </button>
   </div>
 
   {#if tokenProvider === 'gitlab'}
     <div class="space-y-1">
-      <label for="gl-host" class="text-xs font-medium text-neutral-700 dark:text-neutral-300 block">GitLab Host (Tùy chọn)</label>
+      <label for="gl-host" class="text-xs font-medium text-neutral-700 dark:text-neutral-300 block">{localeState.t('auth.token.gitlabHostLabel')}</label>
       <input
         id="gl-host"
         type="text"
         bind:value={customHost}
-        placeholder="gitlab.com hoặc gitlab.yourdomain.com"
+        placeholder={localeState.t('auth.token.gitlabHostPlaceholder')}
         class="w-full px-3 py-2 text-xs bg-white dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-hidden focus:border-indigo-500 font-mono"
       />
     </div>
@@ -133,7 +134,7 @@
   <div class="space-y-1.5">
     <div class="flex items-center justify-between">
       <label for="pat-input" class="text-xs font-medium text-neutral-700 dark:text-neutral-300 block">
-        Personal Access Token ({tokenProvider === 'github' ? 'ghp_...' : 'glpat-...'})
+        {localeState.t('auth.token.patLabel', { format: tokenProvider === 'github' ? 'ghp_...' : 'glpat-...' })}
       </label>
       {#if tokenProvider === 'github'}
         <button
@@ -143,7 +144,7 @@
           }}
           class="text-[11px] font-medium text-indigo-700 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-500/40 transition-colors cursor-pointer flex items-center gap-1"
         >
-          <span>Tạo Token 1-Click (Tự chọn sẵn quyền)</span>
+          <span>{localeState.t('auth.token.oneClickCreateToken')}</span>
           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
             <polyline points="15 3 21 3 21 9"/>
@@ -165,7 +166,7 @@
         onclick={() => (showPassword = !showPassword)}
         class="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 text-xs cursor-pointer"
       >
-        {showPassword ? 'Ẩn' : 'Hiện'}
+        {showPassword ? localeState.t('auth.ssh.hide') : localeState.t('auth.ssh.show')}
       </button>
     </div>
   </div>
@@ -182,8 +183,8 @@
         <img src={tokenValidationSuccess.avatar_url} alt="Avatar" class="w-8 h-8 rounded-full border border-emerald-500/40" />
       {/if}
       <div class="text-xs">
-        <p class="font-semibold text-emerald-800 dark:text-emerald-300">Đã xác thực: @{tokenValidationSuccess.username}</p>
-        <p class="text-neutral-600 dark:text-neutral-400">{tokenValidationSuccess.name || 'Tài khoản hợp lệ'}</p>
+        <p class="font-semibold text-emerald-800 dark:text-emerald-300">{localeState.t('auth.token.verifiedAs', { username: tokenValidationSuccess.username })}</p>
+        <p class="text-neutral-600 dark:text-neutral-400">{tokenValidationSuccess.name || localeState.t('auth.token.validAccount')}</p>
       </div>
     </div>
   {/if}
@@ -194,7 +195,7 @@
       bind:checked={rememberSession}
       class="rounded border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-indigo-600 focus:ring-0 focus:ring-offset-0"
     />
-    <span class="text-xs text-neutral-600 dark:text-neutral-400">Lưu tài khoản an toàn trong cơ sở dữ liệu ứng dụng</span>
+    <span class="text-xs text-neutral-600 dark:text-neutral-400">{localeState.t('auth.token.rememberSession')}</span>
   </label>
 
   <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
@@ -203,7 +204,7 @@
       onclick={onCancel}
       class="px-3 py-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors cursor-pointer"
     >
-      Hủy bỏ
+      {localeState.t('auth.token.cancelBtn')}
     </button>
     <button
       type="submit"
@@ -212,9 +213,9 @@
     >
       {#if isValidatingToken}
         <div class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-        <span>Đang kiểm tra...</span>
+        <span>{localeState.t('auth.token.validating')}</span>
       {:else}
-        <span>Xác nhận & Đồng bộ</span>
+        <span>{localeState.t('auth.token.confirmAndSync')}</span>
       {/if}
     </button>
   </div>

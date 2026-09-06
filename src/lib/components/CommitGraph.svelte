@@ -11,6 +11,7 @@
   import CommitContextMenu from "./CommitContextMenu.svelte";
   import { toast } from "../state/toastState.svelte";
   import { themeState } from "../state/themeState.svelte";
+  import { localeState } from "../state/localeState.svelte";
 
   interface Props {
     commits: CommitNode[];
@@ -687,7 +688,7 @@
       <span
         class="w-3.5 h-3.5 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin"
       ></span>
-      <span>Đang tải thêm commits...</span>
+      <span>{localeState.t('graph.canvas.loadingMore')}</span>
     </div>
   {/if}
 
@@ -719,16 +720,12 @@
           <Layers class="w-6 h-6" />
         </div>
         <h3 class="text-sm font-semibold text-zinc-900 dark:text-neutral-100">
-          Repository mới — Chưa có commit
+          {localeState.t('graph.canvas.emptyTitle')}
         </h3>
         <p
           class="text-xs text-zinc-500 dark:text-neutral-400 mt-2 leading-relaxed"
         >
-          Nhánh hiện tại chưa có commit nào được tạo. Hãy kiểm tra các tệp trong
-          dự án ở bảng <strong
-            class="text-cyan-700 dark:text-cyan-300 font-medium"
-            >Working Tree</strong
-          > bên trái, đưa vào Staged và tạo Commit đầu tiên của bạn!
+          {localeState.t('graph.canvas.emptyDesc')}
         </p>
       </div>
     </div>
@@ -746,10 +743,10 @@
       onToggleLockFocus={(lane) => {
         if (lockedLane === lane) {
           lockedLane = null;
-          toast.info("Focus Unlocked", "Đã bỏ khóa tiêu điểm nhánh.");
+          toast.info(localeState.t('graph.canvas.focusUnlocked'), localeState.t('graph.canvas.focusUnlockedDesc'));
         } else {
           lockedLane = lane;
-          toast.success("Focus Locked", `Đã khóa tiêu điểm vào Lane ${lane}.`);
+          toast.success(localeState.t('graph.canvas.focusLocked'), localeState.t('graph.canvas.focusLockedDesc', { lane: lane.toString() }));
         }
         scheduleRender();
       }}
@@ -801,7 +798,7 @@
         : undefined}
       onCopySha={(sha) => {
         navigator.clipboard.writeText(sha);
-        toast.success("Copied SHA", `Đã sao chép ${sha.slice(0, 7)}`);
+        toast.success(localeState.t('graph.canvas.copiedSha'), localeState.t('graph.canvas.copiedShaDesc', { shortId: sha.slice(0, 7) }));
       }}
       onCompare={(c) => {
         const headCommit = commits[0];

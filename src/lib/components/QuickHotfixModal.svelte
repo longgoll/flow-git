@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Flame, GitBranch, ArrowRight, ShieldCheck, X, AlertCircle } from 'lucide-svelte';
+  import { localeState } from '../state/localeState.svelte';
   import type { BranchInfo } from '../types';
 
   interface Props {
@@ -83,10 +84,10 @@
           </div>
           <div>
             <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              Quick Hotfix 1-Chạm (Smart Stash & Switch)
+              {localeState.t('modals.quickHotfix.title')}
             </h2>
             <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              Cất an toàn code dở dang và chuyển sang nhánh sửa lỗi khẩn cấp
+              {localeState.t('modals.quickHotfix.subtitle')}
             </p>
           </div>
         </div>
@@ -104,20 +105,20 @@
         <!-- Status card -->
         <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-2">
           <div class="flex items-center justify-between text-xs">
-            <span class="text-zinc-500 dark:text-zinc-400">Nhánh hiện tại:</span>
+            <span class="text-zinc-500 dark:text-zinc-400">{localeState.t('modals.quickHotfix.currentBranch')}</span>
             <span class="font-mono font-medium text-zinc-900 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800/80 px-2 py-0.5 rounded border border-zinc-300 dark:border-zinc-700/50">
               {currentBranch || 'HEAD'}
             </span>
           </div>
           <div class="flex items-center justify-between text-xs">
-            <span class="text-zinc-500 dark:text-zinc-400">Trạng thái thay đổi dở:</span>
+            <span class="text-zinc-500 dark:text-zinc-400">{localeState.t('modals.quickHotfix.uncommittedStatus')}</span>
             {#if dirtyFilesCount > 0}
               <span class="font-medium text-amber-700 dark:text-amber-400 flex items-center gap-1">
                 <ShieldCheck class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                {dirtyFilesCount} tệp (sẽ được tự động Stash lưu an toàn)
+                {localeState.t('modals.quickHotfix.dirtyWarning', { count: dirtyFilesCount })}
               </span>
             {:else}
-              <span class="text-emerald-700 dark:text-emerald-400">Working tree sạch sẽ (0 tệp đổi)</span>
+              <span class="text-emerald-700 dark:text-emerald-400">{localeState.t('modals.quickHotfix.cleanTree')}</span>
             {/if}
           </div>
         </div>
@@ -125,7 +126,7 @@
         <!-- Hotfix Branch Name -->
         <div class="space-y-1.5">
           <label for="hotfix-name" class="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-            Tên nhánh Hotfix mới:
+            {localeState.t('modals.quickHotfix.hotfixNameLabel')}
           </label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500">
@@ -144,7 +145,7 @@
         <!-- Base Branch Selection -->
         <div class="space-y-1.5">
           <label for="base-branch" class="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-            Tạo nhánh từ (Base Branch):
+            {localeState.t('modals.quickHotfix.baseBranchLabel')}
           </label>
           <select
             id="base-branch"
@@ -152,11 +153,11 @@
             class="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 font-mono focus:outline-none focus:border-amber-500 transition-colors cursor-pointer"
           >
             {#each branches.filter((b) => !b.is_remote) as b}
-              <option value={b.shorthand} class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">{b.shorthand} {b.is_head ? '(HEAD hiện tại)' : ''}</option>
+              <option value={b.shorthand} class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">{b.shorthand} {b.is_head ? localeState.t('modals.quickHotfix.currentHead') : ''}</option>
             {/each}
           </select>
           <p class="text-[11px] text-zinc-500">
-            Thường là nhánh chính như <code class="text-amber-700 dark:text-amber-400">main</code> hoặc <code class="text-amber-700 dark:text-amber-400">production</code> để sửa lỗi dứt điểm.
+            {localeState.t('modals.quickHotfix.baseBranchHint')}
           </p>
         </div>
 
@@ -174,7 +175,7 @@
             onclick={onClose}
             class="px-4 py-2 rounded-xl text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
-            Hủy bỏ
+            {localeState.t('common.cancel')}
           </button>
 
           <button
@@ -184,10 +185,10 @@
           >
             {#if isSubmitting}
               <div class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              <span>Đang xử lý...</span>
+              <span>{localeState.t('modals.quickHotfix.starting')}</span>
             {:else}
               <Flame class="w-4 h-4" />
-              <span>Bắt đầu Hotfix Ngay</span>
+              <span>{localeState.t('modals.quickHotfix.startBtn')}</span>
               <ArrowRight class="w-3.5 h-3.5" />
             {/if}
           </button>

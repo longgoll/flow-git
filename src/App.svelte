@@ -1269,11 +1269,12 @@
                 commitDetail={repo.commitDetail}
                 isLoading={repo.isDetailLoading}
                 isMaximized={repo.isDetailMaximized}
+                repoPath={repo.currentRepoPath}
                 onToggleMaximize={() =>
                   (repo.isDetailMaximized = !repo.isDetailMaximized)}
                 onClose={() => (repo.isDetailOpen = false)}
                 onSelectParent={(pid) => repo.handleSelectParent(pid)}
-                onSelectFile={(filePath) => {
+                onOpenFileInExplorer={(filePath) => {
                   explorerInitialFilePath = filePath;
                   viewMode = "files";
                 }}

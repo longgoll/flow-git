@@ -291,8 +291,13 @@ pub fn get_commit_detail(repo: &Repository, commit_id: &str) -> AppResult<Commit
         repo.diff_tree_to_tree(None, Some(&current_tree), Some(&mut diff_opts))?
     };
 
-    let deltas = diff.deltas();
-    for delta in deltas {
+    let num_deltas = diff.deltas().len();
+    for delta_idx in 0..num_deltas {
+        let delta = match diff.get_delta(delta_idx) {
+            Some(d) => d,
+            None => continue,
+        };
+
         let status = match delta.status() {
             git2::Delta::Added => "added",
             git2::Delta::Deleted => "deleted",
@@ -316,12 +321,18 @@ pub fn get_commit_detail(repo: &Repository, commit_id: &str) -> AppResult<Commit
             None
         };
 
+        let (additions, deletions) = if let Ok(Some(patch)) = git2::Patch::from_diff(&diff, delta_idx) {
+            patch.line_stats().map(|(_, adds, dels)| (adds, dels)).unwrap_or((0, 0))
+        } else {
+            (0, 0)
+        };
+
         files_changed.push(FileChangeInfo {
             path,
             old_path,
             status: status.to_string(),
-            additions: 0,
-            deletions: 0,
+            additions,
+            deletions,
         });
     }
 

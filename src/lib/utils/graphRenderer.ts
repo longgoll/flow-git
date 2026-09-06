@@ -51,6 +51,22 @@ export function timeAgo(timestamp: number): string {
   return new Date(timestamp * 1000).toLocaleDateString();
 }
 
+export function getAuthorColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < (name || '').length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 65%, 45%)`;
+}
+
+export function getAuthorInitials(name: string): string {
+  if (!name || name === 'Unknown') return 'U';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 export function drawRoundedRect(
   context: CanvasRenderingContext2D,
   x: number,
@@ -620,16 +636,38 @@ export function renderCommitGraph(
     }
     ctx.fillText(summaryText, currentBadgeX, centerY + 4);
 
-    // Draw Author & Timestamp
+    // Draw Author Avatar, Name & Timestamp
     const dateStr = timeAgo(c.timestamp || 0);
     ctx.font = '400 12px "Plus Jakarta Sans", sans-serif';
-    ctx.fillStyle = isDark ? '#a1a1aa' : '#52525b';
     const authorName = c.author_name || 'Unknown';
     const authorWidth = ctx.measureText(authorName).width;
     const dateWidth = ctx.measureText(dateStr).width;
 
+    const avatarRadius = 8;
+    const avatarX = width - dateWidth - authorWidth - 36 - avatarRadius * 2 - 6;
+    const avatarY = centerY;
+
+    if (!c.is_capsule && avatarX > currentBadgeX + 60) {
+      // Draw Avatar Circle
+      ctx.beginPath();
+      ctx.arc(avatarX + avatarRadius, avatarY, avatarRadius, 0, Math.PI * 2);
+      ctx.fillStyle = getAuthorColor(authorName);
+      ctx.fill();
+
+      // Draw Initials
+      ctx.font = '700 8px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(getAuthorInitials(authorName), avatarX + avatarRadius, avatarY);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    ctx.font = '400 12px "Plus Jakarta Sans", sans-serif';
+    ctx.fillStyle = isDark ? '#a1a1aa' : '#52525b';
     ctx.fillText(authorName, width - dateWidth - authorWidth - 36, centerY + 4);
-    ctx.fillStyle = '#71717a';
+    ctx.fillStyle = isDark ? '#71717a' : '#a1a1aa';
     ctx.fillText(dateStr, width - dateWidth - 16, centerY + 4);
   }
 

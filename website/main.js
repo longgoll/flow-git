@@ -107,7 +107,42 @@ const translations = {
     descSafeVisual: "Thao tác Git không còn là nỗi sợ mất code. Mọi tệp hoặc đoạn mã bạn bấm Discard đều được bí mật snapshot vào SQLite cục bộ trong 48 giờ. Bạn có thể xem trước diff và phục hồi tức thì.",
     itemSafe1: "✓ Lưu trữ SQLite tự dọn dẹp sau 48h mà không ngốn dung lượng ổ đĩa",
     itemSafe2: "✓ Hoàn tác Time Machine bằng phím tắt toàn năng Ctrl + Z",
-    itemSafe3: "✓ Xem trước diff của từng snapshot trước khi bấm Phục Hồi",
+    // Install Guide
+    navInstall: "Cài đặt",
+    installBadge: "⚡ Hướng Dẫn Chi Tiết",
+    installTitle: "Nên Tải File Nào & Cài Đặt Ra Sao?",
+    installDesc: "Giải thích chi tiết công dụng của từng định dạng tệp và hướng dẫn cài đặt chuẩn xác trong 30 giây cho mọi hệ điều hành.",
+    badgeRecommended: "★ Khuyên Dùng",
+    badgeEnterprise: "Doanh Nghiệp / IT",
+    badgeAppleSilicon: "★ Apple Silicon",
+    badgeIntelMac: "Intel Mac",
+    badgeDebian: "★ Ubuntu / Debian",
+    badgeAppImage: "Chạy Ngay (Portable)",
+    badgeRpm: "Fedora / RHEL",
+    winFilesTitle: "Các Tệp Tải Về Cho Windows",
+    winExeDesc: "Trình cài đặt tự động NSIS (~8 MB). Tự tạo shortcut trên Desktop & Start Menu, tích hợp gỡ cài đặt sạch sẽ và hỗ trợ tự động cập nhật ngầm.",
+    winMsiDesc: "Gói Windows Installer chính thống (~10 MB), phù hợp triển khai đồng loạt trong môi trường công ty thông qua Group Policy hoặc Active Directory.",
+    winStepsTitle: "3 Bước Cài Đặt Trên Windows",
+    winStep1Title: "Tải & Khởi Chạy",
+    winStep1Desc: "Tải file FlowGit_..._x64-setup.exe về và nhấp đúp chuột để mở.",
+    winStep2Title: "Xử Lý Màn Hình SmartScreen",
+    winStep2Desc: "Nếu Windows Defender hiện thông báo xanh \"Windows protected your PC\": hãy nhấn \"More info\" (Thông tin thêm) ➔ chọn \"Run anyway\" (Vẫn chạy).",
+    winStep3Title: "Hoàn Tất & Sử Dụng",
+    winStep3Desc: "Ứng dụng cài đặt hoàn tất chỉ trong 3 giây và tự động mở lên sẵn sàng cho bạn sử dụng!",
+    winSmartScreenNote: "💡 Tại sao có thông báo SmartScreen? Do FlowGit là phần mềm mã nguồn mở mới phát hành nên Windows chưa lưu danh tiếng. Ứng dụng an toàn 100% và không chứa bất kỳ phần mềm gián điệp nào.",
+    macFilesTitle: "Các Tệp Tải Về Cho macOS",
+    macArmDesc: "Tối ưu native cho toàn bộ máy Mac chạy chip M1, M2, M3, M4 với hiệu năng cao nhất và thời lượng pin tối đa.",
+    macIntelDesc: "Dành cho các dòng máy Mac đời trước chạy vi xử lý Intel Core.",
+    macStepsTitle: "Cài Đặt Trên macOS",
+    macStep1Title: "Mở File .dmg & Kéo Vào Applications",
+    macStep1Desc: "Mở tệp .dmg tải về, kéo biểu tượng FlowGit thả vào thư mục Applications.",
+    macStep2Title: "Xử Lý Cảnh Báo Gatekeeper (Nếu Có)",
+    macStep2Desc: "Nếu macOS báo \"App can't be opened because it is from an unidentified developer\": vào System Settings (Cài đặt) ➔ Privacy & Security (Quyền riêng tư) ➔ cuộn xuống bấm \"Open Anyway\" (Vẫn mở).",
+    linuxFilesTitle: "Các Tệp Tải Về Cho Linux",
+    linuxDebDesc: "Gói cài đặt chuẩn cho Ubuntu, Debian, Linux Mint, Pop!_OS. Tích hợp sâu vào App Launcher và menu hệ thống.",
+    linuxAppImageDesc: "Chạy ngay trên mọi bản phân phối Linux mà không cần cài đặt (Arch, Manjaro, Fedora, openSUSE...).",
+    linuxRpmDesc: "Dành cho Fedora, Red Hat Enterprise Linux (RHEL), openSUSE và CentOS.",
+    linuxStepsTitle: "Lệnh Cài Đặt Linux Nhanh",
 
     // Footer
     footerCopy: "© 2026 FlowGit. Phát hành theo giấy phép mã nguồn mở MIT."
@@ -220,8 +255,43 @@ const translations = {
     descSafeVisual: "Git with zero fear. Every uncommitted discard is transparently snapshotted into local SQLite for 48 hours. Preview the full diff and restore anytime.",
     itemSafe1: "✓ Lightweight local SQLite storage with auto-cleanup after 48h",
     itemSafe2: "✓ Omnipresent Time Machine undo across dangerous Git operations via Ctrl+Z",
-    itemSafe3: "✓ Real-time diff inspector before 1-Click Restore",
-    
+    // Install Guide
+    navInstall: "Install",
+    installBadge: "⚡ Step-by-Step Guide",
+    installTitle: "Which File to Download & How to Install?",
+    installDesc: "Detailed explanation of each package format and a 30-second setup guide for every operating system.",
+    badgeRecommended: "★ Recommended",
+    badgeEnterprise: "Enterprise / IT",
+    badgeAppleSilicon: "★ Apple Silicon",
+    badgeIntelMac: "Intel Mac",
+    badgeDebian: "★ Ubuntu / Debian",
+    badgeAppImage: "Portable (No install)",
+    badgeRpm: "Fedora / RHEL",
+    winFilesTitle: "Windows Download Packages",
+    winExeDesc: "Automated NSIS installer (~8 MB). Automatically creates Desktop & Start Menu shortcuts, clean uninstaller, and background auto-updates.",
+    winMsiDesc: "Standard Windows Installer package (~10 MB), ideal for fleet deployment via Active Directory or Group Policy.",
+    winStepsTitle: "3 Steps to Install on Windows",
+    winStep1Title: "Download & Launch",
+    winStep1Desc: "Download FlowGit_..._x64-setup.exe and double-click to run.",
+    winStep2Title: "Bypass Windows SmartScreen",
+    winStep2Desc: "If Windows Defender displays \"Windows protected your PC\": click \"More info\" ➔ choose \"Run anyway\".",
+    winStep3Title: "Ready to Use",
+    winStep3Desc: "Setup finishes in 3 seconds and FlowGit launches immediately!",
+    winSmartScreenNote: "💡 Why does SmartScreen appear? As a newly released open-source project, Windows has not yet built its reputation database. FlowGit is 100% clean, verified, and spyware-free.",
+    macFilesTitle: "macOS Download Packages",
+    macArmDesc: "Native silicon build for all M1, M2, M3, M4 Apple Mac computers with maximum performance and battery life.",
+    macIntelDesc: "Built for legacy Intel Core-based Mac systems.",
+    macStepsTitle: "macOS Setup Steps",
+    macStep1Title: "Mount .dmg & Drag to Applications",
+    macStep1Desc: "Open the downloaded .dmg file and drag FlowGit into your Applications folder.",
+    macStep2Title: "Gatekeeper Verification (If Needed)",
+    macStep2Desc: "If macOS displays \"App can't be opened because it is from an unidentified developer\": open System Settings ➔ Privacy & Security ➔ scroll down and click \"Open Anyway\".",
+    linuxFilesTitle: "Linux Download Packages",
+    linuxDebDesc: "Standard package for Ubuntu, Debian, Linux Mint, Pop!_OS. Integrates deeply with your desktop app launcher.",
+    linuxAppImageDesc: "Standalone portable binary, runs out-of-the-box on virtually any Linux distro (Arch, Manjaro, Fedora, openSUSE...).",
+    linuxRpmDesc: "For Fedora, Red Hat Enterprise Linux (RHEL), openSUSE, and CentOS.",
+    linuxStepsTitle: "Quick Linux Setup Commands",
+
     // Footer
     footerCopy: "© 2026 FlowGit. Released under the MIT Open Source License."
   }
@@ -427,6 +497,31 @@ function setupShowcaseTabs() {
   }
 }
 
+function switchInstallTab(os) {
+  const tabs = document.querySelectorAll('.install-tab-btn');
+  const panels = document.querySelectorAll('.install-panel');
+
+  tabs.forEach((btn) => {
+    btn.classList.toggle('active', btn.getAttribute('data-install-tab') === os);
+  });
+
+  panels.forEach((panel) => {
+    panel.classList.toggle('active', panel.id === `panel-${os}`);
+  });
+}
+
+function setupInstallTabs() {
+  const tabs = document.querySelectorAll('.install-tab-btn');
+  tabs.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const os = btn.getAttribute('data-install-tab');
+      if (os) switchInstallTab(os);
+    });
+  });
+
+  switchInstallTab(currentOS);
+}
+
 function setupOSBadges() {
   document.querySelectorAll('.os-badge').forEach((badge) => {
     badge.addEventListener('click', (e) => {
@@ -434,6 +529,7 @@ function setupOSBadges() {
       if (os) {
         currentOS = os;
         updateDownloadButtons(os);
+        switchInstallTab(os);
       }
     });
   });
@@ -482,6 +578,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Setup OS selector badges click handler
   setupOSBadges();
+
+  // Setup install guide tabs
+  setupInstallTabs();
 
   // Initial download button render for detected OS
   updateDownloadButtons(currentOS);

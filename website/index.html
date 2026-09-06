@@ -22,6 +22,7 @@
         <a href="#features" data-i18n="navFeatures">Tính năng</a>
         <a href="#metrics">Hiệu năng</a>
         <a href="#comparison" data-i18n="navComparison">So sánh</a>
+        <a href="#install-guide" data-i18n="navInstall">Cài đặt</a>
         <a href="https://github.com/longgoll/flow-git#readme" target="_blank" data-i18n="navDocs">Tài liệu</a>
         <a href="https://github.com/longgoll/flow-git" target="_blank">GitHub</a>
       </nav>
@@ -415,6 +416,249 @@
           </div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- Installation & Setup Guide Section -->
+  <section id="install-guide" class="install-section">
+    <div class="container">
+      <div class="install-header">
+        <div class="badge-tag">
+          <span data-i18n="installBadge">⚡ Hướng Dẫn Chi Tiết</span>
+        </div>
+        <h2 style="font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 800; margin-bottom: 14px; letter-spacing: -0.02em;" data-i18n="installTitle">
+          Nên Tải File Nào & Cài Đặt Ra Sao?
+        </h2>
+        <p style="color: var(--text-muted); font-size: 1.05rem;" data-i18n="installDesc">
+          Giải thích chi tiết công dụng của từng định dạng tệp và hướng dẫn cài đặt chuẩn xác trong 30 giây cho mọi hệ điều hành.
+        </p>
+      </div>
+
+      <!-- OS Selection Tabs for Install Guide -->
+      <div class="install-tabs">
+        <button class="install-tab-btn active" data-install-tab="windows">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.951-1.802"/></svg>
+          <span>Windows</span>
+        </button>
+        <button class="install-tab-btn" data-install-tab="mac">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 0.92-2.85-.9.04-2.02.6-2.66 1.34-.56.64-.99 1.68-.87 2.7.99.08 2-.44 2.61-1.19z"/></svg>
+          <span>macOS</span>
+        </button>
+        <button class="install-tab-btn" data-install-tab="linux">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.003 2c-2.73 0-4.664 2.17-4.664 5.372 0 1.267.318 2.668.79 3.73-.55.437-1.065 1.082-1.397 1.84-.442 1.012-.479 2.052-.232 2.875.228.761.714 1.347 1.332 1.701-.01.19-.015.385-.015.586 0 1.956.88 3.518 2.378 4.316-1.05.518-1.737 1.347-1.737 2.316 0 .428.145.83.407 1.17.394.512 1.066.862 1.916 1.004.815.137 1.82.164 2.945.074 1.125.09 2.13-.037 2.945-.174.85-.142 1.522-.492 1.916-1.004.262-.34.407-.742.407-1.17 0-.969-.687-1.798-1.737-2.316 1.498-.798 2.378-2.36 2.378-4.316 0-.201-.005-.396-.015-.586.618-.354 1.104-.94 1.332-1.701.247-.823.21-1.863-.232-2.875-.332-.758-.847-1.403-1.397-1.84.472-1.062.79-2.463.79-3.73C16.667 4.172 14.733 2 12.003 2z"/></svg>
+          <span>Linux</span>
+        </button>
+      </div>
+
+      <!-- Windows Panel -->
+      <div id="panel-windows" class="install-panel active">
+        <div class="install-grid">
+          <!-- File Explanations -->
+          <div class="install-card">
+            <div class="install-card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span data-i18n="winFilesTitle">Các Tệp Tải Về Cho Windows</span>
+            </div>
+
+            <div class="file-item">
+              <div class="file-item-header">
+                <span class="file-item-name">..._x64-setup.exe</span>
+                <span class="file-badge-rec" data-i18n="badgeRecommended">★ Khuyên Dùng</span>
+              </div>
+              <p class="file-item-desc" data-i18n="winExeDesc">
+                Trình cài đặt tự động NSIS (~8 MB). Tự tạo shortcut trên Desktop & Start Menu, tích hợp gỡ cài đặt sạch sẽ và hỗ trợ tự động cập nhật ngầm.
+              </p>
+            </div>
+
+            <div class="file-item">
+              <div class="file-item-header">
+                <span class="file-item-name">..._x64_en-US.msi</span>
+                <span class="file-badge-opt" data-i18n="badgeEnterprise">Doanh Nghiệp / IT</span>
+              </div>
+              <p class="file-item-desc" data-i18n="winMsiDesc">
+                Gói Windows Installer chính thống (~10 MB), phù hợp triển khai đồng loạt trong môi trường công ty thông qua Group Policy hoặc Active Directory.
+              </p>
+            </div>
+          </div>
+
+          <!-- Step-by-Step Instructions -->
+          <div class="install-card">
+            <div class="install-card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              <span data-i18n="winStepsTitle">3 Bước Cài Đặt Trên Windows</span>
+            </div>
+
+            <div class="step-list">
+              <div class="step-item">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                  <div class="step-title" data-i18n="winStep1Title">Tải & Khởi Chạy</div>
+                  <div class="step-desc" data-i18n="winStep1Desc">Tải file <code>FlowGit_..._x64-setup.exe</code> về và nhấp đúp chuột để mở.</div>
+                </div>
+              </div>
+
+              <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                  <div class="step-title" data-i18n="winStep2Title">Xử Lý Màn Hình SmartScreen</div>
+                  <div class="step-desc" data-i18n="winStep2Desc">
+                    Nếu Windows Defender hiện thông báo xanh <em>"Windows protected your PC"</em>: hãy nhấn <strong>"More info" (Thông tin thêm)</strong> ➔ chọn <strong>"Run anyway" (Vẫn chạy)</strong>.
+                  </div>
+                </div>
+              </div>
+
+              <div class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                  <div class="step-title" data-i18n="winStep3Title">Hoàn Tất & Sử Dụng</div>
+                  <div class="step-desc" data-i18n="winStep3Desc">Ứng dụng cài đặt hoàn tất chỉ trong 3 giây và tự động mở lên sẵn sàng cho bạn sử dụng!</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="install-callout">
+              <span data-i18n="winSmartScreenNote">💡 <strong>Tại sao có thông báo SmartScreen?</strong> Do FlowGit là phần mềm mã nguồn mở mới phát hành nên Windows chưa lưu danh tiếng. Ứng dụng an toàn 100% và không chứa bất kỳ phần mềm gián điệp nào.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- macOS Panel -->
+      <div id="panel-mac" class="install-panel">
+        <div class="install-grid">
+          <!-- File Explanations -->
+          <div class="install-card">
+            <div class="install-card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span data-i18n="macFilesTitle">Các Tệp Tải Về Cho macOS</span>
+            </div>
+
+            <div class="file-item">
+              <div class="file-item-header">
+                <span class="file-item-name">..._aarch64.dmg</span>
+                <span class="file-badge-rec" data-i18n="badgeAppleSilicon">★ Apple Silicon</span>
+              </div>
+              <p class="file-item-desc" data-i18n="macArmDesc">
+                Tối ưu native cho toàn bộ máy Mac chạy chip M1, M2, M3, M4 với hiệu năng cao nhất và thời lượng pin tối đa.
+              </p>
+            </div>
+
+            <div class="file-item">
+              <div class="file-item-header">
+                <span class="file-item-name">..._x86_64.dmg</span>
+                <span class="file-badge-opt" data-i18n="badgeIntelMac">Intel Mac</span>
+              </div>
+              <p class="file-item-desc" data-i18n="macIntelDesc">
+                Dành cho các dòng máy Mac đời trước chạy vi xử lý Intel Core.
+              </p>
+            </div>
+          </div>
+
+          <!-- Step-by-Step Instructions -->
+          <div class="install-card">
+            <div class="install-card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              <span data-i18n="macStepsTitle">Cài Đặt Trên macOS</span>
+            </div>
+
+            <div class="step-list">
+              <div class="step-item">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                  <div class="step-title" data-i18n="macStep1Title">Mở File .dmg & Kéo Vào Applications</div>
+                  <div class="step-desc" data-i18n="macStep1Desc">Mở tệp <code>.dmg</code> tải về, kéo biểu tượng <strong>FlowGit</strong> thả vào thư mục <strong>Applications</strong>.</div>
+                </div>
+              </div>
+
+              <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                  <div class="step-title" data-i18n="macStep2Title">Xử Lý Cảnh Báo Gatekeeper (Nếu Có)</div>
+                  <div class="step-desc" data-i18n="macStep2Desc">
+                    Nếu macOS báo <em>"App can't be opened because it is from an unidentified developer"</em>: vào <strong>System Settings (Cài đặt)</strong> ➔ <strong>Privacy & Security (Quyền riêng tư)</strong> ➔ cuộn xuống bấm <strong>"Open Anyway" (Vẫn mở)</strong>.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Linux Panel -->
+      <div id="panel-linux" class="install-panel">
+        <div class="install-grid">
+          <!-- File Explanations -->
+          <div class="install-card">
+            <div class="install-card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span data-i18n="linuxFilesTitle">Các Tệp Tải Về Cho Linux</span>
+            </div>
+
+            <div class="file-item">
+              <div class="file-item-header">
+                <span class="file-item-name">..._amd64.deb</span>
+                <span class="file-badge-rec" data-i18n="badgeDebian">★ Ubuntu / Debian</span>
+              </div>
+              <p class="file-item-desc" data-i18n="linuxDebDesc">
+                Gói cài đặt chuẩn cho Ubuntu, Debian, Linux Mint, Pop!_OS. Tích hợp sâu vào App Launcher và menu hệ thống.
+              </p>
+            </div>
+
+            <div class="file-item">
+              <div class="file-item-header">
+                <span class="file-item-name">..._amd64.AppImage</span>
+                <span class="file-badge-opt" data-i18n="badgeAppImage">Chạy Ngay (Portable)</span>
+              </div>
+              <p class="file-item-desc" data-i18n="linuxAppImageDesc">
+                Chạy ngay trên mọi bản phân phối Linux mà không cần cài đặt (Arch, Manjaro, Fedora, openSUSE...).
+              </p>
+            </div>
+
+            <div class="file-item">
+              <div class="file-item-header">
+                <span class="file-item-name">...-1.x86_64.rpm</span>
+                <span class="file-badge-opt" data-i18n="badgeRpm">Fedora / RHEL</span>
+              </div>
+              <p class="file-item-desc" data-i18n="linuxRpmDesc">
+                Dành cho Fedora, Red Hat Enterprise Linux (RHEL), openSUSE và CentOS.
+              </p>
+            </div>
+          </div>
+
+          <!-- Step-by-Step Instructions -->
+          <div class="install-card">
+            <div class="install-card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              <span data-i18n="linuxStepsTitle">Lệnh Cài Đặt Linux Nhanh</span>
+            </div>
+
+            <div class="step-list">
+              <div class="step-item">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                  <div class="step-title">Gói .deb (Ubuntu / Debian)</div>
+                  <div class="step-desc">
+                    Mở terminal tại thư mục Downloads và chạy:
+                    <div style="margin-top: 6px;"><code>sudo dpkg -i FlowGit_*.deb</code></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                  <div class="step-title">Gói .AppImage (Mọi Linux)</div>
+                  <div class="step-desc">
+                    Cấp quyền thực thi và mở ứng dụng:
+                    <div style="margin-top: 6px;"><code>chmod +x FlowGit_*.AppImage && ./FlowGit_*.AppImage</code></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </section>
 

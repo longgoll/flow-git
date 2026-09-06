@@ -23,6 +23,29 @@
 
 <img src="website/assets/flowgit_hero.png" alt="FlowGit Hero Interface" width="920" style="border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.35);" />
 
+<br/><br/>
+
+<!-- Mini Sponsor Box (Cute & Compact) -->
+<table align="center" style="border: 1px solid #30363d; border-radius: 12px; background: rgba(255,255,255,0.02); display: inline-block;">
+  <tr>
+    <td align="center" style="border: none; padding: 6px 14px; vertical-align: middle;">
+      <a href="https://ko-fi.com/longgoll" target="_blank">
+        <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support on Ko-fi" height="30" />
+      </a>
+      <br/>
+      <sub style="font-size: 11px;">☕ Buy me a coffee</sub>
+    </td>
+    <td style="border: none; padding: 0 6px; color: #8b949e; vertical-align: middle;">•</td>
+    <td align="center" style="border: none; padding: 6px 14px; vertical-align: middle;">
+      <a href="#-support-the-project">
+        <img src="website/assets/momo_qr.jpg" alt="MoMo QR" width="85" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); vertical-align: middle;" />
+      </a>
+      <br/>
+      <sub style="font-size: 11px;">📱 <b>MoMo:</b> *******154</sub>
+    </td>
+  </tr>
+</table>
+
 <br/>
 
 </div>

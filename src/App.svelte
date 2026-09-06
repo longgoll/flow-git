@@ -16,6 +16,7 @@
   import { GitSafetyState } from "./lib/state/gitSafetyState.svelte";
   import { WorkspaceTabState, pathsEqual } from "./lib/state/workspaceTabState.svelte";
   import { modalState } from "./lib/state/modalState.svelte";
+  import { updateState } from "./lib/state/updateState.svelte";
   import { handleAppKeydown } from "./lib/utils/appShortcuts";
   import { createGitActions } from "./lib/services/gitActionHandlers";
   import { getRemotes } from "./lib/api/remote";
@@ -340,6 +341,11 @@
       } catch {
         repo.showWelcomeScreen = true;
       }
+
+      // Tự động kiểm tra bản cập nhật mới ngầm sau 3 giây khi mở ứng dụng
+      setTimeout(() => {
+        updateState.checkForUpdates(false).catch(() => {});
+      }, 3000);
     } catch (e) {
       console.error("onMount failed gracefully:", e);
       repo.showWelcomeScreen = true;

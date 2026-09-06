@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlowGit — Next-Gen Visual Git Client (Rust + Tauri v2)</title>
+  <meta name="description" content="FlowGit là ứng dụng Git Client siêu nhẹ, nhanh như chớp với lõi Rust, đồ thị 60 FPS, thùng rác Safe Discard 48h và hoàn tác Time Machine Ctrl+Z.">
+  <link rel="icon" type="image/svg+xml" href="app-icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="glass-nav">
+    <div class="container nav-content">
+      <a href="#" class="brand">
+        <img src="app-icon.svg" alt="FlowGit Logo">
+        <span>FlowGit</span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#features" data-i18n="navFeatures">Tính năng</a>
+        <a href="#metrics">Hiệu năng</a>
+        <a href="#comparison" data-i18n="navComparison">So sánh</a>
+        <a href="https://github.com/longgoll/flow-git#readme" target="_blank" data-i18n="navDocs">Tài liệu</a>
+        <a href="https://github.com/longgoll/flow-git" target="_blank">GitHub</a>
+      </nav>
+
+      <div class="nav-actions">
+        <!-- Language Switcher -->
+        <button id="lang-toggle-btn" class="btn btn-lang">
+          🇻🇳 Tiếng Việt
+        </button>
+
+        <!-- Download Button -->
+        <a href="#download" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span data-i18n="navDownload">Tải về</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="badge-tag">
+        <span data-i18n="heroTag">⚡ Thế Hệ Git Client Mới 2026</span>
+        <span>•</span>
+        <span id="version-tag" style="font-family: var(--font-mono); font-weight: 700;">v0.1.0</span>
+      </div>
+
+      <h1 class="hero-title">
+        <span data-i18n="heroTitlePrefix">Trải Nghiệm Git</span>
+        <span class="gradient-text" data-i18n="heroTitleHighlight">Nhanh Như Chớp</span>,<br>
+        <span data-i18n="heroTitleSuffix">An Toàn Tuyệt Đối</span>
+      </h1>
+
+      <p class="hero-desc" data-i18n="heroDesc">
+        Tạm biệt các ứng dụng Electron ì ạch ngốn cả Gigabyte RAM. FlowGit kết hợp sức mạnh native của Rust và đồ thị 60 FPS cùng cỗ máy thời gian hoàn tác, biến Git thành trải nghiệm không-nỗi-sợ.
+      </p>
+
+      <div class="hero-cta">
+        <a id="main-download-btn" href="https://github.com/longgoll/flow-git/releases" class="btn btn-primary btn-lg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span data-i18n="btnDownloadWindows">Tải FlowGit cho Windows</span>
+        </a>
+        <a href="https://github.com/longgoll/flow-git" target="_blank" class="btn btn-secondary btn-lg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span data-i18n="btnStarGithub">Star trên GitHub</span>
+        </a>
+      </div>
+
+      <div class="hero-meta">
+        <span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span data-i18n="freeOpenSource">Miễn phí & Mã nguồn mở</span>
+        </span>
+        <span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span data-i18n="noTelemetry">Không quảng cáo</span>
+        </span>
+        <span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span data-i18n="autoUpdate">Tự động cập nhật ngầm</span>
+        </span>
+      </div>
+
+      <!-- App Interface Mockup Preview -->
+      <div class="mockup-container">
+        <div class="app-window">
+          <div class="window-header">
+            <div class="window-dots">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <span class="window-title">FlowGit — flow-git (main)</span>
+          </div>
+
+          <div class="window-body">
+            <!-- Sidebar -->
+            <div class="mock-sidebar">
+              <div class="sidebar-title">Branches</div>
+              <div class="branch-item active">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+                <span>main</span>
+              </div>
+              <div class="branch-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+                <span>feature/canvas-graph</span>
+              </div>
+              <div class="branch-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+                <span>fix/reflog-undo</span>
+              </div>
+
+              <div class="sidebar-title" style="margin-top: 12px;">Safety Net</div>
+              <div class="branch-item" style="color: #10b981;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>Safe Trash (48h)</span>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="mock-content">
+              <div class="mock-graph-view">
+                <!-- Commit 1 -->
+                <div class="mock-commit-row selected">
+                  <div class="mock-graph-node">
+                    <span class="node-dot" style="background: #06b6d4;"></span>
+                  </div>
+                  <span class="node-hash">a8f9c1e</span>
+                  <span class="node-msg">feat: integrate ed25519 auto-updater via GitHub releases</span>
+                  <span class="node-badge badge-cyan">HEAD -> main</span>
+                </div>
+                <!-- Commit 2 -->
+                <div class="mock-commit-row">
+                  <div class="mock-graph-node">
+                    <span class="node-dot" style="background: #a855f7;"></span>
+                  </div>
+                  <span class="node-hash">3b2d109</span>
+                  <span class="node-msg">perf: offscreencanvas rendering locked at 60fps</span>
+                  <span class="node-badge badge-purple">origin/main</span>
+                </div>
+                <!-- Commit 3 -->
+                <div class="mock-commit-row">
+                  <div class="mock-graph-node">
+                    <span class="node-dot" style="background: #10b981;"></span>
+                  </div>
+                  <span class="node-hash">7c44e90</span>
+                  <span class="node-msg">feat(safety): 48h sqlite snapshot for uncommitted discards</span>
+                  <span class="node-badge badge-emerald">safe-engine</span>
+                </div>
+                <!-- Commit 4 -->
+                <div class="mock-commit-row">
+                  <div class="mock-graph-node">
+                    <span class="node-dot" style="background: #3b82f6;"></span>
+                  </div>
+                  <span class="node-hash">e015d88</span>
+                  <span class="node-msg">chore: add full bilingual vi/en locale system</span>
+                </div>
+                <!-- Commit 5 -->
+                <div class="mock-commit-row">
+                  <div class="mock-graph-node">
+                    <span class="node-dot" style="background: #06b6d4;"></span>
+                  </div>
+                  <span class="node-hash">120fa7c</span>
+                  <span class="node-msg">init: bootstrap Tauri v2 + Svelte 5 runes architecture</span>
+                </div>
+              </div>
+
+              <!-- Status bar -->
+              <div class="mock-statusbar">
+                <span>Working tree clean • 14,820 commits</span>
+                <span style="display: flex; align-items: center; gap: 8px;">
+                  <span style="color: #10b981;">● Trash: Protected</span>
+                  <span>Ctrl+K Palette</span>
+                  <span>Ctrl+Z Undo</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Metrics Section -->
+  <section id="metrics" class="metrics-section">
+    <div class="container">
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-val gradient-text" data-i18n="metricRamVal">&lt; 85 MB</div>
+          <div class="metric-label" data-i18n="metricRamLabel">Chiếm Dụng RAM Siêu Nhẹ</div>
+          <div class="metric-sub" data-i18n="metricRamSub">So với 800MB - 1.2GB của Electron</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val gradient-text" data-i18n="metricSpeedVal">&lt; 0.5s</div>
+          <div class="metric-label" data-i18n="metricSpeedLabel">Khởi Động Tức Thì</div>
+          <div class="metric-sub" data-i18n="metricSpeedSub">Tối ưu hóa native bằng Rust & Tauri v2</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val gradient-text" data-i18n="metricFpsVal">60 FPS</div>
+          <div class="metric-label" data-i18n="metricFpsLabel">Đồ Thị Động Học Mượt Mà</div>
+          <div class="metric-sub" data-i18n="metricFpsSub">OffscreenCanvas cân > 100.000 commits</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val gradient-text" data-i18n="metricSafeVal">48 Giờ</div>
+          <div class="metric-label" data-i18n="metricSafeLabel">Thùng Rác Safe Discard</div>
+          <div class="metric-sub" data-i18n="metricSafeSub">Cứu lại mã nguồn lỡ tay xóa nhầm</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="features-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title" data-i18n="featuresTitle">Tại Sao FlowGit Vượt Trội?</h2>
+        <p class="section-desc" data-i18n="featuresDesc">
+          Mọi tính năng đều được chế tác để giải quyết nỗi đau lớn nhất của lập trình viên khi làm việc với Git hàng ngày.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🛡️</div>
+          <h3 data-i18n="f1Title">Safe Discard 48h & Time Machine (Ctrl+Z)</h3>
+          <p data-i18n="f1Desc">Không bao giờ sợ mất code. Mọi đoạn code discard đều được tự động snapshot vào SQLite 48h. Hoàn tác mọi thao tác nguy hiểm (Reset, Rebase hỏng) tức thì chỉ với Ctrl+Z.</p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">📊</div>
+          <h3 data-i18n="f2Title">Living Commit Graph 60 FPS Locked</h3>
+          <p data-i18n="f2Desc">Đồ thị động học dựng bằng OffscreenCanvas và Web Worker cách ly hoàn toàn khỏi UI thread. Thuật toán Rayon song song đảm bảo cuộn mượt mà ngay cả với repo kernel.</p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🔀</div>
+          <h3 data-i18n="f3Title">Kéo Thả Rebase & In-Memory Ghost Preview</h3>
+          <p data-i18n="f3Desc">Đổi thứ tự commit, bôi đen gộp (Squash) chỉ bằng kéo thả. Thuật toán Ghost Preview mô phỏng in-memory cảnh báo conflict trước khi bạn nhả chuột.</p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">⚔️</div>
+          <h3 data-i18n="f4Title">Trình Xử Lý Xung Đột 4 Khung Hình</h3>
+          <p data-i18n="f4Desc">Phân tách rõ ràng Ours, Base, Theirs và Result. Nhận từng khối mã trực quan 1-click kết hợp sức mạnh highlight cú pháp của Monaco Editor (chuẩn VS Code).</p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🐙</div>
+          <h3 data-i18n="f5Title">GitHub Pull Request Workspace</h3>
+          <p data-i18n="f5Desc">Duyệt PR, đọc diff Monaco, theo dõi CI/CD Actions, checkout nhánh PR và merge trực tiếp trong app mà không cần mở trình duyệt.</p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🐞</div>
+          <h3 data-i18n="f6Title">Visual Git Bisect Wizard</h3>
+          <p data-i18n="f6Desc">Tự động phân đôi lịch sử commit và dẫn dắt bạn qua giao diện trực quan để truy vết commit gây bug chỉ sau 4 - 5 bước kiểm tra.</p>
+        </div>
+
+        <!-- Feature 7 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🧹</div>
+          <h3 data-i18n="f7Title">History Nuker (Tẩy Xóa File Mật)</h3>
+          <p data-i18n="f7Desc">Xóa vĩnh viễn file nhạy cảm lỡ commit (.env, API keys, file binary nặng hàng trăm MB) khỏi toàn bộ lịch sử Git chỉ với vài cú nhấp chuột.</p>
+        </div>
+
+        <!-- Feature 8 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🔄</div>
+          <h3 data-i18n="f8Title">Tự Động Cập Nhật 0 Đồng (Zero-VPS)</h3>
+          <p data-i18n="f8Desc">Tích hợp công nghệ cập nhật ngầm Tauri v2 ký số bằng mật mã Ed25519, phân phối qua GitHub Releases an toàn tuyệt đối và miễn phí trọn đời.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Table Section -->
+  <section id="comparison" class="comparison-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title" data-i18n="compTitle">Bảng So Sánh Chi Tiết</h2>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th data-i18n="compMetric">Tiêu Chí</th>
+              <th class="highlight" data-i18n="compFlowGit">⚡ FlowGit</th>
+              <th data-i18n="compElectron">Ứng Dụng Electron</th>
+              <th data-i18n="compLegacy">Git GUI Cổ Điển</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>RAM Sử Dụng (Idle)</td>
+              <td class="highlight" style="color: #10b981;">~75 MB</td>
+              <td>600 MB – 1.2 GB</td>
+              <td>~350 MB</td>
+            </tr>
+            <tr>
+              <td>Thời Gian Mở Ứng Dụng</td>
+              <td class="highlight" style="color: #10b981;">&lt; 0.5s</td>
+              <td>3.5s – 7.0s</td>
+              <td>4.0s – 8.0s</td>
+            </tr>
+            <tr>
+              <td>Động Cơ Đồ Thị (Graph Engine)</td>
+              <td class="highlight">OffscreenCanvas + Web Worker</td>
+              <td>DOM / SVG (Nghẽn UI ở 10k+)</td>
+              <td>Direct2D / GDI Cũ</td>
+            </tr>
+            <tr>
+              <td>Cứu Mã Nguồn Discard Nhầm</td>
+              <td class="highlight" style="color: #10b981;">✅ Thùng rác SQLite 48h</td>
+              <td>❌ Mất vĩnh viễn</td>
+              <td>❌ Mất vĩnh viễn</td>
+            </tr>
+            <tr>
+              <td>Hoàn Tác Time Machine (Ctrl+Z)</td>
+              <td class="highlight" style="color: #10b981;">✅ Toàn diện qua git reflog</td>
+              <td>⚠️ Hạn chế / Không có</td>
+              <td>❌ Không có</td>
+            </tr>
+            <tr>
+              <td>Mô Phỏng Xung Đột Trước (Dry-Run)</td>
+              <td class="highlight" style="color: #10b981;">✅ In-Memory Ghost Preview</td>
+              <td>❌ Thử sai trực tiếp</td>
+              <td>❌ Thử sai trực tiếp</td>
+            </tr>
+            <tr>
+              <td>Trình So Sánh Code & Diff</td>
+              <td class="highlight">Monaco Editor (Chuẩn VS Code)</td>
+              <td>Diff Text thông thường</td>
+              <td>Giao diện cũ</td>
+            </tr>
+            <tr>
+              <td>Hỗ Trợ Song Ngữ (VI/EN)</td>
+              <td class="highlight" style="color: #10b981;">✅ 100% Bản Ngữ Chuẩn Dev</td>
+              <td>⚠️ Dịch máy</td>
+              <td>❌ Chỉ tiếng Anh</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Download Section -->
+  <section id="download" class="cta-section">
+    <div class="container">
+      <div class="cta-box">
+        <h2 data-i18n="ctaTitle">Sẵn Sàng Nâng Tầm Trải Nghiệm Git?</h2>
+        <p data-i18n="ctaDesc">Tải ngay FlowGit cho Windows hoàn toàn miễn phí hoặc khám phá mã nguồn mở trên GitHub.</p>
+        <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+          <a id="cta-download-btn" href="https://github.com/longgoll/flow-git/releases" class="btn btn-primary btn-lg">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span data-i18n="ctaBtn">Tải Bản Cài Đặt (.exe)</span>
+          </a>
+          <a href="https://github.com/longgoll/flow-git" target="_blank" class="btn btn-secondary btn-lg">
+            <span data-i18n="btnStarGithub">Star trên GitHub</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-content">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="app-icon.svg" alt="FlowGit" style="width: 24px; height: 24px; border-radius: 4px;">
+        <span data-i18n="footerCopy">© 2026 FlowGit. Phát hành theo giấy phép mã nguồn mở MIT.</span>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/longgoll/flow-git" target="_blank">GitHub</a>
+        <a href="https://github.com/longgoll/flow-git/releases" target="_blank">Releases</a>
+        <a href="https://github.com/longgoll/flow-git/blob/main/LICENSE" target="_blank">License</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>

@@ -15,6 +15,7 @@ import { pullRequest } from "./pullRequest";
 import { assistant } from "./assistant";
 import { auth } from "./auth";
 import { actions } from "./actions";
+import { updater } from "./updater";
 
 export const en: TranslationSchema = {
   common,
@@ -39,4 +40,5 @@ export const en: TranslationSchema = {
   assistant,
   auth,
   actions,
+  updater,
 };

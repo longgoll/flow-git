@@ -16,9 +16,12 @@
     Database,
     ShieldCheck,
     Globe,
+    Sparkles,
+    RefreshCw,
   } from 'lucide-svelte';
   import { themeState } from '../../state/themeState.svelte';
   import { localeState } from '../../state/localeState.svelte';
+  import { updateState } from '../../state/updateState.svelte';
 
   interface Props {
     currentBranch?: BranchInfo;
@@ -149,6 +152,30 @@
           </div>
         </button>
       {/if}
+
+      <!-- Auto-Updater Item -->
+      <button
+        onclick={async () => {
+          onCloseToolsMenu();
+          await updateState.checkForUpdates(true);
+        }}
+        disabled={updateState.isChecking}
+        class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-zinc-700 dark:text-zinc-300 hover:text-emerald-900 dark:hover:text-emerald-200 transition-colors cursor-pointer disabled:opacity-50"
+      >
+        <div class="flex items-center gap-2">
+          {#if updateState.isChecking}
+            <RefreshCw class="w-3.5 h-3.5 text-emerald-500 animate-spin" />
+          {:else}
+            <Sparkles class="w-3.5 h-3.5 text-emerald-500" />
+          {/if}
+          <span>{updateState.isChecking ? localeState.t('updater.checking') : localeState.t('updater.checkForUpdates')}</span>
+        </div>
+        {#if updateState.updateAvailable}
+          <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono">
+            {localeState.t('updater.updateBadge')}
+          </span>
+        {/if}
+      </button>
 
       <div class="my-1 border-t border-zinc-200 dark:border-zinc-800"></div>
 

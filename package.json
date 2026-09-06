@@ -15,6 +15,8 @@
     "@tauri-apps/plugin-dialog": "^2.2.0",
     "@tauri-apps/plugin-fs": "^2.2.0",
     "@tauri-apps/plugin-opener": "^2.2.0",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-updater": "^2.11.0",
     "bits-ui": "^1.0.0-next.78",
     "clsx": "^2.1.1",
     "lucide-svelte": "^0.475.0",

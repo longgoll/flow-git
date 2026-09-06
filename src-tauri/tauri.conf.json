@@ -40,6 +40,12 @@
   "plugins": {
     "dialog": null,
     "fs": null,
-    "opener": null
+    "opener": null,
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEMzNjg0N0JFOEQ5RUY2QQpSV1JxNzlub2U0UTJEUENhZjZRYXFZMUY2STd6cGdOUVpYK1dIek9HZnRtdkpodklGSHRnMHRDWAo=",
+      "endpoints": [
+        "https://github.com/longgoll/flow-git/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

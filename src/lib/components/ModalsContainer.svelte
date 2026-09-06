@@ -26,6 +26,7 @@
   import IdentitySwitcherModal from './IdentitySwitcherModal.svelte';
   import GitPlaybookModal from './GitPlaybookModal.svelte';
   import CreatePullRequestModal from './CreatePullRequestModal.svelte';
+  import UpdateModal from './UpdateModal.svelte';
   import { toast } from '../state/toastState.svelte';
   import { localeState } from '../state/localeState.svelte';
   import type { ModalState } from '../state/modalState.svelte';
@@ -556,3 +557,6 @@
     }
   }}
 />
+
+<!-- FlowGit Auto-Updater Modal -->
+<UpdateModal />

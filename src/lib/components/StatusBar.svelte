@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { CurrentRepoIdentity, OperationLog, RepoSummary } from '../types';
-  import { CheckCircle, ShieldCheck, AlertTriangle, UserCheck, Globe, ChevronUp, Terminal, Trash2, X } from 'lucide-svelte';
+  import { CheckCircle, ShieldCheck, AlertTriangle, UserCheck, Globe, ChevronUp, Terminal, Trash2, X, Sparkles } from 'lucide-svelte';
   import { localeState } from '../state/localeState.svelte';
+  import { updateState } from '../state/updateState.svelte';
 
   interface Props {
     statusMessage: string;
@@ -228,6 +229,18 @@
       <ShieldCheck class="w-3 h-3" />
       <span>Trash</span>
     </button>
+    <!-- Update Available Badge -->
+    {#if updateState.updateAvailable}
+      <button
+        onclick={() => updateState.openModal()}
+        class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-semibold text-[10px] cursor-pointer transition-all animate-pulse"
+        title={localeState.t('updater.newVersionFoundMsg', { version: updateState.updateInfo?.version || '' })}
+      >
+        <Sparkles class="w-2.5 h-2.5" />
+        <span>v{updateState.updateInfo?.version}</span>
+      </button>
+    {/if}
+
     <!-- Quick Language Toggle Button -->
     <button
       onclick={() => localeState.toggleLocale()}

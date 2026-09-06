@@ -14,6 +14,7 @@ import { pullRequest } from "./pullRequest";
 import { assistant } from "./assistant";
 import { auth } from "./auth";
 import { actions } from "./actions";
+import { updater } from "./updater";
 
 export const vi = {
   common,
@@ -38,6 +39,7 @@ export const vi = {
   assistant,
   auth,
   actions,
+  updater,
 };
 
 export type TranslationSchema = typeof vi;

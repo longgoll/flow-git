@@ -46,6 +46,7 @@ export class WorkspaceTabState {
             ...t,
             id: normalizePath(t.path || t.id),
             path: normalizePath(t.path),
+            viewMode: t.viewMode === 'pr' ? 'graph' : (t.viewMode || 'graph'),
           }));
           if (savedActiveId && this.tabs.some((t) => t.id === savedActiveId)) {
             this.activeTabId = savedActiveId;

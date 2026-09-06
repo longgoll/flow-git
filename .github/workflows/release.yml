@@ -18,7 +18,7 @@ jobs:
             args: ''
           - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin'
-          - platform: 'macos-13'
+          - platform: 'macos-latest'
             args: '--target x86_64-apple-darwin'
           - platform: 'ubuntu-22.04'
             args: ''
@@ -55,6 +55,19 @@ jobs:
             libappindicator3-dev \
             librsvg2-dev \
             patchelf
+
+      - name: Pre-download WiX Toolset for Windows
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          $wixDir = "$env:LOCALAPPDATA\tauri\WixTools"
+          New-Item -ItemType Directory -Force -Path $wixDir | Out-Null
+          Write-Host "Pre-downloading WiX Toolset to $wixDir with retries..."
+          curl.exe -fSL --retry 5 --retry-delay 3 --retry-all-errors "https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip" -o "$env:TEMP\wix314-binaries.zip"
+          tar.exe -xf "$env:TEMP\wix314-binaries.zip" -C $wixDir
+          Remove-Item "$env:TEMP\wix314-binaries.zip" -Force
+          Write-Host "WiX Toolset verified:"
+          Get-ChildItem -Path $wixDir -Filter "candle.exe"
 
       - name: Install Node dependencies
         run: npm ci

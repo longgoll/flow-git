@@ -1,9 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { BranchInfo, CommitDetail as ICommitDetail, CommitNode, FocusBranchResult } from '../types';
+  import type { BranchInfo, CommitDetail as ICommitDetail, CommitNode, ConflictSimulationResult, FocusBranchResult } from '../types';
   import CommitGraph from './CommitGraph.svelte';
   import CommitDetail from './CommitDetail.svelte';
   import { getFocusBranchInfo } from '../api/repo';
+  import { simulateDragAction } from '../api/action';
   import {
     Crosshair,
     ArrowUpRight,
@@ -15,6 +16,9 @@
     GitPullRequest,
     GitCompare,
     ChevronDown,
+    Upload,
+    ShieldCheck,
+    ShieldAlert,
   } from 'lucide-svelte';
 
   interface Props {
@@ -31,6 +35,7 @@
     onCompareCommits?: (c1: CommitNode, c2: CommitNode) => void;
     onOpenCreatePR?: (sourceBranch: string, targetBranch: string) => void;
     onCloseFocus: () => void;
+    onPush?: () => Promise<void>;
     onSyncWithBase?: (baseBranch?: string) => Promise<void>;
   }
 
@@ -48,6 +53,7 @@
     onCompareCommits,
     onOpenCreatePR,
     onCloseFocus,
+    onPush,
     onSyncWithBase,
   }: Props = $props();
 
@@ -56,7 +62,10 @@
   let showBaseDropdown = $state<boolean>(false);
   let isLoading = $state<boolean>(true);
   let isSyncing = $state<boolean>(false);
+  let isPushing = $state<boolean>(false);
   let syncSuccess = $state<boolean>(false);
+  let dryRunResult = $state<ConflictSimulationResult | null>(null);
+  let isDryRunning = $state<boolean>(false);
   let isDetailOpen = $state<boolean>(true);
   let isDetailMaximized = $state<boolean>(false);
 
@@ -128,10 +137,41 @@
       if (res.commits.length <= 3) {
         detailHeight = Math.max(380, Math.round(window.innerHeight * 0.55));
       }
+      if (res.behind_count > 0 && res.head_commit_id && res.base_commit_id) {
+        checkConflictDryRun(res.head_commit_id, res.base_commit_id);
+      } else {
+        dryRunResult = null;
+      }
     } catch (err) {
       console.error('Failed to load focus branch:', err);
     } finally {
       isLoading = false;
+    }
+  }
+
+  async function checkConflictDryRun(headId: string, baseId: string) {
+    if (!repoPath) return;
+    isDryRunning = true;
+    try {
+      dryRunResult = await simulateDragAction(repoPath, headId, baseId);
+    } catch (e) {
+      console.error('Dry-run simulation failed:', e);
+      dryRunResult = null;
+    } finally {
+      isDryRunning = false;
+    }
+  }
+
+  async function handlePush() {
+    if (!onPush) return;
+    isPushing = true;
+    try {
+      await onPush();
+      await loadFocus(selectedBase);
+    } catch (e) {
+      console.error('Push from focus view failed:', e);
+    } finally {
+      isPushing = false;
     }
   }
 
@@ -259,6 +299,19 @@
         </button>
       {/if}
 
+      <!-- Quick Push Button (When Ahead > 0) -->
+      {#if onPush && focusData && focusData.ahead_count > 0}
+        <button
+          onclick={handlePush}
+          disabled={isPushing}
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all cursor-pointer shadow-xs hover:scale-102 disabled:opacity-70"
+          title="Đẩy {focusData.ahead_count} commit(s) lên remote"
+        >
+          <Upload class="w-3.5 h-3.5 {isPushing ? 'animate-bounce' : ''}" />
+          <span>{isPushing ? 'Pushing...' : `Push (${focusData.ahead_count})`}</span>
+        </button>
+      {/if}
+
       {#if onOpenCreatePR && focusData}
         <button
           onclick={() => onOpenCreatePR?.(focusData!.branch_name, focusData!.base_branch)}
@@ -268,6 +321,37 @@
           <GitPullRequest class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
           <span>Create PR</span>
         </button>
+      {/if}
+
+      <!-- Conflict Dry-Run Badge (When Behind > 0) -->
+      {#if focusData && focusData.behind_count > 0}
+        {#if isDryRunning}
+          <div
+            class="flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-[10px] font-mono text-zinc-500"
+            title="Đang mô phỏng ngầm kiểm tra conflict..."
+          >
+            <RefreshCw class="w-3 h-3 animate-spin text-zinc-400" />
+            <span>Simulating...</span>
+          </div>
+        {:else if dryRunResult}
+          {#if !dryRunResult.has_conflicts}
+            <div
+              class="flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-[11px] font-mono font-medium text-emerald-800 dark:text-emerald-300 shadow-xs"
+              title="Mô phỏng ngầm hoàn tất: Sạch 100%, không phát hiện xung đột khi rebase."
+            >
+              <ShieldCheck class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Clean Rebase</span>
+            </div>
+          {:else}
+            <div
+              class="flex items-center gap-1 px-2 py-1 rounded-md bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-[11px] font-mono font-medium text-rose-800 dark:text-rose-300 shadow-xs"
+              title="Xung đột dự kiến ở {dryRunResult.conflict_files.length} tệp: {dryRunResult.conflict_files.join(', ')}"
+            >
+              <ShieldAlert class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+              <span>{dryRunResult.conflict_files.length} Conflict(s)</span>
+            </div>
+          {/if}
+        {/if}
       {/if}
 
       {#if onSyncWithBase}

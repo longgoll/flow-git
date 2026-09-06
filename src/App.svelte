@@ -1296,6 +1296,7 @@
           onSquashCommits={handleOpenSquash}
           onCompareCommits={handleCompareCommits}
           onOpenCreatePR={(source) => handleOpenCreatePR(source)}
+          onPush={handlePushCurrentBranch}
           onCloseFocus={() => (viewMode = "graph")}
           onSyncWithBase={async (baseBranch) => {
             if (!repo.currentRepoPath) return;

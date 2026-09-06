@@ -601,8 +601,12 @@
     dirtyFilesCount={wt.workingTreeStatus?.total_dirty_count || 0}
     stagedFilesCount={wt.workingTreeStatus?.total_staged_count || 0}
     currentIdentity={currentIdentity}
+    operationLogs={repo.operationLogs}
+    isLogPanelOpen={repo.isLogPanelOpen}
     onOpenIdentity={() => (modalState.showIdentityModal = true)}
     onOpenTrash={() => safety.openTrash(repo.currentRepoPath)}
+    onToggleLog={() => (repo.isLogPanelOpen = !repo.isLogPanelOpen)}
+    onClearLog={() => (repo.operationLogs = [])}
   />
 
   <!-- Modals & Drawers Container -->

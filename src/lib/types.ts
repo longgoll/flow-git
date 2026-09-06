@@ -1,3 +1,12 @@
+export type OperationLogType = 'info' | 'success' | 'error' | 'warn';
+
+export interface OperationLog {
+  id: number;
+  message: string;
+  type: OperationLogType;
+  timestamp: Date;
+}
+
 export type RefType = 'localbranch' | 'remotebranch' | 'tag' | 'stash' | 'head';
 
 export interface RefInfo {

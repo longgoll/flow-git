@@ -101,22 +101,22 @@ export function createGitActions(ctx: GitActionContext) {
 
   async function cherryPickCommit(commit: CommitNode) {
     if (!repo.currentRepoPath) return;
-    repo.statusMessage = `Cherry-picking commit ${commit.short_id}...`;
+    repo.setStatus(`Cherry-picking commit ${commit.short_id}...`);
     try {
       const newSha = await executeCherryPick(repo.currentRepoPath, commit.id);
-      repo.statusMessage = `Cherry-pick succeeded: ${newSha.slice(0, 7)}`;
+      repo.setStatus(`Cherry-pick succeeded: ${newSha.slice(0, 7)}`, 'success');
       toast.success('Cherry-pick thành công', `Đã áp dụng commit ${commit.short_id} -> ${newSha.slice(0, 7)}`);
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
       const errMsg = e?.message || String(e);
       if (errMsg.toLowerCase().includes('conflict')) {
         toast.warning('Phát hiện xung đột khi Cherry-pick', 'Đang tự động chuyển sang trang giải quyết Conflict...');
-        repo.statusMessage = 'Cherry-pick conflict. Vui lòng giải quyết xung đột.';
+        repo.setStatus('Cherry-pick conflict. Vui lòng giải quyết xung đột.', 'warn');
         await loadRepository(repo.currentRepoPath);
         await safety.loadConflictFiles(repo.currentRepoPath);
         setViewMode('conflict');
       } else {
-        repo.statusMessage = `Cherry-pick failed: ${errMsg}`;
+        repo.setStatus(`Cherry-pick failed: ${errMsg}`, 'error');
         toast.error('Cherry-pick thất bại', errMsg);
       }
     }
@@ -125,21 +125,21 @@ export function createGitActions(ctx: GitActionContext) {
   async function cherryPickDrop(source: CommitNode) {
     if (!repo.currentRepoPath) return;
     modalState.closeDropAction();
-    repo.statusMessage = `Cherry-picking commit ${source.short_id}...`;
+    repo.setStatus(`Cherry-picking commit ${source.short_id}...`);
     try {
       const newSha = await executeCherryPick(repo.currentRepoPath, source.id);
-      repo.statusMessage = `Cherry-pick succeeded: ${newSha.slice(0, 7)}`;
+      repo.setStatus(`Cherry-pick succeeded: ${newSha.slice(0, 7)}`, 'success');
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
       const errMsg = e?.message || String(e);
       if (errMsg.toLowerCase().includes('conflict')) {
         toast.warning('Phát hiện xung đột khi Cherry-pick', 'Đang tự động chuyển sang trang giải quyết Conflict...');
-        repo.statusMessage = 'Cherry-pick conflict. Vui lòng giải quyết xung đột.';
+        repo.setStatus('Cherry-pick conflict. Vui lòng giải quyết xung đột.', 'warn');
         await loadRepository(repo.currentRepoPath);
         await safety.loadConflictFiles(repo.currentRepoPath);
         setViewMode('conflict');
       } else {
-        repo.statusMessage = `Cherry-pick failed: ${errMsg}`;
+        repo.setStatus(`Cherry-pick failed: ${errMsg}`, 'error');
         toast.error('Cherry-pick failed', errMsg);
       }
     }
@@ -148,21 +148,21 @@ export function createGitActions(ctx: GitActionContext) {
   async function mergeDrop(source: CommitNode) {
     if (!repo.currentRepoPath) return;
     modalState.closeDropAction();
-    repo.statusMessage = `Merging commit ${source.short_id} into HEAD...`;
+    repo.setStatus(`Merging commit ${source.short_id} into HEAD...`);
     try {
       const newSha = await executeMerge(repo.currentRepoPath, source.id);
-      repo.statusMessage = `Merge succeeded: ${newSha.slice(0, 7)}`;
+      repo.setStatus(`Merge succeeded: ${newSha.slice(0, 7)}`, 'success');
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
       const errMsg = e?.message || String(e);
       if (errMsg.toLowerCase().includes('conflict')) {
         toast.warning('Phát hiện xung đột khi Merge', 'Đang tự động chuyển sang trang giải quyết Conflict...');
-        repo.statusMessage = 'Merge conflict. Vui lòng giải quyết xung đột.';
+        repo.setStatus('Merge conflict. Vui lòng giải quyết xung đột.', 'warn');
         await loadRepository(repo.currentRepoPath);
         await safety.loadConflictFiles(repo.currentRepoPath);
         setViewMode('conflict');
       } else {
-        repo.statusMessage = `Merge failed: ${errMsg}`;
+        repo.setStatus(`Merge failed: ${errMsg}`, 'error');
         toast.error('Merge failed', errMsg);
       }
     }
@@ -172,45 +172,45 @@ export function createGitActions(ctx: GitActionContext) {
     if (!repo.currentRepoPath) return;
     modalState.closeDropAction();
     const targetRef = target.refs?.[0]?.shorthand || target.id;
-    repo.statusMessage = `Rebasing onto ${targetRef}...`;
+    repo.setStatus(`Rebasing onto ${targetRef}...`);
     try {
       const res = await executeRebase(repo.currentRepoPath, targetRef);
       if (res.status === 'completed') {
         toast.success(res.message);
-        repo.statusMessage = res.message;
+        repo.setStatus(res.message, 'success');
         await loadRepository(repo.currentRepoPath);
       } else if (res.status === 'conflict') {
         toast.warning(res.message);
-        repo.statusMessage = res.message;
+        repo.setStatus(res.message, 'warn');
         safety.isRebasing = true;
         await safety.loadConflictFiles(repo.currentRepoPath);
         setViewMode('conflict');
       }
     } catch (e: any) {
       toast.error(`Rebase thất bại: ${e?.message || e}`);
-      repo.statusMessage = `Rebase failed: ${e?.message || e}`;
+      repo.setStatus(`Rebase failed: ${e?.message || e}`, 'error');
     }
   }
 
   async function rebaseBranch(branch: BranchInfo) {
     if (!repo.currentRepoPath) return;
-    repo.statusMessage = `Rebasing HEAD onto ${branch.shorthand}...`;
+    repo.setStatus(`Rebasing HEAD onto ${branch.shorthand}...`);
     try {
       const res = await executeRebase(repo.currentRepoPath, branch.shorthand);
       if (res.status === 'completed') {
         toast.success(res.message);
-        repo.statusMessage = res.message;
+        repo.setStatus(res.message, 'success');
         await loadRepository(repo.currentRepoPath);
       } else if (res.status === 'conflict') {
         toast.warning(res.message);
-        repo.statusMessage = res.message;
+        repo.setStatus(res.message, 'warn');
         safety.isRebasing = true;
         await safety.loadConflictFiles(repo.currentRepoPath);
         setViewMode('conflict');
       }
     } catch (e: any) {
       toast.error(`Rebase thất bại: ${e?.message || e}`);
-      repo.statusMessage = `Rebase failed: ${e?.message || e}`;
+      repo.setStatus(`Rebase failed: ${e?.message || e}`, 'error');
     }
   }
 
@@ -234,7 +234,7 @@ export function createGitActions(ctx: GitActionContext) {
     if (!repo.currentRepoPath) return;
     await createWorktree(repo.currentRepoPath, name, targetPath, branchName);
     repo.worktrees = await listWorktrees(repo.currentRepoPath);
-    repo.statusMessage = `Created worktree '${name}' successfully.`;
+    repo.setStatus(`Created worktree '${name}' successfully.`, 'success');
 
     const tab = tabState.openTab({
       path: targetPath,
@@ -253,7 +253,7 @@ export function createGitActions(ctx: GitActionContext) {
     const targetWt = repo.worktrees.find((w) => w.name === name);
     await deleteWorktree(repo.currentRepoPath, name);
     repo.worktrees = await listWorktrees(repo.currentRepoPath);
-    repo.statusMessage = `Removed worktree '${name}'.`;
+    repo.setStatus(`Removed worktree '${name}'.`, 'info');
     if (targetWt) {
       tabState.closeTab(targetWt.path);
     }
@@ -283,11 +283,11 @@ export function createGitActions(ctx: GitActionContext) {
     if (!repo.currentRepoPath) return;
     try {
       await createBranch(repo.currentRepoPath, newName, fromRef, checkout);
-      repo.statusMessage = `✓ Tạo nhánh '${newName}' từ '${fromRef}' thành công${checkout ? ' và đã checkout' : ''}.`;
+      repo.setStatus(`✓ Tạo nhánh '${newName}' từ '${fromRef}' thành công${checkout ? ' và đã checkout' : ''}.`, 'success');
       modalState.closeCreateBranch();
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
-      repo.statusMessage = `Lỗi tạo nhánh: ${e?.message || e}`;
+      repo.setStatus(`Lỗi tạo nhánh: ${e?.message || e}`, 'error');
     }
   }
 
@@ -297,7 +297,7 @@ export function createGitActions(ctx: GitActionContext) {
       const res = await continueRebase(repo.currentRepoPath);
       if (res.status === 'completed') {
         toast.success(res.message);
-        repo.statusMessage = res.message;
+        repo.setStatus(res.message, 'success');
         await loadRepository(repo.currentRepoPath);
       } else if (res.status === 'conflict') {
         toast.warning(res.message);
@@ -318,7 +318,7 @@ export function createGitActions(ctx: GitActionContext) {
       const res = await skipRebaseStep(repo.currentRepoPath);
       if (res.status === 'completed') {
         toast.success(res.message);
-        repo.statusMessage = res.message;
+        repo.setStatus(res.message, 'success');
         await loadRepository(repo.currentRepoPath);
       } else if (res.status === 'conflict') {
         toast.warning(res.message);
@@ -338,7 +338,7 @@ export function createGitActions(ctx: GitActionContext) {
     try {
       const msg = await abortCurrentOperation(repo.currentRepoPath);
       toast.info(msg);
-      repo.statusMessage = msg;
+      repo.setStatus(msg, 'info');
       safety.isRebasing = false;
       await loadRepository(repo.currentRepoPath);
       return true;
@@ -354,7 +354,7 @@ export function createGitActions(ctx: GitActionContext) {
 
   async function publishBranch(branch: BranchInfo) {
     if (!repo.currentRepoPath) return;
-    repo.statusMessage = `Đang publish nhánh '${branch.shorthand}'...`;
+    repo.setStatus(`Đang publish nhánh '${branch.shorthand}'...`);
     const res = await remote.pushBranch(
       repo.currentRepoPath,
       branch.shorthand,
@@ -363,7 +363,7 @@ export function createGitActions(ctx: GitActionContext) {
       true,
       () => loadRepository(repo.currentRepoPath)
     );
-    repo.statusMessage = res.message;
+    repo.setStatus(res.message, res.success ? 'success' : 'error');
     if (res.success && branch.shorthand !== 'main' && branch.shorthand !== 'master') {
       setRecentPushedBranch(branch.shorthand);
       tabState.updateActiveTabMeta({ recentPushedBranch: branch.shorthand });
@@ -381,7 +381,7 @@ export function createGitActions(ctx: GitActionContext) {
 
   async function pushBranch(branch: BranchInfo, force = false) {
     if (!repo.currentRepoPath) return;
-    repo.statusMessage = `Đang push nhánh '${branch.shorthand}'...`;
+    repo.setStatus(`Đang push nhánh '${branch.shorthand}'...`);
     const res = await remote.pushBranch(
       repo.currentRepoPath,
       branch.shorthand,
@@ -390,7 +390,7 @@ export function createGitActions(ctx: GitActionContext) {
       !branch.upstream_name,
       () => loadRepository(repo.currentRepoPath)
     );
-    repo.statusMessage = res.message;
+    repo.setStatus(res.message, res.success ? 'success' : 'error');
     if (res.success && branch.shorthand !== 'main' && branch.shorthand !== 'master') {
       setRecentPushedBranch(branch.shorthand);
       tabState.updateActiveTabMeta({ recentPushedBranch: branch.shorthand });
@@ -414,7 +414,7 @@ export function createGitActions(ctx: GitActionContext) {
     } else if (current) {
       await pushBranch(current, false);
     } else {
-      repo.statusMessage = `Đang push lên remote...`;
+      repo.setStatus(`Đang push lên remote...`);
       const res = await remote.executeRemote(
         repo.currentRepoPath,
         'push',
@@ -424,20 +424,20 @@ export function createGitActions(ctx: GitActionContext) {
         false,
         () => loadRepository(repo.currentRepoPath)
       );
-      repo.statusMessage = res.message;
+      repo.setStatus(res.message, res.success ? 'success' : 'error');
     }
   }
 
   async function checkoutBranchAction(branch: BranchInfo) {
     if (!repo.currentRepoPath || branch.is_head) return;
     try {
-      repo.statusMessage = `Checking out '${branch.shorthand}'...`;
+      repo.setStatus(`Checking out '${branch.shorthand}'...`);
       await checkoutBranch(repo.currentRepoPath, branch.shorthand);
-      repo.statusMessage = `✓ Đã chuyển sang nhánh '${branch.shorthand}'.`;
+      repo.setStatus(`✓ Đã chuyển sang nhánh '${branch.shorthand}'.`, 'success');
       toast.info('Đã chuyển nhánh', `Hiện đang ở nhánh '${branch.shorthand}'.`);
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
-      repo.statusMessage = `Lỗi checkout: ${e?.message || e}`;
+      repo.setStatus(`Lỗi checkout: ${e?.message || e}`, 'error');
       toast.error('Lỗi chuyển nhánh', e?.message || String(e));
     }
   }
@@ -450,7 +450,7 @@ export function createGitActions(ctx: GitActionContext) {
         'Đổi tên nhánh thành công',
         `Nhánh '${branch.shorthand}' đã được đổi thành '${newName}'.`
       );
-      repo.statusMessage = `Đổi tên nhánh '${branch.shorthand}' -> '${newName}'`;
+      repo.setStatus(`Đổi tên nhánh '${branch.shorthand}' -> '${newName}'`, 'success');
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
       toast.error('Lỗi đổi tên nhánh', e?.message || String(e));
@@ -487,7 +487,7 @@ export function createGitActions(ctx: GitActionContext) {
           branch.is_remote
         );
       }
-      repo.statusMessage = `Đã xóa nhánh ${branch.shorthand} thành công`;
+      repo.setStatus(`Đã xóa nhánh ${branch.shorthand} thành công`, 'success');
       toast.success(
         'Đã xóa nhánh',
         `Nhánh '${branch.shorthand}' đã được xóa an toàn.`
@@ -495,7 +495,7 @@ export function createGitActions(ctx: GitActionContext) {
       modalState.closeDeleteBranch();
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
-      repo.statusMessage = `Lỗi xóa nhánh: ${e?.message || e}`;
+      repo.setStatus(`Lỗi xóa nhánh: ${e?.message || e}`, 'error');
       toast.error('Lỗi xóa nhánh', e?.message || String(e));
     } finally {
       modalState.isDeleteBranchLoading = false;
@@ -508,7 +508,7 @@ export function createGitActions(ctx: GitActionContext) {
     repo.selectedCommitIds = [c1.id, c2.id];
     setViewMode('compare');
     setIsComparisonLoading(true);
-    repo.statusMessage = `Comparing ${c1.short_id} .. ${c2.short_id}...`;
+    repo.setStatus(`Comparing ${c1.short_id} .. ${c2.short_id}...`);
     try {
       const res = await compareTwoCommits(
         repo.currentRepoPath,
@@ -516,9 +516,9 @@ export function createGitActions(ctx: GitActionContext) {
         c2.id
       );
       setComparisonResult(res);
-      repo.statusMessage = `Comparison ready: ${res.files_changed.length} files changed`;
+      repo.setStatus(`Comparison ready: ${res.files_changed.length} files changed`, 'success');
     } catch (e: any) {
-      repo.statusMessage = `Comparison failed: ${e?.message || e}`;
+      repo.setStatus(`Comparison failed: ${e?.message || e}`, 'error');
     } finally {
       setIsComparisonLoading(false);
     }
@@ -531,7 +531,7 @@ export function createGitActions(ctx: GitActionContext) {
     const oldBase = current.base_id;
     const oldTarget = current.target_id;
     setIsComparisonLoading(true);
-    repo.statusMessage = `Comparing ${oldTarget.slice(0, 7)} .. ${oldBase.slice(0, 7)}...`;
+    repo.setStatus(`Comparing ${oldTarget.slice(0, 7)} .. ${oldBase.slice(0, 7)}...`);
     try {
       const res = await compareTwoCommits(
         repo.currentRepoPath,
@@ -540,22 +540,22 @@ export function createGitActions(ctx: GitActionContext) {
       );
       setComparisonResult(res);
       repo.selectedCommitIds = [oldTarget, oldBase];
-      repo.statusMessage = `Comparison ready: ${res.files_changed.length} files changed`;
+      repo.setStatus(`Comparison ready: ${res.files_changed.length} files changed`, 'success');
     } catch (e: any) {
-      repo.statusMessage = `Comparison failed: ${e?.message || e}`;
+      repo.setStatus(`Comparison failed: ${e?.message || e}`, 'error');
     } finally {
       setIsComparisonLoading(false);
     }
   }
 
   async function undo() {
-    repo.statusMessage = 'Time Machine: Undoing last action...';
+    repo.setStatus('Time Machine: Undoing last action...');
     try {
       const record = await safety.undo(repo.currentRepoPath, () =>
         loadRepository(repo.currentRepoPath)
       );
       if (record) {
-        repo.statusMessage = `Time Machine: Undid ${record.description}`;
+        repo.setStatus(`Time Machine: Undid ${record.description}`, 'success');
         toast.info(
           'Đã hoàn tác (Time Machine)',
           `Đã hoàn tác: ${record.description}`,
@@ -566,26 +566,26 @@ export function createGitActions(ctx: GitActionContext) {
         );
       }
     } catch (e: any) {
-      repo.statusMessage = `Undo failed: ${e?.message || e}`;
+      repo.setStatus(`Undo failed: ${e?.message || e}`, 'error');
       toast.warning('Không thể hoàn tác', e?.message || String(e));
     }
   }
 
   async function redo() {
-    repo.statusMessage = 'Time Machine: Redoing action...';
+    repo.setStatus('Time Machine: Redoing action...');
     try {
       const record = await safety.redo(repo.currentRepoPath, () =>
         loadRepository(repo.currentRepoPath)
       );
       if (record) {
-        repo.statusMessage = `Time Machine: Redid ${record.description}`;
+        repo.setStatus(`Time Machine: Redid ${record.description}`, 'success');
         toast.info(
           'Đã làm lại (Time Machine)',
           `Đã khôi phục: ${record.description}`
         );
       }
     } catch (e: any) {
-      repo.statusMessage = `Redo failed: ${e?.message || e}`;
+      repo.setStatus(`Redo failed: ${e?.message || e}`, 'error');
       toast.warning('Không thể làm lại', e?.message || String(e));
     }
   }
@@ -635,16 +635,17 @@ export function createGitActions(ctx: GitActionContext) {
   }
 
   async function revertCommitAction(commit: CommitNode) {
-    repo.statusMessage = `Reverting commit ${commit.short_id}...`;
+    repo.setStatus(`Reverting commit ${commit.short_id}...`);
     try {
       const newSha = await revertCommit(repo.currentRepoPath, commit.id);
       toast.success(
         'Revert thành công',
         `Đã tạo commit đảo ngược: ${newSha.slice(0, 7)}`
       );
+      repo.setStatus(`Revert succeeded: ${newSha.slice(0, 7)}`, 'success');
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
-      repo.statusMessage = `Revert failed: ${e?.message || e}`;
+      repo.setStatus(`Revert failed: ${e?.message || e}`, 'error');
       toast.warning('Lỗi Revert commit', e?.message || String(e));
     }
   }
@@ -653,17 +654,18 @@ export function createGitActions(ctx: GitActionContext) {
     commit: CommitNode,
     mode: 'soft' | 'mixed' | 'hard'
   ) {
-    repo.statusMessage = `Resetting (${mode}) to ${commit.short_id}...`;
+    repo.setStatus(`Resetting (${mode}) to ${commit.short_id}...`);
     try {
       await resetToCommit(repo.currentRepoPath, commit.id, mode);
       toast.info(
         'Reset hoàn tất',
         `HEAD đã đưa về ${commit.short_id} (${mode})`
       );
+      repo.setStatus(`Reset (${mode}) to ${commit.short_id} done`, 'success');
       await loadRepository(repo.currentRepoPath);
       await refreshWorkingTreeAndDiff();
     } catch (e: any) {
-      repo.statusMessage = `Reset failed: ${e?.message || e}`;
+      repo.setStatus(`Reset failed: ${e?.message || e}`, 'error');
       toast.warning('Lỗi Reset commit', e?.message || String(e));
     }
   }

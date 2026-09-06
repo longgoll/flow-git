@@ -2,6 +2,8 @@ import type {
   BranchInfo,
   CommitDetail as ICommitDetail,
   CommitNode,
+  OperationLog,
+  OperationLogType,
   RepoSummary,
   StashInfo,
   TagInfo,
@@ -45,6 +47,15 @@ export class RepoState {
   isDetailMaximized = $state<boolean>(false);
 
   statusMessage = $state<string>('Ready');
+  operationLogs = $state<OperationLog[]>([]);
+  isLogPanelOpen = $state<boolean>(false);
+
+  setStatus(message: string, type: OperationLogType = 'info') {
+    this.statusMessage = message;
+    const entry: OperationLog = { id: Date.now(), message, type, timestamp: new Date() };
+    this.operationLogs = [entry, ...this.operationLogs].slice(0, 500);
+  }
+
   recentRepos = $state<string[]>(
     (() => {
       try {
@@ -132,7 +143,7 @@ export class RepoState {
 
   async loadRepo(path: string, onAfterLoad?: (wtStatus: any) => void, preferredCommitId?: string | null) {
     this.isLoading = true;
-    this.statusMessage = `Opening repository at ${path}...`;
+    this.setStatus(`Opening repository at ${path}...`);
     if (this.currentRepoPath !== path) {
       this.resetRepoData();
     }
@@ -187,10 +198,10 @@ export class RepoState {
 
       this.saveRecentRepo(path);
       this.showWelcomeScreen = false;
-      this.statusMessage = `Loaded ${hist.length.toLocaleString()} commits. Realtime file watcher active.`;
+      this.setStatus(`Loaded ${hist.length.toLocaleString()} commits. Realtime file watcher active.`, 'success');
     } catch (err: any) {
       console.error('Failed to open repository:', err);
-      this.statusMessage = `Error: ${err?.message || err}`;
+      this.setStatus(`Error: ${err?.message || err}`, 'error');
       this.repoSummary = null;
       this.rawCommits = [];
       this.showWelcomeScreen = true;
@@ -202,7 +213,7 @@ export class RepoState {
 
   async initRepo(path: string, defaultBranch?: string, onAfterLoad?: (wtStatus: any) => void) {
     this.isLoading = true;
-    this.statusMessage = `Initializing git repository at ${path}...`;
+    this.setStatus(`Initializing git repository at ${path}...`);
     try {
       this.currentRepoPath = path;
       const summary = await initRepository(path, defaultBranch);
@@ -230,11 +241,11 @@ export class RepoState {
 
       this.saveRecentRepo(path);
       this.showWelcomeScreen = false;
-      this.statusMessage = `Repository initialized successfully. Branch: ${summary.current_branch || 'main'}`;
+      this.setStatus(`Repository initialized successfully. Branch: ${summary.current_branch || 'main'}`, 'success');
       return summary;
     } catch (err: any) {
       console.error('Failed to init repository:', err);
-      this.statusMessage = `Error: ${err?.message || err}`;
+      this.setStatus(`Error: ${err?.message || err}`, 'error');
       throw err;
     } finally {
       this.isLoading = false;
@@ -303,7 +314,7 @@ export class RepoState {
       this.isLoading = true;
       try {
         this.rawCommits = await getCommitHistory(this.currentRepoPath, this.commitLimit);
-        this.statusMessage = `Loaded ${this.rawCommits.length.toLocaleString()} commits.`;
+        this.setStatus(`Loaded ${this.rawCommits.length.toLocaleString()} commits.`, 'success');
       } finally {
         this.isLoading = false;
       }
@@ -318,7 +329,7 @@ export class RepoState {
       const res = await getPaginatedCommitHistory(this.currentRepoPath, nextSkip, 500);
       this.rawCommits = [...this.rawCommits, ...res.commits];
       this.hasMoreCommits = res.has_more;
-      this.statusMessage = `Loaded ${this.rawCommits.length} commits (${this.hasMoreCommits ? 'more available' : 'all history loaded'})`;
+      this.setStatus(`Loaded ${this.rawCommits.length} commits (${this.hasMoreCommits ? 'more available' : 'all history loaded'})`, 'success');
     } catch (err: any) {
       console.error('Failed to load more commits:', err);
     } finally {

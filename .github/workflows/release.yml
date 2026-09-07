@@ -105,3 +105,28 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+      - name: Package MSIX for Microsoft Store
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        env:
+          MSIX_PACKAGE_NAME: ${{ vars.MSIX_PACKAGE_NAME || secrets.MSIX_PACKAGE_NAME || 'HoangLong.FlowGit' }}
+          MSIX_PUBLISHER: ${{ vars.MSIX_PUBLISHER || secrets.MSIX_PUBLISHER || 'CN=4C165668-29A1-4492-8972-4597558CF751' }}
+          MSIX_PUBLISHER_DISPLAY_NAME: ${{ vars.MSIX_PUBLISHER_DISPLAY_NAME || secrets.MSIX_PUBLISHER_DISPLAY_NAME || 'Hoang Long' }}
+        run: |
+          $msi = Get-ChildItem -Path "src-tauri\target\release\bundle\msi" -Filter "*.msi" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($msi) {
+            Write-Host "Đang đóng gói MSIX từ file MSI: $($msi.FullName)"
+            powershell -ExecutionPolicy Bypass -File scripts/create-msix.ps1 -MsiPath $msi.FullName
+          } else {
+            Write-Warning "Không tìm thấy file MSI trong src-tauri\target\release\bundle\msi!"
+          }
+
+      - name: Upload MSIX to GitHub Release
+        if: matrix.platform == 'windows-latest'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist-msix/*.msix
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

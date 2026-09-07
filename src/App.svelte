@@ -402,6 +402,11 @@
     {layoutMode}
     filterHideMerges={repo.filterHideMerges}
     filterMyCommits={repo.filterMyCommits}
+    authors={repo.authors}
+    filterAuthor={repo.filterAuthor}
+    filterDateRange={repo.filterDateRange}
+    filterDateFrom={repo.filterDateFrom}
+    filterDateTo={repo.filterDateTo}
     dirtyFilesCount={wt.workingTreeStatus?.total_dirty_count || 0}
     stagedFilesCount={wt.workingTreeStatus?.total_staged_count || 0}
     conflictedFilesCount={safety.conflictedFiles.length}
@@ -423,6 +428,10 @@
     onChangeLayoutMode={(mode) => (layoutMode = mode)}
     onToggleHideMerges={() => (repo.filterHideMerges = !repo.filterHideMerges)}
     onToggleMyCommits={() => (repo.filterMyCommits = !repo.filterMyCommits)}
+    onSelectAuthor={(a) => (repo.filterAuthor = a)}
+    onSelectDateRange={(r) => (repo.filterDateRange = r)}
+    onSetCustomDates={(from, to) => { repo.filterDateFrom = from; repo.filterDateTo = to; }}
+    onClearAllFilters={() => repo.clearFilters()}
     onOpenTrash={() => safety.openTrash(repo.currentRepoPath)}
     onOpenWorktrees={actions.openWorktreesModal}
     onSmartSync={async () => {
@@ -459,6 +468,7 @@
     <!-- Left Navigation Sidebar -->
     {#if isSidebarOpen}
       <Sidebar
+        {repo}
         repoSummary={repo.repoSummary}
         branches={repo.branches}
         tags={repo.tags}

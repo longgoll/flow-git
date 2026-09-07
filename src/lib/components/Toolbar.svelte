@@ -35,6 +35,11 @@
     isSidebarOpen?: boolean;
     filterHideMerges?: boolean;
     filterMyCommits?: boolean;
+    authors?: Array<{ name: string; email: string; count: number }>;
+    filterAuthor?: string;
+    filterDateRange?: 'all' | '24h' | '7d' | '30d' | 'custom';
+    filterDateFrom?: string | null;
+    filterDateTo?: string | null;
     workspaceTabs?: WorkspaceTab[];
     activeTabId?: string | null;
     onSelectTab?: (tab: WorkspaceTab) => void;
@@ -50,6 +55,10 @@
     onChangeLayoutMode?: (mode: LayoutMode) => void;
     onToggleHideMerges?: () => void;
     onToggleMyCommits?: () => void;
+    onSelectAuthor?: (author: string) => void;
+    onSelectDateRange?: (range: 'all' | '24h' | '7d' | '30d' | 'custom') => void;
+    onSetCustomDates?: (from: string | null, to: string | null) => void;
+    onClearAllFilters?: () => void;
     onOpenTrash: () => void;
     onOpenWorktrees?: () => void;
     onSmartSync?: () => void;
@@ -92,6 +101,11 @@
     layoutMode = 'horizontal',
     filterHideMerges = false,
     filterMyCommits = false,
+    authors = [],
+    filterAuthor = '',
+    filterDateRange = 'all',
+    filterDateFrom = null,
+    filterDateTo = null,
     workspaceTabs = [],
     activeTabId = null,
     onSelectTab,
@@ -108,6 +122,10 @@
     onChangeLayoutMode,
     onToggleHideMerges,
     onToggleMyCommits,
+    onSelectAuthor,
+    onSelectDateRange,
+    onSetCustomDates,
+    onClearAllFilters,
     onOpenTrash,
     onOpenWorktrees,
     onSmartSync,
@@ -224,10 +242,19 @@
         bind:searchQuery
         {filterHideMerges}
         {filterMyCommits}
+        {authors}
+        {filterAuthor}
+        {filterDateRange}
+        {filterDateFrom}
+        {filterDateTo}
         {layoutMode}
         {onSearchChange}
         {onToggleHideMerges}
         {onToggleMyCommits}
+        {onSelectAuthor}
+        {onSelectDateRange}
+        {onSetCustomDates}
+        {onClearAllFilters}
         {onChangeLayoutMode}
       />
       <div class="h-4 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5 hidden xl:block shrink-0"></div>

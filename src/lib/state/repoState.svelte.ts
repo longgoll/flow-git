@@ -76,16 +76,96 @@ export class RepoState {
   filterCompactView = $state<boolean>(false);
   currentUserEmail = $state<string>('');
 
+  // Pinned Branches & Branch Visibility Preferences
+  pinnedBranches = $state<string[]>([]);
+  hiddenBranches = $state<string[]>([]);
+
+  // Advanced Filters
+  filterAuthor = $state<string>('');
+  filterDateRange = $state<'all' | '24h' | '7d' | '30d' | 'custom'>('all');
+  filterDateFrom = $state<string | null>(null);
+  filterDateTo = $state<string | null>(null);
+
+  // Derived authors list with commit counts
+  authors = $derived.by(() => {
+    if (!this.rawCommits || !Array.isArray(this.rawCommits)) return [];
+    const map = new Map<string, { name: string; email: string; count: number }>();
+    for (const c of this.rawCommits) {
+      const email = c.author_email?.trim() || '';
+      const name = c.author_name?.trim() || 'Unknown';
+      const key = email || name;
+      if (!key) continue;
+      const existing = map.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        map.set(key, { name, email, count: 1 });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+  });
+
   // Filtered commits (derived)
   visibleCommits = $derived.by(() => {
     if (!this.rawCommits || !Array.isArray(this.rawCommits)) return [];
     let list = this.rawCommits;
 
+    // 1. Filter by Hidden Branches (DAG Reachability)
+    if (this.hiddenBranches.length > 0 && this.branches.length > 0) {
+      const hiddenSet = new Set(this.hiddenBranches);
+      // Collect visible branch tips
+      const visibleBranchTips = this.branches
+        .filter((b) => !hiddenSet.has(b.shorthand) && b.target_commit_id)
+        .map((b) => b.target_commit_id);
+
+      // Always include HEAD tip if available
+      if (this.rawCommits.length > 0 && !visibleBranchTips.includes(this.rawCommits[0].id)) {
+        visibleBranchTips.push(this.rawCommits[0].id);
+      }
+
+      if (visibleBranchTips.length > 0) {
+        // Fast BFS to find reachable commits from visible branch tips
+        const commitMap = new Map<string, CommitNode>();
+        for (const c of this.rawCommits) {
+          commitMap.set(c.id, c);
+        }
+
+        const reachable = new Set<string>();
+        const queue: string[] = [...visibleBranchTips];
+
+        while (queue.length > 0) {
+          const sha = queue.pop()!;
+          if (!reachable.has(sha)) {
+            reachable.add(sha);
+            const node = commitMap.get(sha);
+            if (node && node.parents) {
+              for (const p of node.parents) {
+                if (!reachable.has(p) && commitMap.has(p)) {
+                  queue.push(p);
+                }
+              }
+            }
+          }
+        }
+
+        list = list.filter((c) => reachable.has(c.id));
+      }
+    }
+
+    // 2. Filter hide merges
     if (this.filterHideMerges) {
       list = list.filter((c) => !c.parents || c.parents.length <= 1);
     }
 
-    if (this.filterMyCommits) {
+    // 3. Filter author (Author dropdown or my commits toggle)
+    if (this.filterAuthor) {
+      const target = this.filterAuthor.toLowerCase().trim();
+      list = list.filter(
+        (c) =>
+          c.author_email?.toLowerCase().trim() === target ||
+          c.author_name?.toLowerCase().trim() === target
+      );
+    } else if (this.filterMyCommits) {
       const email = this.currentUserEmail.toLowerCase().trim();
       if (email) {
         list = list.filter((c) => c.author_email?.toLowerCase().includes(email));
@@ -98,6 +178,31 @@ export class RepoState {
       }
     }
 
+    // 4. Filter date range
+    if (this.filterDateRange !== 'all') {
+      const nowSec = Math.floor(Date.now() / 1000);
+      let minSec = 0;
+      let maxSec = Infinity;
+
+      if (this.filterDateRange === '24h') {
+        minSec = nowSec - 86400;
+      } else if (this.filterDateRange === '7d') {
+        minSec = nowSec - 7 * 86400;
+      } else if (this.filterDateRange === '30d') {
+        minSec = nowSec - 30 * 86400;
+      } else if (this.filterDateRange === 'custom') {
+        if (this.filterDateFrom) {
+          minSec = Math.floor(new Date(this.filterDateFrom).getTime() / 1000);
+        }
+        if (this.filterDateTo) {
+          maxSec = Math.floor(new Date(`${this.filterDateTo}T23:59:59`).getTime() / 1000);
+        }
+      }
+
+      list = list.filter((c) => c.timestamp >= minSec && c.timestamp <= maxSec);
+    }
+
+    // 5. Search query
     if (!this.searchQuery.trim()) return list;
     const q = this.searchQuery.toLowerCase();
     return list.filter(
@@ -108,6 +213,78 @@ export class RepoState {
         (c?.refs && Array.isArray(c.refs) && c.refs.some((r) => r?.shorthand?.toLowerCase().includes(q)))
     );
   });
+
+  loadRepoPrefs(path: string) {
+    if (!path) return;
+    try {
+      const keyPinned = `flowgit_pinned_branches_${encodeURIComponent(path)}`;
+      const savedPinned = localStorage.getItem(keyPinned);
+      this.pinnedBranches = savedPinned ? JSON.parse(savedPinned) : [];
+
+      const keyHidden = `flowgit_hidden_branches_${encodeURIComponent(path)}`;
+      const savedHidden = localStorage.getItem(keyHidden);
+      this.hiddenBranches = savedHidden ? JSON.parse(savedHidden) : [];
+    } catch {}
+  }
+
+  saveRepoPrefs(path: string) {
+    if (!path) return;
+    try {
+      localStorage.setItem(`flowgit_pinned_branches_${encodeURIComponent(path)}`, JSON.stringify(this.pinnedBranches));
+      localStorage.setItem(`flowgit_hidden_branches_${encodeURIComponent(path)}`, JSON.stringify(this.hiddenBranches));
+    } catch {}
+  }
+
+  togglePinBranch(shorthand: string) {
+    if (this.pinnedBranches.includes(shorthand)) {
+      this.pinnedBranches = this.pinnedBranches.filter((b) => b !== shorthand);
+    } else {
+      this.pinnedBranches = [...this.pinnedBranches, shorthand];
+    }
+    this.saveRepoPrefs(this.currentRepoPath);
+  }
+
+  isBranchPinned(shorthand: string): boolean {
+    return this.pinnedBranches.includes(shorthand);
+  }
+
+  toggleBranchVisibility(shorthand: string) {
+    if (this.hiddenBranches.includes(shorthand)) {
+      this.hiddenBranches = this.hiddenBranches.filter((b) => b !== shorthand);
+    } else {
+      this.hiddenBranches = [...this.hiddenBranches, shorthand];
+    }
+    this.saveRepoPrefs(this.currentRepoPath);
+  }
+
+  isBranchHidden(shorthand: string): boolean {
+    return this.hiddenBranches.includes(shorthand);
+  }
+
+  soloBranch(shorthand: string) {
+    const allShorthands = this.branches.map((b) => b.shorthand);
+    const toKeep = new Set<string>([shorthand]);
+    if (this.repoSummary?.current_branch) {
+      toKeep.add(this.repoSummary.current_branch);
+    }
+    this.hiddenBranches = allShorthands.filter((name) => !toKeep.has(name));
+    this.saveRepoPrefs(this.currentRepoPath);
+  }
+
+  showAllBranches() {
+    this.hiddenBranches = [];
+    this.saveRepoPrefs(this.currentRepoPath);
+  }
+
+  clearFilters() {
+    this.searchQuery = '';
+    this.filterAuthor = '';
+    this.filterDateRange = 'all';
+    this.filterDateFrom = null;
+    this.filterDateTo = null;
+    this.filterHideMerges = false;
+    this.filterMyCommits = false;
+  }
 
   initRecentRepos() {
     try {
@@ -149,6 +326,7 @@ export class RepoState {
     }
     try {
       this.currentRepoPath = path;
+      this.loadRepoPrefs(path);
       const summary = await openRepository(path);
       this.repoSummary = summary;
 

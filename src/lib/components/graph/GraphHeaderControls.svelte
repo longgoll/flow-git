@@ -4,6 +4,7 @@
     Globe,
     Sparkles,
     Eye,
+    EyeOff,
     X,
     StretchHorizontal,
     AlignJustify,
@@ -19,10 +20,12 @@
     viewMode: GraphViewMode;
     autoCapsule: boolean;
     density?: GraphDensity;
+    hiddenBranchesCount?: number;
     onUnlockLane: () => void;
     onToggleViewMode: (mode: GraphViewMode) => void;
     onToggleAutoCapsule: () => void;
     onChangeDensity?: (mode: GraphDensity) => void;
+    onShowAllBranches?: () => void;
   }
 
   let {
@@ -32,10 +35,12 @@
     viewMode = $bindable('micro'),
     autoCapsule = $bindable(true),
     density = 'comfortable',
+    hiddenBranchesCount = 0,
     onUnlockLane,
     onToggleViewMode,
     onToggleAutoCapsule,
     onChangeDensity,
+    onShowAllBranches,
   }: Props = $props();
 </script>
 
@@ -61,6 +66,22 @@
         >
           <X class="w-2.5 h-2.5" />
         </button>
+      </span>
+    {/if}
+
+    {#if hiddenBranchesCount > 0}
+      <span class="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 font-sans text-[10px] font-medium flex items-center gap-1.5 animate-in fade-in duration-100">
+        <EyeOff class="w-2.5 h-2.5 text-amber-600 dark:text-amber-400" />
+        <span>{localeState.t('graph.headerControls.hiddenBranchesCount', { count: hiddenBranchesCount })}</span>
+        {#if onShowAllBranches}
+          <button
+            onclick={onShowAllBranches}
+            class="px-1 py-0.2 rounded bg-amber-200/80 dark:bg-amber-900/80 hover:bg-amber-300 dark:hover:bg-amber-800 text-amber-950 dark:text-amber-100 font-bold transition-colors cursor-pointer text-[9px]"
+            title={localeState.t('graph.headerControls.showAllBranchesTooltip')}
+          >
+            {localeState.t('graph.headerControls.showAllBranches')}
+          </button>
+        {/if}
       </span>
     {/if}
   </div>

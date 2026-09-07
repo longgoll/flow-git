@@ -42,6 +42,8 @@
     onResetCommit?: (commit: CommitNode, mode: 'soft' | 'mixed' | 'hard') => void;
     onSquashCommits?: (commits: CommitNode[]) => void;
     onInteractiveRebase?: (commit: CommitNode) => void;
+    hiddenBranchesCount?: number;
+    onShowAllBranches?: () => void;
   }
 
   let {
@@ -64,6 +66,8 @@
     onSquashCommits,
     onInteractiveRebase,
     onOpenDropAction,
+    hiddenBranchesCount = 0,
+    onShowAllBranches,
   }: Props = $props();
 
   let selectedFilePath = $state<string | null>(null);
@@ -162,6 +166,8 @@
         {onSquashCommits}
         {onInteractiveRebase}
         {onOpenDropAction}
+        {hiddenBranchesCount}
+        {onShowAllBranches}
       />
     </div>
   </div>

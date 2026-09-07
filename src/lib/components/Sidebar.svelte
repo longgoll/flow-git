@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { BranchInfo, RemoteInfo, RepoSummary, StashInfo, TagInfo, WorktreeInfo } from '../types';
+  import type { RepoState } from '../state/repoState.svelte';
   import { FolderGit2, PanelLeftClose } from 'lucide-svelte';
   import { localeState } from '../state/localeState.svelte';
   import SidebarBranchTree from './sidebar/SidebarBranchTree.svelte';
@@ -7,6 +8,7 @@
   import SidebarContextMenu from './sidebar/SidebarContextMenu.svelte';
 
   interface Props {
+    repo?: RepoState;
     repoSummary: RepoSummary | null;
     branches: BranchInfo[];
     tags?: TagInfo[];
@@ -37,6 +39,7 @@
   }
 
   let {
+    repo,
     repoSummary,
     branches = [],
     tags = [],
@@ -170,6 +173,7 @@
     <!-- LOCAL & REMOTE BRANCHES -->
     <SidebarBranchTree
       {branches}
+      {repo}
       bind:showLocalBranches
       bind:showRemoteBranches
       {isPushing}
@@ -198,6 +202,8 @@
 <SidebarContextMenu
   {activeBranchMenu}
   {repoSummary}
+  isPinned={activeBranchMenu && repo ? repo.isBranchPinned(activeBranchMenu.branch.shorthand) : false}
+  isHidden={activeBranchMenu && repo ? repo.isBranchHidden(activeBranchMenu.branch.shorthand) : false}
   onClose={() => (activeBranchMenu = null)}
   {onSelectBranch}
   {onRebaseBranch}
@@ -208,5 +214,8 @@
   {onCreateBranchFrom}
   onStartRename={startRename}
   {onDeleteBranch}
+  onTogglePin={(b) => repo?.togglePinBranch(b.shorthand)}
+  onToggleVisibility={(b) => repo?.toggleBranchVisibility(b.shorthand)}
+  onSoloBranch={(b) => repo?.soloBranch(b.shorthand)}
   {isProtectedBranch}
 />

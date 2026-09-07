@@ -142,6 +142,8 @@
       onSquashCommits={(commits) => modalState.openSquash(commits)}
       onInteractiveRebase={(c) => modalState.openInteractiveRebase(c)}
       onOpenDropAction={handleOpenDropAction}
+      hiddenBranchesCount={repo.hiddenBranches.length}
+      onShowAllBranches={() => repo.showAllBranches()}
     />
   {:else}
     <div class="flex-1 min-h-[200px] relative overflow-hidden flex flex-col">
@@ -164,6 +166,8 @@
         onSquashCommits={(commits) => modalState.openSquash(commits)}
         onInteractiveRebase={(c) => modalState.openInteractiveRebase(c)}
         onOpenDropAction={handleOpenDropAction}
+        hiddenBranchesCount={repo.hiddenBranches.length}
+        onShowAllBranches={() => repo.showAllBranches()}
       />
 
       {#if !repo.isDetailOpen && repo.selectedCommitId}

@@ -40,6 +40,8 @@
       simulation: ConflictSimulationResult | null,
       pos: { x: number; y: number },
     ) => void;
+    hiddenBranchesCount?: number;
+    onShowAllBranches?: () => void;
   }
 
   let {
@@ -61,6 +63,8 @@
     onSquashCommits,
     onInteractiveRebase,
     onOpenDropAction,
+    hiddenBranchesCount = 0,
+    onShowAllBranches,
   }: Props = $props();
 
   let containerEl: HTMLDivElement;
@@ -651,6 +655,8 @@
     displayCount={displayCommits.length}
     totalCount={commits.length}
     lockedLane={lockedLane}
+    {hiddenBranchesCount}
+    {onShowAllBranches}
     bind:viewMode
     bind:autoCapsule
     {density}

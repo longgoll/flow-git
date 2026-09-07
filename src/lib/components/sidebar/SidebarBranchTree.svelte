@@ -15,13 +15,18 @@
     CloudUpload,
     Upload,
     MoreVertical,
+    Star,
+    Eye,
+    EyeOff,
     X as CloseIcon,
   } from 'lucide-svelte';
   import type { BranchInfo } from '../../types';
+  import type { RepoState } from '../../state/repoState.svelte';
   import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
     branches: BranchInfo[];
+    repo?: RepoState;
     showLocalBranches: boolean;
     showRemoteBranches: boolean;
     isPushing?: boolean;
@@ -44,6 +49,7 @@
 
   let {
     branches = [],
+    repo,
     showLocalBranches = $bindable(true),
     showRemoteBranches = $bindable(true),
     isPushing = false,
@@ -67,6 +73,69 @@
   let localBranches = $derived(branches.filter((b) => !b.is_remote));
   let remoteBranches = $derived(branches.filter((b) => b.is_remote));
 </script>
+
+<!-- PINNED FAVORITE BRANCHES -->
+{#if repo && repo.pinnedBranches.length > 0}
+  <div class="mb-2 pb-2 border-b border-zinc-200/80 dark:border-zinc-800/60">
+    <div class="w-full flex items-center justify-between px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+      <div class="flex items-center gap-1.5">
+        <Star class="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+        <span>{localeState.t('sidebar.pinnedBranches')}</span>
+        <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({repo.pinnedBranches.length})</span>
+      </div>
+    </div>
+    <div class="mt-1 space-y-0.5 pl-1">
+      {#each repo.pinnedBranches as shorthand (shorthand)}
+        {@const branch = branches.find((b) => b.shorthand === shorthand) || { shorthand, name: shorthand, is_remote: false, is_head: repo.repoSummary?.current_branch === shorthand, target_commit_id: '', ahead_count: 0, behind_count: 0 }}
+        {@const isHidden = repo.isBranchHidden(shorthand)}
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+          oncontextmenu={(e) => {
+            e.preventDefault();
+            onOpenContextMenu(branch, Math.min(e.clientX, window.innerWidth - 220), Math.min(e.clientY, window.innerHeight - 260));
+          }}
+          class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all group {branch.is_head ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-950 dark:text-amber-200 font-semibold border border-amber-300/80 dark:border-amber-700/60 shadow-2xs' : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900'} {isHidden ? 'opacity-50' : ''}"
+        >
+          <button
+            onclick={() => onSelectBranch?.(branch)}
+            class="flex items-center gap-2 truncate pr-1 flex-1 text-left cursor-pointer"
+            title={branch.shorthand}
+          >
+            {#if branch.is_head}
+              <Check class="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            {:else}
+              <Star class="w-3 h-3 fill-amber-400 text-amber-500 shrink-0" />
+            {/if}
+            <span class="truncate font-mono text-[11px] {isHidden ? 'line-through text-zinc-400 dark:text-zinc-500' : ''}">{branch.shorthand}</span>
+          </button>
+
+          <div class="flex items-center gap-1 shrink-0">
+            <!-- Toggle Visibility -->
+            <button
+              onclick={(e) => { e.stopPropagation(); repo?.toggleBranchVisibility(shorthand); }}
+              class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors cursor-pointer"
+              title={isHidden ? localeState.t('sidebar.showBranchTooltip') : localeState.t('sidebar.hideBranchTooltip')}
+            >
+              {#if isHidden}
+                <EyeOff class="w-3 h-3 text-rose-500" />
+              {:else}
+                <Eye class="w-3 h-3 text-zinc-400 hover:text-cyan-500" />
+              {/if}
+            </button>
+            <!-- Unpin button -->
+            <button
+              onclick={(e) => { e.stopPropagation(); repo?.togglePinBranch(shorthand); }}
+              class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-amber-500 transition-colors cursor-pointer"
+              title={localeState.t('sidebar.unpinBranchTooltip')}
+            >
+              <Star class="w-3 h-3 fill-amber-400 text-amber-500" />
+            </button>
+          </div>
+        </div>
+      {/each}
+    </div>
+  </div>
+{/if}
 
 <!-- LOCAL BRANCHES -->
 <div>
@@ -176,7 +245,7 @@
               {:else}
                 <span class="w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-600 group-hover:bg-zinc-600 dark:group-hover:bg-zinc-400 shrink-0"></span>
               {/if}
-              <span class="truncate font-mono text-[11px]">{branch.shorthand}</span>
+              <span class="truncate font-mono text-[11px] {repo?.isBranchHidden(branch.shorthand) ? 'line-through text-zinc-400 dark:text-zinc-500' : ''}">{branch.shorthand}</span>
             </button>
           {/if}
 
@@ -239,6 +308,30 @@
                   <RefreshCw class="w-3 h-3" />
                 </button>
               {/if}
+            {/if}
+
+            <!-- Star & Eye Quick Toggles -->
+            {#if repo}
+              {@const isPinned = repo.isBranchPinned(branch.shorthand)}
+              {@const isHidden = repo.isBranchHidden(branch.shorthand)}
+              <button
+                onclick={(e) => { e.stopPropagation(); repo?.togglePinBranch(branch.shorthand); }}
+                class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all cursor-pointer {isPinned ? 'text-amber-500' : 'opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-amber-500'}"
+                title={isPinned ? localeState.t('sidebar.unpinBranchTooltip') : localeState.t('sidebar.pinBranchTooltip')}
+              >
+                <Star class="w-3 h-3 {isPinned ? 'fill-amber-400' : ''}" />
+              </button>
+              <button
+                onclick={(e) => { e.stopPropagation(); repo?.toggleBranchVisibility(branch.shorthand); }}
+                class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all cursor-pointer {isHidden ? 'text-rose-500' : 'opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-cyan-500'}"
+                title={isHidden ? localeState.t('sidebar.showBranchTooltip') : localeState.t('sidebar.hideBranchTooltip')}
+              >
+                {#if isHidden}
+                  <EyeOff class="w-3 h-3" />
+                {:else}
+                  <Eye class="w-3 h-3" />
+                {/if}
+              </button>
             {/if}
 
             <!-- Branch Actions Menu Button (3-dots) -->
@@ -318,28 +411,66 @@
   {#if showRemoteBranches}
     <div class="mt-1 space-y-0.5 pl-1">
       {#each remoteBranches as branch (branch.name)}
-        <div class="w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-900/60 hover:text-zinc-950 dark:hover:text-zinc-200 transition-colors group">
-          <div class="flex items-center gap-2 truncate flex-1">
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+          oncontextmenu={(e) => {
+            e.preventDefault();
+            onOpenContextMenu(branch, Math.min(e.clientX, window.innerWidth - 220), Math.min(e.clientY, window.innerHeight - 260));
+          }}
+          class="w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-900/60 hover:text-zinc-950 dark:hover:text-zinc-200 transition-colors group {repo?.isBranchHidden(branch.shorthand) ? 'opacity-50' : ''}"
+        >
+          <button
+            onclick={() => onSelectBranch?.(branch)}
+            class="flex items-center gap-2 truncate flex-1 text-left cursor-pointer"
+            title={branch.shorthand}
+          >
             <span class="w-1.5 h-1.5 rounded-full bg-purple-500/60 shrink-0"></span>
-            <span class="truncate font-mono text-[11px]">{branch.shorthand}</span>
-          </div>
-          {#if onDeleteBranch}
-            {#if isProtectedBranch(branch)}
-              <div
-                class="opacity-0 group-hover:opacity-100 p-0.5 text-purple-600/70 dark:text-purple-400/60 shrink-0"
-                title={localeState.t('sidebar.protectedUpstreamBranchTitle')}
+            <span class="truncate font-mono text-[11px] {repo?.isBranchHidden(branch.shorthand) ? 'line-through text-zinc-400 dark:text-zinc-500' : ''}">{branch.shorthand}</span>
+          </button>
+
+          <div class="flex items-center gap-1 shrink-0">
+            <!-- Star & Eye Quick Toggles -->
+            {#if repo}
+              {@const isPinned = repo.isBranchPinned(branch.shorthand)}
+              {@const isHidden = repo.isBranchHidden(branch.shorthand)}
+              <button
+                onclick={(e) => { e.stopPropagation(); repo?.togglePinBranch(branch.shorthand); }}
+                class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all cursor-pointer {isPinned ? 'text-amber-500' : 'opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-amber-500'}"
+                title={isPinned ? localeState.t('sidebar.unpinBranchTooltip') : localeState.t('sidebar.pinBranchTooltip')}
               >
-                <Lock class="w-3 h-3" />
-              </div>
+                <Star class="w-3 h-3 {isPinned ? 'fill-amber-400' : ''}" />
+              </button>
+              <button
+                onclick={(e) => { e.stopPropagation(); repo?.toggleBranchVisibility(branch.shorthand); }}
+                class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all cursor-pointer {isHidden ? 'text-rose-500' : 'opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-cyan-500'}"
+                title={isHidden ? localeState.t('sidebar.showBranchTooltip') : localeState.t('sidebar.hideBranchTooltip')}
+              >
+                {#if isHidden}
+                  <EyeOff class="w-3 h-3" />
+                {:else}
+                  <Eye class="w-3 h-3" />
+                {/if}
+              </button>
             {/if}
-            <button
-              onclick={(e) => { e.stopPropagation(); onDeleteBranch(branch); }}
-              class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-950/60 text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 transition-all cursor-pointer shrink-0"
-              title={localeState.t('sidebar.deleteRemoteRefTooltip', { branch: branch.shorthand, protected: isProtectedBranch(branch) ? localeState.t('sidebar.needsTypedConfirmation') : '' })}
-            >
-              <Trash2 class="w-3 h-3" />
-            </button>
-          {/if}
+
+            {#if onDeleteBranch}
+              {#if isProtectedBranch(branch)}
+                <div
+                  class="opacity-0 group-hover:opacity-100 p-0.5 text-purple-600/70 dark:text-purple-400/60 shrink-0"
+                  title={localeState.t('sidebar.protectedUpstreamBranchTitle')}
+                >
+                  <Lock class="w-3 h-3" />
+                </div>
+              {/if}
+              <button
+                onclick={(e) => { e.stopPropagation(); onDeleteBranch(branch); }}
+                class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-950/60 text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 transition-all cursor-pointer shrink-0"
+                title={localeState.t('sidebar.deleteRemoteRefTooltip', { branch: branch.shorthand, protected: isProtectedBranch(branch) ? localeState.t('sidebar.needsTypedConfirmation') : '' })}
+              >
+                <Trash2 class="w-3 h-3" />
+              </button>
+            {/if}
+          </div>
         </div>
       {/each}
       {#if remoteBranches.length === 0}

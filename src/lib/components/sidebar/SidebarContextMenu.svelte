@@ -11,6 +11,9 @@
     Copy,
     Edit3,
     Plus,
+    Star,
+    Eye,
+    EyeOff,
   } from 'lucide-svelte';
   import type { BranchInfo, RepoSummary } from '../../types';
   import { localeState } from '../../state/localeState.svelte';
@@ -18,6 +21,8 @@
   interface Props {
     activeBranchMenu: { branch: BranchInfo; x: number; y: number } | null;
     repoSummary: RepoSummary | null;
+    isPinned?: boolean;
+    isHidden?: boolean;
     onClose: () => void;
     onSelectBranch?: (branch: BranchInfo) => void;
     onRebaseBranch?: (branch: BranchInfo) => void;
@@ -28,12 +33,17 @@
     onCreateBranchFrom?: (branch: BranchInfo) => void;
     onStartRename: (branch: BranchInfo) => void;
     onDeleteBranch?: (branch: BranchInfo) => void;
+    onTogglePin?: (branch: BranchInfo) => void;
+    onToggleVisibility?: (branch: BranchInfo) => void;
+    onSoloBranch?: (branch: BranchInfo) => void;
     isProtectedBranch: (branch: BranchInfo) => boolean;
   }
 
   let {
     activeBranchMenu,
     repoSummary,
+    isPinned = false,
+    isHidden = false,
     onClose,
     onSelectBranch,
     onRebaseBranch,
@@ -44,6 +54,9 @@
     onCreateBranchFrom,
     onStartRename,
     onDeleteBranch,
+    onTogglePin,
+    onToggleVisibility,
+    onSoloBranch,
     isProtectedBranch,
   }: Props = $props();
 </script>
@@ -70,6 +83,57 @@
           {activeBranchMenu.branch.upstream_name ? localeState.t('sidebar.tracks', { upstream: activeBranchMenu.branch.upstream_name }) : localeState.t('sidebar.localOnly')}
         </div>
       </div>
+
+      <!-- Pin / Unpin Branch -->
+      {#if onTogglePin}
+        <button
+          onclick={() => {
+            const b = activeBranchMenu?.branch;
+            onClose();
+            if (b) onTogglePin(b);
+          }}
+          class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-amber-50 dark:hover:bg-amber-950/40 text-zinc-700 dark:text-zinc-300 hover:text-amber-800 dark:hover:text-amber-300 transition-colors cursor-pointer text-left"
+        >
+          <Star class="w-3.5 h-3.5 {isPinned ? 'fill-amber-400 text-amber-500' : 'text-zinc-400 dark:text-zinc-500'}" />
+          <span>{isPinned ? localeState.t('sidebar.unpinBranch') : localeState.t('sidebar.pinBranch')}</span>
+        </button>
+      {/if}
+
+      <!-- Solo / Visibility Controls -->
+      {#if onToggleVisibility}
+        <button
+          onclick={() => {
+            const b = activeBranchMenu?.branch;
+            onClose();
+            if (b) onToggleVisibility(b);
+          }}
+          class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer text-left"
+        >
+          {#if isHidden}
+            <Eye class="w-3.5 h-3.5 text-cyan-500 dark:text-cyan-400" />
+            <span>{localeState.t('sidebar.showBranch')}</span>
+          {:else}
+            <EyeOff class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+            <span>{localeState.t('sidebar.hideBranch')}</span>
+          {/if}
+        </button>
+      {/if}
+
+      {#if onSoloBranch && !isHidden}
+        <button
+          onclick={() => {
+            const b = activeBranchMenu?.branch;
+            onClose();
+            if (b) onSoloBranch(b);
+          }}
+          class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-cyan-50 dark:hover:bg-cyan-950/40 text-cyan-800 dark:text-cyan-300 hover:text-cyan-950 dark:hover:text-cyan-100 transition-colors cursor-pointer text-left font-medium"
+        >
+          <Eye class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+          <span>{localeState.t('sidebar.soloBranch')}</span>
+        </button>
+      {/if}
+
+      <div class="h-px bg-zinc-200 dark:bg-zinc-800 my-1"></div>
 
       {#if !activeBranchMenu.branch.is_head}
         {#if onSelectBranch}

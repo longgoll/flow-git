@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — FlowGit</title>
+  <meta name="description" content="FlowGit is a local-first, zero-telemetry visual Git client. Read our full privacy policy.">
+  <link rel="icon" type="image/svg+xml" href="app-icon.svg">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .privacy-container {
+      max-width: 860px;
+      margin: 120px auto 80px;
+      padding: 0 24px;
+      line-height: 1.7;
+    }
+    .privacy-card {
+      background: rgba(18, 22, 34, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 48px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    .privacy-header {
+      margin-bottom: 36px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 24px;
+    }
+    .privacy-header h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .privacy-meta {
+      font-size: 0.9rem;
+      color: var(--text-muted, #94a3b8);
+    }
+    .privacy-section {
+      margin-bottom: 32px;
+    }
+    .privacy-section h2 {
+      font-size: 1.35rem;
+      color: #f8fafc;
+      margin-bottom: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .privacy-section h3 {
+      font-size: 1.05rem;
+      color: #cbd5e1;
+      margin: 16px 0 8px;
+      font-weight: 600;
+    }
+    .privacy-section p, .privacy-section li {
+      color: #94a3b8;
+      font-size: 0.98rem;
+    }
+    .privacy-section ul {
+      margin: 8px 0 16px 24px;
+      list-style-type: disc;
+    }
+    .privacy-section li {
+      margin-bottom: 6px;
+    }
+    .highlight-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      margin-bottom: 12px;
+    }
+    .privacy-links a {
+      color: #818cf8;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      transition: color 0.2s;
+    }
+    .privacy-links a:hover {
+      color: #a5b4fc;
+    }
+    .back-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+      transition: color 0.2s;
+    }
+    .back-home:hover {
+      color: #f8fafc;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="glass-nav">
+    <div class="container nav-content">
+      <a href="index.html" class="brand">
+        <img src="app-icon.svg" alt="FlowGit Logo">
+        <span>FlowGit</span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="https://github.com/longgoll/flow-git" target="_blank">GitHub</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="index.html#download" class="btn btn-primary">
+          <span>Download</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="privacy-container">
+    <a href="index.html" class="back-home">
+      &larr; Back to FlowGit Home
+    </a>
+
+    <article class="privacy-card">
+      <div class="privacy-header">
+        <span class="highlight-badge">Zero Telemetry & Local-First</span>
+        <h1>Privacy Policy</h1>
+        <p class="privacy-meta">Last Updated: September 7, 2026 • FlowGit Application</p>
+      </div>
+
+      <div class="privacy-section privacy-links">
+        <h2>1. Zero Telemetry & Local-First Architecture</h2>
+        <p>FlowGit is designed with a strict <strong>local-first, privacy-by-default</strong> philosophy:</p>
+        <ul>
+          <li><strong>No Personal Data Collection:</strong> We do not collect, monitor, track, store, or sell any personal information, usage metrics, device fingerprints, or behavioral analytics.</li>
+          <li><strong>No Background Surveillance:</strong> The application does not monitor your keystrokes, personal files, or general system activities.</li>
+          <li><strong>Local Git Operations:</strong> All repository management tasks (commits, branches, stashes, diff rendering, safe discard snapshots) run 100% locally on your computer via native Rust and <code>libgit2</code> bindings. Your source code never touches our servers.</li>
+        </ul>
+      </div>
+
+      <div class="privacy-section privacy-links">
+        <h2>2. Data Handled by FlowGit</h2>
+        <p>FlowGit only interacts with files and credentials that you explicitly direct it to:</p>
+        
+        <h3>A. Local Repositories</h3>
+        <p>FlowGit reads and modifies only the Git repositories you explicitly select. Staging snapshots (Safe Discard 48h) and undo history are kept in a local SQLite database on your device and are never sent anywhere.</p>
+
+        <h3>B. Authentication Credentials</h3>
+        <p>Credentials (such as GitHub Personal Access Tokens or SSH keys) are stored locally in your operating system's keychain or secure local app storage. FlowGit never uploads or transmits your credentials to external servers.</p>
+
+        <h3>C. Optional AI & External Features</h3>
+        <p>If you choose to enable local AI assistance, requests communicate directly with your local Ollama instance or your custom endpoint. We do not host intermediate proxy servers for your AI queries.</p>
+      </div>
+
+      <div class="privacy-section privacy-links">
+        <h2>3. Network Communications</h2>
+        <p>The application only initiates network traffic for:</p>
+        <ul>
+          <li><strong>User-Initiated Git Remotes:</strong> Explicit push, pull, fetch, and clone operations targeting your own remote repositories.</li>
+          <li><strong>App Updates:</strong> FlowGit checks the official GitHub Release API for published releases and verification keys.</li>
+        </ul>
+      </div>
+
+      <div class="privacy-section privacy-links">
+        <h2>4. Open Source Transparency</h2>
+        <p>FlowGit is fully open-source under the MIT License. The entire codebase is publicly auditable at <a href="https://github.com/longgoll/flow-git" target="_blank">github.com/longgoll/flow-git</a>.</p>
+      </div>
+
+      <div class="privacy-section privacy-links">
+        <h2>5. Contact & Inquiries</h2>
+        <p>If you have any questions or feedback regarding this policy, you can open an issue or start a discussion on our official repository:</p>
+        <p>
+          GitHub: <a href="https://github.com/longgoll/flow-git/issues" target="_blank">https://github.com/longgoll/flow-git/issues</a>
+        </p>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-content">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="app-icon.svg" alt="FlowGit" style="width: 24px; height: 24px; border-radius: 4px;">
+        <span>© 2026 FlowGit. Open source under MIT License.</span>
+      </div>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="https://github.com/longgoll/flow-git" target="_blank">GitHub</a>
+        <a href="privacy.html">Privacy Policy</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

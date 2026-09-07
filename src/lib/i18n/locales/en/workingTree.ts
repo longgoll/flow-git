@@ -35,6 +35,41 @@ export const workingTree: typeof viWorkingTree = {
   generateStandardGitignore: "Generate .gitignore",
   generateGitignoreTooltip: "Auto-detect project stack and create standard .gitignore",
 
+  openGitignoreManager: "Manage .gitignore",
+  gitignoreManagerTooltip: "Open .gitignore rules manager and editor",
+
+  // Context Menu for files
+  contextMenu: {
+    stage: "Stage file",
+    unstage: "Unstage file",
+    discard: "Discard changes (48h Safe Trash)",
+    addToGitignore: "Add to .gitignore",
+    ignoreFile: "Ignore file: {name}",
+    ignoreExt: "Ignore all *.{ext} files",
+    ignoreDir: "Ignore folder: {dir}/",
+    revealInExplorer: "Reveal in File Manager",
+    openInEditor: "Open in External Editor",
+    copyRelativePath: "Copy Relative Path",
+    copyFullPath: "Copy Full Path",
+    viewFileHistory: "View File History",
+    copiedPathToast: "File path copied to clipboard",
+  },
+
+  // Gitignore Manager Modal
+  gitignoreModal: {
+    title: ".gitignore Rules Manager",
+    subtitle: "Configure files and patterns ignored by Git in this repository",
+    presetsTitle: "Quick preset templates:",
+    btnSave: "Save .gitignore",
+    btnSaving: "Saving...",
+    btnGenerateStandard: "Auto-detect & Add Standard Rules",
+    btnCancel: "Close",
+    emptyHint: "No .gitignore file found. Choose a template below or write custom rules.",
+    saveSuccess: "Successfully saved .gitignore file",
+    saveError: "Failed to save .gitignore file",
+    templateAppended: "Appended {template} rules to .gitignore",
+  },
+
   // Commit Box
   commitBox: {
     safetyShieldTitle: "Commit Safety Shield",

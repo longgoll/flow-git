@@ -33,6 +33,41 @@ export const workingTree = {
   generateStandardGitignore: "Tạo .gitignore chuẩn",
   generateGitignoreTooltip: "Tự động phát hiện công nghệ và tạo file .gitignore chuẩn",
 
+  openGitignoreManager: "Quản lý .gitignore",
+  gitignoreManagerTooltip: "Mở trình quản lý và chỉnh sửa file .gitignore",
+
+  // Context Menu for files
+  contextMenu: {
+    stage: "Stage tệp",
+    unstage: "Unstage tệp",
+    discard: "Hủy thay đổi (Lưu thùng rác 48h)",
+    addToGitignore: "Thêm vào .gitignore",
+    ignoreFile: "Bỏ qua tệp: {name}",
+    ignoreExt: "Bỏ qua tất cả *.{ext}",
+    ignoreDir: "Bỏ qua thư mục: {dir}/",
+    revealInExplorer: "Mở vị trí tệp (Explorer)",
+    openInEditor: "Mở bằng trình soạn thảo ngoài",
+    copyRelativePath: "Sao chép đường dẫn tương đối",
+    copyFullPath: "Sao chép đường dẫn đầy đủ",
+    viewFileHistory: "Xem lịch sử tệp (File History)",
+    copiedPathToast: "Đã sao chép đường dẫn vào clipboard",
+  },
+
+  // Gitignore Manager Modal
+  gitignoreModal: {
+    title: "Trình Quản Lý Quy Tắc .gitignore",
+    subtitle: "Cấu hình các tệp và thư mục được Git bỏ qua trong repository này",
+    presetsTitle: "Thêm nhanh mẫu theo công nghệ:",
+    btnSave: "Lưu .gitignore",
+    btnSaving: "Đang lưu...",
+    btnGenerateStandard: "Tự động phân tích & sinh bộ quy tắc chuẩn",
+    btnCancel: "Đóng",
+    emptyHint: "Chưa có file .gitignore. Bạn có thể chọn mẫu bên dưới hoặc tự gõ quy tắc.",
+    saveSuccess: "Đã cập nhật file .gitignore thành công",
+    saveError: "Lỗi khi lưu file .gitignore",
+    templateAppended: "Đã thêm quy tắc mẫu {template} vào .gitignore",
+  },
+
   // Commit Box
   commitBox: {
     safetyShieldTitle: "Commit Safety Shield",

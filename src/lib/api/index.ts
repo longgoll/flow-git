@@ -15,3 +15,4 @@ export * from './githubApi';
 export * from './remote';
 export * from './identity';
 export * from './edgeCases';
+export * from './ignore';

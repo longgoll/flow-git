@@ -287,7 +287,7 @@
       </label>
 
       <label
-        class="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-amber-300 cursor-pointer select-none"
+        class="flex items-center gap-1.5 text-xs transition-colors cursor-pointer select-none px-1.5 py-0.5 rounded {noVerify ? 'text-amber-700 dark:text-amber-300 font-semibold bg-amber-100/70 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-700/80 shadow-2xs' : 'text-zinc-500 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-amber-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
         title={localeState.t('workingTree.commitBox.noVerifyTooltip')}
       >
         <input
@@ -295,7 +295,7 @@
           bind:checked={noVerify}
           class="w-3.5 h-3.5 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-amber-500 focus:ring-0 focus:outline-none cursor-pointer"
         />
-        <span class="text-[11px] font-mono text-zinc-500 dark:text-zinc-400">--no-verify</span>
+        <span class="text-[11px] font-mono">--no-verify</span>
       </label>
     </div>
 

@@ -2,6 +2,9 @@
   import type { FileDiffDetail, FileStatusItem, WorkingTreeStatus } from '../types';
   import DiffViewer from './DiffViewer.svelte';
   import CommitBox from './CommitBox.svelte';
+  import WorkingTreeContextMenu from './WorkingTreeContextMenu.svelte';
+  import GitignoreManagerModal from './GitignoreManagerModal.svelte';
+  import FileHistoryModal from './FileHistoryModal.svelte';
   import {
     Plus,
     Minus,
@@ -77,6 +80,38 @@
   let showStagedSection = $state(true);
   let showUnstagedSection = $state(true);
   let showUntrackedSection = $state(true);
+
+  // Context Menu & Gitignore Manager state
+  let contextMenuData = $state<{
+    x: number;
+    y: number;
+    filePath: string;
+    isStaged: boolean;
+    isUntracked: boolean;
+    isConflicted: boolean;
+  } | null>(null);
+
+  let showGitignoreModal = $state<boolean>(false);
+  let fileHistoryTarget = $state<string | null>(null);
+
+  function handleContextMenu(
+    e: MouseEvent,
+    filePath: string,
+    isStaged: boolean,
+    isUntracked: boolean,
+    isConflicted: boolean = false
+  ) {
+    e.preventDefault();
+    e.stopPropagation();
+    contextMenuData = {
+      x: e.clientX,
+      y: e.clientY,
+      filePath,
+      isStaged,
+      isUntracked,
+      isConflicted,
+    };
+  }
 
   // Pagination cho Untracked files để giữ 60 FPS
   let untrackedLimit = $state(100);
@@ -177,19 +212,30 @@
         <span class="font-bold text-xs text-zinc-900 dark:text-zinc-100">{localeState.t('workingTree.title')}</span>
       </div>
 
-      <button
-        onclick={onOpenTrash}
-        class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-[11px] font-medium transition-colors cursor-pointer"
-        title={localeState.t('workingTree.openSafeDiscardTrash')}
-      >
-        <ShieldCheck class="w-3 h-3" />
-        <span>{localeState.t('workingTree.safeDiscard')}</span>
-        {#if trashCount > 0}
-          <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-emerald-200 dark:bg-emerald-800/80 text-emerald-900 dark:text-emerald-200 shadow-2xs">
-            {trashCount}
-          </span>
-        {/if}
-      </button>
+      <div class="flex items-center gap-1.5">
+        <button
+          onclick={() => (showGitignoreModal = true)}
+          class="flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700/80 border border-zinc-300/70 dark:border-zinc-700/80 text-zinc-700 dark:text-zinc-300 text-[11px] font-medium transition-colors cursor-pointer"
+          title={localeState.t('workingTree.gitignoreManagerTooltip')}
+        >
+          <FileCode class="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
+          <span class="hidden sm:inline">{localeState.t('workingTree.openGitignoreManager')}</span>
+        </button>
+
+        <button
+          onclick={onOpenTrash}
+          class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-[11px] font-medium transition-colors cursor-pointer"
+          title={localeState.t('workingTree.openSafeDiscardTrash')}
+        >
+          <ShieldCheck class="w-3 h-3" />
+          <span>{localeState.t('workingTree.safeDiscard')}</span>
+          {#if trashCount > 0}
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-emerald-200 dark:bg-emerald-800/80 text-emerald-900 dark:text-emerald-200 shadow-2xs">
+              {trashCount}
+            </span>
+          {/if}
+        </button>
+      </div>
     </div>
 
     <!-- Scrollable Files List -->
@@ -275,6 +321,7 @@
                 <div
                   class="group w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs transition-colors cursor-pointer {selectedFilePath === item.path ? 'bg-rose-100 dark:bg-rose-900/50 border border-rose-300 dark:border-rose-700 text-rose-900 dark:text-rose-100 shadow-xs font-semibold' : 'hover:bg-rose-100/60 dark:hover:bg-rose-950/60 text-zinc-800 dark:text-zinc-200'}"
                   onclick={() => onSelectFile(item, false)}
+                  oncontextmenu={(e) => handleContextMenu(e, item.path, false, false, true)}
                   role="button"
                   tabindex="0"
                   onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelectFile(item, false); }}
@@ -338,6 +385,7 @@
               <div
                 class="group w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs transition-colors cursor-pointer {selectedFilePath === item.path && selectedFileIsStaged ? 'bg-cyan-100 dark:bg-cyan-950/40 border border-cyan-300 dark:border-cyan-800/50 text-cyan-900 dark:text-cyan-200 shadow-xs font-medium' : 'hover:bg-zinc-200/60 dark:hover:bg-zinc-900/80 text-zinc-700 dark:text-zinc-300'}"
                 onclick={() => onSelectFile(item, true)}
+                oncontextmenu={(e) => handleContextMenu(e, item.path, true, false, false)}
                 role="button"
                 tabindex="0"
                 onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelectFile(item, true); }}
@@ -412,6 +460,7 @@
               <div
                 class="group w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs transition-colors cursor-pointer {selectedFilePath === item.path && !selectedFileIsStaged ? 'bg-cyan-100 dark:bg-cyan-950/40 border border-cyan-300 dark:border-cyan-800/50 text-cyan-900 dark:text-cyan-200 shadow-xs font-medium' : 'hover:bg-zinc-200/60 dark:hover:bg-zinc-900/80 text-zinc-700 dark:text-zinc-300'}"
                 onclick={() => onSelectFile(item, false)}
+                oncontextmenu={(e) => handleContextMenu(e, item.path, false, false, false)}
                 role="button"
                 tabindex="0"
                 onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelectFile(item, false); }}
@@ -474,6 +523,7 @@
                 <div
                   class="group w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs transition-colors cursor-pointer {selectedFilePath === item.path && !selectedFileIsStaged ? 'bg-cyan-100 dark:bg-cyan-950/40 border border-cyan-300 dark:border-cyan-800/50 text-cyan-900 dark:text-cyan-200 shadow-xs font-medium' : 'hover:bg-zinc-200/60 dark:hover:bg-zinc-900/80 text-zinc-700 dark:text-zinc-300'}"
                   onclick={() => onSelectFile(item, false)}
+                  oncontextmenu={(e) => handleContextMenu(e, item.path, false, true, false)}
                   role="button"
                   tabindex="0"
                   onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelectFile(item, false); }}
@@ -583,3 +633,53 @@
     />
   </div>
 </div>
+
+<!-- Working Tree File Context Menu -->
+{#if contextMenuData}
+  <WorkingTreeContextMenu
+    x={contextMenuData.x}
+    y={contextMenuData.y}
+    filePath={contextMenuData.filePath}
+    isStaged={contextMenuData.isStaged}
+    isUntracked={contextMenuData.isUntracked}
+    isConflicted={contextMenuData.isConflicted}
+    {repoPath}
+    onClose={() => (contextMenuData = null)}
+    onStage={async (p) => {
+      await onStageFile(p);
+    }}
+    onUnstage={async (p) => {
+      await onUnstageFile(p);
+    }}
+    onDiscard={async (p) => {
+      await onDiscardFile(p);
+    }}
+    onAddToGitignore={onAddToGitignore}
+    onOpenFileHistory={(p) => {
+      fileHistoryTarget = p;
+    }}
+  />
+{/if}
+
+<!-- Gitignore Manager Modal -->
+{#if showGitignoreModal}
+  <GitignoreManagerModal
+    {repoPath}
+    onClose={() => (showGitignoreModal = false)}
+    onUpdated={async () => {
+      if (onGenerateGitignore) {
+        await onGenerateGitignore();
+      }
+    }}
+  />
+{/if}
+
+<!-- File History Modal -->
+{#if fileHistoryTarget}
+  <FileHistoryModal
+    isOpen={true}
+    {repoPath}
+    filePath={fileHistoryTarget}
+    onClose={() => (fileHistoryTarget = null)}
+  />
+{/if}

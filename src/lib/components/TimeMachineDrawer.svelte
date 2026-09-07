@@ -17,6 +17,7 @@
     onUndo: () => void;
     onRedo: () => void;
     onTimeTravel: (actionId: number) => void;
+    onOpenLostAndFound?: () => void;
     onClose: () => void;
   }
 
@@ -27,6 +28,7 @@
     onUndo,
     onRedo,
     onTimeTravel,
+    onOpenLostAndFound,
     onClose,
   }: Props = $props();
 
@@ -144,6 +146,22 @@
           {/each}
         {/if}
       </div>
+
+      <!-- Lost & Found Footer Link -->
+      {#if onOpenLostAndFound}
+        <div class="p-3 border-t border-zinc-200 dark:border-zinc-800 bg-amber-50/50 dark:bg-amber-950/20 flex items-center justify-between gap-2 text-xs">
+          <div class="text-[11px] text-zinc-600 dark:text-zinc-400">
+            {localeState.t('safety.timeMachine.openLostAndFoundPrompt')}
+          </div>
+          <button
+            type="button"
+            onclick={onOpenLostAndFound}
+            class="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 font-semibold text-[11px] transition-colors cursor-pointer shrink-0"
+          >
+            {localeState.t('safety.timeMachine.openLostAndFoundBtn')}
+          </button>
+        </div>
+      {/if}
     </div>
   </div>
 {/if}

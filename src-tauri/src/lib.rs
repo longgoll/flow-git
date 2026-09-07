@@ -155,6 +155,9 @@ pub fn run() {
             undo_action,
             redo_action,
             time_travel_to,
+            scan_staged_secrets,
+            get_reflog_entries,
+            restore_lost_commit,
             // Conflicts
             get_conflicted_files,
             get_conflict_details,

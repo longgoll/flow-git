@@ -281,6 +281,7 @@
   <WorkingTree
     status={wt.workingTreeStatus}
     currentBranch={repo.repoSummary?.current_branch || ''}
+    repoPath={repo.currentRepoPath}
     selectedFilePath={wt.selectedFilePath}
     selectedFileIsStaged={wt.selectedFileIsStaged}
     diffDetail={wt.fileDiffDetail}

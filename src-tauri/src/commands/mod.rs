@@ -42,9 +42,10 @@ pub use remote::{
 pub use action::{
     abort_current_operation, check_is_rebasing, continue_rebase_branch, create_commit,
     create_tag, delete_tag, execute_cherry_pick_commit, execute_interactive_rebase,
-    execute_merge_commit, execute_rebase_branch, get_repo_operation_state, list_actions,
-    prepare_interactive_rebase, redo_action, reset_to_commit, revert_commit,
-    simulate_drag_action, skip_rebase_step, squash_commits, time_travel_to, undo_action,
+    execute_merge_commit, execute_rebase_branch, get_reflog_entries, get_repo_operation_state,
+    list_actions, prepare_interactive_rebase, redo_action, reset_to_commit, restore_lost_commit,
+    revert_commit, scan_staged_secrets, simulate_drag_action, skip_rebase_step, squash_commits,
+    time_travel_to, undo_action,
 };
 
 pub use conflict::{

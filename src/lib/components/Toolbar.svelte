@@ -58,6 +58,7 @@
     onOpenPalette?: () => void;
     onOpenBisect?: () => void;
     onOpenTimeMachine?: () => void;
+    onOpenLostAndFound?: () => void;
     onOpenAI?: () => void;
     onOpenSubmodules?: () => void;
     onOpenLfs?: () => void;
@@ -113,6 +114,7 @@
     onOpenPalette,
     onOpenBisect,
     onOpenTimeMachine,
+    onOpenLostAndFound,
     onOpenAI,
     onOpenSubmodules,
     onOpenLfs,
@@ -260,6 +262,7 @@
       {onPush}
       {onOpenPalette}
       {onOpenTimeMachine}
+      {onOpenLostAndFound}
       {onOpenBisect}
       {onOpenWorktrees}
       {onOpenSubmodules}

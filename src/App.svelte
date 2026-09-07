@@ -440,6 +440,7 @@
     onOpenPalette={() => (modalState.showCommandPalette = true)}
     onOpenBisect={() => safety.openBisect(repo.currentRepoPath)}
     onOpenTimeMachine={() => safety.openTimeMachine(repo.currentRepoPath)}
+    onOpenLostAndFound={() => safety.openLostAndFound(repo.currentRepoPath)}
     onOpenAI={actions.openAI}
     onOpenSubmodules={() => (modalState.showSubmoduleModal = true)}
     onOpenLfs={() => (modalState.showLfsModal = true)}

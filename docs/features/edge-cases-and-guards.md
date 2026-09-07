@@ -90,6 +90,38 @@ FlowGit offers 1-click **"Shelve to Safe Discard"**: moves conflicting untracked
 
 ---
 
+## 🔑 6. Secret Shield (Pre-Commit Secret Scanner)
+
+Component: `src/lib/components/PreCommitWarningModal.svelte`  
+Backend: `src-tauri/src/git/safety.rs` (Command: `scan_staged_secrets`)
+
+### The Danger:
+Accidentally committing `.env`, AWS Access Keys (`AKIA...`), OpenAI tokens (`sk-...`), GitHub PATs (`ghp_...`), or private RSA/SSH keys to public repositories leads to instant credential leak and security compromise.
+
+### FlowGit Protective Shield:
+- Intercepts commit execution and deep-scans staged additions (`diff_tree_to_index`).
+- Detects high-risk dotfiles (`.env`, `.env.local`, `.pem`, `id_rsa`) and high-entropy API key patterns across multiple vendors (OpenAI, AWS, GitHub, Stripe, Slack, Google).
+- Displays a dedicated security modal with safely masked previews (e.g. `sk-proj-****...****8AB9`).
+- Offers 1-click remedies: **Unstage Immediately** or **Add file to `.gitignore`**.
+
+---
+
+## 🧭 7. Visual Reflog & Lost & Found (Orphaned Commit Rescue)
+
+Component: `src/lib/components/LostAndFoundModal.svelte`  
+Backend: `src-tauri/src/git/safety.rs` (Commands: `get_reflog_entries`, `restore_lost_commit`)
+
+### The Problem:
+Running `git reset --hard` to an older commit or an accidental rebase disconnects recent commits from all local branches. In standard Git GUIs, these commits vanish from the DAG and seem permanently lost.
+
+### FlowGit Rescue Solution:
+- Reads the native `HEAD` reflog history via `git2-rs`.
+- Evaluates topological reachability (`graph_descendant_of`) against all local branch tips to tag orphaned commits as `is_orphaned: true`.
+- Accessible directly from the **Reflog Time Machine** drawer, the **Tools Menu**, and the **Rescue Kit** Playbook.
+- Provides 1-click **Rescue to Branch** (creates a new branch anchored to the orphaned commit) or **Reset HEAD to here**.
+
+---
+
 <a name="-tiếng-việt"></a>
 # 🇻🇳 Tiếng Việt
 
@@ -167,3 +199,35 @@ Khi chuyển từ nhánh `main` sang nhánh `feature`, nếu ở `main` bạn c�
 
 ### Giải pháp:
 FlowGit cung cấp nút 1-chạm **"Shelve to Safe Discard"**: Tự động chuyển các file untracked bị xung đột vào thùng rác SQLite 48h, cho phép chuyển nhánh trơn tru, và bạn có thể khôi phục lại bất kỳ lúc nào sau đó.
+
+---
+
+## 🔑 6. LÁ CHẮN BÍ MẬT (SECRET SHIELD PRE-COMMIT SCANNER)
+
+Component: `src/lib/components/PreCommitWarningModal.svelte`  
+Backend: `src-tauri/src/git/safety.rs` (Command: `scan_staged_secrets`)
+
+### Nguy cơ:
+Vô tình commit nhầm file `.env`, mã khóa AWS (`AKIA...`), OpenAI API Key (`sk-...`), GitHub Personal Access Token (`ghp_...`), hoặc SSH Private Key (`id_rsa`, `.pem`) lên GitHub công khai dẫn đến lộ thông tin bảo mật và thiệt hại tài chính nghiêm trọng.
+
+### Cơ chế bảo vệ chủ động của FlowGit:
+- Ngay khi người dùng nhấn Commit, FlowGit quét sâu diff của toàn bộ các file staged (`diff_tree_to_index`).
+- Phát hiện các tệp nhạy cảm và các định dạng key đặc thù (AWS, OpenAI, GitHub, Stripe, Slack, Google, PEM Keys).
+- Hiển thị cửa sổ cảnh báo **Secret Shield** với chuỗi token đã được che mờ an toàn (ví dụ: `sk-proj-****...****8AB9`) để tránh bị quay màn hình hoặc nhìn trộm.
+- Cung cấp hành động 1-click: **Unstage ngay lập tức** hoặc **Thêm tệp vào `.gitignore`**.
+
+---
+
+## 🧭 7. VISUAL REFLOG & LOST & FOUND (CỨU HỘ COMMIT THẤT LẠC)
+
+Component: `src/lib/components/LostAndFoundModal.svelte`  
+Backend: `src-tauri/src/git/safety.rs` (Commands: `get_reflog_entries`, `restore_lost_commit`)
+
+### Vấn đề:
+Lỡ tay reset nhầm về commit cũ (`git reset --hard`) hoặc rebase làm mất các commit mới nhất. Trên các Git GUI thông thường, các commit này bị ngắt kết nối khỏi nhánh và biến mất hoàn toàn khỏi màn hình.
+
+### Giải pháp cứu hộ trong FlowGit:
+- Đọc trực tiếp nhật ký di chuyển `HEAD` từ `git reflog` nguyên bản qua `git2-rs`.
+- Sử dụng thuật toán đồ thị kiểm tra xem commit có thể tiếp cận từ bất kỳ nhánh local nào hay không (`graph_descendant_of`) để đánh dấu chính xác commit thất lạc (`is_orphaned: true`).
+- Người dùng có thể mở nhanh từ thanh công cụ, từ **Reflog Time Machine**, hoặc từ **Rescue Kit (F1)**.
+- Cho phép 1-click **Cứu hộ thành nhánh mới** trỏ vào commit mồ côi hoặc **Reset HEAD về commit đó**.

@@ -128,6 +128,9 @@ All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard
 | `undo_action` | `repo_path: String` | `bool` | **Time Machine Undo (`Ctrl + Z`)**: Reverts last action using reflog snapshot. |
 | `redo_action` | `repo_path: String` | `bool` | **Time Machine Redo (`Ctrl + Shift + Z`)**: Replays previously undone action. |
 | `time_travel_to` | `repo_path: String, action_id: i64` | `bool` | Time-travels repository state to arbitrary past action point. |
+| `scan_staged_secrets` | `path: String` | `Vec<SecretFinding>` | **Secret Shield**: Deep scans staged diffs and file paths for API keys, tokens, credentials, and sensitive dotfiles with auto-masking. |
+| `get_reflog_entries` | `path: String, limit: Option<usize>` | `Vec<ReflogEntry>` | **Visual Reflog / Lost & Found**: Traverses native Git Reflog entries and mathematically identifies orphaned commits unreachable from branch tips. |
+| `restore_lost_commit` | `path: String, commit_id: String, branch_name: String` | `bool` | Rescues an orphaned/lost commit by creating a new local branch pointing directly to it. |
 
 ---
 
@@ -310,6 +313,9 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `undo_action` | `repo_path: String` | `bool` | **Time Machine Undo (`Ctrl + Z`)**: Hoàn tác hành động gần nhất qua `git reflog`. |
 | `redo_action` | `repo_path: String` | `bool` | **Time Machine Redo (`Ctrl + Shift + Z`)**: Làm lại hành động vừa hoàn tác. |
 | `time_travel_to` | `repo_path: String, action_id: i64` | `bool` | Nhảy vọt dòng thời gian về đúng trạng thái tại một mốc thao tác bất kỳ trong quá khứ. |
+| `scan_staged_secrets` | `path: String` | `Vec<SecretFinding>` | **Secret Shield**: Quét sâu diff và tên tệp staged để phát hiện API key, token, private key và tệp nhạy cảm với cơ chế che giấu an toàn. |
+| `get_reflog_entries` | `path: String, limit: Option<usize>` | `Vec<ReflogEntry>` | **Visual Reflog & Lost/Found**: Duyệt Reflog nội bộ git2 và phát hiện các commit mồ côi (orphaned commits) bị tách rời khỏi nhánh. |
+| `restore_lost_commit` | `path: String, commit_id: String, branch_name: String` | `bool` | Cứu hộ commit thất lạc bằng cách tạo một nhánh Git mới trỏ trực tiếp vào commit đó. |
 
 ---
 

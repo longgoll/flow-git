@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { ActionRecord, ConflictSimulationResult, RebaseExecutionResult, RebaseTodoItem, RepoOperationState } from '../types';
+import type { ActionRecord, ConflictSimulationResult, RebaseExecutionResult, RebaseTodoItem, ReflogEntry, RepoOperationState, SecretFinding } from '../types';
 import { isTauri } from './client';
 
 export async function createCommit(
@@ -311,5 +311,37 @@ export async function executeInteractiveRebase(
     message: 'Mock interactive rebase succeeded.',
     conflicted_files: [],
   };
+}
+
+export async function scanStagedSecrets(path: string): Promise<SecretFinding[]> {
+  if (isTauri) {
+    return await invoke<SecretFinding[]>('scan_staged_secrets', { path });
+  }
+  return [];
+}
+
+export async function getReflogEntries(
+  path: string,
+  limit?: number
+): Promise<ReflogEntry[]> {
+  if (isTauri) {
+    return await invoke<ReflogEntry[]>('get_reflog_entries', { path, limit });
+  }
+  return [];
+}
+
+export async function restoreLostCommit(
+  path: string,
+  commitId: string,
+  branchName: string
+): Promise<string> {
+  if (isTauri) {
+    return await invoke<string>('restore_lost_commit', {
+      path,
+      commitId,
+      branchName,
+    });
+  }
+  return `refs/heads/${branchName}`;
 }
 

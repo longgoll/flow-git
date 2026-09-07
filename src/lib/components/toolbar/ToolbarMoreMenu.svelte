@@ -18,6 +18,7 @@
     Globe,
     Sparkles,
     RefreshCw,
+    Compass,
   } from 'lucide-svelte';
   import { themeState } from '../../state/themeState.svelte';
   import { localeState } from '../../state/localeState.svelte';
@@ -34,6 +35,7 @@
     onPush?: () => void;
     onOpenPalette?: () => void;
     onOpenTimeMachine?: () => void;
+    onOpenLostAndFound?: () => void;
     onOpenBisect?: () => void;
     onOpenWorktrees?: () => void;
     onOpenSubmodules?: () => void;
@@ -53,6 +55,7 @@
     onPush,
     onOpenPalette,
     onOpenTimeMachine,
+    onOpenLostAndFound,
     onOpenBisect,
     onOpenWorktrees,
     onOpenSubmodules,
@@ -241,6 +244,19 @@
             <span>{localeState.t('toolbar.reflogTimeMachine')}</span>
           </div>
           <span class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">Ctrl+Z</span>
+        </button>
+      {/if}
+
+      {#if onOpenLostAndFound}
+        <button
+          onclick={() => { onCloseToolsMenu(); onOpenLostAndFound(); }}
+          class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors cursor-pointer"
+        >
+          <div class="flex items-center gap-2">
+            <Compass class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+            <span>{localeState.t('safety.lostAndFound.menuItem')}</span>
+          </div>
+          <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Reflog</span>
         </button>
       {/if}
 

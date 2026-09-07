@@ -21,6 +21,7 @@
     PlusCircle,
     Upload,
     CloudDownload,
+    LifeBuoy,
   } from 'lucide-svelte';
 
   interface PaletteItem {
@@ -42,6 +43,7 @@
     onOpenWorktrees: () => void;
     onOpenBisect: () => void;
     onOpenTimeMachine: () => void;
+    onOpenLostAndFound?: () => void;
     onOpenAI: () => void;
     onSmartSync: () => void;
     onStageAll: () => void;
@@ -66,6 +68,7 @@
     onOpenWorktrees,
     onOpenBisect,
     onOpenTimeMachine,
+    onOpenLostAndFound,
     onOpenAI,
     onSmartSync,
     onStageAll,
@@ -136,6 +139,13 @@
         icon: History,
         shortcut: 'Ctrl + Z',
         action: () => { onOpenTimeMachine(); onClose(); },
+      },
+      {
+        id: 'open-lost-and-found',
+        title: 'Open Lost & Found (Git Reflog Explorer - Rescue Commits)',
+        category: 'View',
+        icon: LifeBuoy,
+        action: () => { onOpenLostAndFound?.(); onClose(); },
       },
       {
         id: 'open-trash',

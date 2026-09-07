@@ -609,3 +609,26 @@ export interface WorkspaceTab {
   searchQuery?: string;
   recentPushedBranch?: string | null;
 }
+
+export interface SecretFinding {
+  file_path: string;
+  rule_id: string;
+  rule_name: string;
+  description: string;
+  line_number?: number | null;
+  snippet_masked?: string | null;
+  severity: 'critical' | 'warning';
+}
+
+export interface ReflogEntry {
+  index: number;
+  commit_id: string;
+  short_id: string;
+  old_id: string;
+  action: string;
+  message: string;
+  committer: string;
+  timestamp: number;
+  is_orphaned: boolean;
+}
+

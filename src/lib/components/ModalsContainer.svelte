@@ -26,7 +26,9 @@
   import IdentitySwitcherModal from './IdentitySwitcherModal.svelte';
   import GitPlaybookModal from './GitPlaybookModal.svelte';
   import CreatePullRequestModal from './CreatePullRequestModal.svelte';
+  import LostAndFoundModal from './LostAndFoundModal.svelte';
   import UpdateModal from './UpdateModal.svelte';
+  import { resetToCommit } from '../api';
   import { toast } from '../state/toastState.svelte';
   import { localeState } from '../state/localeState.svelte';
   import type { ModalState } from '../state/modalState.svelte';
@@ -246,7 +248,38 @@
       loadRepository(repo.currentRepoPath)
     )
   }
+  onOpenLostAndFound={() => safety.openLostAndFound(repo.currentRepoPath)}
   onClose={() => (safety.showTimeMachineDrawer = false)}
+/>
+
+<!-- Visual Reflog & Lost and Found Modal -->
+<LostAndFoundModal
+  isOpen={safety.showLostAndFoundModal}
+  repoPath={repo.currentRepoPath}
+  reflogEntries={safety.reflogEntries}
+  isLoading={safety.isReflogLoading}
+  onRescueCommit={async (commitId, branchName) => {
+    await safety.rescueCommitToBranch(
+      repo.currentRepoPath,
+      commitId,
+      branchName,
+      () => loadRepository(repo.currentRepoPath)
+    );
+  }}
+  onResetToCommit={async (commitId) => {
+    try {
+      await resetToCommit(repo.currentRepoPath, commitId, 'mixed');
+      toast.info(
+        localeState.t('safety.lostAndFound.resetSuccess', { sha: commitId.slice(0, 7) })
+      );
+      await loadRepository(repo.currentRepoPath);
+      await refreshWorkingTreeAndDiff();
+      await safety.refreshReflog(repo.currentRepoPath);
+    } catch (err: any) {
+      toast.error('Reset failed', err?.message || String(err));
+    }
+  }}
+  onClose={() => (safety.showLostAndFoundModal = false)}
 />
 
 <!-- Command Palette (Ctrl + K) -->
@@ -260,6 +293,7 @@
   onOpenWorktrees={handleOpenWorktreesModal}
   onOpenBisect={() => safety.openBisect(repo.currentRepoPath)}
   onOpenTimeMachine={() => safety.openTimeMachine(repo.currentRepoPath)}
+  onOpenLostAndFound={() => safety.openLostAndFound(repo.currentRepoPath)}
   onOpenAI={handleOpenAI}
   onSmartSync={async () => {
     const res = await remote.runSmartSync(
@@ -532,6 +566,7 @@
   onClose={() => (modalState.showPlaybookModal = false)}
   onOpenTrash={() => safety.openTrash(repo.currentRepoPath)}
   onOpenTimeMachine={() => safety.openTimeMachine(repo.currentRepoPath)}
+  onOpenLostAndFound={() => safety.openLostAndFound(repo.currentRepoPath)}
   onRepoRefreshed={async () => {
     if (repo.currentRepoPath) {
       await loadRepository(repo.currentRepoPath);

@@ -23,6 +23,12 @@ use crate::git::{
         simulate_merge_or_rebase as git_simulate_merge, ConflictSimulationResult,
     },
     status::{get_repo_operation_state as git_get_repo_operation_state, RepoOperationState},
+    safety::{
+        get_reflog_entries as git_get_reflog_entries,
+        restore_lost_commit as git_restore_lost_commit,
+        scan_staged_secrets as git_scan_staged_secrets,
+        ReflogEntry, SecretFinding,
+    },
 };
 use crate::storage::action_log::ActionRecord;
 
@@ -563,3 +569,66 @@ pub async fn execute_interactive_rebase(
     .await
     .map_err(|e| AppError::Internal(e.to_string()))?
 }
+
+#[command]
+pub async fn scan_staged_secrets(path: String) -> AppResult<Vec<SecretFinding>> {
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        git_scan_staged_secrets(&repo)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn get_reflog_entries(
+    path: String,
+    limit: Option<usize>,
+) -> AppResult<Vec<ReflogEntry>> {
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        git_get_reflog_entries(&repo, limit)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn restore_lost_commit(
+    path: String,
+    commit_id: String,
+    branch_name: String,
+    state: State<'_, AppState>,
+) -> AppResult<String> {
+    let action_store = state.action_store.clone();
+    let path_clone = path.clone();
+    let cid_clone = commit_id.clone();
+    let bname_clone = branch_name.clone();
+
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        let prev_head = repo
+            .head()
+            .ok()
+            .and_then(|h| h.target())
+            .map(|t| t.to_string())
+            .unwrap_or_default();
+
+        let refname = git_restore_lost_commit(&repo, &commit_id, &branch_name)?;
+
+        let _ = action_store.record_action(
+            &path_clone,
+            "restore_lost_commit",
+            &format!("Restored lost commit {} to branch {}", &cid_clone[..7.min(cid_clone.len())], bname_clone),
+            &prev_head,
+            &cid_clone,
+            Some(&bname_clone),
+            "safe",
+        );
+
+        Ok(refname)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+

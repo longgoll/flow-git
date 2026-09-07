@@ -2,6 +2,8 @@ import type {
   ActionRecord,
   BisectStatus,
   ConflictFileDetail,
+  ReflogEntry,
+  SecretFinding,
   TrashSnapshotItem,
 } from '../types';
 import {
@@ -13,11 +15,14 @@ import {
   getBisectStatus,
   getConflictDetails,
   getConflictedFiles,
+  getReflogEntries,
   listActions,
   listTrashSnapshots,
   redoAction,
   resolveConflictFile,
+  restoreLostCommit,
   restoreTrashSnapshot,
+  scanStagedSecrets,
   startBisect,
   timeTravelTo,
   undoAction,
@@ -46,6 +51,16 @@ export class GitSafetyState {
   isConflictLoading = $state<boolean>(false);
   isRebasing = $state<boolean>(false);
 
+  // Secret Shield State
+  detectedSecrets = $state<SecretFinding[]>([]);
+  isScanningSecrets = $state<boolean>(false);
+  showSecretShieldModal = $state<boolean>(false);
+
+  // Lost & Found (Visual Reflog) State
+  showLostAndFoundModal = $state<boolean>(false);
+  reflogEntries = $state<ReflogEntry[]>([]);
+  isReflogLoading = $state<boolean>(false);
+
   reset() {
     this.showTrashModal = false;
     this.trashSnapshots = [];
@@ -61,6 +76,12 @@ export class GitSafetyState {
     this.conflictFileDetail = null;
     this.isConflictLoading = false;
     this.isRebasing = false;
+    this.detectedSecrets = [];
+    this.isScanningSecrets = false;
+    this.showSecretShieldModal = false;
+    this.showLostAndFoundModal = false;
+    this.reflogEntries = [];
+    this.isReflogLoading = false;
   }
 
   // -------------------------------------------------------------
@@ -269,4 +290,60 @@ export class GitSafetyState {
       return false;
     }
   }
+
+  // -------------------------------------------------------------
+  // Secret Shield
+  // -------------------------------------------------------------
+  async scanSecrets(repoPath: string): Promise<SecretFinding[]> {
+    if (!repoPath) return [];
+    this.isScanningSecrets = true;
+    try {
+      this.detectedSecrets = await scanStagedSecrets(repoPath);
+      return this.detectedSecrets;
+    } catch (e) {
+      console.error('Failed to scan staged secrets:', e);
+      return [];
+    } finally {
+      this.isScanningSecrets = false;
+    }
+  }
+
+  // -------------------------------------------------------------
+  // Lost & Found (Git Reflog Explorer)
+  // -------------------------------------------------------------
+  async openLostAndFound(repoPath: string) {
+    if (!repoPath) return;
+    this.showLostAndFoundModal = true;
+    this.isReflogLoading = true;
+    try {
+      this.reflogEntries = await getReflogEntries(repoPath, 150);
+    } catch (e) {
+      console.error('Failed to load reflog entries:', e);
+    } finally {
+      this.isReflogLoading = false;
+    }
+  }
+
+  async refreshReflog(repoPath: string) {
+    if (!repoPath) return;
+    try {
+      this.reflogEntries = await getReflogEntries(repoPath, 150);
+    } catch (e) {
+      console.error('Failed to refresh reflog entries:', e);
+    }
+  }
+
+  async rescueCommitToBranch(
+    repoPath: string,
+    commitId: string,
+    branchName: string,
+    onRefresh: () => Promise<void>
+  ): Promise<string> {
+    if (!repoPath || !commitId || !branchName) return '';
+    const ref = await restoreLostCommit(repoPath, commitId, branchName);
+    await onRefresh();
+    await this.refreshReflog(repoPath);
+    return ref;
+  }
 }
+

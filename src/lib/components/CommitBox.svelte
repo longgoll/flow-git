@@ -1,7 +1,8 @@
 <script lang="ts">
   import { Sparkles, GitCommitHorizontal, History, ShieldAlert, GitFork } from 'lucide-svelte';
   import PreCommitWarningModal, { type RiskyFileItem } from './PreCommitWarningModal.svelte';
-  import type { FileStatusItem } from '../types';
+  import type { FileStatusItem, SecretFinding } from '../types';
+  import { scanStagedSecrets } from '../api';
   import { localeState } from '../state/localeState.svelte';
 
   const PROTECTED_BRANCHES = new Set(['main', 'master', 'production', 'release']);
@@ -10,20 +11,24 @@
     stagedCount: number;
     isLoading?: boolean;
     currentBranch?: string;
+    repoPath?: string;
     stagedFiles?: FileStatusItem[];
     onCommit: (message: string, amend: boolean, noVerify?: boolean) => Promise<void>;
     onCreateBranch?: (baseBranch: string) => void;
     onUnstageFiles?: (files: string[]) => Promise<void>;
+    onAddToGitignore?: (pattern: string) => Promise<void>;
   }
 
   let {
     stagedCount,
     isLoading = false,
     currentBranch = '',
+    repoPath = '',
     stagedFiles = [],
     onCommit,
     onCreateBranch,
     onUnstageFiles,
+    onAddToGitignore,
   }: Props = $props();
 
   let commitType = $state<string>('');
@@ -37,6 +42,8 @@
   // Pre-commit Scan State
   let showPreCommitModal = $state<boolean>(false);
   let detectedRiskyFiles = $state<RiskyFileItem[]>([]);
+  let detectedSecretFindings = $state<SecretFinding[]>([]);
+  let isScanningSecrets = $state<boolean>(false);
 
   let isProtected = $derived.by(() => {
     if (!currentBranch) return false;
@@ -113,15 +120,28 @@
   }
 
   async function handleFormSubmit() {
-    if (!fullMessage.trim() || isLoading) return;
+    if (!fullMessage.trim() || isLoading || isScanningSecrets) return;
     if (stagedCount === 0 && !isAmend) return;
     if (isProtected && !bypassSafetyShield) return;
 
     // Scan for dangerous secrets or heavy binary before commit
     if (!isAmend) {
       const risky = scanRiskyFiles();
-      if (risky.length > 0) {
+      let backendSecrets: SecretFinding[] = [];
+      if (repoPath) {
+        try {
+          isScanningSecrets = true;
+          backendSecrets = await scanStagedSecrets(repoPath);
+        } catch (err) {
+          console.error('Failed to run backend secret scanner:', err);
+        } finally {
+          isScanningSecrets = false;
+        }
+      }
+
+      if (risky.length > 0 || backendSecrets.length > 0) {
         detectedRiskyFiles = risky;
+        detectedSecretFindings = backendSecrets;
         showPreCommitModal = true;
         return;
       }
@@ -301,8 +321,11 @@
 {#if showPreCommitModal}
   <PreCommitWarningModal
     riskyFiles={detectedRiskyFiles}
+    secretFindings={detectedSecretFindings}
     onConfirmCommit={handleConfirmBypassCommit}
     onUnstageRisky={handleUnstageRisky}
+    onAddToGitignore={onAddToGitignore}
     onCancel={() => (showPreCommitModal = false)}
   />
 {/if}
+

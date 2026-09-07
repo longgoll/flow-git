@@ -13,6 +13,7 @@
     HardDrive,
     Trash2,
     ArrowRight,
+    LifeBuoy,
   } from 'lucide-svelte';
   import {
     isIndexLocked,
@@ -30,6 +31,7 @@
     onClose: () => void;
     onOpenTrash: () => void;
     onOpenTimeMachine: () => void;
+    onOpenLostAndFound?: () => void;
     onRepoRefreshed?: () => Promise<void>;
   }
 
@@ -40,6 +42,7 @@
     onClose,
     onOpenTrash,
     onOpenTimeMachine,
+    onOpenLostAndFound,
     onRepoRefreshed,
   }: Props = $props();
 
@@ -368,8 +371,8 @@
               </p>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-              <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between">
                 <div>
                   <h4 class="text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 mb-1">
                     <Trash2 class="w-4 h-4" />
@@ -388,7 +391,7 @@
                 </button>
               </div>
 
-              <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between">
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between">
                 <div>
                   <h4 class="text-xs font-bold text-purple-700 dark:text-purple-400 flex items-center gap-1.5 mb-1">
                     <History class="w-4 h-4" />
@@ -403,6 +406,25 @@
                   class="mt-3 px-3 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-600/20 hover:bg-purple-100 dark:hover:bg-purple-600/30 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40 text-xs font-semibold flex items-center justify-between cursor-pointer transition-colors"
                 >
                   <span>{localeState.t('assistant.playbook.openTimeMachineBtn')}</span>
+                  <ArrowRight class="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between">
+                <div>
+                  <h4 class="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5 mb-1">
+                    <LifeBuoy class="w-4 h-4" />
+                    Lost & Found
+                  </h4>
+                  <p class="text-xs text-zinc-600 dark:text-zinc-400">
+                    {localeState.t('safety.lostAndFound.subtitle')}
+                  </p>
+                </div>
+                <button
+                  onclick={() => { onClose(); onOpenLostAndFound && onOpenLostAndFound(); }}
+                  class="mt-3 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-600/20 hover:bg-amber-100 dark:hover:bg-amber-600/30 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40 text-xs font-semibold flex items-center justify-between cursor-pointer transition-colors"
+                >
+                  <span>{localeState.t('safety.lostAndFound.rescueBtn')}</span>
                   <ArrowRight class="w-3.5 h-3.5" />
                 </button>
               </div>

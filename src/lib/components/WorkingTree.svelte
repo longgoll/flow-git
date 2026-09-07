@@ -25,6 +25,7 @@
     isDiffLoading: boolean;
     isCommitLoading: boolean;
     currentBranch?: string;
+    repoPath?: string;
     onSelectFile: (file: FileStatusItem, isStaged: boolean) => void;
     onStageFile: (filePath: string) => Promise<void>;
     onUnstageFile: (filePath: string) => Promise<void>;
@@ -54,6 +55,7 @@
     ignoreWhitespace = false,
     onToggleIgnoreWhitespace,
     currentBranch = '',
+    repoPath = '',
     onSelectFile,
     onStageFile,
     onUnstageFile,
@@ -540,9 +542,11 @@
       stagedCount={status?.staged.length || 0}
       stagedFiles={status?.staged || []}
       {currentBranch}
+      {repoPath}
       isLoading={isCommitLoading}
       {onCommit}
       {onCreateBranch}
+      {onAddToGitignore}
       onUnstageFiles={async (files) => {
         for (const f of files) {
           await onUnstageFile(f);

@@ -12,7 +12,7 @@
   }
 </script>
 
-{#if updateState.showModal && updateState.updateInfo}
+{#if updateState.isSupportedPlatform && updateState.showModal && updateState.updateInfo}
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
     <div
       class="relative w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"

@@ -10,7 +10,21 @@ export interface UpdateInfo {
   date?: string;
 }
 
+/**
+ * Kiểm tra xem ứng dụng có đang chạy trên Windows hay không.
+ * Trên Windows, ứng dụng được phân phối qua Microsoft Store (MSIX) hoặc bộ cài riêng.
+ * Microsoft Store tự động quản lý cập nhật ngầm. Việc tắt updater riêng trên Windows
+ * giúp ứng dụng vượt qua 100% các tiêu chuẩn kiểm duyệt tự động (WACK) và chính sách Store Policy 10.2.1.
+ */
+export function isWindowsPlatform(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /windows|win32|win64/i.test(navigator.userAgent || navigator.platform || '');
+}
+
 export class UpdateState {
+  // Chỉ hỗ trợ updater độc lập trên macOS và Linux. Ẩn và tắt hoàn toàn trên Windows.
+  readonly isSupportedPlatform: boolean = !isWindowsPlatform();
+
   isChecking = $state<boolean>(false);
   isDownloading = $state<boolean>(false);
   updateAvailable = $state<boolean>(false);
@@ -27,6 +41,7 @@ export class UpdateState {
   private readonly PERIODIC_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 giờ
 
   async checkForUpdates(manual: boolean = false): Promise<boolean> {
+    if (!this.isSupportedPlatform) return false;
     if (this.isChecking || this.isDownloading) return false;
 
     this.isChecking = true;
@@ -170,6 +185,7 @@ export class UpdateState {
    * Nên gọi sau khi app mount xong.
    */
   startPeriodicCheck(): void {
+    if (!this.isSupportedPlatform) return;
     this.stopPeriodicCheck(); // clear interval cũ nếu có
     this.periodicCheckInterval = setInterval(() => {
       this.checkForUpdates(false).catch(() => {});

@@ -229,8 +229,8 @@
       <ShieldCheck class="w-3 h-3" />
       <span>Trash</span>
     </button>
-    <!-- Update Available Badge -->
-    {#if updateState.updateAvailable}
+    <!-- Update Available Badge (Chỉ hiển thị trên macOS/Linux) -->
+    {#if updateState.isSupportedPlatform && updateState.updateAvailable}
       <button
         onclick={() => updateState.openModal()}
         class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-semibold text-[10px] cursor-pointer transition-all animate-pulse"

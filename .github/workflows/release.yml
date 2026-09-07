@@ -110,9 +110,9 @@ jobs:
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         env:
-          MSIX_PACKAGE_NAME: ${{ vars.MSIX_PACKAGE_NAME || secrets.MSIX_PACKAGE_NAME || 'HoangLong.FlowGit' }}
-          MSIX_PUBLISHER: ${{ vars.MSIX_PUBLISHER || secrets.MSIX_PUBLISHER || 'CN=4C165668-29A1-4492-8972-4597558CF751' }}
-          MSIX_PUBLISHER_DISPLAY_NAME: ${{ vars.MSIX_PUBLISHER_DISPLAY_NAME || secrets.MSIX_PUBLISHER_DISPLAY_NAME || 'Hoang Long' }}
+          MSIX_PACKAGE_NAME: ${{ secrets.MSIX_PACKAGE_NAME || vars.MSIX_PACKAGE_NAME }}
+          MSIX_PUBLISHER: ${{ secrets.MSIX_PUBLISHER || vars.MSIX_PUBLISHER }}
+          MSIX_PUBLISHER_DISPLAY_NAME: ${{ secrets.MSIX_PUBLISHER_DISPLAY_NAME || vars.MSIX_PUBLISHER_DISPLAY_NAME }}
         run: |
           $msi = Get-ChildItem -Path "src-tauri\target\release\bundle\msi" -Filter "*.msi" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($msi) {

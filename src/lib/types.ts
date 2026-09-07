@@ -17,6 +17,7 @@ export interface RefInfo {
 }
 
 export type GraphViewMode = 'micro' | 'macro';
+export type GraphDensity = 'comfortable' | 'compact' | 'ultra';
 
 export interface GraphEdge {
   childIndex: number;

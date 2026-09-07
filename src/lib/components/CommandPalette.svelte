@@ -23,6 +23,7 @@
     CloudDownload,
     LifeBuoy,
     Archive,
+    Activity,
   } from 'lucide-svelte';
 
   interface PaletteItem {
@@ -57,6 +58,7 @@
     onPull?: () => void;
     onFetch?: () => void;
     onOpenGuide?: () => void;
+    onOpenInsights?: () => void;
     onClose: () => void;
   }
 
@@ -83,6 +85,7 @@
     onPull,
     onFetch,
     onOpenGuide,
+    onOpenInsights,
     onClose,
   }: Props = $props();
 
@@ -163,6 +166,16 @@
         category: 'View',
         icon: FolderGit2,
         action: () => { onOpenWorktrees(); onClose(); },
+      },
+      {
+        id: 'open-insights',
+        title: localeState.t('insights.commandTitle'),
+        category: 'View',
+        icon: Activity,
+        action: () => {
+          onClose();
+          onOpenInsights?.();
+        },
       },
 
       // AI

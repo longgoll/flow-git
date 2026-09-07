@@ -115,6 +115,7 @@ export interface RenderGraphOptions {
   lockedLane?: number | null;
   viewMode?: 'micro' | 'macro';
   edges?: GraphEdge[];
+  rowHeight?: number;
 }
 
 export function renderCommitGraph(
@@ -137,7 +138,11 @@ export function renderCommitGraph(
     lockedLane = null,
     viewMode = 'micro',
     edges,
+    rowHeight: customRowHeight,
   } = options;
+
+  const rowHeight = customRowHeight || ROW_HEIGHT;
+  const isCompact = rowHeight < 25;
 
   void viewMode; // Explicitly consumed for options compatibility
 
@@ -155,14 +160,14 @@ export function renderCommitGraph(
     return;
   }
 
-  const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - 2);
-  const endIndex = Math.min(totalCommits - 1, Math.ceil((scrollTop + height) / ROW_HEIGHT) + 2);
+  const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - 2);
+  const endIndex = Math.min(totalCommits - 1, Math.ceil((scrollTop + height) / rowHeight) + 2);
 
   // 1. Row backgrounds
   for (let i = startIndex; i <= endIndex; i++) {
     const c = commits[i];
     if (!c) continue;
-    const y = i * ROW_HEIGHT - scrollTop;
+    const y = i * rowHeight - scrollTop;
     const isSelected = activeSelectedIds.includes(c.id);
     const isGhostTarget = isDraggingNode && hoveredTargetCommit?.id === c.id;
 
@@ -172,27 +177,27 @@ export function renderCommitGraph(
         : simulationResult?.is_fast_forward
           ? (isDark ? 'rgba(245, 158, 11, 0.22)' : 'rgba(245, 158, 11, 0.16)')
           : (isDark ? 'rgba(6, 182, 212, 0.2)' : 'rgba(8, 145, 178, 0.15)');
-      ctx.fillRect(0, y, width, ROW_HEIGHT);
+      ctx.fillRect(0, y, width, rowHeight);
 
       ctx.fillStyle = simulationResult?.has_conflicts
         ? '#f43f5e'
         : simulationResult?.is_fast_forward
           ? (isDark ? '#fbbf24' : '#d97706')
           : (isDark ? '#06b6d4' : '#0891b2');
-      ctx.fillRect(0, y, 4, ROW_HEIGHT);
+      ctx.fillRect(0, y, 4, rowHeight);
     } else if (isSelected) {
       ctx.fillStyle = isDark ? 'rgba(59, 130, 246, 0.18)' : 'rgba(59, 130, 246, 0.12)';
-      ctx.fillRect(0, y, width, ROW_HEIGHT);
+      ctx.fillRect(0, y, width, rowHeight);
 
       ctx.fillStyle = '#3b82f6';
-      ctx.fillRect(0, y, 3, ROW_HEIGHT);
+      ctx.fillRect(0, y, 3, rowHeight);
     } else if (c.id === hoveredCommitId) {
       ctx.fillStyle = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.035)';
-      ctx.fillRect(0, y, width, ROW_HEIGHT);
+      ctx.fillRect(0, y, width, rowHeight);
     }
 
     ctx.fillStyle = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.05)';
-    ctx.fillRect(0, y + ROW_HEIGHT - 1, width, 1);
+    ctx.fillRect(0, y + rowHeight - 1, width, 1);
   }
 
   // 2. Continuous Bezier Splines with Metro Spine & Edge-Span Viewport Intersection
@@ -213,9 +218,9 @@ export function renderCommitGraph(
 
       const childLane = edge.childLane;
       const parentLane = edge.parentLane;
-      const childY = edge.childIndex * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
+      const childY = edge.childIndex * rowHeight - scrollTop + rowHeight / 2;
       const childX = GRAPH_LEFT_MARGIN + childLane * LANE_WIDTH;
-      const parentY = edge.parentIndex * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
+      const parentY = edge.parentIndex * rowHeight - scrollTop + rowHeight / 2;
       const parentX = GRAPH_LEFT_MARGIN + parentLane * LANE_WIDTH;
 
       const childColor = getLaneColor(childLane, isDark);
@@ -253,7 +258,7 @@ export function renderCommitGraph(
       const child = commits[i];
       if (!child) continue;
       const childLane = child.lane || 0;
-      const childY = i * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
+      const childY = i * rowHeight - scrollTop + rowHeight / 2;
       const childX = GRAPH_LEFT_MARGIN + childLane * LANE_WIDTH;
       const childColor = getLaneColor(childLane, isDark);
 
@@ -266,7 +271,7 @@ export function renderCommitGraph(
           const parent = commits[parentIndex];
           if (!parent) continue;
           const parentLane = parent.lane || 0;
-          const parentY = parentIndex * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
+          const parentY = parentIndex * rowHeight - scrollTop + rowHeight / 2;
           const parentX = GRAPH_LEFT_MARGIN + parentLane * LANE_WIDTH;
 
           const isTrunkBackbone = childLane === 0 && parentLane === 0;
@@ -306,9 +311,9 @@ export function renderCommitGraph(
     if (sIndex !== undefined && tIndex !== undefined) {
       const sCommit = commits[sIndex];
       const tCommit = commits[tIndex];
-      const sY = sIndex * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
+      const sY = sIndex * rowHeight - scrollTop + rowHeight / 2;
       const sX = GRAPH_LEFT_MARGIN + (sCommit?.lane || 0) * LANE_WIDTH;
-      const tY = tIndex * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
+      const tY = tIndex * rowHeight - scrollTop + rowHeight / 2;
       const tX = GRAPH_LEFT_MARGIN + (tCommit?.lane || 0) * LANE_WIDTH;
 
       const midY = (sY + tY) / 2;
@@ -424,8 +429,8 @@ export function renderCommitGraph(
   for (let i = startIndex; i <= endIndex; i++) {
     const c = commits[i];
     if (!c) continue;
-    const y = i * ROW_HEIGHT - scrollTop;
-    const centerY = y + ROW_HEIGHT / 2;
+    const y = i * rowHeight - scrollTop;
+    const centerY = y + rowHeight / 2;
     const cLane = c.lane || 0;
     const nodeX = GRAPH_LEFT_MARGIN + cLane * LANE_WIDTH;
     const laneColor = getLaneColor(cLane, isDark);
@@ -453,7 +458,7 @@ export function renderCommitGraph(
       ctx.strokeStyle = laneColor;
       ctx.lineWidth = 1.5;
       ctx.moveTo(nodeX, y);
-      ctx.lineTo(nodeX, y + ROW_HEIGHT);
+      ctx.lineTo(nodeX, y + rowHeight);
       ctx.stroke();
       ctx.setLineDash([]);
 
@@ -566,11 +571,11 @@ export function renderCommitGraph(
     if (c.refs && Array.isArray(c.refs) && c.refs.length > 0) {
       for (const r of c.refs) {
         if (!r || !r.shorthand) continue;
-        ctx.font = '600 11px "Plus Jakarta Sans", sans-serif';
+        ctx.font = isCompact ? '600 10px "Plus Jakarta Sans", sans-serif' : '600 11px "Plus Jakarta Sans", sans-serif';
         const labelText = r.shorthand;
         const textWidth = ctx.measureText(labelText).width;
-        const badgeWidth = textWidth + 14;
-        const badgeHeight = 20;
+        const badgeWidth = textWidth + (isCompact ? 10 : 14);
+        const badgeHeight = isCompact ? 15 : 20;
         const badgeY = centerY - badgeHeight / 2;
 
         let bgStyle = isDark ? 'rgba(39, 39, 42, 0.85)' : 'rgba(228, 228, 231, 0.85)';
@@ -604,23 +609,25 @@ export function renderCommitGraph(
         ctx.stroke();
 
         ctx.fillStyle = textStyle;
-        ctx.fillText(labelText, currentBadgeX + 7, centerY + 3.5);
+        ctx.fillText(labelText, currentBadgeX + (isCompact ? 5 : 7), centerY + (isCompact ? 3 : 3.5));
 
-        currentBadgeX += badgeWidth + 6;
+        currentBadgeX += badgeWidth + 5;
       }
     }
 
     // Draw Short Hash (Skip for capsule commit because capsule pill already shows the count)
     if (!c.is_capsule) {
       const shortId = c.short_id || (c.id ? c.id.slice(0, 7) : '???????');
-      ctx.font = '500 12px "JetBrains Mono", monospace';
+      ctx.font = isCompact ? '500 10.5px "JetBrains Mono", monospace' : '500 12px "JetBrains Mono", monospace';
       ctx.fillStyle = isDark ? '#a1a1aa' : '#71717a';
-      ctx.fillText(shortId, currentBadgeX, centerY + 4);
-      currentBadgeX += 65;
+      ctx.fillText(shortId, currentBadgeX, centerY + (isCompact ? 3.5 : 4));
+      currentBadgeX += isCompact ? 56 : 65;
     }
 
     // Draw Summary
-    ctx.font = isSelected ? '600 13px "Plus Jakarta Sans", sans-serif' : '400 13px "Plus Jakarta Sans", sans-serif';
+    ctx.font = isCompact
+      ? (isSelected ? '600 11px "Plus Jakarta Sans", sans-serif' : '400 11px "Plus Jakarta Sans", sans-serif')
+      : (isSelected ? '600 13px "Plus Jakarta Sans", sans-serif' : '400 13px "Plus Jakarta Sans", sans-serif');
     ctx.fillStyle = isSelected
       ? (isDark ? '#ffffff' : '#09090b')
       : (isDark ? '#f4f4f5' : '#27272a');
@@ -634,16 +641,16 @@ export function renderCommitGraph(
       }
       summaryText += '...';
     }
-    ctx.fillText(summaryText, currentBadgeX, centerY + 4);
+    ctx.fillText(summaryText, currentBadgeX, centerY + (isCompact ? 3.5 : 4));
 
     // Draw Author Avatar, Name & Timestamp
     const dateStr = timeAgo(c.timestamp || 0);
-    ctx.font = '400 12px "Plus Jakarta Sans", sans-serif';
+    ctx.font = isCompact ? '400 10.5px "Plus Jakarta Sans", sans-serif' : '400 12px "Plus Jakarta Sans", sans-serif';
     const authorName = c.author_name || 'Unknown';
     const authorWidth = ctx.measureText(authorName).width;
     const dateWidth = ctx.measureText(dateStr).width;
 
-    const avatarRadius = 8;
+    const avatarRadius = isCompact ? 6 : 8;
     const avatarX = width - dateWidth - authorWidth - 36 - avatarRadius * 2 - 6;
     const avatarY = centerY;
 

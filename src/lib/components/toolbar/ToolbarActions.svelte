@@ -11,6 +11,7 @@
     Flame,
     BookOpen,
     LifeBuoy,
+    Activity,
   } from 'lucide-svelte';
 
   interface Props {
@@ -31,6 +32,7 @@
     onRestoreHotfixStash?: () => void;
     onOpenGuide?: () => void;
     onOpenPlaybook?: () => void;
+    onOpenInsights?: () => void;
   }
 
   let {
@@ -51,6 +53,7 @@
     onRestoreHotfixStash,
     onOpenGuide,
     onOpenPlaybook,
+    onOpenInsights,
   }: Props = $props();
 </script>
 
@@ -198,3 +201,16 @@
     <span class="text-xs font-semibold">{localeState.t('toolbar.rescueKitBtn')}</span>
   </button>
 {/if}
+
+<!-- Repository Pulse & Insights Button -->
+{#if onOpenInsights}
+  <button
+    onclick={onOpenInsights}
+    class="flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 border border-zinc-200 dark:border-zinc-800 hover:border-cyan-300 dark:hover:border-cyan-700/60 text-xs text-zinc-700 dark:text-zinc-300 hover:text-cyan-900 dark:hover:text-cyan-200 transition-all cursor-pointer group shadow-xs shrink-0"
+    title={localeState.t('insights.title')}
+  >
+    <Activity class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors" />
+    <span class="font-medium text-[11px] hidden 2xl:inline">{localeState.t('insights.badge')}</span>
+  </button>
+{/if}
+

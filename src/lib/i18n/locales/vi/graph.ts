@@ -185,6 +185,10 @@ export const graph = {
     capsulesOn: "Capsules BẬT",
     capsulesOff: "Capsules TẮT",
     capsulesTooltip: "Tự động nén các chuỗi commit phụ thành viên nang [+N commits]",
+    densityComfortable: "Thoải mái (36px)",
+    densityCompact: "Tiêu chuẩn (28px)",
+    densityUltra: "Siêu gọn (20px)",
+    densityTooltip: "Mật độ hiển thị đồ thị (Ctrl + Con lăn chuột để thu phóng)",
   },
 
   // Drag Avatar Tooltip

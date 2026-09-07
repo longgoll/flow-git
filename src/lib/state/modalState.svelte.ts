@@ -98,7 +98,17 @@ export class ModalState {
   publishRepoName = $state<string>('');
   publishCurrentBranch = $state<string>('');
 
+  // Repository Pulse & Insights Modal
+  showInsightsModal = $state<boolean>(false);
+
   // --- HELPER ACTIONS ---
+  openInsights() {
+    this.showInsightsModal = true;
+  }
+  closeInsights() {
+    this.showInsightsModal = false;
+  }
+
   openCreateBranch(baseRef = '') {
     this.createBranchBaseRef = baseRef;
     this.showCreateBranchModal = true;

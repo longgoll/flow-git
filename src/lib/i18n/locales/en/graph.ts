@@ -187,6 +187,10 @@ export const graph: typeof viGraph = {
     capsulesOn: "Capsules ON",
     capsulesOff: "Capsules OFF",
     capsulesTooltip: "Automatically condense secondary commit runs into capsules [+N commits]",
+    densityComfortable: "Comfortable (36px)",
+    densityCompact: "Compact (28px)",
+    densityUltra: "Ultra-Compact (20px)",
+    densityTooltip: "Graph display density (Ctrl + Wheel to zoom)",
   },
 
   // Drag Avatar Tooltip

@@ -65,6 +65,7 @@
     onOpenLfs?: () => void;
     onOpenGuide?: () => void;
     onOpenPlaybook?: () => void;
+    onOpenInsights?: () => void;
     activeAccount?: AccountProfile | null;
     onOpenAuth?: () => void;
     onOpenQuickHotfix?: () => void;
@@ -122,6 +123,7 @@
     onOpenLfs,
     onOpenGuide,
     onOpenPlaybook,
+    onOpenInsights,
     onOpenAuth,
     onOpenQuickHotfix,
     activeHotfixBranch = null,
@@ -250,6 +252,7 @@
       {onRestoreHotfixStash}
       {onOpenGuide}
       {onOpenPlaybook}
+      {onOpenInsights}
     />
 
     <!-- More Tools Dropdown Container -->
@@ -271,6 +274,7 @@
       {onOpenSubmodules}
       {onOpenLfs}
       {onOpenTrash}
+      {onOpenInsights}
       {onLimitChange}
     />
 

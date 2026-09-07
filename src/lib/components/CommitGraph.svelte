@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { Layers } from "lucide-svelte";
-  import type { CommitNode, ConflictSimulationResult, GraphViewMode } from "../types";
+  import type { CommitNode, ConflictSimulationResult, GraphDensity, GraphViewMode } from "../types";
   import { simulateDragAction } from "../api";
-  import { ROW_HEIGHT, renderCommitGraph } from "../utils/graphRenderer";
+  import { renderCommitGraph } from "../utils/graphRenderer";
   import DragAvatarTooltip from "./graph/DragAvatarTooltip.svelte";
   import GraphHeaderControls from "./graph/GraphHeaderControls.svelte";
   import GraphFloatingDock from "./graph/GraphFloatingDock.svelte";
@@ -92,16 +92,29 @@
   let simulationDebounceTimer: any = null;
 
   let viewMode = $state<GraphViewMode>('micro');
+  let density = $state<GraphDensity>('comfortable');
   let autoCapsule = $state(true);
   let expandedCapsuleIds = $state<Set<string>>(new Set());
   let lockedLane = $state<number | null>(null);
+
+  let rowHeight = $derived.by(() => {
+    switch (density) {
+      case 'ultra':
+        return 20;
+      case 'compact':
+        return 28;
+      case 'comfortable':
+      default:
+        return 36;
+    }
+  });
 
   // Derive displayCommits by applying Macro View filtering and Semantic Capsule collapsing
   let displayCommits = $derived(
     deriveDisplayCommits(commits, viewMode, autoCapsule, expandedCapsuleIds)
   );
 
-  let totalHeight = $derived(displayCommits.length * ROW_HEIGHT);
+  let totalHeight = $derived(displayCommits.length * rowHeight);
   let maxScrollTop = $derived(Math.max(0, totalHeight - containerHeight));
   let scrollThumbHeight = $derived(
     totalHeight > 0
@@ -174,6 +187,7 @@
       lockedLane,
       viewMode,
       edges: graphEdges,
+      rowHeight,
     });
   }
 
@@ -232,13 +246,29 @@
   function checkTriggerLoadMore(currScrollTop: number) {
     if (hasMore && !isLoadingMore && onLoadMore) {
       const remainingDistance = totalHeight - (currScrollTop + containerHeight);
-      if (remainingDistance < ROW_HEIGHT * 20) {
+      if (remainingDistance < rowHeight * 20) {
         onLoadMore();
       }
     }
   }
 
   function handleWheel(e: WheelEvent) {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      // Zoom density via Ctrl + Wheel
+      if (e.deltaY < 0) {
+        // Zoom in -> toward comfortable
+        if (density === 'ultra') density = 'compact';
+        else if (density === 'compact') density = 'comfortable';
+      } else if (e.deltaY > 0) {
+        // Zoom out -> toward ultra
+        if (density === 'comfortable') density = 'compact';
+        else if (density === 'compact') density = 'ultra';
+      }
+      scheduleRender();
+      return;
+    }
+
     e.preventDefault();
     const newScrollTop = Math.max(
       0,
@@ -255,7 +285,7 @@
     if (isDraggingScrollbar || e.target !== canvasEl) return;
     const rect = containerEl.getBoundingClientRect();
     const y = e.clientY - rect.top + scrollTop;
-    const clickedIndex = Math.floor(y / ROW_HEIGHT);
+    const clickedIndex = Math.floor(y / rowHeight);
 
     if (clickedIndex >= 0 && clickedIndex < displayCommits.length) {
       const commit = displayCommits[clickedIndex];
@@ -270,7 +300,7 @@
     if (!isDraggingNode && e.target !== canvasEl) return;
     const rect = containerEl.getBoundingClientRect();
     const y = e.clientY - rect.top + scrollTop;
-    const hoveredIndex = Math.floor(y / ROW_HEIGHT);
+    const hoveredIndex = Math.floor(y / rowHeight);
 
     if (isMouseDown && draggedCommit && !isDraggingNode) {
       const dist = Math.hypot(
@@ -356,7 +386,7 @@
     if (isDraggingNode || e.target !== canvasEl) return;
     const rect = containerEl.getBoundingClientRect();
     const y = e.clientY - rect.top + scrollTop;
-    const clickedIndex = Math.floor(y / ROW_HEIGHT);
+    const clickedIndex = Math.floor(y / rowHeight);
 
     if (clickedIndex >= 0 && clickedIndex < displayCommits.length) {
       const commit = displayCommits[clickedIndex];
@@ -525,7 +555,7 @@
           c.parents.length === 0);
       if (isMilestone) {
         onSelectCommit(c);
-        const itemTop = idx * ROW_HEIGHT;
+        const itemTop = idx * rowHeight;
         scrollTop = Math.max(0, Math.min(maxScrollTop, itemTop - containerHeight / 2));
         scheduleRender();
         const label = c.refs?.[0]?.shorthand || c.short_id;
@@ -541,7 +571,7 @@
     e.preventDefault();
     const rect = containerEl.getBoundingClientRect();
     const y = e.clientY - rect.top + scrollTop;
-    const clickedIndex = Math.floor(y / ROW_HEIGHT);
+    const clickedIndex = Math.floor(y / rowHeight);
 
     if (clickedIndex >= 0 && clickedIndex < displayCommits.length) {
       const commit = displayCommits[clickedIndex];
@@ -574,8 +604,8 @@
       const targetCommit = displayCommits[nextIndex];
       onSelectCommit(targetCommit);
 
-      const itemTop = nextIndex * ROW_HEIGHT;
-      const itemBottom = itemTop + ROW_HEIGHT;
+      const itemTop = nextIndex * rowHeight;
+      const itemBottom = itemTop + rowHeight;
       if (itemTop < scrollTop) {
         scrollTop = itemTop;
         scheduleRender();
@@ -623,6 +653,11 @@
     lockedLane={lockedLane}
     bind:viewMode
     bind:autoCapsule
+    {density}
+    onChangeDensity={(newDensity) => {
+      density = newDensity;
+      scheduleRender();
+    }}
     onUnlockLane={() => {
       lockedLane = null;
       scheduleRender();

@@ -29,6 +29,7 @@
   import CreatePullRequestModal from './CreatePullRequestModal.svelte';
   import LostAndFoundModal from './LostAndFoundModal.svelte';
   import UpdateModal from './UpdateModal.svelte';
+  import RepoInsightsModal from './RepoInsightsModal.svelte';
   import { resetToCommit } from '../api';
   import { toast } from '../state/toastState.svelte';
   import { localeState } from '../state/localeState.svelte';
@@ -362,6 +363,7 @@
     )
   }
   onOpenGuide={() => { modalState.showGuideModal = true; }}
+  onOpenInsights={() => modalState.openInsights()}
   onClose={() => (modalState.showCommandPalette = false)}
 />
 
@@ -610,3 +612,11 @@
 
 <!-- FlowGit Auto-Updater Modal -->
 <UpdateModal />
+
+<!-- Repository Pulse & Insights Modal -->
+{#if modalState.showInsightsModal}
+  <RepoInsightsModal
+    {repo}
+    onClose={() => modalState.closeInsights()}
+  />
+{/if}

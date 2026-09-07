@@ -5,8 +5,11 @@
     Sparkles,
     Eye,
     X,
+    StretchHorizontal,
+    AlignJustify,
+    Menu,
   } from 'lucide-svelte';
-  import type { GraphViewMode } from '../../types';
+  import type { GraphDensity, GraphViewMode } from '../../types';
   import { localeState } from '../../state/localeState.svelte';
 
   interface Props {
@@ -15,9 +18,11 @@
     lockedLane: number | null;
     viewMode: GraphViewMode;
     autoCapsule: boolean;
+    density?: GraphDensity;
     onUnlockLane: () => void;
     onToggleViewMode: (mode: GraphViewMode) => void;
     onToggleAutoCapsule: () => void;
+    onChangeDensity?: (mode: GraphDensity) => void;
   }
 
   let {
@@ -26,9 +31,11 @@
     lockedLane,
     viewMode = $bindable('micro'),
     autoCapsule = $bindable(true),
+    density = 'comfortable',
     onUnlockLane,
     onToggleViewMode,
     onToggleAutoCapsule,
+    onChangeDensity,
   }: Props = $props();
 </script>
 
@@ -58,8 +65,38 @@
     {/if}
   </div>
 
-  <!-- Right: View Modes & Capsules -->
+  <!-- Right: Density, View Modes & Capsules -->
   <div class="flex items-center gap-2">
+    <!-- Density Toggle: Comfortable (36px) | Compact (28px) | Ultra (20px) -->
+    {#if onChangeDensity}
+      <div
+        class="flex items-center p-0.5 rounded-md bg-zinc-200/60 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 text-xs"
+        title={localeState.t('graph.headerControls.densityTooltip')}
+      >
+        <button
+          onclick={() => onChangeDensity('comfortable')}
+          class="p-1 rounded text-[11px] transition-all cursor-pointer {density === 'comfortable' ? 'bg-white dark:bg-zinc-900 text-cyan-600 dark:text-cyan-400 font-semibold shadow-xs' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+          title={localeState.t('graph.headerControls.densityComfortable')}
+        >
+          <StretchHorizontal class="w-3 h-3" />
+        </button>
+        <button
+          onclick={() => onChangeDensity('compact')}
+          class="p-1 rounded text-[11px] transition-all cursor-pointer {density === 'compact' ? 'bg-white dark:bg-zinc-900 text-cyan-600 dark:text-cyan-400 font-semibold shadow-xs' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+          title={localeState.t('graph.headerControls.densityCompact')}
+        >
+          <AlignJustify class="w-3 h-3" />
+        </button>
+        <button
+          onclick={() => onChangeDensity('ultra')}
+          class="p-1 rounded text-[11px] transition-all cursor-pointer {density === 'ultra' ? 'bg-white dark:bg-zinc-900 text-cyan-600 dark:text-cyan-400 font-semibold shadow-xs' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+          title={localeState.t('graph.headerControls.densityUltra')}
+        >
+          <Menu class="w-3 h-3" />
+        </button>
+      </div>
+    {/if}
+
     <div class="flex items-center p-0.5 rounded-md bg-zinc-200/60 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 text-xs">
       <button
         onclick={() => onToggleViewMode('micro')}

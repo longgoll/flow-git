@@ -20,6 +20,7 @@
     RefreshCw,
     Compass,
     Archive,
+    Activity,
   } from 'lucide-svelte';
   import { themeState } from '../../state/themeState.svelte';
   import { localeState } from '../../state/localeState.svelte';
@@ -43,6 +44,7 @@
     onOpenSubmodules?: () => void;
     onOpenLfs?: () => void;
     onOpenTrash: () => void;
+    onOpenInsights?: () => void;
     onLimitChange: (limit: number) => void;
   }
 
@@ -64,6 +66,7 @@
     onOpenSubmodules,
     onOpenLfs,
     onOpenTrash,
+    onOpenInsights,
     onLimitChange,
   }: Props = $props();
 </script>
@@ -313,6 +316,19 @@
         >
           <Database class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
           <span>{localeState.t('toolbar.gitLfs')}</span>
+        </button>
+      {/if}
+
+      {#if onOpenInsights}
+        <button
+          onclick={() => { onCloseToolsMenu(); onOpenInsights(); }}
+          class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors cursor-pointer"
+        >
+          <div class="flex items-center gap-2">
+            <Activity class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+            <span>{localeState.t('insights.title')}</span>
+          </div>
+          <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">Pulse</span>
         </button>
       {/if}
 

@@ -447,6 +447,7 @@
     onOpenLfs={() => (modalState.showLfsModal = true)}
     onOpenGuide={() => (modalState.showGuideModal = true)}
     onOpenPlaybook={() => (modalState.showPlaybookModal = true)}
+    onOpenInsights={() => modalState.openInsights()}
     onOpenAuth={() => (remote.showAuthModal = true)}
     onOpenQuickHotfix={() => (modalState.showHotfixModal = true)}
     activeHotfixBranch={modalState.activeHotfixBranch}

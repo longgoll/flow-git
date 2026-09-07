@@ -22,6 +22,7 @@
     Upload,
     CloudDownload,
     LifeBuoy,
+    Archive,
   } from 'lucide-svelte';
 
   interface PaletteItem {
@@ -44,6 +45,7 @@
     onOpenBisect: () => void;
     onOpenTimeMachine: () => void;
     onOpenLostAndFound?: () => void;
+    onOpenStashShelf?: () => void;
     onOpenAI: () => void;
     onSmartSync: () => void;
     onStageAll: () => void;
@@ -60,8 +62,8 @@
 
   let {
     isOpen,
-    branches,
-    tags,
+    branches = [],
+    tags = [],
     onSelectBranch,
     onChangeViewMode,
     onOpenTrash,
@@ -69,6 +71,7 @@
     onOpenBisect,
     onOpenTimeMachine,
     onOpenLostAndFound,
+    onOpenStashShelf,
     onOpenAI,
     onSmartSync,
     onStageAll,
@@ -238,6 +241,16 @@
         action: () => { onDiscardAll(); onClose(); },
       },
     ];
+
+    if (onOpenStashShelf) {
+      list.push({
+        id: 'action-stash-shelf',
+        title: 'Visual Stash Shelf: Inspect Diffs & Restore Stashes',
+        category: 'Action',
+        icon: Archive,
+        action: () => { onClose(); onOpenStashShelf(); },
+      });
+    }
 
     // Dynamic Branches
     for (const b of branches) {

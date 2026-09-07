@@ -63,6 +63,10 @@ export class ModalState {
   activeHotfixBranch = $state<string | null>(null);
   hotfixStashed = $state<boolean>(false);
 
+  // Visual Stash Shelf Drawer
+  showStashShelfDrawer = $state<boolean>(false);
+  selectedStashIndex = $state<number>(0);
+
   // Nuke File from History
   showNukeModal = $state<boolean>(false);
   nukeTargetFilePath = $state<string>('');
@@ -156,6 +160,14 @@ export class ModalState {
   closeNukeFile() {
     this.showNukeModal = false;
     this.nukeTargetFilePath = '';
+  }
+
+  openStashShelf(index: number = 0) {
+    this.selectedStashIndex = index;
+    this.showStashShelfDrawer = true;
+  }
+  closeStashShelf() {
+    this.showStashShelfDrawer = false;
   }
 
   openDropAction(

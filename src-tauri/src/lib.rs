@@ -16,7 +16,8 @@ use commands::{
     reorder_stacked_commits, reveal_in_file_manager, save_file_content,
     // Branches, Tags, Stashes, Sync
     delete_branch, delete_merged_branches, get_branches, get_merged_branches, get_stashes,
-    get_tags, rename_branch, smart_sync, stash_apply, stash_drop, stash_pop, stash_save,
+    get_stash_detail, get_stash_file_diff, get_tags, rename_branch, smart_sync, stash_apply,
+    stash_branch, stash_drop, stash_pop, stash_save,
     create_branch, checkout_branch,
     // Diff, Staging, Discard & Trash
     add_to_gitignore, delete_trash_snapshot, discard_all_changes, discard_file_changes,
@@ -106,10 +107,13 @@ pub fn run() {
             create_tag,
             delete_tag,
             get_stashes,
+            get_stash_detail,
+            get_stash_file_diff,
             stash_save,
             stash_apply,
             stash_pop,
             stash_drop,
+            stash_branch,
             smart_sync,
             // Diff & Staging
             get_status,

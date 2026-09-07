@@ -43,7 +43,7 @@ pub struct FileDiffDetail {
     pub modified_content: Option<String>,
 }
 
-fn get_tree_blob_content(repo: &Repository, tree: Option<&git2::Tree>, file_path: &str) -> Option<String> {
+pub(crate) fn get_tree_blob_content(repo: &Repository, tree: Option<&git2::Tree>, file_path: &str) -> Option<String> {
     let tree = tree?;
     let entry = tree.get_path(Path::new(file_path)).ok()?;
     let obj = entry.to_object(repo).ok()?;

@@ -68,6 +68,26 @@ export interface StashInfo {
   commit_id: string;
 }
 
+export interface StashFileItem {
+  path: string;
+  old_path?: string;
+  status: string;
+  additions: number;
+  deletions: number;
+  is_untracked: boolean;
+}
+
+export interface StashDetail {
+  index: number;
+  message: string;
+  commit_id: string;
+  branch_name?: string;
+  created_at: number;
+  files: StashFileItem[];
+  total_additions: number;
+  total_deletions: number;
+}
+
 export interface RepoSummary {
   path: string;
   name: string;

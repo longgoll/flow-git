@@ -441,6 +441,7 @@
     onOpenBisect={() => safety.openBisect(repo.currentRepoPath)}
     onOpenTimeMachine={() => safety.openTimeMachine(repo.currentRepoPath)}
     onOpenLostAndFound={() => safety.openLostAndFound(repo.currentRepoPath)}
+    onOpenStashShelf={() => modalState.openStashShelf(0)}
     onOpenAI={actions.openAI}
     onOpenSubmodules={() => (modalState.showSubmoduleModal = true)}
     onOpenLfs={() => (modalState.showLfsModal = true)}
@@ -514,6 +515,7 @@
         }}
         onPublishRepo={() => (modalState.showPublishModal = true)}
         onCloseSidebar={() => (isSidebarOpen = false)}
+        onOpenStashShelf={(index) => modalState.openStashShelf(index ?? 0)}
       />
     {/if}
 

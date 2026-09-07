@@ -93,6 +93,27 @@ Component: `src/lib/components/CommitBox.svelte`
 
 ---
 
+## 🗄️ 6. Visual Stash Shelf with Monaco Diff Preview
+
+Component: `src/lib/components/StashShelfDrawer.svelte`  
+Backend: `src-tauri/src/git/stash_ops.rs` (Commands: `get_stash_detail`, `get_stash_file_diff`, `stash_branch`)
+
+### The Problem:
+Blindly applying or popping stashes via `git stash pop` risks conflicts and accidental overwrites because traditional Git tools don't show the files or diffs inside a stash before restoration.
+
+### FlowGit Visual Stash Shelf:
+- **Slide-over Drawer (`StashShelfDrawer`):** Opens instantly from the Sidebar stashes list, Toolbar More Menu, or Command Palette.
+- **Stash Breakdown:** Shows original branch, creation timestamp, and file count with `+lines / -lines` stats.
+- **File Inspector:** Lists all modified, added, deleted, and untracked files with status pills (`M`, `A`, `D`, `U`).
+- **Monaco Diff Preview:** Inspect line-by-line changes in Split (side-by-side) or Unified mode with syntax highlighting before restoring.
+- **1-Click Actions:**
+  - 🟢 **Apply:** Restores changes into working directory while preserving the stash.
+  - ⚡ **Pop:** Restores changes and removes the stash entry.
+  - 🌿 **Branch from Stash:** Creates a new branch directly from the stash's base commit and checks it out (`git stash branch`).
+  - 🗑️ **Drop:** Permanently removes stash with confirmation safety.
+
+---
+
 <a name="-tiếng-việt"></a>
 # 🇻🇳 Tiếng Việt
 
@@ -178,3 +199,24 @@ Component: `src/lib/components/CommitBox.svelte`
   - **Ignore phần mở rộng:** Tự động thêm mẫu `*.log`, `*.tmp`, `*.cache`.
   - **Ignore thư mục cha:** Thêm toàn bộ thư mục chứa file vào quy tắc bỏ qua.
 - Hỗ trợ tạo file `.gitignore` mẫu chuẩn hóa 1-click cho các môi trường phổ biến (Node.js, Rust, Python, Go, Java).
+
+---
+
+## 🗄️ 6. KỆ STASH TRỰC QUAN (VISUAL STASH SHELF VỚI MONACO DIFF)
+
+Component: `src/lib/components/StashShelfDrawer.svelte`  
+Backend: `src-tauri/src/git/stash_ops.rs` (Commands: `get_stash_detail`, `get_stash_file_diff`, `stash_branch`)
+
+### Vấn đề:
+Lập trình viên thường ngần ngại sử dụng `git stash pop` vì không nhớ bản stash cũ chứa những file gì, sửa dòng code nào, rất dễ gây ra conflict đè nát code đang làm dở.
+
+### Giải pháp Kệ Stash Trực Quan trong FlowGit:
+- **Ngăn kéo Slide-over (`StashShelfDrawer`):** Mở mượt mà khi nhấn vào bất kỳ bản stash nào ở Sidebar, hoặc từ menu Toolbar / Command Palette.
+- **Bóc tách chi tiết bản Stash:** Hiển thị rõ nhánh gốc đã tạo stash, thời gian tạo, tổng số file và dòng thêm/bớt (`+X / -Y`).
+- **Danh sách tệp thông minh:** Liệt kê toàn bộ các tệp được sửa đổi, thêm mới, xóa và cả các tệp untracked kèm huy hiệu màu sắc (`M`, `A`, `D`, `U`).
+- **Monaco Diff Preview toàn diện:** Soi chi tiết diff từng dòng với chế độ xem song song 2 cột (Split) hoặc 1 cột (Unified), hỗ trợ syntax highlighting và tự động cuộn đến điểm thay đổi.
+- **Hành động 1-Click an toàn:**
+  - 🟢 **Apply:** Áp dụng code vào thư mục làm việc, vẫn giữ nguyên bản stash.
+  - ⚡ **Pop:** Áp dụng code và xóa bản stash khỏi Git.
+  - 🌿 **Branch from Stash:** Tạo một nhánh Git mới trực tiếp từ mốc stash và checkout sang (`git stash branch`).
+  - 🗑️ **Drop:** Xóa vĩnh viễn bản stash kèm hộp thoại xác nhận.

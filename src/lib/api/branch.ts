@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { BranchInfo, GitCredentials, SmartSyncResult, StashInfo, TagInfo } from '../types';
+import type { BranchInfo, FileDiffDetail, GitCredentials, SmartSyncResult, StashDetail, StashInfo, TagInfo } from '../types';
 import { isTauri } from './client';
 import { getMockBranches } from './mocks';
 
@@ -76,6 +76,70 @@ export async function stashDrop(path: string, index: number): Promise<void> {
   if (isTauri) {
     await invoke('stash_drop', { path, index });
   }
+}
+
+export async function getStashDetail(path: string, index: number): Promise<StashDetail> {
+  if (isTauri) {
+    return await invoke<StashDetail>('get_stash_detail', { path, index });
+  }
+  return {
+    index,
+    message: `WIP on main: mock stash ${index}`,
+    commit_id: 'mock_stash_commit',
+    branch_name: 'main',
+    created_at: Math.floor(Date.now() / 1000) - 3600,
+    files: [
+      { path: 'src/App.svelte', status: 'modified', additions: 15, deletions: 4, is_untracked: false },
+      { path: 'src/config.ts', status: 'added', additions: 8, deletions: 0, is_untracked: false },
+    ],
+    total_additions: 23,
+    total_deletions: 4,
+  };
+}
+
+export async function getStashFileDiff(
+  path: string,
+  index: number,
+  filePath: string,
+  ignoreWhitespace?: boolean
+): Promise<FileDiffDetail> {
+  if (isTauri) {
+    return await invoke<FileDiffDetail>('get_stash_file_diff', {
+      path,
+      index,
+      filePath,
+      ignoreWhitespace,
+    });
+  }
+  return {
+    path: filePath,
+    is_staged: false,
+    is_binary: false,
+    additions: 5,
+    deletions: 2,
+    hunks: [],
+    original_content: '// Original code\nexport const val = 1;',
+    modified_content: '// Modified in stash\nexport const val = 2;\nexport const extra = true;',
+  };
+}
+
+export async function stashBranch(
+  path: string,
+  index: number,
+  branchName: string
+): Promise<BranchInfo> {
+  if (isTauri) {
+    return await invoke<BranchInfo>('stash_branch', { path, index, branchName });
+  }
+  return {
+    name: `refs/heads/${branchName}`,
+    shorthand: branchName,
+    is_head: true,
+    is_remote: false,
+    ahead_count: 0,
+    behind_count: 0,
+    target_commit_id: 'mock_base_commit',
+  };
 }
 
 export async function smartSync(

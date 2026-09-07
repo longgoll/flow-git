@@ -62,6 +62,9 @@ All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard
 | `stash_apply` | `path: String, index: usize` | `bool` | Applies a stash entry without removing it. |
 | `stash_pop` | `path: String, index: usize` | `bool` | Applies and removes a stash entry. |
 | `stash_drop` | `path: String, index: usize` | `bool` | Drops a stash entry. |
+| `get_stash_detail` | `path: String, index: usize` | `StashDetail` | **Visual Stash Shelf**: Inspects files, status, line stats, and branch origin of a stash. |
+| `get_stash_file_diff` | `path: String, index: usize, file_path: String, ignore_whitespace: Option<bool>` | `FileDiffDetail` | **Visual Stash Shelf**: Generates Monaco-compatible diff for any file inside a stash (supports untracked). |
+| `stash_branch` | `path: String, index: usize, branch_name: String` | `BranchInfo` | Creates a new branch from stash base commit, checks out, and applies the stash (`git stash branch`). |
 | `get_tags` | `path: String` | `Vec<TagInfo>` | Lists release tags with target commits and annotations. |
 | `create_tag` | `path: String, tag_name: String, target_commit: String, message: Option<String>` | `TagInfo` | Creates a Lightweight or Annotated tag. |
 | `delete_tag` | `path: String, tag_name: String` | `bool` | Deletes tag from repository. |
@@ -247,6 +250,9 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `stash_apply` | `path: String, index: usize` | `bool` | Áp dụng lại một mốc stash mà không xóa nó khỏi danh sách. |
 | `stash_pop` | `path: String, index: usize` | `bool` | Áp dụng lại một mốc stash và xóa nó ra khỏi stash list. |
 | `stash_drop` | `path: String, index: usize` | `bool` | Xóa bỏ một mốc stash. |
+| `get_stash_detail` | `path: String, index: usize` | `StashDetail` | **Visual Stash Shelf**: Bóc tách danh sách file thay đổi, thống kê dòng, và nhánh gốc của mốc Stash. |
+| `get_stash_file_diff` | `path: String, index: usize, file_path: String, ignore_whitespace: Option<bool>` | `FileDiffDetail` | **Visual Stash Shelf**: Trích xuất nội dung diff chuẩn Monaco Diff Editor cho bất kỳ tệp nào trong Stash (kể cả tệp untracked). |
+| `stash_branch` | `path: String, index: usize, branch_name: String` | `BranchInfo` | Tạo nhánh Git mới từ mốc stash, checkout và tự động apply nội dung stash (`git stash branch`). |
 | `get_tags` | `path: String` | `Vec<TagInfo>` | Liệt kê toàn bộ Release Tags kèm commit mục tiêu và ghi chú. |
 | `create_tag` | `path: String, tag_name: String, target_commit: String, message: Option<String>` | `TagInfo` | Tạo Lightweight Tag hoặc Annotated Tag tại một commit. |
 | `delete_tag` | `path: String, tag_name: String` | `bool` | Xóa Tag khỏi repository. |

@@ -11,6 +11,7 @@
   import LfsManager from './LfsManager.svelte';
   import SquashModal from './SquashModal.svelte';
   import SubmoduleManager from './SubmoduleManager.svelte';
+  import StashShelfDrawer from './StashShelfDrawer.svelte';
   import TimeMachineDrawer from './TimeMachineDrawer.svelte';
   import TrashInspector from './TrashInspector.svelte';
   import UserGuideModal from './UserGuideModal.svelte';
@@ -252,6 +253,19 @@
   onClose={() => (safety.showTimeMachineDrawer = false)}
 />
 
+<!-- Visual Stash Shelf Drawer with Monaco Diff Preview -->
+<StashShelfDrawer
+  isOpen={modalState.showStashShelfDrawer}
+  repoPath={repo.currentRepoPath}
+  stashes={repo.stashes}
+  initialIndex={modalState.selectedStashIndex}
+  onClose={() => (modalState.showStashShelfDrawer = false)}
+  onRefresh={async () => {
+    await loadRepository(repo.currentRepoPath);
+    await refreshWorkingTreeAndDiff();
+  }}
+/>
+
 <!-- Visual Reflog & Lost and Found Modal -->
 <LostAndFoundModal
   isOpen={safety.showLostAndFoundModal}
@@ -294,6 +308,7 @@
   onOpenBisect={() => safety.openBisect(repo.currentRepoPath)}
   onOpenTimeMachine={() => safety.openTimeMachine(repo.currentRepoPath)}
   onOpenLostAndFound={() => safety.openLostAndFound(repo.currentRepoPath)}
+  onOpenStashShelf={() => modalState.openStashShelf(0)}
   onOpenAI={handleOpenAI}
   onSmartSync={async () => {
     const res = await remote.runSmartSync(

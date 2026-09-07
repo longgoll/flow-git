@@ -30,6 +30,7 @@
     onFetchRemote?: (name: string) => Promise<void>;
     onPublishRepo?: () => void;
     onDeleteTag?: (tagName: string) => void;
+    onOpenStashShelf?: (index?: number) => void;
   }
 
   let {
@@ -47,6 +48,7 @@
     onFetchRemote,
     onPublishRepo,
     onDeleteTag,
+    onOpenStashShelf,
   }: Props = $props();
 </script>
 
@@ -224,29 +226,52 @@
 
 <!-- STASHES -->
 <div>
-  <button
-    onclick={() => (showStashes = !showStashes)}
-    class="w-full flex items-center justify-between px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors cursor-pointer"
-  >
-    <div class="flex items-center gap-1.5">
+  <div class="flex items-center justify-between px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 group">
+    <button
+      onclick={() => (showStashes = !showStashes)}
+      class="flex items-center gap-1.5 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+    >
       <Archive class="w-3.5 h-3.5 text-zinc-400" />
       <span>{localeState.t('sidebar.stashes')}</span>
       <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">({stashes.length})</span>
+    </button>
+    <div class="flex items-center gap-1">
+      {#if onOpenStashShelf && stashes.length > 0}
+        <button
+          onclick={() => onOpenStashShelf?.(0)}
+          class="opacity-0 group-hover:opacity-100 p-0.5 rounded text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+          title="Mở Visual Stash Shelf"
+        >
+          <Archive class="w-3 h-3" />
+        </button>
+      {/if}
+      <button
+        onclick={() => (showStashes = !showStashes)}
+        class="text-zinc-400 dark:text-zinc-500 cursor-pointer"
+      >
+        {#if showStashes}
+          <ChevronDown class="w-3.5 h-3.5" />
+        {:else}
+          <ChevronRight class="w-3.5 h-3.5" />
+        {/if}
+      </button>
     </div>
-    {#if showStashes}
-      <ChevronDown class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
-    {:else}
-      <ChevronRight class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
-    {/if}
-  </button>
+  </div>
 
   {#if showStashes}
     <div class="mt-1 space-y-0.5 pl-1">
       {#each stashes as stash (stash.index)}
-        <div class="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-900/60 hover:text-zinc-950 dark:hover:text-zinc-200 font-mono text-[11px]">
-          <span class="text-rose-600 dark:text-rose-400 font-semibold">stash@{`{${stash.index}}`}</span>
-          <span class="truncate text-zinc-500">{stash.message}</span>
-        </div>
+        <button
+          onclick={() => onOpenStashShelf?.(stash.index)}
+          class="w-full text-left flex items-center justify-between px-2 py-1.5 rounded-md text-xs text-zinc-600 dark:text-zinc-400 hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-300 font-mono text-[11px] transition-colors cursor-pointer group"
+          title="Nhấn để xem chi tiết diff và thao tác với Stash này"
+        >
+          <div class="flex items-center gap-2 truncate">
+            <span class="text-amber-600 dark:text-amber-400 font-semibold shrink-0">stash@{`{${stash.index}}`}</span>
+            <span class="truncate text-zinc-500 group-hover:text-zinc-800 dark:group-hover:text-zinc-200">{stash.message}</span>
+          </div>
+          <span class="text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 shrink-0">Diff ➔</span>
+        </button>
       {/each}
       {#if stashes.length === 0}
         <div class="px-2 py-1 text-[11px] text-zinc-400 dark:text-zinc-600 italic">{localeState.t('sidebar.noStashesFound')}</div>

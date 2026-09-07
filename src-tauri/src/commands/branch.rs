@@ -9,7 +9,9 @@ use crate::git::{
         get_all_branches, get_all_stashes, get_all_tags,
     },
     commit_ops::{stash_apply as git_stash_apply, stash_drop as git_stash_drop, stash_pop as git_stash_pop, stash_save as git_stash_save},
+    diff::FileDiffDetail,
     repo::open_repository as git_open_repo,
+    stash_ops::{get_stash_detail as git_get_stash_detail, get_stash_file_diff as git_get_stash_file_diff, stash_branch as git_stash_branch, StashDetail},
     sync::{smart_sync_upstream as git_smart_sync, SmartSyncResult},
     BranchInfo, StashInfo, TagInfo,
 };
@@ -128,6 +130,41 @@ pub async fn stash_drop(path: String, index: usize) -> AppResult<()> {
     tokio::task::spawn_blocking(move || {
         let mut repo = git_open_repo(&path)?;
         git_stash_drop(&mut repo, index)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn get_stash_detail(path: String, index: usize) -> AppResult<StashDetail> {
+    tokio::task::spawn_blocking(move || {
+        let mut repo = git_open_repo(&path)?;
+        git_get_stash_detail(&mut repo, index)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn get_stash_file_diff(
+    path: String,
+    index: usize,
+    file_path: String,
+    ignore_whitespace: Option<bool>,
+) -> AppResult<FileDiffDetail> {
+    tokio::task::spawn_blocking(move || {
+        let mut repo = git_open_repo(&path)?;
+        git_get_stash_file_diff(&mut repo, index, &file_path, ignore_whitespace)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn stash_branch(path: String, index: usize, branch_name: String) -> AppResult<BranchInfo> {
+    tokio::task::spawn_blocking(move || {
+        let mut repo = git_open_repo(&path)?;
+        git_stash_branch(&mut repo, index, &branch_name)
     })
     .await
     .map_err(|e| AppError::Internal(e.to_string()))?

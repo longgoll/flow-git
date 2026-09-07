@@ -24,8 +24,8 @@ pub use repo::{
 
 pub use branch::{
     checkout_branch, create_branch, delete_branch, delete_merged_branches, get_branches,
-    get_merged_branches, get_stashes, get_tags, rename_branch, smart_sync, stash_apply,
-    stash_drop, stash_pop, stash_save,
+    get_merged_branches, get_stash_detail, get_stash_file_diff, get_stashes, get_tags,
+    rename_branch, smart_sync, stash_apply, stash_branch, stash_drop, stash_pop, stash_save,
 };
 
 pub use diff::{

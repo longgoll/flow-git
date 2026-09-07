@@ -32,6 +32,7 @@
     onDeleteTag?: (tagName: string) => void;
     onCreatePullRequest?: (branch: BranchInfo) => void;
     onCloseSidebar?: () => void;
+    onOpenStashShelf?: (index?: number) => void;
     isPushing?: boolean;
   }
 
@@ -61,6 +62,7 @@
     onDeleteTag,
     onCreatePullRequest,
     onCloseSidebar,
+    onOpenStashShelf,
     isPushing = false,
   }: Props = $props();
 
@@ -162,6 +164,7 @@
       {onFetchRemote}
       {onPublishRepo}
       {onDeleteTag}
+      {onOpenStashShelf}
     />
 
     <!-- LOCAL & REMOTE BRANCHES -->

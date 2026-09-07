@@ -24,6 +24,7 @@ pub mod submodule;
 pub mod sync;
 pub mod tree;
 pub mod worktree;
+pub mod stash_ops;
 
 use serde::{Deserialize, Serialize};
 
@@ -38,6 +39,7 @@ pub use interactive_rebase::RebaseTodoItem;
 pub use lfs::{LfsFileInfo, LfsLockInfo, LfsSummary};
 pub use rebase::RebaseExecutionResult;
 pub use remote_ops::RemoteInfo;
+pub use stash_ops::{StashDetail, StashFileItem};
 pub use submodule::SubmoduleInfo;
 pub use tree::{FileContentResponse, FileGrepMatch, TreeEntryItem};
 

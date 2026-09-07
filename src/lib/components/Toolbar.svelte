@@ -59,6 +59,7 @@
     onOpenBisect?: () => void;
     onOpenTimeMachine?: () => void;
     onOpenLostAndFound?: () => void;
+    onOpenStashShelf?: () => void;
     onOpenAI?: () => void;
     onOpenSubmodules?: () => void;
     onOpenLfs?: () => void;
@@ -115,6 +116,7 @@
     onOpenBisect,
     onOpenTimeMachine,
     onOpenLostAndFound,
+    onOpenStashShelf,
     onOpenAI,
     onOpenSubmodules,
     onOpenLfs,
@@ -263,6 +265,7 @@
       {onOpenPalette}
       {onOpenTimeMachine}
       {onOpenLostAndFound}
+      {onOpenStashShelf}
       {onOpenBisect}
       {onOpenWorktrees}
       {onOpenSubmodules}

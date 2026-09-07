@@ -19,6 +19,7 @@
     Sparkles,
     RefreshCw,
     Compass,
+    Archive,
   } from 'lucide-svelte';
   import { themeState } from '../../state/themeState.svelte';
   import { localeState } from '../../state/localeState.svelte';
@@ -36,6 +37,7 @@
     onOpenPalette?: () => void;
     onOpenTimeMachine?: () => void;
     onOpenLostAndFound?: () => void;
+    onOpenStashShelf?: () => void;
     onOpenBisect?: () => void;
     onOpenWorktrees?: () => void;
     onOpenSubmodules?: () => void;
@@ -56,6 +58,7 @@
     onOpenPalette,
     onOpenTimeMachine,
     onOpenLostAndFound,
+    onOpenStashShelf,
     onOpenBisect,
     onOpenWorktrees,
     onOpenSubmodules,
@@ -257,6 +260,19 @@
             <span>{localeState.t('safety.lostAndFound.menuItem')}</span>
           </div>
           <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Reflog</span>
+        </button>
+      {/if}
+
+      {#if onOpenStashShelf}
+        <button
+          onclick={() => { onCloseToolsMenu(); onOpenStashShelf(); }}
+          class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-amber-700 dark:hover:text-amber-300 transition-colors cursor-pointer"
+        >
+          <div class="flex items-center gap-2">
+            <Archive class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+            <span>{localeState.t('stash.shelf.title')}</span>
+          </div>
+          <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Diff</span>
         </button>
       {/if}
 

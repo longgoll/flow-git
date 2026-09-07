@@ -16,6 +16,7 @@ import { assistant } from "./assistant";
 import { auth } from "./auth";
 import { actions } from "./actions";
 import { updater } from "./updater";
+import { stash } from "./stash";
 
 export const en: TranslationSchema = {
   common,
@@ -41,4 +42,5 @@ export const en: TranslationSchema = {
   auth,
   actions,
   updater,
+  stash,
 };

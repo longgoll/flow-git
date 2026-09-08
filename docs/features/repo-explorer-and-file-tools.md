@@ -120,6 +120,36 @@ When secrets, passwords, or huge binaries are committed:
 
 ---
 
+## 🚫 7. Visual .gitignore Manager
+
+Component: [`src/lib/components/GitignoreManagerModal.svelte`](file:///d:/HoangLong/Dev/flow-git/src/lib/components/GitignoreManagerModal.svelte)  
+Backend IPC: `get_file_content`, `save_file_content`, `add_to_gitignore`, `generate_standard_gitignore`
+
+### Effortless Exclusion Rules:
+- **Integrated Monaco Editor:** View and edit `.gitignore` rules with syntax highlighting and instant save (`Ctrl + S`).
+- **Standard Industry Presets (1-Click Insertion):**
+  - **Node.js / Web:** `node_modules/`, `dist/`, `.next/`, `.env*`, `*.log`.
+  - **Rust / Tauri:** `target/`, `src-tauri/target/`, `*.rs.bk`.
+  - **Python:** `__pycache__/`, `*.pyc`, `.venv/`, `.pytest_cache/`.
+  - **Go:** `bin/`, `vendor/`, `*.exe`.
+  - **OS & IDE:** `.DS_Store`, `Thumbs.db`, `.vscode/*`, `.idea/`.
+- **Context Menu Integration:** Right-click any unstaged/untracked file in the Working Tree to instantly append ignoring rules without opening the file manually.
+
+---
+
+## 📊 8. Repository Pulse & Insights
+
+Component: [`src/lib/components/RepoInsightsModal.svelte`](file:///d:/HoangLong/Dev/flow-git/src/lib/components/RepoInsightsModal.svelte)  
+Backend IPC: `get_commit_history`, `get_branches`, `scan_heavy_files`
+
+### High-Level Engineering Metrics:
+- **Active Contributors Leaderboard:** Top authors ranked by commit velocity, email attribution, and contribution percentage.
+- **Commit Activity Distribution:** Day-of-week and hourly commit frequency heatmap for tracking team productivity cycles.
+- **Branch Health & Stale Branches:** Visual indicators of active vs stale branches (> 30 days without updates).
+- **Heavy Binary Radar:** Realtime scan preventing repository bloat by identifying large committed artifacts.
+
+---
+
 <a name="-tiếng-việt"></a>
 # 🇻🇳 Tiếng Việt
 
@@ -245,3 +275,33 @@ Lập trình viên vô tình commit file `.env` chứa mật khẩu cơ sở d�
    - Backend Rust gọi thuật toán `nuke_file_from_history`: Quét đệ quy toàn bộ cây commit của repository và xóa sạch blob của tệp đó khỏi mọi tree object.
    - Viết lại các commit ID cha-con một cách nhất quán.
    - Sau khi hoàn tất, tệp hoàn toàn biến mất khỏi mọi nhánh và commit cũ, bảo vệ an toàn tuyệt đối cho dự án của bạn.
+
+---
+
+## 🚫 7. QUẢN LÝ .GITIGNORE TRỰC QUAN (VISUAL .GITIGNORE MANAGER)
+
+Component: [`src/lib/components/GitignoreManagerModal.svelte`](file:///d:/HoangLong/Dev/flow-git/src/lib/components/GitignoreManagerModal.svelte)  
+Backend IPC: `get_file_content`, `save_file_content`, `add_to_gitignore`, `generate_standard_gitignore`
+
+### Thiết lập quy tắc loại trừ dễ dàng:
+- **Tích hợp Monaco Editor:** Soạn thảo và chỉnh sửa file `.gitignore` trực tiếp với tô màu cú pháp, số dòng và phím tắt lưu nhanh `Ctrl + S`.
+- **Mẫu cấu hình tiêu chuẩn theo hệ sinh thái (1-Click Insertion):**
+  - **Node.js / Web:** Tự động điền các mẫu bỏ qua `node_modules/`, `dist/`, `.next/`, `.env*`, `*.log`.
+  - **Rust / Tauri:** Bỏ qua `target/`, `src-tauri/target/`, `*.rs.bk`.
+  - **Python:** Bỏ qua `__pycache__/`, `*.pyc`, `.venv/`, `.pytest_cache/`.
+  - **Go:** Bỏ qua `bin/`, `vendor/`, `*.exe`.
+  - **OS & IDE:** Bỏ qua `.DS_Store`, `Thumbs.db`, `.vscode/*`, `.idea/`.
+- **Thêm quy tắc nhanh từ Context Menu:** Nhấp chuột phải vào bất kỳ file nào trong Working Tree ➔ Chọn "Thêm vào .gitignore" để tự động bổ sung mà không cần mở file thủ công.
+
+---
+
+## 📊 8. THỐNG KÊ CHUYÊN SÂU & NHỊP ĐẬP REPOSITORY (REPO PULSE & INSIGHTS)
+
+Component: [`src/lib/components/RepoInsightsModal.svelte`](file:///d:/HoangLong/Dev/flow-git/src/lib/components/RepoInsightsModal.svelte)  
+Backend IPC: `get_commit_history`, `get_branches`, `scan_heavy_files`
+
+### Đo lường hiệu suất và sức khỏe dự án:
+- **Bảng vàng Tác giả (Active Contributors Leaderboard):** Xếp hạng các lập trình viên đóng góp tích cực nhất theo tốc độ commit, email và tỷ lệ đóng góp trong dự án.
+- **Biểu đồ phân bố thời gian commit:** Phân tích tần suất commit theo các ngày trong tuần và khung giờ trong ngày, giúp nắm bắt nhịp sinh học làm việc của đội ngũ.
+- **Theo dõi độ tươi của Nhánh (Branch Health & Stale Branches):** Phân loại nhánh đang hoạt động vs nhánh cũ bị bỏ quên (> 30 ngày không có commit mới) để dọn dẹp kịp thời.
+- **Radar phát hiện tệp nhị phân nặng:** Quét tức thì dung lượng các file lớn để ngăn ngừa phình to repo ngoài tầm kiểm soát.

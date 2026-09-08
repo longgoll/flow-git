@@ -457,6 +457,7 @@
     onOpenGuide={() => (modalState.showGuideModal = true)}
     onOpenPlaybook={() => (modalState.showPlaybookModal = true)}
     onOpenInsights={() => modalState.openInsights()}
+    onOpenGitHooks={() => modalState.openGitHooks()}
     onOpenAuth={() => (remote.showAuthModal = true)}
     onOpenQuickHotfix={() => (modalState.showHotfixModal = true)}
     activeHotfixBranch={modalState.activeHotfixBranch}

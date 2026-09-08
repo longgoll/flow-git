@@ -30,6 +30,7 @@
   import LostAndFoundModal from './LostAndFoundModal.svelte';
   import UpdateModal from './UpdateModal.svelte';
   import RepoInsightsModal from './RepoInsightsModal.svelte';
+  import GitHooksModal from './GitHooksModal.svelte';
   import { resetToCommit } from '../api';
   import { toast } from '../state/toastState.svelte';
   import { localeState } from '../state/localeState.svelte';
@@ -364,6 +365,7 @@
   }
   onOpenGuide={() => { modalState.showGuideModal = true; }}
   onOpenInsights={() => modalState.openInsights()}
+  onOpenGitHooks={() => modalState.openGitHooks()}
   onClose={() => (modalState.showCommandPalette = false)}
 />
 
@@ -620,3 +622,12 @@
     onClose={() => modalState.closeInsights()}
   />
 {/if}
+
+<!-- Git Hooks Manager Modal -->
+{#if modalState.showGitHooksModal && repo.currentRepoPath}
+  <GitHooksModal
+    repoPath={repo.currentRepoPath}
+    onClose={() => modalState.closeGitHooks()}
+  />
+{/if}
+

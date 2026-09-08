@@ -16,3 +16,4 @@ export * from './remote';
 export * from './identity';
 export * from './edgeCases';
 export * from './ignore';
+export * from './hooks';

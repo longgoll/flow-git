@@ -66,6 +66,27 @@ Backend: `src-tauri/src/git/submodule.rs`
 
 ---
 
+## ⚓ 4. Git Hooks Manager
+
+Component: `src/lib/components/GitHooksModal.svelte`  
+Backend: `src-tauri/src/git/hooks.rs` & `src-tauri/src/commands/hooks.rs`
+
+### Visual Automation & Guardrails:
+- **8 Standard Git Hooks Supported:** `pre-commit`, `commit-msg`, `pre-push`, `post-merge`, `prepare-commit-msg`, `post-checkout`, `post-commit`, `pre-rebase`.
+- **1-Click Toggle Switch:**
+  - Toggle between active (`.git/hooks/<name>`) and disabled state (`.git/hooks/<name>.disabled`).
+  - Automatically initializes standard boilerplate scripts with executable permissions (`0o755` on Unix/macOS).
+- **Integrated Monaco Code Editor:**
+  - Syntax highlighting for Shell / Bash scripts (`language="shell"`), line numbers, and quick save (`Ctrl + S`).
+  - **"Restore from Sample"**: Restore official `.sample` scripts generated during Git repo initialization.
+  - **Built-in Presets**:
+    - `commit-msg`: Conventional Commits validation regex.
+    - `pre-commit`: Linter and test pre-check execution.
+    - `pre-push`: Protected branch direct push blocker (`main` / `master`).
+    - `post-merge`: Automatic `npm install` on `package.json` updates.
+
+---
+
 <a name="-tiếng-việt"></a>
 # 🇻🇳 Tiếng Việt
 
@@ -122,6 +143,28 @@ Backend: `src-tauri/src/git/submodule.rs`
 
 ---
 
+## ⚓ 4. GIT HOOKS MANAGER (QUẢN LÝ HOOKS TRỰC QUAN)
+
+Component: `src/lib/components/GitHooksModal.svelte`  
+Backend: `src-tauri/src/git/hooks.rs` & `src-tauri/src/commands/hooks.rs`
+
+### Tự động hóa kiểm tra & Bảo vệ kho mã nguồn:
+- **Hỗ trợ 8 Git Hooks tiêu chuẩn:** `pre-commit`, `commit-msg`, `pre-push`, `post-merge`, `prepare-commit-msg`, `post-checkout`, `post-commit`, `pre-rebase`.
+- **Công tắc Bật / Tắt 1-Click (Toggle Switch):**
+  - Tự động chuyển trạng thái giữa tệp thực thi `<hook>` và tệp vô hiệu hóa `<hook>.disabled`.
+  - Tự động cấp quyền thực thi (`chmod +x` / `0o755`) trên Unix/macOS.
+- **Trình soạn thảo mã nguồn Monaco Editor tích hợp:**
+  - Soạn thảo trực tiếp script Shell/Bash có tô màu cú pháp, số dòng và phím tắt lưu nhanh `Ctrl + S`.
+  - **"Khôi phục từ Sample"**: Tái tạo lại tệp mẫu gốc `.sample` của Git.
+  - **Mẫu kịch bản có sẵn (Built-in Templates):**
+    - `commit-msg`: Kiểm tra quy chuẩn Conventional Commits (`feat:`, `fix:`, v.v.).
+    - `pre-commit`: Chạy linter và kiểm thử tự động trước khi commit.
+    - `pre-push`: Chặn hành động push trực tiếp vào nhánh được bảo vệ (`main`/`master`).
+    - `post-merge`: Tự động chạy `npm install` khi có cập nhật `package.json`.
+
+---
+
 ## 🔗 LIÊN KẾT ĐẾN BỘ CÔNG CỤ TỆP LIÊN QUAN
 - 📂 [repo-explorer-and-file-tools.md](./repo-explorer-and-file-tools.md): Trình duyệt cây tệp tin Repository Explorer, Interactive Blame, File History Timeline, và History Nuker xóa tệp nhạy cảm.
 - 🥞 [stacked-commits-and-hotfix.md](./stacked-commits-and-hotfix.md): Chuỗi Stacked Commits và luồng Quick Hotfix.
+

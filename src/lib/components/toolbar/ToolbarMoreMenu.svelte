@@ -21,6 +21,7 @@
     Compass,
     Archive,
     Activity,
+    Anchor,
   } from 'lucide-svelte';
   import { themeState } from '../../state/themeState.svelte';
   import { localeState } from '../../state/localeState.svelte';
@@ -45,6 +46,7 @@
     onOpenLfs?: () => void;
     onOpenTrash: () => void;
     onOpenInsights?: () => void;
+    onOpenGitHooks?: () => void;
     onLimitChange: (limit: number) => void;
   }
 
@@ -67,6 +69,7 @@
     onOpenLfs,
     onOpenTrash,
     onOpenInsights,
+    onOpenGitHooks,
     onLimitChange,
   }: Props = $props();
 </script>
@@ -329,6 +332,19 @@
             <span>{localeState.t('insights.title')}</span>
           </div>
           <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">Pulse</span>
+        </button>
+      {/if}
+
+      {#if onOpenGitHooks}
+        <button
+          onclick={() => { onCloseToolsMenu(); onOpenGitHooks(); }}
+          class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-amber-700 dark:hover:text-amber-300 transition-colors cursor-pointer"
+        >
+          <div class="flex items-center gap-2">
+            <Anchor class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+            <span>{localeState.t('gitHooks.title')}</span>
+          </div>
+          <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Hooks</span>
         </button>
       {/if}
 

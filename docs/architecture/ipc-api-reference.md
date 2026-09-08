@@ -201,6 +201,16 @@ All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard
 
 ---
 
+## ⚓ 10. Git Hooks Commands
+
+| Command Name | Parameters | Return Type | Description |
+| :--- | :--- | :--- | :--- |
+| `get_git_hooks` | `repo_path: String` | `Vec<GitHookInfo>` | Lists all 8 standard lifecycle hooks with active/disabled/sample state and content. |
+| `save_git_hook` | `repo_path: String, name: String, content: String, enabled: bool` | `()` | Saves hook script content, updates `.disabled` extension, and sets executable bits (`0o755`). |
+| `toggle_git_hook` | `repo_path: String, name: String, enabled: bool` | `()` | 1-Click toggle renaming between `<hook>` and `<hook>.disabled` (or copies `.sample`). |
+
+---
+
 <a name="-tiếng-việt"></a>
 # 🇻🇳 Tiếng Việt
 
@@ -386,3 +396,14 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `check_file_locks` | `path: String, files: Vec<String>` | `Vec<LockedFileInfo>` | Quét xem file nào đang bị các phần mềm khác trên Windows/OS khóa chặt không cho ghi. |
 | `scan_heavy_files` | `path: String, size_threshold_mb: Option<u64>` | `Vec<HeavyFileInfo>` | Quét trước khi stage/commit để ngăn ngừa vô tình đẩy file nhị phân > 50MB lên Git. |
 | `shelve_untracked_files`| `path: String, files: Vec<String>` | `bool` | Cất tạm các file untracked bị trùng tên vào Safe Discard để tránh bị ghi đè khi switch branch. |
+
+---
+
+## ⚓ 10. GIT HOOKS COMMANDS
+
+| Tên Command | Tham số đầu vào | Kiểu dữ liệu trả về | Mô tả chi tiết |
+| :--- | :--- | :--- | :--- |
+| `get_git_hooks` | `repo_path: String` | `Vec<GitHookInfo>` | Đọc toàn bộ 8 lifecycle hooks kèm trạng thái bật/tắt/sample và nội dung tệp. |
+| `save_git_hook` | `repo_path: String, name: String, content: String, enabled: bool` | `()` | Lưu nội dung script, xử lý phần mở rộng `.disabled` và cấp quyền `0o755`. |
+| `toggle_git_hook` | `repo_path: String, name: String, enabled: bool` | `()` | Bật/tắt 1-click bằng cách đổi tên tệp giữa `<hook>` và `<hook>.disabled` (hoặc sao chép `.sample`). |
+

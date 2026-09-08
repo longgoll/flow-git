@@ -11,6 +11,7 @@ export const assistant = {
     categoryTag: "Tag",
     categoryAI: "Artificial Intelligence (AI)",
     categoryHelp: "Help & Documentation",
+    categoryTools: "Advanced Tools",
   },
   welcome: {
     title: "Welcome to FlowGit",

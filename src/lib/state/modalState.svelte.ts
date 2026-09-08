@@ -36,9 +36,10 @@ export class ModalState {
   showAIModal = $state<boolean>(false);
   aiDiffContext = $state<string>('');
 
-  // Submodules & LFS
+  // Submodules, LFS & Git Hooks
   showSubmoduleModal = $state<boolean>(false);
   showLfsModal = $state<boolean>(false);
+  showGitHooksModal = $state<boolean>(false);
 
   // User Guide / Playbook
   showGuideModal = $state<boolean>(false);
@@ -192,6 +193,13 @@ export class ModalState {
     this.dropModalPosition = position;
     this.showDropActionModal = true;
   }
+  openGitHooks() {
+    this.showGitHooksModal = true;
+  }
+  closeGitHooks() {
+    this.showGitHooksModal = false;
+  }
+
   closeDropAction() {
     this.showDropActionModal = false;
     this.dropSourceCommit = null;

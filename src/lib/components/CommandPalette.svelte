@@ -24,12 +24,13 @@
     LifeBuoy,
     Archive,
     Activity,
+    Anchor,
   } from 'lucide-svelte';
 
   interface PaletteItem {
     id: string;
     title: string;
-    category: 'View' | 'Action' | 'Branch' | 'Tag' | 'AI' | 'Help';
+    category: 'View' | 'Action' | 'Branch' | 'Tag' | 'AI' | 'Help' | 'Tools';
     icon: any;
     shortcut?: string;
     action: () => void;
@@ -59,6 +60,7 @@
     onFetch?: () => void;
     onOpenGuide?: () => void;
     onOpenInsights?: () => void;
+    onOpenGitHooks?: () => void;
     onClose: () => void;
   }
 
@@ -86,6 +88,7 @@
     onFetch,
     onOpenGuide,
     onOpenInsights,
+    onOpenGitHooks,
     onClose,
   }: Props = $props();
 
@@ -175,6 +178,16 @@
         action: () => {
           onClose();
           onOpenInsights?.();
+        },
+      },
+      {
+        id: 'open-git-hooks',
+        title: `${localeState.t('gitHooks.title')} (pre-commit, commit-msg, pre-push, post-merge)`,
+        category: 'Tools',
+        icon: Anchor,
+        action: () => {
+          onClose();
+          onOpenGitHooks?.();
         },
       },
 

@@ -23,12 +23,13 @@ Backend: `src-tauri/src/git/interactive_rebase.rs`
 ### The Problem:
 `git rebase -i HEAD~N` in the terminal forces developers into crude text editors (Vim, Nano), requiring obscure shorthand letters (`p`, `r`, `s`, `f`, `d`) where accidental line deletions can corrupt branches.
 
-### FlowGit Timeline Interface:
-Right-click any base commit on the graph to open the visual timeline:
+### FlowGit Visual Rebase Studio:
+Right-click any base commit on the graph ➔ **"Interactive Rebase from Here"** to launch the studio:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 🔀 INTERACTIVE REBASE TIMELINE                                              │
+│ 🔀 VISUAL INTERACTIVE REBASE STUDIO                                         │
+│ [ Todo List & Drag-Drop ]  [ Dry-Run Preview Graph ]                        │
 │                                                                             │
 │ ☰  [Pick ▼]   a1b2c3d  feat(auth): add GitHub device flow authentication   │
 │ ☰  [Reword ▼] 4e5f6g7  adjust button CSS padding                            │
@@ -36,17 +37,20 @@ Right-click any base commit on the graph to open the visual timeline:
 │ ☰  [Fixup ▼]  2k3l4m5  fix typo in readme                                   │
 │ ☰  [Drop ▼]   6n7o8p9  experimental code removal                            │
 │                                                                             │
-│ [Cancel]                                            [Execute Rebase Sequence]│
+│ [Drop All Merges]  [Restore All]                    [Start Rebase (3)]      │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Supported Actions:
-1. **Reorder via Drag & Drop:** Grab `☰` to change commit application order.
-2. **`Pick`:** Preserves commit as-is.
-3. **`Reword`:** Modifies commit message directly in UI without changing code.
-4. **`Squash`:** Melds commit into predecessor and consolidates commit messages.
-5. **`Fixup`:** Melds into predecessor while discarding current commit message.
-6. **`Drop`:** Completely purges commit from historical lineage.
+### Key Studio Capabilities:
+1. **HTML5 Drag & Drop Reordering (`GripVertical`):** Drag any commit row up or down with live amber indicators (`border-dashed border-amber-500`) and destination insertion markers.
+2. **Dry-Run Preview Graph:**
+   - Pre-computes and simulates the resulting commit tree DAG *before* executing against disk.
+   - Distinct node markers: Blue for squashed commits (with expandable sub-message bullets), amber for reworded commits, emerald for preserved picks, purple for onto base, and luminous `NEW HEAD` badge.
+   - High-level metric summary: e.g., `From 7 commits ➔ 3 commits (4 squashed/dropped)`.
+3. **Safety Guard (Invalid First Squash):** Automatically detects if a squash/fixup is placed at the first position, warns in red with 1-click **"Fix to Pick"**, and safely disables the Rebase button.
+4. **Batch Operations & Filtering:**
+   - **`Drop All Merges`:** 1-Click marks all merge commits as `drop` to flatten branch history.
+   - Filters: `All`, `Merge Commits`, `Dropped`.
 
 ---
 
@@ -119,12 +123,13 @@ Backend: `src-tauri/src/git/interactive_rebase.rs`
 ### Vấn đề:
 Lệnh `git rebase -i HEAD~N` bằng dòng lệnh terminal buộc dev phải sử dụng trình soạn thảo văn bản thô sơ (Vim, Nano), nhớ các ký tự viết tắt (`p`, `r`, `s`, `f`, `d`) và rất dễ gây lỗi nếu xóa nhầm dòng.
 
-### Giao diện Timeline của FlowGit:
-Mở modal Interactive Rebase bằng cách nhấp chuột phải vào một commit làm mốc cơ sở (Base):
+### Giao diện Visual Rebase Studio của FlowGit:
+Mở Rebase Studio bằng cách nhấp chuột phải vào một commit làm mốc cơ sở (Base) ➔ Chọn **"Interactive Rebase từ đây"**:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 🔀 INTERACTIVE REBASE TIMELINE                                              │
+│ 🔀 VISUAL INTERACTIVE REBASE STUDIO                                         │
+│ [ Danh sách thao tác & Kéo thả ]  [ Xem trước đồ thị (Dry-Run) ]            │
 │                                                                             │
 │ ☰  [Pick ▼]   a1b2c3d  feat(auth): thêm xác thực thiết bị GitHub            │
 │ ☰  [Reword ▼] 4e5f6g7  sửa lại css phần nút bấm                             │
@@ -132,17 +137,20 @@ Mở modal Interactive Rebase bằng cách nhấp chuột phải vào một comm
 │ ☰  [Fixup ▼]  2k3l4m5  fix typo file readme                                 │
 │ ☰  [Drop ▼]   6n7o8p9  thử nghiệm tính năng bỏ                              │
 │                                                                             │
-│ [Hủy bỏ]                                           [Bắt đầu thực thi Rebase]│
+│ [Bỏ tất cả Merges]  [Khôi phục tất cả]             [Bắt đầu Rebase (3)]     │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Các hành động được hỗ trợ:
-1. **Kéo thả đổi vị trí (Reorder):** Giữ chuột vào biểu tượng `☰` để đổi thứ tự thực thi commit.
-2. **`Pick`:** Giữ nguyên commit.
-3. **`Reword`:** Sửa lại commit message trực tiếp trên giao diện mà không sửa code.
-4. **`Squash`:** Gộp commit vào commit liền trước và tổng hợp nội dung commit message.
-5. **`Fixup`:** Gộp vào commit trước nhưng tự động bỏ qua message của commit hiện tại.
-6. **`Drop`:** Xóa bỏ hoàn toàn commit đó ra khỏi chuỗi lịch sử.
+### Các tính năng cốt lõi của Studio:
+1. **Kéo - Thả trực quan (HTML5 Drag & Drop):** Giữ biểu tượng tay nắm `☰` kéo trực tiếp từng thẻ commit lên hoặc xuống với vạch chỉ dẫn màu cam hổ phách thời gian thực.
+2. **Xem trước đồ thị mô phỏng (Dry-Run Preview Graph):**
+   - Chế độ tab chuyển đổi: Mô phỏng toàn bộ cấu trúc cây commit dự kiến sẽ nhận được trước khi thực sự ghi đè vào Git.
+   - Màu sắc node chuẩn trạng thái: 🔵 Xanh dương cho commit gộp (hiển thị danh sách các commit con đã gộp), 🟡 Hổ phách cho commit sửa message, 🟢 Ngọc bích cho commit giữ nguyên, 🟣 Commit gốc Onto Base và huy hiệu `HEAD mới sau Rebase`.
+   - Thống kê chênh lệch số lượng commit: ví dụ `Từ 7 commits ➔ 3 commits (4 đã gộp/xóa)`.
+3. **Cơ chế an toàn (Invalid First Squash Guard):** Tự động phát hiện lỗi nếu commit đầu tiên bị gán `squash`/`fixup`, hiển thị cảnh báo đỏ kèm nút 1-click **"Sửa thành Pick"** và khóa nút Rebase an toàn.
+4. **Thao tác hàng loạt & Bộ lọc:**
+   - **`Loại bỏ tất cả Merge commits`:** 1-Click tự động gán `drop` cho toàn bộ commit merge để làm phẳng lịch sử.
+   - Lọc nhanh: `Tất cả`, `Merge Commits`, `Đã Drop`.
 
 ---
 

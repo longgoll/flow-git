@@ -86,6 +86,29 @@ Enables Google / Meta style Stacked Diffs workflows:
 
 ---
 
+## 🎚️ 6. Graph Density, Visibility & Advanced Filters
+
+- **Display Density Controls:** Toggle between Compact (high commit count view), Comfortable, and Spacious row heights.
+- **Pinned Favorite Branches (⭐):** 1-Click pin important branches (main, dev, personal features) to sidebar top for instant switching.
+- **Branch Visibility Control (👁️):**
+  - Hide / Solo specific branches to unclutter dense repositories.
+  - Powered by a safe DAG BFS reachability filter that only prunes commits belonging exclusively to hidden branches.
+- **Advanced Commit Filters:**
+  - Dynamic Author filter with commit counts.
+  - Date Range filter (Last 24h, 7 days, 30 days, or Custom Range picker).
+
+---
+
+## 🛡️ 7. Safe Commit Context Menu
+
+Right-click any commit node on the living graph for contextual actions:
+- **Interactive Rebase Studio:** Reorder commits via drag & drop, squash, fixup, reword, or drop with dry-run preview simulation.
+- **Squash Commits:** 1-Click squash recent commits into one with automated commit message drafting.
+- **Safe Reset (`--soft`, `--mixed`, `--hard`):** Backed up by Safe Discard & Time Machine Undo (`Ctrl + Z`).
+- **Cherry-pick & Revert:** Non-destructive operations with smart branch destination selection.
+
+---
+
 <a name="-tiếng-việt"></a>
 # 🇻🇳 Tiếng Việt
 
@@ -164,3 +187,27 @@ Theo tiêu chuẩn công nghệ hiện đại tại các công ty lớn (Google 
 - Khi người dùng giữ chuột vào một node commit hoặc nhãn nhánh và kéo đi:
   - Cây đồ thị lập tức xuất hiện các **đường nét đứt mờ (Ghost lines)** mô phỏng hình dạng tương lai nếu thả vào vị trí đó.
   - Phía sau hậu trường, Rust backend chạy kiểm tra Dry-run in-memory: nếu có nguy cơ xung đột, viền node mục tiêu sẽ đổi sang **màu cam phát sáng** kèm thông báo cảnh báo tức thì.
+
+---
+
+## 🎚️ 6. MẬT ĐỘ ĐỒ THỊ, ẨN/HIỆN NHÁNH & BỘ LỌC NÂNG CAO
+
+- **Điều chỉnh mật độ hiển thị (Graph Density):** Chuyển đổi linh hoạt giữa các chế độ Thu gọn (Compact - xem nhiều commit nhất), Vừa vặn (Comfortable) và Thoáng đãng (Spacious).
+- **Ghim nhánh yêu thích (⭐ Pinned Branches):** 1-Click ghim các nhánh cốt lõi (`main`, `dev`, nhánh cá nhân) lên đầu Sidebar để chuyển đổi tức thì.
+- **Kiểm soát hiển thị nhánh (👁️ Branch Visibility):**
+  - Bật/tắt con mắt hoặc chọn **"Solo this branch"** để dọn sạch các nhánh phụ gây rối mắt.
+  - Vận hành trên thuật toán duyệt đồ thị DAG BFS Reachability: chỉ ẩn các commit thuộc riêng nhánh bị ẩn, tuyệt đối an toàn với dữ liệu kho mã nguồn.
+- **Bộ lọc commit nâng cao (Advanced Filters):**
+  - Lọc theo Tác giả (Author Filter) hiển thị số lượng commit tương ứng.
+  - Lọc theo Khoảng thời gian (24h qua, 7 ngày qua, 30 ngày qua hoặc tùy chọn Ngày bắt đầu - Ngày kết thúc).
+
+---
+
+## 🛡️ 7. MENU NGỮ CẢNH AN TOÀN (SAFE COMMIT CONTEXT MENU)
+
+Nhấp chuột phải vào bất kỳ node commit nào trên đồ thị động để mở menu hành động an toàn:
+- **Interactive Rebase Studio:** Kéo thả đổi thứ tự commit, squash, fixup, reword, drop với tính năng xem trước mô phỏng Dry-Run.
+- **Gộp commit nhanh (Squash Commits):** Gộp chuỗi commit gần nhất thành 1 commit duy nhất kèm tự động soạn thảo commit message.
+- **Safe Reset (`--soft`, `--mixed`, `--hard`):** Luôn được bảo vệ bởi thùng rác Safe Discard 48h và Time Machine hoàn tác (`Ctrl + Z`).
+- **Cherry-pick & Revert:** Sao chép hoặc đảo ngược commit không phá hủy, tự động định tuyến đến nhánh đích mong muốn.
+

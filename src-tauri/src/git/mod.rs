@@ -25,6 +25,7 @@ pub mod sync;
 pub mod tree;
 pub mod worktree;
 pub mod stash_ops;
+pub mod hooks;
 
 use serde::{Deserialize, Serialize};
 
@@ -34,6 +35,7 @@ pub use blame::{BlameHunkItem, FileHistoryItem};
 pub use conflict::{ConflictChunk, ConflictFileDetail};
 pub use edge_cases::{HeavyFileInfo, LockedFileInfo};
 pub use history::PaginatedCommitHistory;
+pub use hooks::GitHookInfo;
 pub use identity::{CurrentRepoIdentity, GitIdentity};
 pub use interactive_rebase::RebaseTodoItem;
 pub use lfs::{LfsFileInfo, LfsLockInfo, LfsSummary};

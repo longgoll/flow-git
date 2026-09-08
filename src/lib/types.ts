@@ -134,6 +134,15 @@ export interface RebaseTodoItem {
   author: string;
 }
 
+export interface GitHookInfo {
+  name: string;
+  description_key: string;
+  enabled: boolean;
+  exists: boolean;
+  content: string;
+  sample_content?: string | null;
+}
+
 export interface GitIdentity {
   id: string;
   label: string;

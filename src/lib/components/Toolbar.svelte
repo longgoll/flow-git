@@ -75,6 +75,7 @@
     onOpenGuide?: () => void;
     onOpenPlaybook?: () => void;
     onOpenInsights?: () => void;
+    onOpenGitHooks?: () => void;
     activeAccount?: AccountProfile | null;
     onOpenAuth?: () => void;
     onOpenQuickHotfix?: () => void;
@@ -142,6 +143,7 @@
     onOpenGuide,
     onOpenPlaybook,
     onOpenInsights,
+    onOpenGitHooks,
     onOpenAuth,
     onOpenQuickHotfix,
     activeHotfixBranch = null,
@@ -302,6 +304,7 @@
       {onOpenLfs}
       {onOpenTrash}
       {onOpenInsights}
+      {onOpenGitHooks}
       {onLimitChange}
     />
 

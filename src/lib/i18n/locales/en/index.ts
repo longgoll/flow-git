@@ -18,6 +18,7 @@ import { actions } from "./actions";
 import { updater } from "./updater";
 import { stash } from "./stash";
 import { insights } from "./insights";
+import { gitHooks } from "./gitHooks";
 
 export const en: TranslationSchema = {
   common,
@@ -45,4 +46,5 @@ export const en: TranslationSchema = {
   updater,
   stash,
   insights,
+  gitHooks,
 };

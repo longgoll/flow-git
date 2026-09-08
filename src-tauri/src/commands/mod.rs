@@ -10,6 +10,7 @@ pub mod remote;
 pub mod repo;
 pub mod state;
 pub mod worktree;
+pub mod hooks;
 
 // Re-export AppState and all commands for convenience
 pub use state::AppState;
@@ -74,4 +75,8 @@ pub use auth::{
 
 pub use edge_cases::{
     check_file_locks, clear_index_lock, is_index_locked, scan_heavy_files, shelve_untracked_files,
+};
+
+pub use hooks::{
+    get_git_hooks, save_git_hook, toggle_git_hook,
 };

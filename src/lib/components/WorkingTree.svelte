@@ -17,8 +17,10 @@
     FileCode,
     Folder,
     AlertTriangle,
+    Anchor,
   } from 'lucide-svelte';
   import { localeState } from '../state/localeState.svelte';
+  import { modalState } from '../state/modalState.svelte';
 
   interface Props {
     status: WorkingTreeStatus | null;
@@ -220,6 +222,15 @@
         >
           <FileCode class="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
           <span class="hidden sm:inline">{localeState.t('workingTree.openGitignoreManager')}</span>
+        </button>
+
+        <button
+          onclick={() => modalState.openGitHooks()}
+          class="flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700/80 border border-zinc-300/70 dark:border-zinc-700/80 text-zinc-700 dark:text-zinc-300 text-[11px] font-medium transition-colors cursor-pointer"
+          title={localeState.t('gitHooks.title')}
+        >
+          <Anchor class="w-3 h-3 text-amber-500" />
+          <span class="hidden sm:inline">{localeState.t('gitHooks.title')}</span>
         </button>
 
         <button

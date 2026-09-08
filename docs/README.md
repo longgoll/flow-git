@@ -116,15 +116,15 @@ docs/
 - 🎨 [architecture/offscreen-canvas-graph.md](./architecture/offscreen-canvas-graph.md): OffscreenCanvas Worker 60 FPS & Lane Compaction.
 - 🔌 [architecture/ipc-api-reference.md](./architecture/ipc-api-reference.md): Complete index of 70+ Tauri v2 IPC Commands.
 - 🛡️ [architecture/safety-engine.md](./architecture/safety-engine.md): 48-Hour Safe Discard & `Ctrl+Z` Time-Travel engine.
-- 📊 [features/commit-graph-and-dag.md](./features/commit-graph-and-dag.md): Living Commit Graph & DAG Mini-Map.
+- 📊 [features/commit-graph-and-dag.md](./features/commit-graph-and-dag.md): Living Commit Graph, DAG Mini-Map, Graph Density, Pinned Branches ⭐ & Branch Visibility 👁️.
 - 🔍 [features/working-tree-and-diff.md](./features/working-tree-and-diff.md): Working Tree, Monaco Diff & Line Staging.
 - 🌿 [features/branches-and-remotes.md](./features/branches-and-remotes.md): Branches, Multi-Remotes, Smart Sync & Branch Cleanup.
-- 🔀 [features/rebase-and-history-ops.md](./features/rebase-and-history-ops.md): Interactive Rebase, Drag-and-Drop, Squash.
+- 🔀 [features/rebase-and-history-ops.md](./features/rebase-and-history-ops.md): Visual Interactive Rebase Studio (Drag & Drop, Dry-Run Simulation), Squash.
 - ⚔️ [features/conflict-and-bisect.md](./features/conflict-and-bisect.md): 4-Pane Conflict Resolver & Visual Bisect Wizard.
 - 🐙 [features/github-and-pull-requests.md](./features/github-and-pull-requests.md): GitHub PR Hub, Reviewer, CI Checks & Publish Repo.
-- 📂 [features/repo-explorer-and-file-tools.md](./features/repo-explorer-and-file-tools.md): Repository Explorer, Blame, Comparison & History Nuker.
+- 📂 [features/repo-explorer-and-file-tools.md](./features/repo-explorer-and-file-tools.md): Repository Explorer, Blame, Comparison, History Nuker, .gitignore Manager & Repo Insights.
 - 🥞 [features/stacked-commits-and-hotfix.md](./features/stacked-commits-and-hotfix.md): Stacked Commits & Quick Hotfix Workflow.
-- 🌲 [features/advanced-tools.md](./features/advanced-tools.md): Git Worktrees, Git LFS & Submodules Hub.
+- 🌲 [features/advanced-tools.md](./features/advanced-tools.md): Git Worktrees, Git LFS, Submodules Hub & Git Hooks Manager.
 - 🔑 [features/auth-and-identity.md](./features/auth-and-identity.md): GitHub OAuth Device Flow, PAT & Identity Switcher.
 - 🚨 [features/edge-cases-and-guards.md](./features/edge-cases-and-guards.md): Index Lock, Heavy Files & Windows File Locks.
 - 📖 [features/onboarding-and-playbook.md](./features/onboarding-and-playbook.md): Interactive User Guide (F1), Git Playbook & Pre-Commit Guard.
@@ -241,15 +241,15 @@ docs/
 - 🎨 [architecture/offscreen-canvas-graph.md](./architecture/offscreen-canvas-graph.md): Đồ thị động học OffscreenCanvas Worker 60 FPS & Lane Compaction.
 - 🔌 [architecture/ipc-api-reference.md](./architecture/ipc-api-reference.md): Bảng tra cứu 70+ Tauri v2 IPC Commands.
 - 🛡️ [architecture/safety-engine.md](./architecture/safety-engine.md): Cơ chế Safe Discard & Time-Travel `Ctrl+Z`.
-- 📊 [features/commit-graph-and-dag.md](./features/commit-graph-and-dag.md): Đồ thị Living Graph & DAG Mini-Map.
+- 📊 [features/commit-graph-and-dag.md](./features/commit-graph-and-dag.md): Đồ thị Living Graph, DAG Mini-Map, Mật độ đồ thị, Ghim nhánh ⭐ & Ẩn/Hiện nhánh 👁️.
 - 🔍 [features/working-tree-and-diff.md](./features/working-tree-and-diff.md): Working Tree, Monaco Diff & Staging từng dòng.
 - 🌿 [features/branches-and-remotes.md](./features/branches-and-remotes.md): Nhánh, Multi-Remotes, Smart Sync & Clean Merged Branches.
-- 🔀 [features/rebase-and-history-ops.md](./features/rebase-and-history-ops.md): Interactive Rebase, Kéo-Thả, Squash.
+- 🔀 [features/rebase-and-history-ops.md](./features/rebase-and-history-ops.md): Visual Interactive Rebase Studio (Kéo-Thả, Mô phỏng Dry-Run), Squash.
 - ⚔️ [features/conflict-and-bisect.md](./features/conflict-and-bisect.md): Bộ giải quyết Conflict 4-Pane & Bisect Wizard.
 - 🐙 [features/github-and-pull-requests.md](./features/github-and-pull-requests.md): GitHub PR Hub, Reviewer, Checks & Publish Repo.
-- 📂 [features/repo-explorer-and-file-tools.md](./features/repo-explorer-and-file-tools.md): Repository Explorer, Blame, Comparison & History Nuker.
+- 📂 [features/repo-explorer-and-file-tools.md](./features/repo-explorer-and-file-tools.md): Repository Explorer, Blame, Comparison, History Nuker, Quản lý .gitignore & Repo Insights.
 - 🥞 [features/stacked-commits-and-hotfix.md](./features/stacked-commits-and-hotfix.md): Chuỗi Stacked Commits & Quy trình Quick Hotfix.
-- 🌲 [features/advanced-tools.md](./features/advanced-tools.md): Git Worktrees, Git LFS & Submodules Hub.
+- 🌲 [features/advanced-tools.md](./features/advanced-tools.md): Git Worktrees, Git LFS, Submodules Hub & Quản lý Git Hooks.
 - 🔑 [features/auth-and-identity.md](./features/auth-and-identity.md): GitHub OAuth Device Flow, PAT & Identity Switcher.
 - 🚨 [features/edge-cases-and-guards.md](./features/edge-cases-and-guards.md): Index Lock, Heavy Files & Windows File Locks.
 - 📖 [features/onboarding-and-playbook.md](./features/onboarding-and-playbook.md): Interactive User Guide (F1), Git Playbook & Pre-Commit Guard.

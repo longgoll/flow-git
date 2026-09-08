@@ -207,6 +207,10 @@ pub fn run() {
             is_index_locked,
             scan_heavy_files,
             shelve_untracked_files,
+            // Git Hooks Manager
+            get_git_hooks,
+            save_git_hook,
+            toggle_git_hook,
         ])
         .run(tauri::generate_context!())
         .expect("error while running FlowGit application");

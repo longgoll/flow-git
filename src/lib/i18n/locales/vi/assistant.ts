@@ -11,6 +11,7 @@ export const assistant = {
     categoryTag: "Tag",
     categoryAI: "Trí tuệ nhân tạo (AI)",
     categoryHelp: "Trợ giúp & Tài liệu",
+    categoryTools: "Công cụ nâng cao",
   },
   welcome: {
     title: "Chào mừng đến với FlowGit",

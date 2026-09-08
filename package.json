@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "tauri": "tauri",
-    "bump": "node scripts/bump-version.mjs"
+    "bump": "node scripts/bump-version.mjs",
+    "shots": "node scripts/capture_marketing_shots.mjs",
+    "demo-gif": "node scripts/generate_demo_gif.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.2.0",
@@ -31,7 +33,9 @@
     "@tailwindcss/vite": "^4.0.9",
     "@tauri-apps/cli": "^2.2.7",
     "@types/node": "^26.4.1",
+    "gifenc": "^1.0.3",
     "playwright-core": "^1.63.0",
+    "pngjs": "^7.0.0",
     "svelte": "^5.20.2",
     "svelte-check": "^4.1.4",
     "tailwindcss": "^4.0.9",

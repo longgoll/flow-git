@@ -39,40 +39,17 @@ const translations = {
     metricSafeSub: "Cứu lại mã nguồn lỡ tay xóa nhầm",
 
     // Section Titles
-    featuresTitle: "Tại Sao FlowGit Vượt Trội?",
+    navRescues: "Tình huống thực tế",
+    featuresTitle: "Tại Sao FlowGit Vượt Trội? (18 Chuyên Đề • 40+ Công Cụ)",
     featuresDesc: "Mọi tính năng đều được chế tác để giải quyết nỗi đau lớn nhất của lập trình viên khi làm việc với Git hàng ngày.",
-    
-    // 8 Features
-    f1Title: "🛡️ Safe Discard 48h & Time Machine (Ctrl+Z)",
-    f1Desc: "Không bao giờ sợ mất code. Mọi đoạn code discard đều được tự động snapshot vào SQLite 48h. Hoàn tác mọi thao tác nguy hiểm (Reset, Rebase hỏng) tức thì chỉ với Ctrl+Z.",
-    
-    f2Title: "📊 Living Commit Graph 60 FPS Locked",
-    f2Desc: "Đồ thị động học dựng bằng OffscreenCanvas và Web Worker cách ly hoàn toàn khỏi UI thread. Thuật toán Rayon song song đảm bảo cuộn mượt mà ngay cả với repo kernel.",
-    
-    f3Title: "🔀 Kéo Thả Rebase & In-Memory Ghost Preview",
-    f3Desc: "Đổi thứ tự commit, bôi đen gộp (Squash) chỉ bằng kéo thả. Thuật toán Ghost Preview mô phỏng in-memory cảnh báo conflict trước khi bạn nhả chuột.",
-    
-    f4Title: "⚔️ Trình Xử Lý Xung Đột 4 Khung Hình",
-    f4Desc: "Phân tách rõ ràng Ours, Base, Theirs và Result. Nhận từng khối mã trực quan 1-click kết hợp sức mạnh highlight cú pháp của Monaco Editor (chuẩn VS Code).",
-    
-    f5Title: "🐙 GitHub Pull Request Workspace",
-    f5Desc: "Duyệt PR, đọc diff Monaco, theo dõi CI/CD Actions, checkout nhánh PR và merge trực tiếp trong app mà không cần mở trình duyệt.",
-    
-    f6Title: "🐞 Visual Git Bisect Wizard",
-    f6Desc: "Tự động phân đôi lịch sử commit và dẫn dắt bạn qua giao diện trực quan để truy vết commit gây bug chỉ sau 4 - 5 bước kiểm tra.",
-    
-    f7Title: "🧹 History Nuker (Tẩy Xóa File Mật)",
-    f7Desc: "Xóa vĩnh viễn file nhạy cảm lỡ commit (.env, API keys, file binary nặng hàng trăm MB) khỏi toàn bộ lịch sử Git chỉ với vài cú nhấp chuột.",
-    
-    f8Title: "🔄 Tự Động Cập Nhật 0 Đồng (Zero-VPS)",
-    f8Desc: "Tích hợp công nghệ cập nhật ngầm Tauri v2 ký số bằng mật mã Ed25519, phân phối qua GitHub Releases an toàn tuyệt đối và miễn phí trọn đời.",
 
     // Comparison
-    compTitle: "Bảng So Sánh Chi Tiết",
+    compTitle: "Bảng So Sánh Kiến Trúc & Hiệu Năng",
     compMetric: "Tiêu Chí",
-    compFlowGit: "⚡ FlowGit",
-    compElectron: "Ứng Dụng Electron",
-    compLegacy: "Git GUI Cổ Điển",
+    compFlowGit: "⚡ FlowGit (Tauri v2 + Rust)",
+    compElectron: "Chromium / Electron (GitKraken, Desktop)",
+    compLegacy: "Công Cụ Git Cổ Điển (SourceTree)",
+    compNote: "💡 <strong>Ghi chú phân tích kỹ thuật:</strong> Các ứng dụng dựa trên Chromium/Electron sở hữu hệ sinh thái phong phú và giao diện trau chuốt. Sự khác biệt về tài nguyên đến từ kiến trúc nền tảng: Electron đóng gói kèm trình duyệt Chromium và Node.js runtime, trong khi FlowGit lựa chọn hướng đi Native Rust (libgit2) và Tauri v2 webview tối giản, hướng đến các nhà phát triển ưu tiên hiệu năng cực đại và an toàn dữ liệu tuyệt đối.",
     
     // CTA
     ctaTitle: "Sẵn Sàng Nâng Tầm Trải Nghiệm Git?",
@@ -83,18 +60,22 @@ const translations = {
     ctaBtnLinux: "Tải Bản Cài Đặt Linux (.deb / .AppImage)",
     
     // Showcase Tabs & Captions
+    tabDemo: "⚡ Live Demo (GIF)",
     tabLivingGraph: "Living Graph & Monaco Diff",
     tabSplitDiff: "Split Diff Editor",
     tabConflicts: "3-Way Conflict Resolver",
     tabSafeTrash: "Safe Discard (48h Trash)",
     tabTimeMachine: "Time Machine (Ctrl+Z)",
+    tabExplorer: "Repo File Explorer",
     tabPalette: "Command Palette (Ctrl+K)",
     windowLiveBadge: "● Ảnh chụp ứng dụng thực tế",
+    captionDemo: "⚡ Xem FlowGit vận hành thực tế: đồ thị 60 FPS, duyệt commit, chuyển Monaco Split Diff và siêu bảng lệnh Ctrl+K.",
     captionHero: "✨ Đồ thị Living Commit Graph vẽ bằng OffscreenCanvas 60 FPS kết hợp Monaco Diff Editor tích hợp.",
     captionDiff: "⚡ Monaco Diff Editor hỗ trợ chế độ Split 2 cột trực quan, syntax highlighting chuẩn VS Code.",
-    captionConflicts: "⚔️ 3-Way Conflict Resolver trực quan với AI Auto-Merge, Take Ours / Theirs và xem kết quả tức thì.",
+    captionConflicts: "⚔️ 3-Way Conflict Resolver trực quan với Take Ours / Theirs và xem kết quả tức thì.",
     captionTrash: "🛡️ Safe Discard 48h Trash Inspector: Cứu lại mã nguồn đã lỡ xóa chỉ với 1-Click Restore.",
     captionTimeMachine: "⏪ Cỗ máy thời gian Time Machine: Hoàn tác (Undo) và làm lại (Redo) mọi hành động Git qua Ctrl+Z.",
+    captionExplorer: "🗂️ Repository File Explorer: Khám phá toàn bộ cấu trúc file mã nguồn tại bất kỳ commit nào mà không cần checkout.",
     captionPalette: "⌘ Siêu bảng lệnh Command Palette (Ctrl+K): Tìm kiếm lệnh, chuyển nhánh, mở công cụ tức thì.",
 
     // Visual Deep Dives
@@ -206,41 +187,17 @@ const translations = {
     metricSafeLabel: "Safe Discard Protection",
     metricSafeSub: "Recover accidentally discarded code",
 
-    // Section Titles
-    featuresTitle: "Why Developers Love FlowGit",
+    navRescues: "Real-World Rescues",
+    featuresTitle: "Why Developers Love FlowGit (18 Suites • 40+ Tools)",
     featuresDesc: "Engineered specifically to eliminate the most painful friction points in your daily Git workflow.",
-    
-    // 8 Features
-    f1Title: "🛡️ Safe Discard 48h & Time Machine (Ctrl+Z)",
-    f1Desc: "Never lose work again. Every discarded change is auto-snapshotted into an encrypted SQLite database for 48h. Undo destructive operations with a single Ctrl+Z.",
-    
-    f2Title: "📊 Living Commit Graph (60 FPS Locked)",
-    f2Desc: "Hardware-accelerated OffscreenCanvas graph rendered in an isolated Web Worker. Parallel Rayon threading guarantees zero UI stutter even on kernel-sized trees.",
-    
-    f3Title: "🔀 Drag-and-Drop Rebase & Ghost Preview",
-    f3Desc: "Reorder commits or select multiple to squash with key S. Ghost Preview simulates in-memory trees and warns you of conflicts before releasing your mouse.",
-    
-    f4Title: "⚔️ 4-Way Visual Conflict Resolver",
-    f4Desc: "Crystal-clear side-by-side view of Ours, Base, Theirs, and live Result. One-click block picking powered by Monaco Editor's VS Code syntax engine.",
-    
-    f5Title: "🐙 GitHub Pull Request Workspace",
-    f5Desc: "Inspect PRs, read Monaco diffs, review CI/CD Actions, checkout branches, and merge directly inside FlowGit without ever touching your browser.",
-    
-    f6Title: "🐞 Visual Git Bisect Wizard",
-    f6Desc: "Automates binary search across your history with an intuitive visual guide to track down regression-inducing commits in 4-5 quick steps.",
-    
-    f7Title: "🧹 Sensitive History Nuker (.env Purge)",
-    f7Desc: "Permanently erase committed secrets (.env, API keys, massive binary files) across your repository history with a few clicks.",
-    
-    f8Title: "🔄 Zero-VPS Auto-Updater",
-    f8Desc: "Integrated Tauri v2 updater verified by cryptographic Ed25519 signatures, hosted seamlessly on GitHub Releases with zero server costs.",
 
     // Comparison
-    compTitle: "In-Depth Comparison",
+    compTitle: "Architectural & Performance Comparison",
     compMetric: "Specification",
-    compFlowGit: "⚡ FlowGit",
-    compElectron: "Electron-based Clients",
-    compLegacy: "Legacy GUIs (SourceTree)",
+    compFlowGit: "⚡ FlowGit (Tauri v2 + Rust)",
+    compElectron: "Chromium / Electron (GitKraken, Desktop)",
+    compLegacy: "Legacy Native GUIs (SourceTree)",
+    compNote: "💡 <strong>Architectural Note:</strong> Established Chromium/Electron-based GUIs feature rich ecosystems and polished interfaces. The resource difference stems from fundamental architecture: Electron bundles a full Chromium browser and Node.js runtime, whereas FlowGit pairs native Rust (libgit2) with lightweight Tauri v2 webviews, designed for engineers who prioritize extreme efficiency and absolute data safety.",
     
     // CTA
     ctaTitle: "Ready to Upgrade Your Git Workflow?",
@@ -251,18 +208,22 @@ const translations = {
     ctaBtnLinux: "Download Linux Package (.deb / .AppImage)",
 
     // Showcase Tabs & Captions
+    tabDemo: "⚡ Live Demo (GIF)",
     tabLivingGraph: "Living Graph & Monaco Diff",
     tabSplitDiff: "Split Diff Editor",
     tabConflicts: "3-Way Conflict Resolver",
     tabSafeTrash: "Safe Discard (48h Trash)",
     tabTimeMachine: "Time Machine (Ctrl+Z)",
+    tabExplorer: "Repo File Explorer",
     tabPalette: "Command Palette (Ctrl+K)",
     windowLiveBadge: "● Real App Screenshot",
+    captionDemo: "⚡ Watch FlowGit in action: 60 FPS graph, commit inspection, Monaco Split Diff toggle, and universal Command Palette.",
     captionHero: "✨ Living Commit Graph rendered via 60 FPS OffscreenCanvas paired with embedded Monaco Diff.",
     captionDiff: "⚡ Side-by-side Monaco Split Diff with full VS Code syntax highlighting and hunk staging.",
     captionConflicts: "⚔️ 3-Way Conflict Resolver with AI Auto-Merge, Take Ours / Theirs, and real-time output preview.",
     captionTrash: "🛡️ Safe Discard 48h Trash Inspector: 1-Click Restore for any accidentally discarded code.",
     captionTimeMachine: "⏪ Time Machine undo & redo engine: seamlessly reverse any destructive action via Ctrl+Z.",
+    captionExplorer: "🗂️ Repository File Explorer: Inspect historical file trees at any commit without checking out.",
     captionPalette: "⌘ Supercharged Command Palette (Ctrl+K): lightning-fast actions, branch jump & tools.",
 
     // Visual Deep Dives
@@ -282,44 +243,44 @@ const translations = {
     navInstall: "Install",
     installBadge: "⚡ Step-by-Step Guide",
     installTitle: "Which File to Download & How to Install?",
-    installDesc: "Detailed explanation of each package format and a 30-second setup guide for every operating system.",
+    installDesc: "Detailed explanation of each package format and a 30-second setup guide for every major OS.",
     badgeRecommended: "★ Recommended",
-    badgeStoreOfficial: "★ Recommended (Official Store)",
-    badgeStandalone: "Standalone Installer",
+    badgeStoreOfficial: "★ Most Recommended",
+    badgeStandalone: "Standalone Setup",
     badgeEnterprise: "Enterprise / IT",
     badgeAppleSilicon: "★ Apple Silicon",
     badgeIntelMac: "Intel Mac",
     badgeDebian: "★ Ubuntu / Debian",
-    badgeAppImage: "Portable (No install)",
+    badgeAppImage: "Portable AppImage",
     badgeRpm: "Fedora / RHEL",
-    winFilesTitle: "Windows Download Packages",
-    winStoreDesc: "Official installation via Microsoft Store. 100% verified & certified by Microsoft, 1-click silent install, automatic background updates, zero SmartScreen warnings.",
-    winExeDesc: "Automated NSIS installer (~8 MB). Automatically creates Desktop & Start Menu shortcuts, clean uninstaller, and background auto-updates.",
-    winMsiDesc: "Standard Windows Installer package (~10 MB), ideal for fleet deployment via Active Directory or Group Policy.",
-    winStepsTitle: "Windows Installation Options",
-    winStep1Title: "Install via Microsoft Store (Recommended) or .exe",
-    winStep1Desc: "The easiest way is clicking 'Get from Microsoft Store'. If using the standalone .exe from GitHub, double-click to run.",
-    winStep2Title: "1-Click Certified Setup",
-    winStep2Desc: "The Microsoft Store package installs seamlessly with zero warnings. For standalone .exe, click 'More info' ➔ 'Run anyway' if SmartScreen pops up.",
-    winStep3Title: "Ready to Use",
-    winStep3Desc: "Setup finishes in 3 seconds and FlowGit launches immediately!",
-    winSmartScreenNote: "💡 Why does SmartScreen appear? As a newly released open-source project, Windows has not yet built its reputation database. FlowGit is 100% clean, verified, and spyware-free.",
-    macFilesTitle: "macOS Download Packages",
-    macArmDesc: "Native silicon build for all M1, M2, M3, M4 Apple Mac computers with maximum performance and battery life.",
-    macIntelDesc: "Built for legacy Intel Core-based Mac systems.",
-    macStepsTitle: "macOS Setup Steps",
-    macStep1Title: "Mount .dmg & Drag to Applications",
-    macStep1Desc: "Open the downloaded .dmg file and drag FlowGit into your Applications folder.",
-    macStep2Title: "Gatekeeper Verification (If Needed)",
-    macStep2Desc: "If macOS displays \"App can't be opened because it is from an unidentified developer\": open System Settings ➔ Privacy & Security ➔ scroll down and click \"Open Anyway\".",
-    linuxFilesTitle: "Linux Download Packages",
-    linuxDebDesc: "Standard package for Ubuntu, Debian, Linux Mint, Pop!_OS. Integrates deeply with your desktop app launcher.",
-    linuxAppImageDesc: "Standalone portable binary, runs out-of-the-box on virtually any Linux distro (Arch, Manjaro, Fedora, openSUSE...).",
-    linuxRpmDesc: "For Fedora, Red Hat Enterprise Linux (RHEL), openSUSE, and CentOS.",
-    linuxStepsTitle: "Quick Linux Setup Commands",
+    winFilesTitle: "Download Packages for Windows",
+    winStoreDesc: "Official Microsoft Store release. 100% verified by Microsoft, 1-click install, background auto-updates and never triggers SmartScreen warnings.",
+    winExeDesc: "Standard NSIS installer (~8 MB). Automatically creates Desktop & Start Menu shortcuts with clean uninstall support and background updates.",
+    winMsiDesc: "Official Windows Installer package (~10 MB), suitable for mass deployment via Active Directory or Group Policy.",
+    winStepsTitle: "Windows Installation Steps",
+    winStep1Title: "Install via Microsoft Store or Run .exe",
+    winStep1Desc: "Fastest way: Click 'Get from Microsoft Store'. If using the standalone installer from GitHub, double click the .exe file.",
+    winStep2Title: "Safe 1-Click Install",
+    winStep2Desc: "Microsoft Store installs silently. With standalone .exe, if Windows SmartScreen displays a dialog, click 'More info' ➔ then 'Run anyway'.",
+    winStep3Title: "Complete & Launch",
+    winStep3Desc: "Installation finishes in under 3 seconds and launches FlowGit immediately!",
+    winSmartScreenNote: "💡 Why does SmartScreen appear? As a newly released open-source project, binary reputation takes time to build. The app is 100% clean and free of telemetry.",
+    macFilesTitle: "Download Packages for macOS",
+    macArmDesc: "Native Apple Silicon build for M1, M2, M3, and M4 Macs with top battery efficiency.",
+    macIntelDesc: "Optimized for older Intel-powered Mac computers.",
+    macStepsTitle: "macOS Installation Steps",
+    macStep1Title: "Open .dmg & Drag to Applications",
+    macStep1Desc: "Open the downloaded .dmg file, then drag FlowGit into your Applications folder.",
+    macStep2Title: "Handle Gatekeeper (If Prompted)",
+    macStep2Desc: "If macOS prompts 'unidentified developer', go to System Settings ➔ Privacy & Security ➔ scroll down and click 'Open Anyway'.",
+    linuxFilesTitle: "Download Packages for Linux",
+    linuxDebDesc: "Standard Debian package for Ubuntu, Debian, Linux Mint, and Pop!_OS. Deep desktop integration.",
+    linuxAppImageDesc: "Portable single executable running across Arch, Fedora, openSUSE, Manjaro, and more.",
+    linuxRpmDesc: "RPM package for Fedora, Red Hat Enterprise Linux (RHEL), and CentOS.",
+    linuxStepsTitle: "Quick Linux Commands",
 
     // Footer
-    footerCopy: "© 2026 FlowGit. Released under the MIT Open Source License.",
+    footerCopy: "© 2026 FlowGit. Released under the open-source MIT License.",
 
     // Sponsor
     navSponsor: "Sponsor",
@@ -338,9 +299,14 @@ const translations = {
 };
 
 let currentLang = 'vi';
-let activeShotKey = 'hero';
+let activeShotKey = 'demo';
 
 const showcaseShots = {
+  demo: {
+    src: 'assets/flowgit_demo.gif',
+    title: 'FlowGit — Live Demonstration (60 FPS Graph, Split Diff, Safe Trash)',
+    captionKey: 'captionDemo',
+  },
   hero: {
     src: 'assets/flowgit_hero.png',
     title: 'FlowGit — Living Commit Graph & Monaco Diff (main)',
@@ -365,6 +331,11 @@ const showcaseShots = {
     src: 'assets/flowgit_timemachine.png',
     title: 'FlowGit — Time Machine Undo / Redo Engine (Ctrl + Z)',
     captionKey: 'captionTimeMachine',
+  },
+  explorer: {
+    src: 'assets/flowgit_explorer.png',
+    title: 'FlowGit — Repository File Explorer & Historical Tree Browser',
+    captionKey: 'captionExplorer',
   },
   palette: {
     src: 'assets/flowgit_palette.png',
@@ -480,6 +451,87 @@ function updateDownloadButtons(targetOS) {
   });
 }
 
+let currentPillar = 'all';
+
+function renderPillars(activePillar = 'all') {
+  const container = document.getElementById('pillar-filter-bar');
+  if (!container || typeof window === 'undefined' || !window.FLOWGIT_PILLARS) return;
+  
+  const lang = currentLang;
+  const features = window.FLOWGIT_FEATURES || [];
+
+  container.innerHTML = window.FLOWGIT_PILLARS.map(p => {
+    const count = p.id === 'all' 
+      ? features.length 
+      : features.filter(f => f.pillar === p.id).length;
+    const isActive = p.id === activePillar ? 'active' : '';
+    const name = (p.name && (p.name[lang] || p.name.en)) || p.id;
+    return `
+      <button class="pillar-btn ${isActive}" data-pillar="${p.id}" type="button">
+        <span>${p.icon}</span>
+        <span>${name}</span>
+        <span class="pillar-count">${count}</span>
+      </button>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.pillar-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pillarId = btn.dataset.pillar;
+      currentPillar = pillarId;
+      renderPillars(currentPillar);
+      renderFeatures(currentPillar, currentLang);
+    });
+  });
+}
+
+function renderFeatures(activePillar = 'all', lang = currentLang) {
+  const container = document.getElementById('features-grid');
+  if (!container || typeof window === 'undefined' || !window.FLOWGIT_FEATURES) return;
+
+  const features = window.FLOWGIT_FEATURES.filter(f => activePillar === 'all' || f.pillar === activePillar);
+  const docText = lang === 'vi' ? 'Xem tài liệu ↗' : 'View Spec ↗';
+
+  container.innerHTML = features.map(f => {
+    const title = (f.title && (f.title[lang] || f.title.en)) || '';
+    const desc = (f.desc && (f.desc[lang] || f.desc.en)) || '';
+    return `
+      <div class="feature-card">
+        <div class="feature-top-meta">
+          <div class="feature-icon-wrapper">${f.icon}</div>
+          ${f.badge ? `<span class="feature-meta-badge">${f.badge}</span>` : ''}
+        </div>
+        <h3>${title}</h3>
+        <p>${desc}</p>
+        ${f.doc ? `<a href="https://github.com/longgoll/flow-git/blob/main/docs/features/${f.doc}" target="_blank" class="feature-doc-link">${docText}</a>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderScenarios(lang = currentLang) {
+  const container = document.getElementById('scenario-grid');
+  if (!container || typeof window === 'undefined' || !window.FLOWGIT_RESCUES) return;
+
+  container.innerHTML = window.FLOWGIT_RESCUES.map(s => {
+    const badge = (s.badge && (s.badge[lang] || s.badge.en)) || '';
+    const title = (s.title && (s.title[lang] || s.title.en)) || '';
+    const prob = (s.problem && (s.problem[lang] || s.problem.en)) || '';
+    const sol = (s.solution && (s.solution[lang] || s.solution.en)) || '';
+    return `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-badge ${s.badgeClass || ''}">${badge}</span>
+          <span>${s.icon}</span>
+        </div>
+        <h3 class="scenario-title">${title}</h3>
+        <div class="scenario-problem">${prob}</div>
+        <div class="scenario-solution">${sol}</div>
+      </div>
+    `;
+  }).join('');
+}
+
 function setLanguage(lang) {
   currentLang = lang;
   document.documentElement.lang = lang;
@@ -509,6 +561,11 @@ function setLanguage(lang) {
 
   // Refresh download buttons text
   updateDownloadButtons();
+
+  // Refresh dynamic pillars, features, and rescue scenarios
+  renderPillars(currentPillar);
+  renderFeatures(currentPillar, lang);
+  renderScenarios(lang);
 }
 
 function setupShowcaseTabs() {

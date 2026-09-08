@@ -81,3 +81,126 @@ pub fn fetch_specific_remote(
     let res = smart_sync_upstream(repo, Some(name), None, credentials)?;
     Ok(res.status)
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BackgroundFetchResult {
+    pub success: bool,
+    pub has_new_commits: bool,
+    pub current_branch: Option<String>,
+    pub upstream_branch: Option<String>,
+    pub ahead_count: usize,
+    pub behind_count: usize,
+    pub message: String,
+}
+
+/// Perform a silent background fetch without showing noisy auth popups on network/auth failure.
+/// Safely updates remote tracking refs and computes ahead/behind commit metrics for the active branch.
+pub fn silent_background_fetch(
+    repo: &Repository,
+    remote_name: Option<&str>,
+    credentials: Option<GitCredentials>,
+) -> AppResult<BackgroundFetchResult> {
+    let remotes = repo.remotes()?;
+    if remotes.is_empty() {
+        return Ok(BackgroundFetchResult {
+            success: true,
+            has_new_commits: false,
+            current_branch: None,
+            upstream_branch: None,
+            ahead_count: 0,
+            behind_count: 0,
+            message: "No remotes configured".to_string(),
+        });
+    }
+
+    let default_remote = remotes.get(0).unwrap_or("origin");
+    let target_remote = remote_name.unwrap_or(default_remote);
+
+    // Prepare Git CLI fetch with credentials and terminal prompt disabled
+    let workdir = repo.workdir().unwrap_or_else(|| repo.path());
+    let mut cmd = std::process::Command::new("git");
+    cmd.current_dir(workdir);
+    cmd.env("GIT_TERMINAL_PROMPT", "0");
+
+    if let Some(ref c) = credentials {
+        if c.auth_type == "ssh_passphrase" {
+            if let Some(ref pass) = c.ssh_passphrase {
+                cmd.env("SSH_PASSPHRASE", pass);
+            }
+        } else if let Some(ref token) = c.token {
+            let user = c.username.as_deref().unwrap_or("x-access-token");
+            let auth_str = format!("{}:{}", user, token);
+            let b64 = crate::git::auth::base64_encode(auth_str.as_bytes());
+            cmd.arg("-c").arg(format!("http.extraHeader=Authorization: Basic {}", b64));
+        }
+    }
+
+    cmd.arg("fetch").arg(target_remote).arg("--prune");
+
+    let output = match cmd.output() {
+        Ok(out) => out,
+        Err(e) => {
+            return Ok(BackgroundFetchResult {
+                success: false,
+                has_new_commits: false,
+                current_branch: None,
+                upstream_branch: None,
+                ahead_count: 0,
+                behind_count: 0,
+                message: format!("Fetch skipped (git spawn error): {}", e),
+            });
+        }
+    };
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        return Ok(BackgroundFetchResult {
+            success: false,
+            has_new_commits: false,
+            current_branch: None,
+            upstream_branch: None,
+            ahead_count: 0,
+            behind_count: 0,
+            message: format!("Fetch skipped or offline: {}", stderr.trim()),
+        });
+    }
+
+    // Inspect HEAD branch and calculate ahead/behind against upstream
+    let head = repo.head().ok();
+    let current_branch = head.as_ref().and_then(|h| h.shorthand()).map(|s| s.to_string());
+    let mut upstream_branch = None;
+    let mut ahead_count = 0;
+    let mut behind_count = 0;
+
+    if let Some(ref b_name) = current_branch {
+        if let Ok(branch) = repo.find_branch(b_name, git2::BranchType::Local) {
+            if let Ok(upstream) = branch.upstream() {
+                if let Ok(Some(up_name)) = upstream.name() {
+                    upstream_branch = Some(up_name.to_string());
+                }
+                if let (Some(local_oid), Some(up_oid)) = (branch.get().target(), upstream.get().target()) {
+                    if let Ok((ahead, behind)) = repo.graph_ahead_behind(local_oid, up_oid) {
+                        ahead_count = ahead;
+                        behind_count = behind;
+                    }
+                }
+            }
+        }
+    }
+
+    let has_new_commits = behind_count > 0;
+    Ok(BackgroundFetchResult {
+        success: true,
+        has_new_commits,
+        current_branch,
+        upstream_branch,
+        ahead_count,
+        behind_count,
+        message: if has_new_commits {
+            format!("Found {} new commit(s) on remote.", behind_count)
+        } else {
+            "Remote is up to date.".to_string()
+        },
+    })
+}
+

@@ -71,14 +71,22 @@
 
 <!-- 1-Click Smart Sync -->
 {#if onSmartSync}
+  {@const isBehind = (currentBranch?.behind_count ?? 0) > 0}
   <button
     onclick={onSmartSync}
     disabled={isSyncing}
-    class="flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/80 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-700 dark:text-zinc-300 hover:text-cyan-600 dark:hover:text-cyan-300 transition-all cursor-pointer group disabled:opacity-50 shrink-0"
-    title={localeState.t('toolbar.smartSyncTooltip')}
+    class="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-all cursor-pointer group disabled:opacity-50 shrink-0 font-medium {isBehind ? 'bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-600/60 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/80 shadow-xs ring-1 ring-amber-400/30 dark:ring-amber-500/20' : 'bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/80 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-cyan-600 dark:hover:text-cyan-300'}"
+    title={isBehind ? localeState.t('toolbar.smartSyncBehindTooltip', { count: currentBranch?.behind_count ?? 0, upstream: currentBranch?.upstream_name || 'origin' }) : localeState.t('toolbar.smartSyncTooltip')}
   >
-    <CloudDownload class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 group-hover:scale-105 transition-transform {isSyncing ? 'animate-bounce' : ''}" />
-    <span class="text-[11px] hidden xl:inline">{isSyncing ? localeState.t('toolbar.syncing') : localeState.t('toolbar.sync')}</span>
+    <CloudDownload class="w-3.5 h-3.5 transition-transform group-hover:scale-105 {isBehind ? 'text-amber-600 dark:text-amber-400 animate-pulse' : 'text-cyan-600 dark:text-cyan-400'} {isSyncing ? 'animate-bounce' : ''}" />
+    <span class="text-[11px] hidden xl:inline">
+      {isSyncing ? localeState.t('toolbar.syncing') : isBehind ? localeState.t('toolbar.syncBehindBadge', { count: currentBranch?.behind_count ?? 0 }) : localeState.t('toolbar.sync')}
+    </span>
+    {#if isBehind}
+      <span class="xl:hidden flex items-center text-[10px] font-bold text-amber-600 dark:text-amber-400">
+        ↓{currentBranch?.behind_count}
+      </span>
+    {/if}
   </button>
 {/if}
 

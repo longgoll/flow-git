@@ -55,6 +55,8 @@ export const toolbar = {
   layoutHorizontal: "Layout Ngang (Graph trên, Detail dưới)",
   layoutThreeColumn: "3-Column Diff-First (Sublime Merge style)",
   smartSyncTooltip: "1-Click Smart Sync (Fetch & Fast-Forward)",
+  smartSyncBehindTooltip: "Nhánh của bạn đang đi sau {count} commit(s) so với {upstream}. Bấm 1-Click để Fast-Forward cập nhật ngay!",
+  syncBehindBadge: "↓ {count} Mới",
   syncing: "Syncing...",
   sync: "Sync",
   publishBranchTooltip: "Publish nhánh hiện tại ({branch}) lên remote origin",
@@ -154,6 +156,12 @@ export const banners = {
   detachedHeadTitle: "Cảnh báo: Detached HEAD State",
   detachedHeadDesc: "Bạn đang xem commit trực tiếp mà không gắn với nhánh nào. Các commit mới tạo ở đây sẽ bị mồ côi (dangling) khi bạn checkout đi chỗ khác!",
   createBranchFromDetached: "Tạo nhánh mới tại đây",
+  upstreamBehindTitle: "Phát hiện commit mới trên Remote",
+  upstreamBehindDesc: "Nhánh {branch} đang đi sau {upstream} {count} commit(s). Hãy kéo code mới về để giữ mã nguồn đồng bộ.",
+  fastForwardBtn: "1-Click Fast-Forward",
+  fastForwardTooltip: "Kéo nhanh và áp dụng commit mới từ remote vào nhánh hiện tại (0 conflict nếu chưa sửa)",
+  viewDetails: "Xem đồ thị",
+  dismissNotice: "Bỏ qua",
 };
 
 export const sidebar = {

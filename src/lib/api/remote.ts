@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { GitCredentials, RemoteInfo } from '../types';
+import type { BackgroundFetchResult, GitCredentials, RemoteInfo } from '../types';
 import { isTauri } from './client';
 
 export async function getRemotes(path: string): Promise<RemoteInfo[]> {
@@ -40,3 +40,21 @@ export async function fetchRemote(
   }
   return `Fetched ${name} successfully.`;
 }
+
+export async function silentBackgroundFetch(
+  path: string,
+  remote?: string,
+  credentials?: GitCredentials
+): Promise<BackgroundFetchResult> {
+  if (isTauri) {
+    return await invoke<BackgroundFetchResult>('silent_background_fetch', { path, remote, credentials });
+  }
+  return {
+    success: true,
+    has_new_commits: false,
+    ahead_count: 0,
+    behind_count: 0,
+    message: 'Mock auto-fetch completed.',
+  };
+}
+

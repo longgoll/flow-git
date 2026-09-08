@@ -31,6 +31,7 @@ export class RepoState {
   tags = $state<TagInfo[]>([]);
   stashes = $state<StashInfo[]>([]);
   worktrees = $state<WorktreeInfo[]>([]);
+  currentBranch = $derived(this.branches.find((b) => b.is_head));
 
   currentRepoPath = $state<string>('');
   searchQuery = $state<string>('');

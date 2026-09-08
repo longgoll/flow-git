@@ -5,6 +5,7 @@
   import StatusBar from "./lib/components/StatusBar.svelte";
   import ModalsContainer from "./lib/components/ModalsContainer.svelte";
   import RepoAlertBanner from "./lib/components/RepoAlertBanner.svelte";
+  import UpstreamUpdateBanner from "./lib/components/UpstreamUpdateBanner.svelte";
   import RecentPushBanner from "./lib/components/RecentPushBanner.svelte";
   import ToastContainer from "./lib/components/ToastContainer.svelte";
   import MainViewSwitcher from "./lib/components/MainViewSwitcher.svelte";
@@ -348,6 +349,16 @@
         updateState.checkForUpdates(false).catch(() => {});
         updateState.startPeriodicCheck();
       }, 3000);
+
+      // Kích hoạt Silent Background Auto-Fetch kiểm tra commit mới từ remote
+      remote.startAutoFetch(
+        () => repo.currentRepoPath,
+        async () => {
+          if (repo.currentRepoPath) {
+            await loadRepository(repo.currentRepoPath);
+          }
+        }
+      );
     } catch (e) {
       console.error("onMount failed gracefully:", e);
       repo.showWelcomeScreen = true;
@@ -360,6 +371,7 @@
     if (unlistenWatcher) unlistenWatcher();
     window.removeEventListener("keydown", handleGlobalKeydown);
     updateState.stopPeriodicCheck();
+    remote.stopAutoFetch();
   });
 
   function handleGlobalKeydown(e: KeyboardEvent) {
@@ -533,6 +545,27 @@
 
     <!-- Center & Right Views -->
     <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-zinc-50 dark:bg-zinc-950">
+      <!-- Upstream Update Banner (Khi branch local đi sau remote) -->
+      {#if repo.currentBranch && (repo.currentBranch.behind_count ?? 0) > 0 && remote.dismissedBehindBranch !== repo.currentBranch.shorthand}
+        <UpstreamUpdateBanner
+          currentBranch={repo.currentBranch}
+          isSyncing={remote.isSyncing}
+          onSmartSync={async () => {
+            const res = await remote.runSmartSync(
+              repo.currentRepoPath,
+              undefined,
+              () => loadRepository(repo.currentRepoPath),
+            );
+            repo.statusMessage = res.message;
+          }}
+          onDismiss={() => {
+            if (repo.currentBranch) {
+              remote.dismissBehindNotice(repo.currentBranch.shorthand);
+            }
+          }}
+        />
+      {/if}
+
       <RepoAlertBanner
         operationState={repoOpState}
         isDetached={repo.repoSummary?.is_detached ?? false}

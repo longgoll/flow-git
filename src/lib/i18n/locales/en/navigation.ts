@@ -63,6 +63,8 @@ export const toolbar: typeof viToolbar = {
   layoutHorizontal: "Horizontal Layout (Graph top, Detail bottom)",
   layoutThreeColumn: "3-Column Diff-First (Sublime Merge style)",
   smartSyncTooltip: "1-Click Smart Sync (Fetch & Fast-Forward)",
+  smartSyncBehindTooltip: "Your branch is behind {upstream} by {count} commit(s). Click for 1-Click Fast-Forward update!",
+  syncBehindBadge: "↓ {count} Behind",
   syncing: "Syncing...",
   sync: "Sync",
   publishBranchTooltip: "Publish current branch ({branch}) to remote origin",
@@ -162,6 +164,12 @@ export const banners: typeof viBanners = {
   detachedHeadTitle: "Warning: Detached HEAD State",
   detachedHeadDesc: "You are inspecting a commit directly without being on a branch. Any new commits will become dangling when you checkout elsewhere!",
   createBranchFromDetached: "Create new branch here",
+  upstreamBehindTitle: "New Commits Found on Remote",
+  upstreamBehindDesc: "Branch {branch} is behind {upstream} by {count} commit(s). Pull changes to keep your local branch up to date.",
+  fastForwardBtn: "1-Click Fast-Forward",
+  fastForwardTooltip: "Fast-forward your local branch to upstream commits (0 conflict when clean)",
+  viewDetails: "View Graph",
+  dismissNotice: "Dismiss",
 };
 
 export const sidebar: typeof viSidebar = {

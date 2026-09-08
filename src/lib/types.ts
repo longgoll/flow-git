@@ -458,6 +458,16 @@ export interface SmartSyncResult {
   updated_commit_id?: string;
 }
 
+export interface BackgroundFetchResult {
+  success: boolean;
+  has_new_commits: boolean;
+  current_branch?: string;
+  upstream_branch?: string;
+  ahead_count: number;
+  behind_count: number;
+  message: string;
+}
+
 export interface DragDropGraphPayload {
   sourceCommit: CommitNode;
   clientX: number;

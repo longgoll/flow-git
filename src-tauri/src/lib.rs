@@ -26,6 +26,7 @@ use commands::{
     stage_file, stage_hunk, unstage_all, unstage_file, unstage_hunk,
     // Remotes
     add_remote, fetch_remote, get_remotes, remove_remote, set_remote_url,
+    silent_background_fetch,
     // Action, Simulation, Cherry-pick, Merge, Rebase, Time Machine
     abort_current_operation, check_is_rebasing, continue_rebase_branch, create_commit,
     create_tag, delete_tag, execute_cherry_pick_commit, execute_interactive_rebase,
@@ -141,6 +142,7 @@ pub fn run() {
             remove_remote,
             set_remote_url,
             fetch_remote,
+            silent_background_fetch,
             // Actions, Rebase & Time Machine
             create_commit,
             simulate_drag_action,

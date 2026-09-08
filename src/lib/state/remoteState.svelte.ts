@@ -1,5 +1,5 @@
-import type { AccountProfile, GitCredentials, GitHubPullRequest } from '../types';
-import { executeRemoteWithAuth, getActiveAccount, saveAccountAuth, smartSync } from '../api';
+import type { AccountProfile, GitCredentials, GitHubPullRequest, BackgroundFetchResult } from '../types';
+import { executeRemoteWithAuth, getActiveAccount, saveAccountAuth, smartSync, silentBackgroundFetch } from '../api';
 import {
   fetchGitHubPullRequests,
   parseGitHubRemote,
@@ -253,4 +253,91 @@ export class RemoteState {
       this.isCheckingPRs = false;
     }
   }
+
+  // --- Silent Auto-Fetch Engine ---
+  isAutoFetching = $state<boolean>(false);
+  lastAutoFetchTime = $state<number>(0);
+  autoFetchIntervalSeconds = $state<number>(180);
+  autoFetchEnabled = $state<boolean>(true);
+  dismissedBehindBranch = $state<string | null>(null);
+  lastFetchResult = $state<BackgroundFetchResult | null>(null);
+
+  private autoFetchTimer: any = null;
+  private focusListener: (() => void) | null = null;
+
+  async runSilentAutoFetch(
+    repoPath: string,
+    onNewCommitsFound?: (res: BackgroundFetchResult) => Promise<void>
+  ): Promise<BackgroundFetchResult | null> {
+    if (!repoPath || this.isAutoFetching || this.isSyncing || this.isPushing) return null;
+    this.isAutoFetching = true;
+    try {
+      const creds = this.getEffectiveCredentials();
+      const res = await silentBackgroundFetch(repoPath, undefined, creds);
+      this.lastAutoFetchTime = Date.now();
+      this.lastFetchResult = res;
+
+      if (res.success && res.has_new_commits) {
+        // Reset dismissed branch if new commit count changed
+        if (this.dismissedBehindBranch === res.current_branch && res.behind_count > 0) {
+          // keep dismissed or reset
+        }
+        if (onNewCommitsFound) {
+          await onNewCommitsFound(res);
+        }
+      }
+      return res;
+    } catch (e) {
+      console.debug('Silent background fetch skipped:', e);
+      return null;
+    } finally {
+      this.isAutoFetching = false;
+    }
+  }
+
+  startAutoFetch(
+    getRepoPath: () => string,
+    onNewCommitsFound: (res: BackgroundFetchResult) => Promise<void>
+  ) {
+    this.stopAutoFetch();
+
+    // 1. Periodic Timer (default: 3 minutes)
+    this.autoFetchTimer = setInterval(async () => {
+      if (!this.autoFetchEnabled) return;
+      const path = getRepoPath();
+      if (!path) return;
+      await this.runSilentAutoFetch(path, onNewCommitsFound);
+    }, Math.max(30, this.autoFetchIntervalSeconds) * 1000);
+
+    // 2. Window Focus Trigger with 60s cooldown
+    this.focusListener = async () => {
+      if (!this.autoFetchEnabled) return;
+      const path = getRepoPath();
+      if (!path) return;
+      const now = Date.now();
+      if (now - this.lastAutoFetchTime > 60_000) {
+        await this.runSilentAutoFetch(path, onNewCommitsFound);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', this.focusListener);
+    }
+  }
+
+  stopAutoFetch() {
+    if (this.autoFetchTimer) {
+      clearInterval(this.autoFetchTimer);
+      this.autoFetchTimer = null;
+    }
+    if (this.focusListener && typeof window !== 'undefined') {
+      window.removeEventListener('focus', this.focusListener);
+      this.focusListener = null;
+    }
+  }
+
+  dismissBehindNotice(branchName?: string) {
+    this.dismissedBehindBranch = branchName || 'all';
+  }
 }
+

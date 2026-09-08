@@ -23,4 +23,9 @@ export const submodules: typeof viSubmodules = {
   updateError: "Failed to update submodules",
   updateNameError: "Failed to update {name}",
   syncError: "Failed to sync submodules",
+  viewDiff: "View Diff",
+  openRepo: "Open Workspace",
+  loadingDiff: "Reading submodule diff...",
+  diffTitle: "Submodule Working Tree Diff",
+  filesModified: "{count} files modified",
 };

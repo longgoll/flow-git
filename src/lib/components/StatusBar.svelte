@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { CurrentRepoIdentity, OperationLog, RepoSummary } from '../types';
-  import { CheckCircle, ShieldCheck, AlertTriangle, UserCheck, Globe, ChevronUp, Terminal, Trash2, X, Sparkles } from 'lucide-svelte';
+  import type { CurrentRepoIdentity, OperationLog, RepoSummary, TransferProgressPayload } from '../types';
+  import { CheckCircle, ShieldCheck, AlertTriangle, UserCheck, Globe, ChevronUp, Terminal, Trash2, X, Sparkles, RefreshCw } from 'lucide-svelte';
   import { localeState } from '../state/localeState.svelte';
   import { updateState } from '../state/updateState.svelte';
 
@@ -11,6 +11,7 @@
     dirtyFilesCount: number;
     stagedFilesCount: number;
     currentIdentity?: CurrentRepoIdentity | null;
+    transferProgress?: TransferProgressPayload | null;
     operationLogs?: OperationLog[];
     isLogPanelOpen?: boolean;
     onOpenTrash: () => void;
@@ -26,6 +27,7 @@
     dirtyFilesCount,
     stagedFilesCount,
     currentIdentity = null,
+    transferProgress = null,
     operationLogs = [],
     isLogPanelOpen = false,
     onOpenTrash,
@@ -182,6 +184,19 @@
         class="w-3 h-3 shrink-0 text-zinc-400 dark:text-zinc-600 group-hover:text-emerald-500 transition-all {isLogPanelOpen ? 'rotate-180' : ''}"
       />
     </button>
+
+    {#if transferProgress}
+      <span class="text-zinc-300 dark:text-zinc-600">|</span>
+      <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 text-[10px] font-mono shadow-xs animate-pulse">
+        <RefreshCw class="w-2.5 h-2.5 animate-spin text-cyan-500" />
+        <span class="capitalize font-semibold">{transferProgress.phase}:</span>
+        <span>
+          {transferProgress.total_objects > 0
+            ? `${Math.round((transferProgress.received_objects / transferProgress.total_objects) * 100)}% (${transferProgress.received_objects}/${transferProgress.total_objects})`
+            : `${(transferProgress.received_bytes / 1024).toFixed(1)} KB`}
+        </span>
+      </div>
+    {/if}
 
     {#if repoSummary}
       <span class="text-zinc-300 dark:text-zinc-600">|</span>

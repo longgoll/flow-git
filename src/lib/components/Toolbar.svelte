@@ -242,6 +242,7 @@
     {#if viewMode === 'graph'}
       <ToolbarSearchFilters
         bind:searchQuery
+        repoPath={repoSummary?.path}
         {filterHideMerges}
         {filterMyCommits}
         {authors}

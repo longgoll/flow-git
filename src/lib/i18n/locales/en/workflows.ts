@@ -101,6 +101,12 @@ export const workflows: typeof viWorkflows = {
     failBad: "Code Has Bug (Fail / Bad 🐞)",
     failBadDesc: "Bug exists at this commit",
     abortAndRestore: "Abort Bisect & Restore Original Branch",
+    manualMode: "Manual (Good / Bad)",
+    autoMode: "Auto-run Script",
+    scriptLabel: "Automated Test Command (Script):",
+    runningAuto: "Testing...",
+    startAutoBtn: "Run Auto-Bisect",
+    quickPresets: "Presets",
   },
   rebase: {
     title: "Interactive Rebase Timeline (`git rebase -i`)",

@@ -1,4 +1,4 @@
-use tauri::{command, State};
+use tauri::{command, AppHandle, Emitter, State};
 use crate::commands::state::AppState;
 use crate::error::{AppError, AppResult};
 use crate::git::{
@@ -12,7 +12,7 @@ use crate::git::{
     diff::FileDiffDetail,
     repo::open_repository as git_open_repo,
     stash_ops::{get_stash_detail as git_get_stash_detail, get_stash_file_diff as git_get_stash_file_diff, stash_branch as git_stash_branch, StashDetail},
-    sync::{smart_sync_upstream as git_smart_sync, SmartSyncResult},
+    sync::{smart_sync_upstream_with_progress, SmartSyncResult, TransferProgressPayload},
     BranchInfo, StashInfo, TagInfo,
 };
 
@@ -176,6 +176,7 @@ pub async fn smart_sync(
     remote_name: Option<String>,
     branch_name: Option<String>,
     credentials: Option<GitCredentials>,
+    app_handle: AppHandle,
     state: State<'_, AppState>,
 ) -> AppResult<SmartSyncResult> {
     let effective_creds = match credentials {
@@ -195,7 +196,16 @@ pub async fn smart_sync(
     };
     tokio::task::spawn_blocking(move || {
         let repo = git_open_repo(&path)?;
-        git_smart_sync(&repo, remote_name.as_deref(), branch_name.as_deref(), effective_creds)
+        let app = app_handle.clone();
+        smart_sync_upstream_with_progress(
+            &repo,
+            remote_name.as_deref(),
+            branch_name.as_deref(),
+            effective_creds,
+            Some(move |progress: TransferProgressPayload| {
+                let _ = app.emit("remote://transfer-progress", &progress);
+            }),
+        )
     })
     .await
     .map_err(|e| AppError::Internal(e.to_string()))?

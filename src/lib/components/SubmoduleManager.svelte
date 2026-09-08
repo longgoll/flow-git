@@ -1,22 +1,28 @@
 <script lang="ts">
-  import { getSubmodules, updateSubmodules, syncSubmodules } from '../api';
+  import { getSubmodules, updateSubmodules, syncSubmodules, getSubmoduleDiff } from '../api';
   import { localeState } from '../state/localeState.svelte';
-  import type { SubmoduleInfo } from '../types';
+  import type { SubmoduleDiffResult, SubmoduleInfo } from '../types';
+  import { ExternalLink, FileText, ChevronDown, ChevronUp, Loader2 } from 'lucide-svelte';
 
   let {
     repoPath = '',
     isOpen = false,
     onClose = () => {},
+    onOpenSubmoduleRepo,
   }: {
     repoPath: string;
     isOpen: boolean;
     onClose: () => void;
+    onOpenSubmoduleRepo?: (fullPath: string) => void;
   } = $props();
 
   let submodules = $state<SubmoduleInfo[]>([]);
   let isLoading = $state(false);
   let actionLoading = $state<string | null>(null);
   let statusMessage = $state<{ text: string; type: 'info' | 'error' | 'success' } | null>(null);
+  let expandedDiffSub = $state<string | null>(null);
+  let subDiffData = $state<SubmoduleDiffResult | null>(null);
+  let isLoadingDiff = $state(false);
 
   $effect(() => {
     if (isOpen && repoPath) {
@@ -76,6 +82,30 @@
     } finally {
       actionLoading = null;
     }
+  }
+
+  async function toggleSubmoduleDiff(name: string) {
+    if (expandedDiffSub === name) {
+      expandedDiffSub = null;
+      subDiffData = null;
+      return;
+    }
+    expandedDiffSub = name;
+    isLoadingDiff = true;
+    try {
+      subDiffData = await getSubmoduleDiff(repoPath, name);
+    } catch (e: any) {
+      statusMessage = { text: e?.toString() || 'Failed to load submodule diff', type: 'error' };
+      subDiffData = null;
+    } finally {
+      isLoadingDiff = false;
+    }
+  }
+
+  function handleOpenSubmodule(sub: SubmoduleInfo) {
+    const fullPath = subDiffData?.full_path || `${repoPath.replace(/[/\\]+$/, '')}/${sub.path.replace(/^[/\\]+/, '')}`;
+    onClose();
+    onOpenSubmoduleRepo?.(fullPath);
   }
 </script>
 
@@ -198,6 +228,31 @@
 
                   <div class="flex items-center gap-1.5">
                     <button
+                      onclick={() => toggleSubmoduleDiff(sub.name)}
+                      class="px-2.5 py-1 text-xs rounded-md bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 font-medium transition-colors flex items-center gap-1 border border-neutral-300 dark:border-transparent cursor-pointer shadow-xs"
+                      title="Xem chi tiết thay đổi trong submodule"
+                    >
+                      <FileText class="w-3 h-3 text-cyan-500" />
+                      <span>{localeState.t('submodules.viewDiff')}</span>
+                      {#if expandedDiffSub === sub.name}
+                        <ChevronUp class="w-3 h-3 text-neutral-400" />
+                      {:else}
+                        <ChevronDown class="w-3 h-3 text-neutral-400" />
+                      {/if}
+                    </button>
+
+                    {#if onOpenSubmoduleRepo}
+                      <button
+                        onclick={() => handleOpenSubmodule(sub)}
+                        class="px-2.5 py-1 text-xs rounded-md bg-white dark:bg-neutral-800 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 text-cyan-700 dark:text-cyan-400 font-medium transition-colors flex items-center gap-1 border border-neutral-300 dark:border-neutral-700 cursor-pointer shadow-xs"
+                        title="Mở submodule này thành Workspace độc lập trong FlowGit"
+                      >
+                        <ExternalLink class="w-3 h-3 text-cyan-500" />
+                        <span>{localeState.t('submodules.openRepo')}</span>
+                      </button>
+                    {/if}
+
+                    <button
                       onclick={() => handleUpdateSingle(sub.name)}
                       disabled={actionLoading !== null}
                       class="px-2.5 py-1 text-xs rounded-md bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 font-medium transition-colors disabled:opacity-50 flex items-center gap-1 border border-neutral-300 dark:border-transparent cursor-pointer shadow-xs"
@@ -223,6 +278,39 @@
                     {/if}
                   </div>
                 </div>
+
+                <!-- Collapsible Submodule Diff Container -->
+                {#if expandedDiffSub === sub.name}
+                  <div class="mt-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-950 p-3 overflow-hidden animate-in fade-in duration-150">
+                    <div class="flex items-center justify-between text-xs font-mono pb-2 border-b border-neutral-800 text-neutral-400">
+                      <span class="font-bold text-cyan-400 flex items-center gap-1">
+                        <FileText class="w-3.5 h-3.5" />
+                        {localeState.t('submodules.diffTitle')}
+                      </span>
+                      {#if subDiffData?.modified_files.length}
+                        <span class="text-[10px] text-neutral-400">{localeState.t('submodules.filesModified', { count: subDiffData.modified_files.length })}</span>
+                      {/if}
+                    </div>
+
+                    {#if isLoadingDiff}
+                      <div class="py-6 flex items-center justify-center gap-2 text-neutral-500 text-xs font-mono">
+                        <Loader2 class="w-4 h-4 animate-spin text-cyan-500" />
+                        <span>{localeState.t('submodules.loadingDiff')}</span>
+                      </div>
+                    {:else if subDiffData}
+                      {#if subDiffData.modified_files.length > 0}
+                        <div class="py-1.5 flex flex-wrap gap-1 border-b border-neutral-800/60 mb-2">
+                          {#each subDiffData.modified_files as file}
+                            <span class="px-1.5 py-0.5 rounded bg-neutral-900 text-neutral-300 border border-neutral-800 text-[10px] font-mono">
+                              {file}
+                            </span>
+                          {/each}
+                        </div>
+                      {/if}
+                      <pre class="max-h-60 overflow-auto font-mono text-[11px] leading-relaxed select-text text-neutral-300 whitespace-pre-wrap">{#each subDiffData.diff.split('\n') as line}{#if line.startsWith('+')}<span class="text-emerald-400 bg-emerald-500/10 block">{line}</span>{:else if line.startsWith('-')}<span class="text-rose-400 bg-rose-500/10 block">{line}</span>{:else if line.startsWith('@@')}<span class="text-cyan-400 font-semibold block">{line}</span>{:else}<span class="text-neutral-400 block">{line}</span>{/if}{/each}</pre>
+                    {/if}
+                  </div>
+                {/if}
               </div>
             {/each}
           </div>

@@ -114,6 +114,28 @@ Blindly applying or popping stashes via `git stash pop` risks conflicts and acci
 
 ---
 
+## 🗑️ 7. Safe Discard 48h Trash & Monaco Diff Preview
+
+Components: `src/lib/components/SafeDiscardTrash.svelte`, `src/lib/components/TrashInspector.svelte`  
+Backend: `src-tauri/src/commands/repo.rs` (`get_trash_snapshot_diff`, `restore_trash_snapshot`, `restore_trash_batch`)
+
+- **48-Hour Safety Net**: When discarding files or discarding all changes, file contents are atomically stored in local SQLite before HEAD checkout.
+- **Monaco Diff Preview**: Click any snapshot row to launch the `TrashInspector` with Monaco Diff Editor, comparing original snapshot contents directly against current working tree files (Split or Inline).
+- **1-Click Restore & Batch Restore**: Restore a single file or an entire batch of discarded files without fear of data loss.
+
+---
+
+## ⛏️ 8. Pickaxe Code Diff Search (`-S`)
+
+Components: `src/lib/components/toolbar/ToolbarSearchFilters.svelte`  
+Backend: `src-tauri/src/git/search.rs` (`search_commits_pickaxe`)
+
+- **Code-Level Historical Search**: Search commits that added or removed specific variable names, functions, or string literals across all diffs.
+- **Rayon-Powered Concurrency**: Inspects git diff hunks across history with Rayon parallelism.
+- **Visual Match Flyout**: Clicking a search match displays commit metadata, files affected, and exact added/removed line statistics.
+
+---
+
 <a name="-tiếng-việt"></a>
 # 🇻🇳 Tiếng Việt
 
@@ -220,3 +242,26 @@ Lập trình viên thường ngần ngại sử dụng `git stash pop` vì khôn
   - ⚡ **Pop:** Áp dụng code và xóa bản stash khỏi Git.
   - 🌿 **Branch from Stash:** Tạo một nhánh Git mới trực tiếp từ mốc stash và checkout sang (`git stash branch`).
   - 🗑️ **Drop:** Xóa vĩnh viễn bản stash kèm hộp thoại xác nhận.
+
+---
+
+## 🗑️ 7. THÙNG RÁC SAFE DISCARD 48H & MONACO DIFF PREVIEW
+
+Component: `src/lib/components/SafeDiscardTrash.svelte`, `src/lib/components/TrashInspector.svelte`  
+Backend: `src-tauri/src/commands/repo.rs` (`get_trash_snapshot_diff`, `restore_trash_snapshot`, `restore_trash_batch`)
+
+- **Bảo vệ mã nguồn an toàn tuyệt đối (No-Fear Git)**: Mỗi khi bạn discard một tệp hoặc discard all, nội dung trước khi xóa được tự động snapshot vào cơ sở dữ liệu SQLite trong 48 giờ.
+- **Monaco Diff Inspector**: Nhấn vào bất kỳ bản chụp nào để mở trình so sánh Monaco Diff Editor, trực tiếp đối chiếu nội dung bản chụp thùng rác với file hiện tại trong Working Tree (hỗ trợ chuyển đổi linh hoạt Split hoặc Inline).
+- **Khôi phục 1-Click & Khôi phục theo Đợt (Batch Restore)**: Lấy lại chính xác 100% nội dung tệp mà không lo mất dữ liệu.
+
+---
+
+## ⛏️ 8. TÌM KIẾM THEO NỘI DUNG DÒNG CODE (PICKAXE SEARCH `-S`)
+
+Component: `src/lib/components/toolbar/ToolbarSearchFilters.svelte`  
+Backend: `src-tauri/src/git/search.rs` (`search_commits_pickaxe`)
+
+- **Truy vết thay đổi cấp độ mã nguồn**: Tìm kiếm chính xác các commit trong lịch sử từng thêm hoặc xóa một đoạn code, tên biến, hoặc hàm cụ thể qua thuật toán Git Pickaxe `-S`.
+- **Hiệu năng cao với Rust Rayon**: Xử lý đa luồng quét diff toàn bộ lịch sử commit cực nhanh.
+- **Flyout kết quả trực quan**: Hiển thị danh sách commit khớp, tệp tác động và số dòng `+X / -Y` kèm phím tắt nhảy thẳng đến commit trên đồ thị.
+

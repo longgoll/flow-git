@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { LfsSummary, SubmoduleInfo } from '../types';
+import type { LfsSummary, SubmoduleDiffResult, SubmoduleInfo } from '../types';
 import { isTauri } from './client';
 
 // -------------------------------------------------------------
@@ -10,6 +10,19 @@ export async function getSubmodules(path: string): Promise<SubmoduleInfo[]> {
     return await invoke<SubmoduleInfo[]>('get_submodules', { path });
   }
   return [];
+}
+
+export async function getSubmoduleDiff(path: string, name: string): Promise<SubmoduleDiffResult> {
+  if (isTauri) {
+    return await invoke<SubmoduleDiffResult>('get_submodule_diff', { path, name });
+  }
+  return {
+    name,
+    path: `submodules/${name}`,
+    full_path: `/mock/path/submodules/${name}`,
+    diff: 'diff --git a/file.txt b/file.txt\n+ mock line added in submodule',
+    modified_files: ['file.txt'],
+  };
 }
 
 export async function updateSubmodules(

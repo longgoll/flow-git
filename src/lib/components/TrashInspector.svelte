@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { TrashSnapshotItem } from '../types';
+  import type { TrashSnapshotDiffResult, TrashSnapshotItem } from '../types';
   import {
     ShieldCheck,
     RotateCcw,
@@ -9,8 +9,13 @@
     FolderArchive,
     Search,
     CheckCheck,
+    Columns2,
+    AlignJustify,
+    Loader2,
   } from 'lucide-svelte';
   import { localeState } from '../state/localeState.svelte';
+  import { getTrashSnapshotDiff } from '../api/repo';
+  import MonacoDiffEditor from './MonacoDiffEditor.svelte';
 
   interface Props {
     isOpen: boolean;
@@ -34,6 +39,9 @@
 
   let selectedSnapshotId = $state<number | null>(null);
   let searchQuery = $state('');
+  let snapshotDiffData = $state<TrashSnapshotDiffResult | null>(null);
+  let isLoadingDiff = $state(false);
+  let diffViewMode = $state<'split' | 'unified'>('split');
 
   let filteredSnapshots = $derived(
     searchQuery.trim()
@@ -48,6 +56,26 @@
       selectedSnapshotId = filteredSnapshots[0].id;
     }
   });
+
+  $effect(() => {
+    if (selectedSnapshotId) {
+      loadSnapshotDiff(selectedSnapshotId);
+    } else {
+      snapshotDiffData = null;
+    }
+  });
+
+  async function loadSnapshotDiff(id: number) {
+    isLoadingDiff = true;
+    try {
+      snapshotDiffData = await getTrashSnapshotDiff(id);
+    } catch (e) {
+      console.error('Failed to load snapshot diff:', e);
+      snapshotDiffData = null;
+    } finally {
+      isLoadingDiff = false;
+    }
+  }
 
   let selectedSnapshot = $derived(
     filteredSnapshots.find((s) => s.id === selectedSnapshotId) || filteredSnapshots[0] || null
@@ -188,6 +216,26 @@
               </div>
 
               <div class="flex items-center gap-2">
+                <!-- Split / Unified view toggle -->
+                <div class="flex items-center bg-zinc-200/80 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-zinc-300/60 dark:border-zinc-700/60 text-xs">
+                  <button
+                    onclick={() => (diffViewMode = 'split')}
+                    class="px-2 py-1 rounded-md flex items-center gap-1 transition-all {diffViewMode === 'split' ? 'bg-white dark:bg-zinc-900 text-cyan-600 dark:text-cyan-400 font-bold shadow-xs' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+                    title="Split side-by-side"
+                  >
+                    <Columns2 class="w-3 h-3" />
+                    <span class="text-[10px]">Split</span>
+                  </button>
+                  <button
+                    onclick={() => (diffViewMode = 'unified')}
+                    class="px-2 py-1 rounded-md flex items-center gap-1 transition-all {diffViewMode === 'unified' ? 'bg-white dark:bg-zinc-900 text-cyan-600 dark:text-cyan-400 font-bold shadow-xs' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+                    title="Unified inline diff"
+                  >
+                    <AlignJustify class="w-3 h-3" />
+                    <span class="text-[10px]">Inline</span>
+                  </button>
+                </div>
+
                 <button
                   onclick={() => onDelete(selectedSnapshot.id)}
                   class="p-1.5 rounded-lg bg-white dark:bg-zinc-900 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 dark:hover:text-rose-400 border border-zinc-300 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs transition-colors cursor-pointer shadow-xs"
@@ -206,19 +254,45 @@
               </div>
             </div>
 
-            <!-- Preview Text / Diff with colored lines -->
-            <div class="flex-1 p-4 overflow-auto font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50/70 dark:bg-zinc-950/90 select-text leading-relaxed">
-              {#each selectedSnapshot.diff_preview.split('\n') as line}
-                {#if line.startsWith('+')}
-                  <div class="text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-1 rounded-xs">{line}</div>
-                {:else if line.startsWith('-')}
-                  <div class="text-rose-700 dark:text-rose-400 bg-rose-500/10 px-1 rounded-xs">{line}</div>
-                {:else if line.startsWith('@@')}
-                  <div class="text-cyan-600 dark:text-cyan-400 font-semibold bg-cyan-500/5 px-1 py-0.5 my-0.5 rounded-xs">{line}</div>
-                {:else}
-                  <div class="text-zinc-600 dark:text-zinc-400 px-1">{line}</div>
-                {/if}
-              {/each}
+            <!-- Monaco Diff Editor Preview -->
+            <div class="flex-1 relative overflow-hidden bg-zinc-950">
+              {#if isLoadingDiff}
+                <div class="h-full flex flex-col items-center justify-center gap-2 text-zinc-400 text-xs font-mono">
+                  <Loader2 class="w-6 h-6 animate-spin text-cyan-500" />
+                  <span>Đang tải nội dung snapshot...</span>
+                </div>
+              {:else if snapshotDiffData && !snapshotDiffData.is_oversized}
+                <div class="h-full w-full flex flex-col">
+                  <!-- Labels for Left (Current) vs Right (Trash) -->
+                  <div class="h-6 px-3 bg-zinc-100 dark:bg-zinc-900/90 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-[10px] font-mono text-zinc-500 select-none">
+                    <span class="text-amber-600 dark:text-amber-400 font-semibold">Working Tree (Hiện tại)</span>
+                    <span class="text-cyan-600 dark:text-cyan-400 font-semibold">Trash Snapshot (Bản lưu phục hồi)</span>
+                  </div>
+                  <div class="flex-1 min-h-0">
+                    <MonacoDiffEditor
+                      originalContent={snapshotDiffData.current_content}
+                      modifiedContent={snapshotDiffData.snapshot_content}
+                      filePath={snapshotDiffData.file_path}
+                      viewMode={diffViewMode}
+                    />
+                  </div>
+                </div>
+              {:else}
+                <!-- Fallback to line colored diff preview -->
+                <div class="h-full p-4 overflow-auto font-mono text-xs text-zinc-800 dark:text-zinc-300 bg-zinc-50/70 dark:bg-zinc-950/90 select-text leading-relaxed">
+                  {#each selectedSnapshot.diff_preview.split('\n') as line}
+                    {#if line.startsWith('+')}
+                      <div class="text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-1 rounded-xs">{line}</div>
+                    {:else if line.startsWith('-')}
+                      <div class="text-rose-700 dark:text-rose-400 bg-rose-500/10 px-1 rounded-xs">{line}</div>
+                    {:else if line.startsWith('@@')}
+                      <div class="text-cyan-600 dark:text-cyan-400 font-semibold bg-cyan-500/5 px-1 py-0.5 my-0.5 rounded-xs">{line}</div>
+                    {:else}
+                      <div class="text-zinc-600 dark:text-zinc-400 px-1">{line}</div>
+                    {/if}
+                  {/each}
+                </div>
+              {/if}
             </div>
           {:else}
             <div class="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-2">

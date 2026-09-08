@@ -91,6 +91,12 @@ FlowGit applies binary search to reduce 200 candidate commits down to **just 7�
    - FlowGit pinpoints the exact first commit that introduced the bug.
    - Shows summary modal: Author, timestamp, commit message, and full code diff, complete with a 1-click **"Revert This Commit"** button.
 
+### 🤖 Automated Bisect Runner (Script Mode):
+For test suites and CI scripts, switch to the **Auto-Bisect** tab:
+- **Preset Buttons**: 1-click presets for `npm test`, `cargo test`, `pytest`, or `go test`.
+- **Zero Manual Clicks**: FlowGit checks out each midpoint, executes the command in background, and parses the exit code (exit `0` = Good, non-zero = Bad).
+- **Live Terminal Logs**: Tauri event streaming (`bisect://step-log`) streams stderr/stdout live for each commit step directly into the wizard.
+
 ---
 
 <a name="-tiếng-việt"></a>
@@ -171,3 +177,9 @@ FlowGit tự động áp dụng thuật toán tìm kiếm nhị phân để thu 
 4. **Tìm ra thủ phạm (Culprit Identified):**
    - Sau vài bước, FlowGit lập tức phát hiện chính xác commit duy nhất đầu tiên đưa lỗi vào hệ thống.
    - Hiển thị bảng tổng kết: Tên tác giả, ngày giờ, commit message và danh sách các dòng code đã sửa của commit đó, kèm nút **"Revert Commit Này Ngay"**.
+
+### 🤖 Chế độ Auto-Bisect Tự Động (Script Runner):
+Đối với dự án có sẵn Unit test hoặc Integration test, chuyển sang tab **Tự động (Script)**:
+- **Phím tắt cài sẵn (Presets)**: Hỗ trợ 1-click cho `npm test`, `cargo test`, `pytest`, hoặc `go test`.
+- **Hoàn toàn tự động**: FlowGit tự động checkout từng commit ở giữa, kích hoạt lệnh test và phân tích exit code (mã `0` = Good, khác `0` = Bad).
+- **Stream Log trực tiếp**: Luồng sự kiện Tauri `bisect://step-log` truyền tải realtime toàn bộ output stdout/stderr của từng bước test ngay trên giao diện Bisect Wizard.

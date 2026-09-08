@@ -26,6 +26,7 @@ pub mod tree;
 pub mod worktree;
 pub mod stash_ops;
 pub mod hooks;
+pub mod search;
 
 use serde::{Deserialize, Serialize};
 

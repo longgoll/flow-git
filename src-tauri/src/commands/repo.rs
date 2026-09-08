@@ -1,4 +1,5 @@
 use tauri::{command, AppHandle, State};
+use serde::{Deserialize, Serialize};
 use crate::commands::state::AppState;
 use crate::error::{AppError, AppResult};
 use crate::git::{
@@ -308,6 +309,57 @@ pub async fn reveal_in_file_manager(
     .await
     .map_err(|e| AppError::Internal(e.to_string()))?
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TrashSnapshotDiffResult {
+    pub file_path: String,
+    pub snapshot_content: String,
+    pub current_content: String,
+    pub is_oversized: bool,
+}
+
+#[command]
+pub async fn get_trash_snapshot_diff(
+    snapshot_id: i64,
+    state: State<'_, AppState>,
+) -> AppResult<TrashSnapshotDiffResult> {
+    tokio::task::spawn_blocking(move || {
+        let (repo_path, file_path, content_bytes) = state.trash_store.get_snapshot_content(snapshot_id)?;
+        let snapshot_content = String::from_utf8_lossy(&content_bytes).to_string();
+
+        let full_path = std::path::Path::new(&repo_path).join(&file_path);
+        let current_content = if full_path.exists() {
+            std::fs::read_to_string(&full_path).unwrap_or_else(|_| "(Không thể đọc nội dung file hiện tại hoặc file nhị phân)".to_string())
+        } else {
+            String::new()
+        };
+
+        Ok(TrashSnapshotDiffResult {
+            file_path,
+            snapshot_content,
+            current_content,
+            is_oversized: content_bytes.is_empty(),
+        })
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn search_commits_pickaxe(
+    path: String,
+    query: String,
+    is_regex: Option<bool>,
+    max_results: Option<usize>,
+) -> AppResult<Vec<crate::git::search::PickaxeSearchResult>> {
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        crate::git::search::search_commits_pickaxe(&repo, &query, is_regex.unwrap_or(false), max_results)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
 
 
 

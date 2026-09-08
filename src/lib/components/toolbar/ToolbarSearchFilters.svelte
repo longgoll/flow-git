@@ -1,6 +1,7 @@
 <script lang="ts">
-  import type { LayoutMode } from '../../types';
+  import type { LayoutMode, PickaxeSearchResult } from '../../types';
   import { localeState } from '../../state/localeState.svelte';
+  import { searchCommitsPickaxe } from '../../api/repo';
   import {
     Search,
     X,
@@ -13,10 +14,14 @@
     ChevronDown,
     Rows2,
     Columns3,
+    Code2,
+    Loader2,
+    FileText,
   } from 'lucide-svelte';
 
   interface Props {
     searchQuery: string;
+    repoPath?: string;
     filterHideMerges?: boolean;
     filterMyCommits?: boolean;
     layoutMode?: LayoutMode;
@@ -26,6 +31,7 @@
     filterDateFrom?: string | null;
     filterDateTo?: string | null;
     onSearchChange: (query: string) => void;
+    onSelectCommit?: (commitId: string) => void;
     onToggleHideMerges?: () => void;
     onToggleMyCommits?: () => void;
     onSelectAuthor?: (author: string) => void;
@@ -37,6 +43,7 @@
 
   let {
     searchQuery = $bindable(''),
+    repoPath = '',
     filterHideMerges = false,
     filterMyCommits = false,
     layoutMode = 'horizontal',
@@ -46,6 +53,7 @@
     filterDateFrom = null,
     filterDateTo = null,
     onSearchChange,
+    onSelectCommit,
     onToggleHideMerges,
     onToggleMyCommits,
     onSelectAuthor,
@@ -85,10 +93,66 @@
     )
   );
 
+  let isPickaxeMode = $state<boolean>(false);
+  let isPickaxeLoading = $state<boolean>(false);
+  let pickaxeResults = $state<PickaxeSearchResult[]>([]);
+  let isPickaxeDropdownOpen = $state<boolean>(false);
+  let pickaxeDebounceTimer: any = null;
+
+  async function triggerPickaxeSearch() {
+    if (!repoPath || !searchQuery.trim()) {
+      pickaxeResults = [];
+      isPickaxeDropdownOpen = false;
+      return;
+    }
+    isPickaxeLoading = true;
+    try {
+      pickaxeResults = await searchCommitsPickaxe(repoPath, searchQuery.trim(), false, 30);
+      isPickaxeDropdownOpen = true;
+    } catch (err) {
+      console.error('Pickaxe search error:', err);
+      pickaxeResults = [];
+    } finally {
+      isPickaxeLoading = false;
+    }
+  }
+
+  function togglePickaxeMode() {
+    isPickaxeMode = !isPickaxeMode;
+    if (isPickaxeMode && searchQuery.trim()) {
+      triggerPickaxeSearch();
+    } else {
+      isPickaxeDropdownOpen = false;
+      pickaxeResults = [];
+    }
+  }
+
   function handleInput(e: Event) {
     const val = (e.target as HTMLInputElement).value;
     searchQuery = val;
     onSearchChange(val);
+
+    if (isPickaxeMode) {
+      clearTimeout(pickaxeDebounceTimer);
+      if (val.trim()) {
+        pickaxeDebounceTimer = setTimeout(() => {
+          triggerPickaxeSearch();
+        }, 350);
+      } else {
+        pickaxeResults = [];
+        isPickaxeDropdownOpen = false;
+      }
+    }
+  }
+
+  function handleSelectPickaxeCommit(commitId: string) {
+    isPickaxeDropdownOpen = false;
+    if (onSelectCommit) {
+      onSelectCommit(commitId);
+    } else {
+      searchQuery = commitId;
+      onSearchChange(commitId);
+    }
   }
 
   function applyCustomDate() {
@@ -105,21 +169,83 @@
     <Search class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 absolute left-2 top-2 pointer-events-none" />
     <input
       type="text"
-      placeholder={localeState.t('toolbar.filterPlaceholder')}
+      placeholder={isPickaxeMode ? 'Diff (-S)...' : localeState.t('toolbar.filterPlaceholder')}
       value={searchQuery}
       oninput={handleInput}
-      class="w-full bg-zinc-100 dark:bg-zinc-900/70 hover:bg-zinc-200/60 dark:hover:bg-zinc-900 focus:bg-white dark:focus:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/80 focus:border-cyan-500/60 rounded-md pl-7 pr-6 py-1 text-xs text-zinc-900 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500/30 transition-all font-mono"
+      class="w-full bg-zinc-100 dark:bg-zinc-900/70 hover:bg-zinc-200/60 dark:hover:bg-zinc-900 focus:bg-white dark:focus:bg-zinc-900 border {isPickaxeMode ? 'border-cyan-500/80 bg-cyan-500/5 ring-1 ring-cyan-500/20' : 'border-zinc-200 dark:border-zinc-800/80 focus:border-cyan-500/60'} rounded-md pl-7 pr-6 py-1 text-xs text-zinc-900 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500/30 transition-all font-mono"
     />
     {#if searchQuery}
       <button
-        onclick={() => { searchQuery = ''; onSearchChange(''); }}
+        onclick={() => { searchQuery = ''; onSearchChange(''); pickaxeResults = []; isPickaxeDropdownOpen = false; }}
         class="absolute right-1 top-1 p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
         title={localeState.t('toolbar.clearFilter')}
       >
         <X class="w-3 h-3" />
       </button>
     {/if}
+
+    <!-- Pickaxe Results Popover -->
+    {#if isPickaxeMode && isPickaxeDropdownOpen}
+      <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+      <div class="fixed inset-0 z-40" onclick={() => (isPickaxeDropdownOpen = false)}></div>
+      <div class="absolute left-0 top-8 w-80 max-h-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col font-sans animate-in fade-in zoom-in-95 duration-100">
+        <div class="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-950/80 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-[11px]">
+          <span class="font-bold text-cyan-600 dark:text-cyan-400 flex items-center gap-1">
+            <Code2 class="w-3.5 h-3.5" />
+            Pickaxe Results (-S)
+          </span>
+          <span class="text-zinc-500">{pickaxeResults.length} commits</span>
+        </div>
+        <div class="flex-1 overflow-y-auto p-1 divide-y divide-zinc-100 dark:divide-zinc-800/50">
+          {#if isPickaxeLoading}
+            <div class="p-6 flex flex-col items-center justify-center gap-2 text-zinc-500 text-xs font-mono">
+              <Loader2 class="w-5 h-5 animate-spin text-cyan-500" />
+              <span>Scanning diffs...</span>
+            </div>
+          {:else if pickaxeResults.length === 0}
+            <div class="p-6 text-center text-zinc-500 text-xs font-mono">
+              Không tìm thấy commit nào có thay đổi chứa "{searchQuery}".
+            </div>
+          {:else}
+            {#each pickaxeResults as match}
+              <button
+                onclick={() => handleSelectPickaxeCommit(match.commit_id)}
+                class="w-full text-left p-2 hover:bg-cyan-50/60 dark:hover:bg-cyan-950/40 rounded-lg transition-colors cursor-pointer group"
+              >
+                <div class="flex items-center justify-between text-xs font-mono">
+                  <span class="font-bold text-cyan-600 dark:text-cyan-400">{match.short_id}</span>
+                  <span class="text-[10px] text-zinc-500 truncate max-w-[120px]">{match.author_name}</span>
+                </div>
+                <div class="text-xs text-zinc-800 dark:text-zinc-200 font-medium truncate mt-0.5">
+                  {match.summary}
+                </div>
+                <div class="mt-1 space-y-0.5 font-mono text-[10px]">
+                  {#each match.matched_files.slice(0, 2) as file}
+                    <div class="flex items-center gap-1 text-zinc-500 dark:text-zinc-400 truncate">
+                      <FileText class="w-2.5 h-2.5 shrink-0 text-cyan-500" />
+                      <span class="truncate">{file.path}</span>
+                      <span class="text-emerald-600 dark:text-emerald-400 shrink-0">+{file.additions}</span>
+                      <span class="text-rose-600 dark:text-rose-400 shrink-0">-{file.deletions}</span>
+                    </div>
+                  {/each}
+                </div>
+              </button>
+            {/each}
+          {/if}
+        </div>
+      </div>
+    {/if}
   </div>
+
+  <!-- Pickaxe Code Search Toggle Button -->
+  <button
+    onclick={togglePickaxeMode}
+    class="px-1.5 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-all cursor-pointer {isPickaxeMode ? 'bg-cyan-500/20 dark:bg-cyan-500/25 text-cyan-700 dark:text-cyan-300 border border-cyan-500/40 shadow-xs' : 'bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800/80 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+    title="Pickaxe Code Diff Search (-S): Tìm commit theo nội dung code bị thêm/xóa"
+  >
+    <Code2 class="w-3.5 h-3.5 {isPickaxeMode ? 'text-cyan-600 dark:text-cyan-400' : ''}" />
+    <span class="text-[10px] font-mono hidden sm:inline">-S</span>
+  </button>
 
   <!-- Smart Filter Toggles: Hide Merges & My Commits -->
   <div class="flex items-center bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800/80 rounded-md p-0.5 shrink-0">

@@ -63,6 +63,8 @@ Backend: `src-tauri/src/git/submodule.rs`
 - **1-Click Operations:**
   - **`Update All (--init --recursive)`:** Clones and checks out all submodule trees recursively.
   - **`Sync URLs`:** Synchronizes `.gitmodules` endpoint modifications into local Git configs.
+  - **`View Working Tree Diff`**: Expandable panel revealing uncommitted changes, modified file pills, and unified diff syntax inside nested submodules.
+  - **`Open Workspace`**: Seamlessly switches the main FlowGit workspace to the selected submodule repository directory.
 
 ---
 
@@ -140,6 +142,8 @@ Backend: `src-tauri/src/git/submodule.rs`
 - **Các thao tác 1-Click:**
   - **`Update All (--init --recursive)`:** Tự động clone và cập nhật toàn bộ cây submodules nhiều cấp.
   - **`Sync URLs`:** Đồng bộ lại các thay đổi URL trong file cấu hình `.gitmodules` vào git config nội bộ.
+  - **`Xem Diff`**: Mở khung xem trước trực tiếp các tệp đang bị sửa đổi dở dang và nội dung diff chi tiết trong working tree của submodule.
+  - **`Mở Workspace`**: Chuyển đổi FlowGit sang mở trực tiếp thư mục submodule con thành một repository độc lập chỉ với 1 click.
 
 ---
 

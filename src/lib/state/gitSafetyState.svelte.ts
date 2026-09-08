@@ -22,6 +22,7 @@ import {
   resolveConflictFile,
   restoreLostCommit,
   restoreTrashSnapshot,
+  runAutoBisect,
   scanStagedSecrets,
   startBisect,
   timeTravelTo,
@@ -217,6 +218,19 @@ export class GitSafetyState {
     this.bisectStatus = null;
     this.showBisectModal = false;
     await onRefresh();
+  }
+
+  async runAutoBisect(repoPath: string, script: string, onRefresh: () => Promise<void>) {
+    if (!repoPath) return;
+    this.isBisectLoading = true;
+    try {
+      const res = await runAutoBisect(repoPath, script);
+      this.bisectStatus = res.status;
+      await onRefresh();
+      return res;
+    } finally {
+      this.isBisectLoading = false;
+    }
   }
 
   // -------------------------------------------------------------

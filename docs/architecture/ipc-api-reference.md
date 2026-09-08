@@ -42,6 +42,7 @@ All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard
 | `get_focus_branch_info` | `path: String, branch_name: Option<String>, base_branch: Option<String>` | `FocusBranchResult` | Retrieves isolated commit stream belonging to Focus branch relative to Base. |
 | `get_unpushed_stacked_commits` | `path: String` | `Vec<StackedCommitItem>` | Lists unpushed commits in active branch for Stacked PR workflows. |
 | `reorder_stacked_commits` | `path: String, new_order_ids: Vec<String>` | `bool` | Reorders unpushed commits using the Reorder Sequencer. |
+| `search_commits_pickaxe` | `path: String, query: String, max_results: Option<usize>` | `Vec<PickaxeSearchResult>` | **Pickaxe Search (`-S`)**: Finds commits that introduced or removed specific lines/strings across diffs. |
 
 ---
 
@@ -88,6 +89,7 @@ All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard
 | `discard_all_changes` | `path: String` | `Vec<i64>` | **Safe Discard All**: Atomically snapshots all files into SQLite within a single transaction under a shared batch ID before discarding; returns array of snapshot IDs. |
 | `list_trash_snapshots`| `repo_path: Option<String>` | `Vec<TrashSnapshotItem>` | Lists all available snapshots in 48-hour trash (supports batch ID and oversized markers). |
 | `restore_trash_snapshot`| `path: String, snapshot_id: i64` | `()` | Restores 100% of discarded file content back to working tree. |
+| `get_trash_snapshot_diff` | `path: String, snapshot_id: i64` | `TrashSnapshotDiffResult` | **Trash Snapshot Preview**: Retrieves Monaco-ready diff comparing snapshot content with active working tree. |
 | `restore_trash_batch` | `path: String, batch_id: String` | `usize` | **Batch Restore**: Atomically restores all discarded files belonging to a specific batch ID in one click. |
 | `delete_trash_snapshot` | `snapshot_id: i64` | `()` | Permanently deletes a single snapshot from trash. |
 | `get_file_blame` | `path: String, file_path: String, min_line: Option<usize>, max_line: Option<usize>` | `Vec<BlameHunkItem>` | Line-by-line blame: author, email, timestamp, and commit SHA (supports optional line range). |
@@ -152,6 +154,7 @@ All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard
 | `bisect_step` | `path: String, is_good: bool` | `BisectStatus` | Reports test result (`Pass` or `Fail`) at current node to bisect further. |
 | `abort_bisect` | `path: String` | `bool` | Aborts bisect and returns HEAD to original reference. |
 | `get_bisect_status` | `path: String` | `BisectStatus` | Queries active bisect status and estimated steps remaining. |
+| `run_auto_bisect` | `path: String, bad_id: String, good_id: String, test_script: String` | `AutoBisectResult` | **Auto-Bisect**: Automated script execution (`npm test`, `cargo test`) with real-time streaming step logs. |
 
 ---
 
@@ -165,6 +168,7 @@ All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard
 | `get_submodules` | `path: String` | `Vec<SubmoduleInfo>` | Lists submodules with HEAD vs Index status and remote URLs. |
 | `update_submodules` | `path: String, recursive: bool, init: bool` | `bool` | Recursively updates submodules (`git submodule update --init --recursive`). |
 | `sync_submodules` | `path: String` | `bool` | Synchronizes submodule URLs from `.gitmodules`. |
+| `get_submodule_diff` | `path: String, submodule_name: String` | `SubmoduleDiffResult` | **Submodule Working Tree Diff**: Extracts unstaged changes, modified files list, and diff content within a submodule. |
 | `get_lfs_info` | `path: String` | `LfsSummary` | Scans LFS managed files, pointers, and active locks. |
 | `lock_lfs_file` | `path: String, file_path: String` | `bool` | Locks binary file on LFS server to prevent merge conflicts. |
 | `unlock_lfs_file` | `path: String, file_path: String, force: bool` | `bool` | Unlocks LFS file. |
@@ -247,6 +251,7 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `get_focus_branch_info` | `path: String, branch_name: Option<String>, base_branch: Option<String>` | `FocusBranchResult` | Lấy thông tin các commit đặc thù thuộc về nhánh Focus so với Base branch (hỗ trợ chọn Base branch tùy chỉnh). |
 | `get_unpushed_stacked_commits` | `path: String` | `Vec<StackedCommitItem>` | Lấy chuỗi các commit chưa được push lên remote để quản lý Stacked Commits / Stacked PRs. |
 | `reorder_stacked_commits` | `path: String, new_order_ids: Vec<String>` | `bool` | Sắp xếp lại thứ tự của các commit trong chuỗi Stacked Commits bằng bộ Reorder Sequencer. |
+| `search_commits_pickaxe` | `path: String, query: String, max_results: Option<usize>` | `Vec<PickaxeSearchResult>` | **Pickaxe Search (`-S`)**: Tìm kiếm commit đã thêm hoặc xóa chuỗi/đoạn mã cụ thể trong diffs. |
 
 ---
 
@@ -293,6 +298,7 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `discard_all_changes` | `path: String` | `Vec<i64>` | **Safe Discard All**: Sao lưu nguyên tử toàn bộ working tree vào SQLite trong 1 Transaction duy nhất kèm mã `batch_id`, trả về mảng snapshot IDs. |
 | `list_trash_snapshots`| `repo_path: Option<String>` | `Vec<TrashSnapshotItem>` | Liệt kê danh sách các bản chụp thùng rác còn hạn sử dụng (trong vòng 48h, có gắn cờ `batch_id` và `is_oversized`). |
 | `restore_trash_snapshot`| `path: String, snapshot_id: i64` | `()` | Khôi phục nguyên vẹn 100% nội dung file đã lỡ tay discard. |
+| `get_trash_snapshot_diff` | `path: String, snapshot_id: i64` | `TrashSnapshotDiffResult` | **Xem trước Diff Thùng rác**: Trích xuất diff Monaco so sánh giữa bản chụp snapshot đã discard và working tree hiện tại. |
 | `restore_trash_batch` | `path: String, batch_id: String` | `usize` | **Khôi phục cả đợt (Batch Restore)**: Phục hồi đồng loạt toàn bộ các file đã discard trong cùng một batch chỉ bằng 1 thao tác. |
 | `delete_trash_snapshot` | `snapshot_id: i64` | `()` | Xóa vĩnh viễn một bản snapshot khỏi thùng rác. |
 | `get_file_blame` | `path: String, file_path: String, min_line: Option<usize>, max_line: Option<usize>` | `Vec<BlameHunkItem>` | Soi vết từng dòng code: tác giả, email, thời gian, commit SHA (hỗ trợ tùy chọn khoảng dòng min..max). |
@@ -357,6 +363,7 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `bisect_step` | `path: String, is_good: bool` | `BisectStatus` | Báo cáo kết quả kiểm tra tại node hiện tại (`Pass` hoặc `Fail`) để hệ thống chia đôi tiếp. |
 | `abort_bisect` | `path: String` | `bool` | Hủy bỏ chế độ Bisect và đưa HEAD trở về vị trí ban đầu. |
 | `get_bisect_status` | `path: String` | `BisectStatus` | Lấy trạng thái hiện tại của phiên Bisect (ước tính số bước còn lại, danh sách commit nghi vấn). |
+| `run_auto_bisect` | `path: String, bad_id: String, good_id: String, test_script: String` | `AutoBisectResult` | **Auto-Bisect Tự Động**: Chạy script kiểm thử (`npm test`, `cargo test`) tự động phân nhánh nhị phân và stream log thời gian thực. |
 
 ---
 
@@ -370,6 +377,7 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `get_submodules` | `path: String` | `Vec<SubmoduleInfo>` | Liệt kê danh sách Submodules kèm trạng thái HEAD vs Index và URL remote. |
 | `update_submodules` | `path: String, recursive: bool, init: bool` | `bool` | Cập nhật đệ quy toàn bộ các submodules (`git submodule update --init --recursive`). |
 | `sync_submodules` | `path: String` | `bool` | Đồng bộ cấu hình URL submodules từ `.gitmodules`. |
+| `get_submodule_diff` | `path: String, submodule_name: String` | `SubmoduleDiffResult` | **Xem trước Diff Submodule**: Đọc diff tệp thay đổi trong working tree của submodule con. |
 | `get_lfs_info` | `path: String` | `LfsSummary` | Quét tệp được quản lý bởi LFS, danh sách con trỏ (pointers) và locks đang hoạt động. |
 | `lock_lfs_file` | `path: String, file_path: String` | `bool` | Khóa tệp nhị phân lớn trên LFS server để đồng nghiệp không thể ghi đè. |
 | `unlock_lfs_file` | `path: String, file_path: String, force: bool` | `bool` | Mở khóa tệp LFS. |

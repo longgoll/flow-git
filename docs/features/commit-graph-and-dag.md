@@ -34,7 +34,7 @@ The Living Commit Graph is the beating heart of FlowGit, vividly visualizing bra
 - **FlowGit Architecture:**
   - Offloads canvas rendering via **`transferControlToOffscreen()`** to **`graphWorker.ts`**.
   - Worker computes coordinate matrices and draws smooth **Cubic Bezier Splines**.
-  - **Virtual Viewport Clipping:** Only renders rows within the active scrollport plus a 200px buffer.
+  - **Virtual Viewport Clipping & Long-Span Continuity**: Only renders rows within the active scrollport plus a 200px buffer. Long-living branch spans (> 20 rows) are pre-indexed upon `SET_DATA` so splines passing through the active viewport are rendered seamlessly without broken or missing curve segments when scrolling fast.
 
 ### 1.2. Parallel Topological Lane Compaction
 - Parallelized in Rust via `rayon` (`src-tauri/src/git/history.rs`).
@@ -134,7 +134,7 @@ Living Commit Graph là trái tim của FlowGit, nơi mọi nhánh, commit, tag 
 - **Giải pháp của FlowGit:**
   - Chuyển toàn bộ canvas sang chế độ **`OffscreenCanvas`** và gửi sang **`graphWorker.ts`**.
   - Worker tính toán tọa độ $X, Y$ của từng node commit và vẽ các đường cong **Cubic Bezier Splines** mượt mà.
-  - Áp dụng kỹ thuật **Virtual Viewport Clipping**: Chỉ render các node và đường nối nằm trong khung nhìn hiển thị hiện tại của màn hình cộng thêm một vùng đệm (buffer) 200px.
+  - Áp dụng kỹ thuật **Virtual Viewport Clipping & Liền Mạch Nhánh Dài (Long-Span Continuity)**: Chỉ render các node và đường nối nằm trong khung nhìn hiển thị hiện tại cộng thêm vùng đệm 200px. Đồng thời các nhánh sống dài (> 20 hàng) được tiền lập chỉ mục `longSpans` ngay khi nhận dữ liệu `SET_DATA`, đảm bảo đường spline chạy xuyên qua viewport luôn liền mạch 100%, không bị đứt nét hay cụt nhánh khi cuộn chuột nhanh trên các repo lớn.
 
 ### 1.2. Thuật toán Nén Làn Tự Động (Topological Lane Compaction)
 - Được tính toán song song tại backend Rust bằng thư viện đa luồng `rayon` (`src-tauri/src/git/history.rs`).

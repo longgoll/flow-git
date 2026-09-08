@@ -18,9 +18,9 @@ pub use state::AppState;
 pub use repo::{
     clone_repository, compare_two_commits, get_commit_history, get_commit_info,
     get_file_content, get_focus_branch_info, get_paginated_commit_history,
-    get_remote_url, get_tree_entries, get_unpushed_stacked_commits, grep_repository_content,
+    get_remote_url, get_trash_snapshot_diff, get_tree_entries, get_unpushed_stacked_commits, grep_repository_content,
     init_repository, nuke_file_from_history, open_in_external_editor, open_repository,
-    reorder_stacked_commits, reveal_in_file_manager, save_file_content,
+    reorder_stacked_commits, reveal_in_file_manager, save_file_content, search_commits_pickaxe,
 };
 
 pub use branch::{
@@ -55,7 +55,7 @@ pub use conflict::{
 };
 
 pub use bisect::{
-    abort_bisect, bisect_step, get_bisect_status, start_bisect,
+    abort_bisect, bisect_step, get_bisect_status, run_auto_bisect, start_bisect,
 };
 
 pub use worktree::{
@@ -63,7 +63,7 @@ pub use worktree::{
 };
 
 pub use advanced::{
-    get_lfs_info, get_submodules, lock_lfs_file, pull_lfs_files, sync_submodules,
+    get_lfs_info, get_submodule_diff, get_submodules, lock_lfs_file, pull_lfs_files, sync_submodules,
     unlock_lfs_file, update_submodules,
 };
 

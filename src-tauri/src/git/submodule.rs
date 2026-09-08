@@ -101,3 +101,68 @@ pub fn sync_submodule_cli(repo_path: &str, name: Option<&str>) -> AppResult<Stri
 
     Ok("Submodules synced successfully".to_string())
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SubmoduleDiffResult {
+    pub name: String,
+    pub path: String,
+    pub full_path: String,
+    pub diff: String,
+    pub modified_files: Vec<String>,
+}
+
+pub fn get_submodule_diff(repo: &Repository, name: &str) -> AppResult<SubmoduleDiffResult> {
+    let sm = repo.find_submodule(name)?;
+    let sm_path = sm.path().to_string_lossy().to_string();
+    let workdir = repo.workdir().ok_or_else(|| AppError::InvalidRepo("Không có working directory".into()))?;
+    let full_path = workdir.join(&sm_path).to_string_lossy().to_string();
+
+    let sm_repo = match sm.open() {
+        Ok(r) => r,
+        Err(e) => {
+            return Ok(SubmoduleDiffResult {
+                name: name.to_string(),
+                path: sm_path,
+                full_path,
+                diff: format!("(Submodule chưa được clone/khởi tạo: {e})"),
+                modified_files: Vec::new(),
+            });
+        }
+    };
+
+    let mut diff_opts = git2::DiffOptions::new();
+    let head_tree = sm_repo.head().ok().and_then(|h| h.peel_to_tree().ok());
+    let diff = sm_repo.diff_tree_to_workdir_with_index(head_tree.as_ref(), Some(&mut diff_opts))?;
+
+    let mut diff_output = String::new();
+    let mut modified_files = Vec::new();
+
+    let _ = diff.print(git2::DiffFormat::Patch, |delta, _hunk, line| {
+        let path = delta.new_file().path().or_else(|| delta.old_file().path())
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_default();
+        if !path.is_empty() && !modified_files.contains(&path) {
+            modified_files.push(path);
+        }
+
+        let origin = line.origin();
+        if origin == '+' || origin == '-' || origin == ' ' {
+            diff_output.push(origin);
+        }
+        diff_output.push_str(&String::from_utf8_lossy(line.content()));
+        true
+    });
+
+    if diff_output.is_empty() {
+        diff_output = "(Không có thay đổi trong submodule)".to_string();
+    }
+
+    Ok(SubmoduleDiffResult {
+        name: name.to_string(),
+        path: sm_path,
+        full_path,
+        diff: diff_output,
+        modified_files,
+    })
+}
+

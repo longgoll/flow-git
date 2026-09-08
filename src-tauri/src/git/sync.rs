@@ -11,12 +11,34 @@ pub struct SmartSyncResult {
     pub updated_commit_id: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TransferProgressPayload {
+    pub total_objects: usize,
+    pub indexed_objects: usize,
+    pub received_objects: usize,
+    pub received_bytes: usize,
+    pub phase: String,
+}
+
 pub fn smart_sync_upstream(
     repo: &Repository,
     remote_name: Option<&str>,
     target_branch_name: Option<&str>,
     credentials: Option<GitCredentials>,
 ) -> AppResult<SmartSyncResult> {
+    smart_sync_upstream_with_progress(repo, remote_name, target_branch_name, credentials, None)
+}
+
+pub fn smart_sync_upstream_with_progress<F>(
+    repo: &Repository,
+    remote_name: Option<&str>,
+    target_branch_name: Option<&str>,
+    credentials: Option<GitCredentials>,
+    progress_callback: Option<F>,
+) -> AppResult<SmartSyncResult>
+where
+    F: Fn(TransferProgressPayload) + Send + Sync + 'static,
+{
     let remote_str = remote_name.unwrap_or("origin");
 
     // 1. Find remote
@@ -45,6 +67,32 @@ pub fn smart_sync_upstream(
         git2::Cred::default()
             .or_else(|_| git2::Cred::ssh_key_from_agent(username_from_url.unwrap_or("git")))
     });
+
+    if let Some(cb) = progress_callback {
+        callbacks.transfer_progress(move |stats| {
+            let total = stats.total_objects();
+            let received = stats.received_objects();
+            let indexed = stats.indexed_objects();
+            let phase = if total == 0 {
+                "connecting".to_string()
+            } else if received < total {
+                "receiving".to_string()
+            } else if indexed < total {
+                "indexing".to_string()
+            } else {
+                "resolving".to_string()
+            };
+
+            cb(TransferProgressPayload {
+                total_objects: total,
+                indexed_objects: indexed,
+                received_objects: received,
+                received_bytes: stats.received_bytes(),
+                phase,
+            });
+            true
+        });
+    }
 
     let mut fetch_opts = FetchOptions::new();
     fetch_opts.remote_callbacks(callbacks);

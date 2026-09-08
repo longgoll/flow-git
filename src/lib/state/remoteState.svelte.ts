@@ -1,5 +1,6 @@
-import type { AccountProfile, GitCredentials, GitHubPullRequest, BackgroundFetchResult } from '../types';
-import { executeRemoteWithAuth, getActiveAccount, saveAccountAuth, smartSync, silentBackgroundFetch } from '../api';
+import type { AccountProfile, GitCredentials, GitHubPullRequest, BackgroundFetchResult, TransferProgressPayload } from '../types';
+import { executeRemoteWithAuth, getActiveAccount, saveAccountAuth, smartSync, silentBackgroundFetch, isTauri } from '../api';
+import { listen } from '@tauri-apps/api/event';
 import {
   fetchGitHubPullRequests,
   parseGitHubRemote,
@@ -12,6 +13,7 @@ export class RemoteState {
   cachedCredentials = $state<GitCredentials | null>(null);
   isSyncing = $state<boolean>(false);
   isPushing = $state<boolean>(false);
+  transferProgress = $state<TransferProgressPayload | null>(null);
   openPRCount = $state<number>(0);
   isCheckingPRs = $state<boolean>(false);
   lastPRCheckRepo = $state<string>('');
@@ -39,6 +41,8 @@ export class RemoteState {
     setUpstream?: boolean;
   } | null>(null);
 
+  private isListeningProgress = false;
+
   async initAccount() {
     try {
       this.activeAccount = await getActiveAccount().catch(() => null);
@@ -48,6 +52,20 @@ export class RemoteState {
           username: this.activeAccount.username,
           token: this.activeAccount.token,
         };
+      }
+
+      if (isTauri && !this.isListeningProgress) {
+        this.isListeningProgress = true;
+        listen<TransferProgressPayload>('remote://transfer-progress', (event) => {
+          this.transferProgress = event.payload;
+          if (event.payload.phase === 'done') {
+            setTimeout(() => {
+              if (this.transferProgress?.phase === 'done') {
+                this.transferProgress = null;
+              }
+            }, 3000);
+          }
+        }).catch(() => {});
       }
     } catch (e) {
       console.error('Failed to init account auth:', e);

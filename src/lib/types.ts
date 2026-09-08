@@ -694,3 +694,66 @@ export interface ReflogEntry {
   is_orphaned: boolean;
 }
 
+// ----------------------------------------------------------------------
+// Mid-Term Enhancements Types: Progress, Pickaxe, TrashDiff, AutoBisect, Submodule
+// ----------------------------------------------------------------------
+
+export interface TransferProgressPayload {
+  total_objects: number;
+  indexed_objects: number;
+  received_objects: number;
+  received_bytes: number;
+  phase: 'connecting' | 'receiving' | 'indexing' | 'resolving' | 'done' | string;
+}
+
+export interface PickaxeFileMatch {
+  path: string;
+  additions: number;
+  deletions: number;
+  line_snippets: string[];
+}
+
+export interface PickaxeSearchResult {
+  commit_id: string;
+  short_id: string;
+  author_name: string;
+  author_email: string;
+  timestamp: number;
+  summary: string;
+  matched_files: PickaxeFileMatch[];
+}
+
+export interface TrashSnapshotDiffResult {
+  file_path: string;
+  snapshot_content: string;
+  current_content: string;
+  is_oversized: boolean;
+}
+
+export interface AutoBisectLogStep {
+  step: number;
+  commit_id: string;
+  commit_summary: string;
+  command: string;
+  exit_code: number;
+  is_good: boolean;
+  stdout_snippet: string;
+  stderr_snippet: string;
+}
+
+export interface AutoBisectResult {
+  status: BisectStatus;
+  logs: AutoBisectLogStep[];
+  completed: boolean;
+  message: string;
+}
+
+export interface SubmoduleDiffResult {
+  name: string;
+  path: string;
+  full_path: string;
+  diff: string;
+  modified_files: string[];
+}
+
+

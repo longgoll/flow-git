@@ -21,4 +21,9 @@ export const submodules = {
   updateError: "Lỗi cập nhật submodule",
   updateNameError: "Lỗi cập nhật {name}",
   syncError: "Lỗi đồng bộ submodule",
+  viewDiff: "Xem Diff",
+  openRepo: "Mở Workspace",
+  loadingDiff: "Đang đọc diff submodule...",
+  diffTitle: "Submodule Working Tree Diff",
+  filesModified: "{count} tệp thay đổi",
 };

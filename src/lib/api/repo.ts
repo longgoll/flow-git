@@ -8,8 +8,10 @@ import type {
   FocusBranchResult,
   GitCredentials,
   PaginatedCommitHistory,
+  PickaxeSearchResult,
   RepoSummary,
   StackedCommitItem,
+  TrashSnapshotDiffResult,
   TreeEntryItem,
 } from '../types';
 import { isTauri } from './client';
@@ -263,6 +265,38 @@ export async function revealInFileManager(
     await invoke<void>('reveal_in_file_manager', { fullPath });
   }
 }
+
+export async function getTrashSnapshotDiff(
+  snapshotId: number
+): Promise<TrashSnapshotDiffResult> {
+  if (isTauri) {
+    return await invoke<TrashSnapshotDiffResult>('get_trash_snapshot_diff', { snapshotId });
+  }
+  return {
+    file_path: 'mock/path.ts',
+    snapshot_content: '// Mock snapshot content\nexport const x = 1;\n',
+    current_content: '// Mock current content\nexport const x = 2;\n',
+    is_oversized: false,
+  };
+}
+
+export async function searchCommitsPickaxe(
+  path: string,
+  query: string,
+  isRegex?: boolean,
+  maxResults?: number
+): Promise<PickaxeSearchResult[]> {
+  if (isTauri) {
+    return await invoke<PickaxeSearchResult[]>('search_commits_pickaxe', {
+      path,
+      query,
+      isRegex: isRegex ?? false,
+      maxResults: maxResults ?? 40,
+    });
+  }
+  return [];
+}
+
 
 
 

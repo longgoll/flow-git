@@ -99,6 +99,12 @@ export const workflows = {
     failBad: "Code Bị Lỗi (Fail / Bad 🐞)",
     failBadDesc: "Lỗi xuất hiện ở commit này",
     abortAndRestore: "Hủy Bisect & Khôi phục nhánh ban đầu",
+    manualMode: "Thủ công (Good / Bad)",
+    autoMode: "Tự động chạy Script",
+    scriptLabel: "Lệnh kiểm thử tự động (Script):",
+    runningAuto: "Đang kiểm thử...",
+    startAutoBtn: "Chạy Auto-Bisect",
+    quickPresets: "Lệnh mẫu",
   },
   rebase: {
     title: "Interactive Rebase Timeline (`git rebase -i`)",

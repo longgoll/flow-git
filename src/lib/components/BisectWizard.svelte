@@ -1,12 +1,17 @@
 <script lang="ts">
-  import type { BisectStatus, CommitNode } from '../types';
+  import type { AutoBisectLogStep, BisectStatus, CommitNode } from '../types';
   import { localeState } from '../state/localeState.svelte';
+  import { isTauri } from '../api/client';
+  import { listen } from '@tauri-apps/api/event';
   import {
     Bug,
     CheckCircle2,
     RotateCcw,
     Sparkles,
-    Award
+    Award,
+    Terminal,
+    Play,
+    Loader2,
   } from 'lucide-svelte';
 
   interface Props {
@@ -16,6 +21,7 @@
     isLoading: boolean;
     onStartBisect: (badSha: string, goodSha: string) => void;
     onBisectStep: (isGood: boolean) => void;
+    onRunAutoBisect?: (script: string) => Promise<any>;
     onAbortBisect: () => void;
     onClose: () => void;
   }
@@ -27,12 +33,17 @@
     isLoading,
     onStartBisect,
     onBisectStep,
+    onRunAutoBisect,
     onAbortBisect,
     onClose,
   }: Props = $props();
 
   let selectedBad = $state<string>('');
   let selectedGood = $state<string>('');
+  let bisectMode = $state<'manual' | 'auto'>('manual');
+  let testScript = $state<string>('npm test');
+  let isAutoRunning = $state<boolean>(false);
+  let autoLogs = $state<AutoBisectLogStep[]>([]);
 
   $effect(() => {
     if (commits.length >= 2 && !selectedBad && !selectedGood) {
@@ -40,6 +51,31 @@
       selectedGood = commits[Math.min(commits.length - 1, 10)].id;
     }
   });
+
+  $effect(() => {
+    if (isTauri && isOpen) {
+      const unlisten = listen<AutoBisectLogStep>('bisect://step-log', (event) => {
+        autoLogs = [...autoLogs, event.payload];
+      });
+      return () => {
+        unlisten.then((fn) => fn());
+      };
+    }
+    return undefined;
+  });
+
+  async function handleRunAuto() {
+    if (!onRunAutoBisect || !testScript.trim()) return;
+    isAutoRunning = true;
+    autoLogs = [];
+    try {
+      await onRunAutoBisect(testScript.trim());
+    } catch (e) {
+      console.error('Auto bisect error:', e);
+    } finally {
+      isAutoRunning = false;
+    }
+  }
 
   let progressPercentage = $derived.by(() => {
     if (!status || status.total_commits_count === 0) return 0;
@@ -201,28 +237,113 @@
               </div>
             </div>
 
-            <!-- 2 Big Decision Buttons -->
-            <div class="grid grid-cols-2 gap-4 pt-2">
+            <!-- Mode Selector: Manual vs Script -->
+            <div class="flex items-center justify-between bg-zinc-100 dark:bg-zinc-800/60 p-1 rounded-xl border border-zinc-200 dark:border-zinc-700/60">
               <button
-                onclick={() => onBisectStep(true)}
-                disabled={isLoading}
-                class="py-4 px-4 rounded-xl bg-emerald-50 dark:bg-emerald-600/20 hover:bg-emerald-100 dark:hover:bg-emerald-600/30 border border-emerald-300 dark:border-emerald-500/40 text-emerald-800 dark:text-emerald-300 font-bold text-xs flex flex-col items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-500/10 dark:shadow-emerald-950/50 cursor-pointer"
+                onclick={() => (bisectMode = 'manual')}
+                class="flex-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all {bisectMode === 'manual' ? 'bg-white dark:bg-zinc-900 text-purple-600 dark:text-purple-400 shadow-xs' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
               >
-                <CheckCircle2 class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                <span>{localeState.t('workflows.bisect.passGood')}</span>
-                <span class="text-[10px] font-normal text-emerald-600 dark:text-emerald-400/80">{localeState.t('workflows.bisect.passGoodDesc')}</span>
+                <span>{localeState.t('workflows.bisect.manualMode')}</span>
               </button>
-
               <button
-                onclick={() => onBisectStep(false)}
-                disabled={isLoading}
-                class="py-4 px-4 rounded-xl bg-rose-50 dark:bg-rose-600/20 hover:bg-rose-100 dark:hover:bg-rose-600/30 border border-rose-300 dark:border-rose-500/40 text-rose-800 dark:text-rose-300 font-bold text-xs flex flex-col items-center justify-center gap-1.5 transition-all shadow-md shadow-rose-500/10 dark:shadow-rose-950/50 cursor-pointer"
+                onclick={() => (bisectMode = 'auto')}
+                class="flex-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all {bisectMode === 'auto' ? 'bg-white dark:bg-zinc-900 text-purple-600 dark:text-purple-400 shadow-xs' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
               >
-                <Bug class="w-6 h-6 text-rose-600 dark:text-rose-400" />
-                <span>{localeState.t('workflows.bisect.failBad')}</span>
-                <span class="text-[10px] font-normal text-rose-600 dark:text-rose-400/80">{localeState.t('workflows.bisect.failBadDesc')}</span>
+                <Terminal class="w-3.5 h-3.5" />
+                <span>{localeState.t('workflows.bisect.autoMode')}</span>
               </button>
             </div>
+
+            {#if bisectMode === 'manual'}
+              <!-- 2 Big Decision Buttons -->
+              <div class="grid grid-cols-2 gap-4 pt-1">
+                <button
+                  onclick={() => onBisectStep(true)}
+                  disabled={isLoading}
+                  class="py-4 px-4 rounded-xl bg-emerald-50 dark:bg-emerald-600/20 hover:bg-emerald-100 dark:hover:bg-emerald-600/30 border border-emerald-300 dark:border-emerald-500/40 text-emerald-800 dark:text-emerald-300 font-bold text-xs flex flex-col items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-500/10 dark:shadow-emerald-950/50 cursor-pointer"
+                >
+                  <CheckCircle2 class="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                  <span>{localeState.t('workflows.bisect.passGood')}</span>
+                  <span class="text-[10px] font-normal text-emerald-600 dark:text-emerald-400/80">{localeState.t('workflows.bisect.passGoodDesc')}</span>
+                </button>
+
+                <button
+                  onclick={() => onBisectStep(false)}
+                  disabled={isLoading}
+                  class="py-4 px-4 rounded-xl bg-rose-50 dark:bg-rose-600/20 hover:bg-rose-100 dark:hover:bg-rose-600/30 border border-rose-300 dark:border-rose-500/40 text-rose-800 dark:text-rose-300 font-bold text-xs flex flex-col items-center justify-center gap-1.5 transition-all shadow-md shadow-rose-500/10 dark:shadow-rose-950/50 cursor-pointer"
+                >
+                  <Bug class="w-6 h-6 text-rose-600 dark:text-rose-400" />
+                  <span>{localeState.t('workflows.bisect.failBad')}</span>
+                  <span class="text-[10px] font-normal text-rose-600 dark:text-rose-400/80">{localeState.t('workflows.bisect.failBadDesc')}</span>
+                </button>
+              </div>
+            {:else}
+              <!-- Auto-Bisect Script Runner -->
+              <div class="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 space-y-3 font-mono text-xs">
+                <div>
+                  <label for="auto-script-input" class="block font-sans text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">
+                    {localeState.t('workflows.bisect.scriptLabel')}
+                  </label>
+                  <div class="flex items-center gap-2">
+                    <input
+                      id="auto-script-input"
+                      type="text"
+                      bind:value={testScript}
+                      placeholder="e.g. npm test or cargo test"
+                      class="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-hidden focus:border-purple-500"
+                    />
+                    <button
+                      onclick={handleRunAuto}
+                      disabled={isAutoRunning || isLoading || !testScript.trim()}
+                      class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-sans font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer"
+                    >
+                      {#if isAutoRunning}
+                        <Loader2 class="w-3.5 h-3.5 animate-spin" />
+                        <span>{localeState.t('workflows.bisect.runningAuto')}</span>
+                      {:else}
+                        <Play class="w-3.5 h-3.5" />
+                        <span>{localeState.t('workflows.bisect.startAutoBtn')}</span>
+                      {/if}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Presets -->
+                <div class="flex items-center gap-1.5 pt-1">
+                  <span class="font-sans text-[11px] text-zinc-500">{localeState.t('workflows.bisect.quickPresets')}:</span>
+                  {#each ['npm test', 'cargo test', 'npm run lint', 'pytest'] as preset}
+                    <button
+                      onclick={() => (testScript = preset)}
+                      class="px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-[10px] text-zinc-700 dark:text-zinc-300 cursor-pointer transition-colors"
+                    >
+                      {preset}
+                    </button>
+                  {/each}
+                </div>
+
+                <!-- Terminal Step Logs -->
+                {#if autoLogs.length > 0}
+                  <div class="mt-3 p-3 rounded-lg bg-zinc-900 text-zinc-200 border border-zinc-800 max-h-40 overflow-y-auto space-y-1.5 text-[11px] select-text">
+                    <div class="text-[10px] text-zinc-400 font-bold border-b border-zinc-800 pb-1 flex items-center justify-between">
+                      <span>Execution Log ({autoLogs.length} steps)</span>
+                    </div>
+                    {#each autoLogs as log}
+                      <div class="flex items-start gap-2">
+                        <span class="{log.is_good ? 'text-emerald-400' : 'text-rose-400'} font-bold">
+                          {log.is_good ? '✓' : '✗'}
+                        </span>
+                        <div class="flex-1 min-w-0">
+                          <span class="font-semibold text-purple-400">Step {log.step}:</span>
+                          <span class="text-zinc-400">[{log.commit_id.slice(0, 7)}]</span>
+                          <span class="text-zinc-300">{log.commit_summary.slice(0, 35)}</span>
+                          <span class="{log.is_good ? 'text-emerald-400' : 'text-rose-400'} font-bold">({log.is_good ? 'GOOD' : `BAD (exit ${log.exit_code})`})</span>
+                        </div>
+                      </div>
+                    {/each}
+                  </div>
+                {/if}
+              </div>
+            {/if}
 
             <!-- Abort Bisect Action -->
             <div class="flex items-center justify-center pt-2">

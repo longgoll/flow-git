@@ -84,6 +84,10 @@ Takes 5–7 steps, interrupts IDE state, and triggers unnecessary project recomp
   - Automatically fetches upstream changes.
   - Rebases your active feature branch onto upstream HEAD in the background.
   - You **never leave the context of your active feature branch**.
+- **Realtime Transfer Progress Streaming**:
+  - During Fetch, Push, or Smart Sync, Rust transfers network bytes via `git2` transfer progress callbacks.
+  - Emits `remote://transfer-progress` events containing indexed objects, received objects, total objects, and transferred bytes.
+  - The `StatusBar` displays an animated capsule with exact percentage and megabytes received (e.g. `Syncing... 64% (12.4 MB)`).
 
 ---
 
@@ -199,6 +203,9 @@ Thao tác này mất từ 5 đến 7 bước, phải chuyển đổi checkout qu
   - Hệ thống tự động fetch các commit mới từ remote.
   - Tự động thực hiện Rebase ngầm nhánh hiện tại của bạn lên trên đỉnh của upstream.
   - Bạn **không bao giờ phải rời khỏi ngữ cảnh của nhánh đang code**.
+- **Hiển thị tiến trình mạng thời gian thực (Transfer Progress Streaming)**:
+  - Khi thực hiện Fetch, Push hoặc Smart Sync, backend Rust lắng nghe sự kiện `git2` transfer callback và phát event `remote://transfer-progress`.
+  - Thanh trạng thái `StatusBar` hiển thị viên nang (capsule) động với phần trăm (%) hoàn thành và dung lượng tải về thực tế (ví dụ: `Syncing... 64% (12.4 MB)`).
 
 ---
 

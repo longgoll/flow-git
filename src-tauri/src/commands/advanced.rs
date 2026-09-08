@@ -42,6 +42,16 @@ pub async fn sync_submodules(path: String, name: Option<String>) -> AppResult<St
     .map_err(|e| AppError::Internal(e.to_string()))?
 }
 
+#[command]
+pub async fn get_submodule_diff(path: String, name: String) -> AppResult<crate::git::submodule::SubmoduleDiffResult> {
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        crate::git::submodule::get_submodule_diff(&repo, &name)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
 // ---------------------------------------------------------
 // Git LFS Commands
 // ---------------------------------------------------------

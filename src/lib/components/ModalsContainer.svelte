@@ -231,6 +231,11 @@
       loadRepository(repo.currentRepoPath)
     );
   }}
+  onRunAutoBisect={async (script) => {
+    await safety.runAutoBisect(repo.currentRepoPath, script, () =>
+      loadRepository(repo.currentRepoPath)
+    );
+  }}
   onAbortBisect={() =>
     safety.abortBisect(repo.currentRepoPath, () =>
       loadRepository(repo.currentRepoPath)
@@ -384,6 +389,10 @@
   repoPath={repo.currentRepoPath}
   isOpen={modalState.showSubmoduleModal}
   onClose={() => (modalState.showSubmoduleModal = false)}
+  onOpenSubmoduleRepo={(subPath) => {
+    loadRepository(subPath);
+    modalState.showSubmoduleModal = false;
+  }}
 />
 
 <!-- Git LFS Asset Manager Modal -->

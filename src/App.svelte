@@ -765,6 +765,7 @@
     dirtyFilesCount={wt.workingTreeStatus?.total_dirty_count || 0}
     stagedFilesCount={wt.workingTreeStatus?.total_staged_count || 0}
     currentIdentity={currentIdentity}
+    transferProgress={remote.transferProgress}
     operationLogs={repo.operationLogs}
     isLogPanelOpen={repo.isLogPanelOpen}
     onOpenIdentity={() => (modalState.showIdentityModal = true)}

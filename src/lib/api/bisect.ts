@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { BisectStatus } from '../types';
+import type { AutoBisectResult, BisectStatus } from '../types';
 import { isTauri } from './client';
 
 export async function startBisect(
@@ -62,3 +62,37 @@ export async function getBisectStatus(path: string): Promise<BisectStatus> {
     total_commits_count: 0,
   };
 }
+
+export async function runAutoBisect(
+  path: string,
+  script: string
+): Promise<AutoBisectResult> {
+  if (isTauri) {
+    return await invoke<AutoBisectResult>('run_auto_bisect', { path, script });
+  }
+  return {
+    status: {
+      is_active: false,
+      good_commit_ids: [],
+      estimated_steps_remaining: 0,
+      tested_commits_count: 2,
+      total_commits_count: 5,
+      culprit_commit_id: 'mock-culprit-id-789',
+    },
+    logs: [
+      {
+        step: 1,
+        commit_id: 'commit-1-test',
+        commit_summary: 'Initial test commit',
+        command: script,
+        exit_code: 0,
+        is_good: true,
+        stdout_snippet: 'Tests passed successfully',
+        stderr_snippet: '',
+      },
+    ],
+    completed: true,
+    message: 'Mock auto-bisect complete.',
+  };
+}
+

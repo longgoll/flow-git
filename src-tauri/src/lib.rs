@@ -50,6 +50,7 @@ pub fn run() {
             nuke_file_from_history,
             save_file_content,
             grep_repository_content,
+            search_commits_pickaxe,
             open_in_external_editor,
             reveal_in_file_manager,
             // Branches, Stashes & Tags
@@ -85,6 +86,7 @@ pub fn run() {
             discard_file_changes,
             discard_all_changes,
             list_trash_snapshots,
+            get_trash_snapshot_diff,
             restore_trash_snapshot,
             restore_trash_batch,
             delete_trash_snapshot,
@@ -132,12 +134,14 @@ pub fn run() {
             bisect_step,
             abort_bisect,
             get_bisect_status,
+            run_auto_bisect,
             // Worktrees
             list_worktrees,
             create_worktree,
             delete_worktree,
             // Submodules & LFS
             get_submodules,
+            get_submodule_diff,
             update_submodules,
             sync_submodules,
             get_lfs_info,

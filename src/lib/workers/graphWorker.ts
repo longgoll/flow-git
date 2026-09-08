@@ -14,6 +14,15 @@ let scrollTop = 0;
 let selectedCommitIds: string[] = [];
 let hoveredCommitId: string | null = null;
 
+interface LongSpan {
+  childIndex: number;
+  parentIndex: number;
+  childLane: number;
+  parentLane: number;
+  pIdx: number;
+}
+let longSpans: LongSpan[] = [];
+
 // Ghost Preview state
 let ghostSourceId: string | null = null;
 let ghostTargetId: string | null = null;
@@ -147,47 +156,67 @@ function render() {
     const hoveredCommit = hoveredCommitId ? commits[commitIndexMap.get(hoveredCommitId) ?? -1] : null;
     const hoveredLane = hoveredCommit ? (hoveredCommit.lane || 0) : null;
 
+    const drawSplineLine = (
+      cLane: number,
+      cIndex: number,
+      pLane: number,
+      pIndex: number,
+      color: string
+    ) => {
+      const childY = cIndex * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
+      const childX = GRAPH_LEFT_MARGIN + cLane * LANE_WIDTH;
+      const parentY = pIndex * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
+      const parentX = GRAPH_LEFT_MARGIN + pLane * LANE_WIDTH;
+
+      const isLineFocused = hoveredCommitId === null || (hoveredLane !== null && (cLane === hoveredLane || pLane === hoveredLane));
+      ctx!.globalAlpha = isLineFocused ? 1.0 : 0.2;
+      ctx!.lineWidth = isLineFocused && hoveredCommitId !== null ? 2.8 : 2.2;
+
+      ctx!.beginPath();
+      ctx!.strokeStyle = color;
+      ctx!.setLineDash([]);
+
+      if (cLane === pLane) {
+        ctx!.moveTo(childX, childY);
+        ctx!.lineTo(parentX, parentY);
+      } else {
+        const midY = (childY + parentY) / 2;
+        ctx!.moveTo(childX, childY);
+        ctx!.bezierCurveTo(childX, midY, parentX, midY, parentX, parentY);
+      }
+      ctx!.stroke();
+    };
+
+    // 2a. Draw local short splines
     for (let i = splineStartIndex; i <= splineEndIndex; i++) {
       const child = commits[i];
-      if (!child) continue;
+      if (!child || !child.parents || !Array.isArray(child.parents)) continue;
       const childLane = child.lane || 0;
-      const childY = i * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
-      const childX = GRAPH_LEFT_MARGIN + childLane * LANE_WIDTH;
       const childColor = getLaneColor(childLane);
 
-      if (child.parents && Array.isArray(child.parents)) {
-        for (let pIdx = 0; pIdx < child.parents.length; pIdx++) {
-          const parentId = child.parents[pIdx];
-          const parentIndex = commitIndexMap.get(parentId);
-          if (parentIndex === undefined) continue;
+      for (let pIdx = 0; pIdx < child.parents.length; pIdx++) {
+        const parentId = child.parents[pIdx];
+        const parentIndex = commitIndexMap.get(parentId);
+        if (parentIndex === undefined) continue;
 
-          const parent = commits[parentIndex];
-          if (!parent) continue;
-          const parentLane = parent.lane || 0;
-          const parentY = parentIndex * ROW_HEIGHT - scrollTop + ROW_HEIGHT / 2;
-          const parentX = GRAPH_LEFT_MARGIN + parentLane * LANE_WIDTH;
+        // Long spans (> 20 rows) are handled below to prevent clipping
+        if (parentIndex - i > 20) continue;
 
-          const lineColor = pIdx === 0 ? childColor : getLaneColor(parentLane);
+        const parent = commits[parentIndex];
+        if (!parent) continue;
+        const parentLane = parent.lane || 0;
+        const lineColor = pIdx === 0 ? childColor : getLaneColor(parentLane);
 
-          // Focus Dimming
-          const isLineFocused = hoveredCommitId === null || (hoveredLane !== null && (childLane === hoveredLane || parentLane === hoveredLane));
-          ctx.globalAlpha = isLineFocused ? 1.0 : 0.2;
-          ctx.lineWidth = isLineFocused && hoveredCommitId !== null ? 2.8 : 2.2;
+        drawSplineLine(childLane, i, parentLane, parentIndex, lineColor);
+      }
+    }
 
-          ctx.beginPath();
-          ctx.strokeStyle = lineColor;
-          ctx.setLineDash([]);
-
-          if (childLane === parentLane) {
-            ctx.moveTo(childX, childY);
-            ctx.lineTo(parentX, parentY);
-          } else {
-            const midY = (childY + parentY) / 2;
-            ctx.moveTo(childX, childY);
-            ctx.bezierCurveTo(childX, midY, parentX, midY, parentX, parentY);
-          }
-          ctx.stroke();
-        }
+    // 2b. Draw long spans intersecting visible viewport (prevents disappeared lines on fast scroll)
+    for (let sIdx = 0; sIdx < longSpans.length; sIdx++) {
+      const span = longSpans[sIdx];
+      if (span.childIndex <= endIndex + 10 && span.parentIndex >= startIndex - 10) {
+        const lineColor = span.pIdx === 0 ? getLaneColor(span.childLane) : getLaneColor(span.parentLane);
+        drawSplineLine(span.childLane, span.childIndex, span.parentLane, span.parentIndex, lineColor);
       }
     }
     ctx.globalAlpha = 1.0;
@@ -439,9 +468,27 @@ self.onmessage = (e: MessageEvent) => {
     case 'SET_DATA': {
       commits = data.commits || [];
       commitIndexMap.clear();
+      longSpans = [];
       for (let i = 0; i < commits.length; i++) {
-        if (commits[i] && commits[i].id) {
-          commitIndexMap.set(commits[i].id, i);
+        const c = commits[i];
+        if (c && c.id) {
+          commitIndexMap.set(c.id, i);
+        }
+      }
+      for (let i = 0; i < commits.length; i++) {
+        const child = commits[i];
+        if (!child || !child.parents || !Array.isArray(child.parents)) continue;
+        for (let pIdx = 0; pIdx < child.parents.length; pIdx++) {
+          const pIdxVal = commitIndexMap.get(child.parents[pIdx]);
+          if (pIdxVal !== undefined && pIdxVal - i > 20) {
+            longSpans.push({
+              childIndex: i,
+              parentIndex: pIdxVal,
+              childLane: child.lane || 0,
+              parentLane: commits[pIdxVal]?.lane || 0,
+              pIdx,
+            });
+          }
         }
       }
       selectedCommitIds = data.selectedCommitIds || (data.selectedCommitId ? [data.selectedCommitId] : []);

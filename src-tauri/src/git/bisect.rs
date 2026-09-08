@@ -262,3 +262,148 @@ fn get_commit_range(repo: &Repository, bad: Oid, good: Oid) -> AppResult<Vec<Str
 
     Ok(commits)
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AutoBisectLogStep {
+    pub step: usize,
+    pub commit_id: String,
+    pub commit_summary: String,
+    pub command: String,
+    pub exit_code: i32,
+    pub is_good: bool,
+    pub stdout_snippet: String,
+    pub stderr_snippet: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AutoBisectResult {
+    pub status: BisectStatus,
+    pub logs: Vec<AutoBisectLogStep>,
+    pub completed: bool,
+    pub message: String,
+}
+
+pub fn run_auto_bisect<F>(
+    repo: &Repository,
+    script: &str,
+    step_callback: Option<F>,
+) -> AppResult<AutoBisectResult>
+where
+    F: Fn(&AutoBisectLogStep) + Send + Sync + 'static,
+{
+    let script = script.trim();
+    if script.is_empty() {
+        return Err(AppError::InvalidRepo("Lệnh kiểm thử không được để trống.".into()));
+    }
+
+    let workdir = repo.workdir().ok_or_else(|| {
+        AppError::InvalidRepo("Repository không có working directory hợp lệ.".into())
+    })?;
+
+    let mut logs = Vec::new();
+    let max_iterations = 40;
+    let mut step_count = 0;
+
+    loop {
+        step_count += 1;
+        if step_count > max_iterations {
+            let status = get_bisect_status(repo)?;
+            return Ok(AutoBisectResult {
+                status,
+                logs,
+                completed: false,
+                message: "Đã vượt quá số bước bisect tối đa (40 bước). Đã tạm dừng.".to_string(),
+            });
+        }
+
+        let current_status = get_bisect_status(repo)?;
+        if !current_status.is_active {
+            return Ok(AutoBisectResult {
+                status: current_status,
+                logs,
+                completed: true,
+                message: "Bisect không còn active.".to_string(),
+            });
+        }
+
+        if current_status.culprit_commit_id.is_some() {
+            return Ok(AutoBisectResult {
+                status: current_status,
+                logs,
+                completed: true,
+                message: "Đã tìm ra commit gây lỗi.".to_string(),
+            });
+        }
+
+        let current_cid = match current_status.current_commit_id {
+            Some(ref id) => id.clone(),
+            None => break,
+        };
+        let current_summary = current_status.current_commit_summary.clone().unwrap_or_default();
+
+        #[cfg(target_os = "windows")]
+        let mut cmd = {
+            let mut c = std::process::Command::new("powershell");
+            c.arg("-NoProfile").arg("-Command").arg(script);
+            c
+        };
+
+        #[cfg(not(target_os = "windows"))]
+        let mut cmd = {
+            let mut c = std::process::Command::new("sh");
+            c.arg("-c").arg(script);
+            c
+        };
+
+        cmd.current_dir(workdir);
+        let output_res = cmd.output();
+
+        let (exit_code, stdout_snippet, stderr_snippet) = match output_res {
+            Ok(out) => {
+                let code = out.status.code().unwrap_or(-1);
+                let stdout = String::from_utf8_lossy(&out.stdout);
+                let stderr = String::from_utf8_lossy(&out.stderr);
+                let stdout_snip = stdout.lines().rev().take(8).collect::<Vec<_>>().into_iter().rev().collect::<Vec<_>>().join("\n");
+                let stderr_snip = stderr.lines().rev().take(8).collect::<Vec<_>>().into_iter().rev().collect::<Vec<_>>().join("\n");
+                (code, stdout_snip, stderr_snip)
+            }
+            Err(e) => (-1, String::new(), format!("Không thể thực thi lệnh: {e}")),
+        };
+
+        let is_good = exit_code == 0;
+        let step_log = AutoBisectLogStep {
+            step: step_count,
+            commit_id: current_cid.clone(),
+            commit_summary: current_summary,
+            command: script.to_string(),
+            exit_code,
+            is_good,
+            stdout_snippet,
+            stderr_snippet,
+        };
+
+        if let Some(ref cb) = step_callback {
+            cb(&step_log);
+        }
+        logs.push(step_log);
+
+        let next_status = bisect_step(repo, is_good)?;
+        if next_status.culprit_commit_id.is_some() || !next_status.is_active {
+            return Ok(AutoBisectResult {
+                status: next_status,
+                logs,
+                completed: true,
+                message: "Đã hoàn thành auto-bisect và cô lập được commit lỗi!".to_string(),
+            });
+        }
+    }
+
+    let final_status = get_bisect_status(repo)?;
+    Ok(AutoBisectResult {
+        status: final_status,
+        logs,
+        completed: true,
+        message: "Kết thúc auto-bisect.".to_string(),
+    })
+}
+

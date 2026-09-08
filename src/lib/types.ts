@@ -296,6 +296,8 @@ export interface TrashSnapshotItem {
   created_at: number;
   head_commit_sha?: string;
   file_size: number;
+  batch_id?: string | null;
+  is_oversized?: boolean;
 }
 
 export type LayoutMode = 'horizontal' | 'three-column';

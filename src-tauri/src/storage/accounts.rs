@@ -38,8 +38,36 @@ impl AccountStore {
         if let Some(parent) = db_path.parent() {
             let _ = std::fs::create_dir_all(parent);
         }
-        let conn = Connection::open(db_path)
-            .map_err(|e| AppError::Internal(format!("Failed to open accounts SQLite: {e}")))?;
+
+        let conn = match Connection::open(db_path) {
+            Ok(c) => {
+                let is_ok = c
+                    .query_row("PRAGMA quick_check;", [], |r| r.get::<_, String>(0))
+                    .map(|res| res.to_lowercase() == "ok")
+                    .unwrap_or(false);
+
+                if !is_ok {
+                    drop(c);
+                    let timestamp = Utc::now().timestamp();
+                    let corrupted = db_path.with_extension(format!("corrupt.{timestamp}"));
+                    let _ = std::fs::rename(db_path, corrupted);
+                    Connection::open(db_path)
+                        .map_err(|e| AppError::Internal(format!("Failed to recreate accounts database: {e}")))?
+                } else {
+                    c
+                }
+            }
+            Err(e) => return Err(AppError::Internal(format!("Failed to open accounts SQLite: {e}"))),
+        };
+
+        // Configure robust PRAGMAs
+        conn.execute_batch(
+            "PRAGMA journal_mode = WAL;
+             PRAGMA synchronous = NORMAL;
+             PRAGMA busy_timeout = 5000;
+             PRAGMA foreign_keys = ON;",
+        )
+        .map_err(|e| AppError::Internal(format!("Failed to configure accounts pragmas: {e}")))?;
 
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS accounts (
@@ -71,10 +99,13 @@ impl AccountStore {
         )
         .map_err(|e| AppError::Internal(format!("Failed to init accounts schema: {e}")))?;
 
-
         Ok(Self {
             conn: Mutex::new(conn),
         })
+    }
+
+    fn get_conn(&self) -> std::sync::MutexGuard<'_, Connection> {
+        self.conn.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
     }
 
     pub fn default_store() -> AppResult<Self> {
@@ -85,7 +116,7 @@ impl AccountStore {
     }
 
     pub fn save_account(&self, profile: &AccountProfile) -> AppResult<()> {
-        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        let conn = self.get_conn();
         
         // Deactivate other accounts if setting this one active
         if profile.is_active {
@@ -113,7 +144,7 @@ impl AccountStore {
     }
 
     pub fn get_active_account(&self, provider: Option<&str>) -> AppResult<Option<AccountProfile>> {
-        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        let conn = self.get_conn();
         
         let query = if provider.is_some() {
             "SELECT id, username, name, avatar_url, provider, token, auth_method, is_active, created_at
@@ -152,7 +183,7 @@ impl AccountStore {
     }
 
     pub fn list_accounts(&self) -> AppResult<Vec<AccountProfile>> {
-        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        let conn = self.get_conn();
         let mut stmt = conn.prepare(
             "SELECT id, username, name, avatar_url, provider, token, auth_method, is_active, created_at
              FROM accounts ORDER BY created_at DESC"
@@ -185,14 +216,14 @@ impl AccountStore {
     }
 
     pub fn delete_account(&self, id: &str) -> AppResult<()> {
-        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        let conn = self.get_conn();
         conn.execute("DELETE FROM accounts WHERE id = ?1", params![id])
             .map_err(|e| AppError::Internal(format!("Failed to delete account: {e}")))?;
         Ok(())
     }
 
     pub fn list_identities(&self) -> AppResult<Vec<GitIdentity>> {
-        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        let conn = self.get_conn();
         let mut stmt = conn
             .prepare("SELECT id, label, name, email, signing_key FROM git_identities ORDER BY label ASC")
             .map_err(|e| AppError::Internal(format!("SQLite prepare error: {e}")))?;
@@ -217,7 +248,7 @@ impl AccountStore {
     }
 
     pub fn save_identity(&self, iden: GitIdentity) -> AppResult<()> {
-        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        let conn = self.get_conn();
         conn.execute(
             "INSERT INTO git_identities (id, label, name, email, signing_key)
              VALUES (?1, ?2, ?3, ?4, ?5)
@@ -233,14 +264,14 @@ impl AccountStore {
     }
 
     pub fn delete_identity(&self, id: &str) -> AppResult<()> {
-        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        let conn = self.get_conn();
         conn.execute("DELETE FROM git_identities WHERE id = ?1", params![id])
             .map_err(|e| AppError::Internal(format!("Failed to delete identity: {e}")))?;
         Ok(())
     }
 
     pub fn get_account_by_id(&self, id: &str) -> AppResult<Option<AccountProfile>> {
-        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        let conn = self.get_conn();
         let mut stmt = conn.prepare(
             "SELECT id, username, name, avatar_url, provider, token, auth_method, is_active, created_at
              FROM accounts WHERE id = ?1 LIMIT 1"
@@ -269,7 +300,7 @@ impl AccountStore {
     }
 
     pub fn get_repo_binding(&self, repo_path: &str) -> AppResult<Option<RepoBinding>> {
-        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        let conn = self.get_conn();
         let mut stmt = conn.prepare(
             "SELECT repo_path, project_type, account_id, identity_id, updated_at
              FROM repo_bindings WHERE repo_path = ?1 LIMIT 1"
@@ -293,7 +324,7 @@ impl AccountStore {
     }
 
     pub fn save_repo_binding(&self, binding: &RepoBinding) -> AppResult<()> {
-        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        let conn = self.get_conn();
         conn.execute(
             "INSERT INTO repo_bindings (repo_path, project_type, account_id, identity_id, updated_at)
              VALUES (?1, ?2, ?3, ?4, ?5)
@@ -315,7 +346,7 @@ impl AccountStore {
     }
 
     pub fn list_repo_bindings(&self) -> AppResult<Vec<RepoBinding>> {
-        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        let conn = self.get_conn();
         let mut stmt = conn.prepare(
             "SELECT repo_path, project_type, account_id, identity_id, updated_at
              FROM repo_bindings ORDER BY updated_at DESC"
@@ -343,7 +374,7 @@ impl AccountStore {
     }
 
     pub fn delete_repo_binding(&self, repo_path: &str) -> AppResult<()> {
-        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        let conn = self.get_conn();
         conn.execute("DELETE FROM repo_bindings WHERE repo_path = ?1", params![repo_path])
             .map_err(|e| AppError::Internal(format!("Failed to delete repo binding: {e}")))?;
         Ok(())

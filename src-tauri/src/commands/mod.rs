@@ -32,7 +32,7 @@ pub use branch::{
 pub use diff::{
     add_to_gitignore, delete_trash_snapshot, discard_all_changes, discard_file_changes,
     generate_standard_gitignore, get_commit_file_diff, get_file_blame, get_file_diff,
-    get_file_history, get_status, list_trash_snapshots, restore_trash_snapshot, stage_all,
+    get_file_history, get_status, list_trash_snapshots, restore_trash_batch, restore_trash_snapshot, stage_all,
     stage_file, stage_hunk, unstage_all, unstage_file, unstage_hunk,
 };
 

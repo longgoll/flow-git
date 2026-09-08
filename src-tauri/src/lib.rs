@@ -86,6 +86,7 @@ pub fn run() {
             discard_all_changes,
             list_trash_snapshots,
             restore_trash_snapshot,
+            restore_trash_batch,
             delete_trash_snapshot,
             add_to_gitignore,
             generate_standard_gitignore,

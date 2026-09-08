@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::error::{AppError, AppResult};
 use crate::git::diff::get_working_tree_file_diff;
 use crate::git::status::get_working_tree_status;
-use crate::storage::trash::{TrashSnapshotItem, TrashStore};
+use crate::storage::trash::{NewTrashSnapshot, TrashSnapshotItem, TrashStore, MAX_TRASH_FILE_SIZE};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecretFinding {
@@ -53,47 +53,65 @@ pub fn discard_file_changes(
         .and_then(|h| h.target())
         .map(|t| t.to_string());
 
-    // 1. Read current disk content and generate diff preview for safe snapshot
-    let (content, diff_preview) = if full_path.exists() && full_path.is_file() {
-        let raw = std::fs::read(&full_path).unwrap_or_default();
-        let diff_detail = get_working_tree_file_diff(repo, file_path, false, None).ok();
-        let preview = if let Some(d) = diff_detail {
-            let mut buf = String::new();
-            for h in &d.hunks {
-                buf.push_str(&h.header);
-                buf.push('\n');
-                for l in &h.lines {
-                    match l.line_type {
-                        crate::git::diff::LineChangeType::Addition => buf.push('+'),
-                        crate::git::diff::LineChangeType::Deletion => buf.push('-'),
-                        crate::git::diff::LineChangeType::Context => buf.push(' '),
-                    }
-                    buf.push_str(&l.content);
-                    buf.push('\n');
-                }
-            }
-            if buf.is_empty() {
-                format!("Raw content ({} bytes)", raw.len())
-            } else {
-                buf
-            }
+    // 1. Check file existence, size guard, and build diff preview
+    let (content, diff_preview, is_oversized) = if full_path.exists() && full_path.is_file() {
+        let meta = std::fs::metadata(&full_path).ok();
+        let file_len = meta.map(|m| m.len()).unwrap_or(0);
+
+        if file_len > MAX_TRASH_FILE_SIZE as u64 {
+            let size_mb = file_len / (1024 * 1024);
+            (
+                Vec::new(),
+                format!("Oversized file ({} MB exceeds 20MB limit). Content not retained in SQLite.", size_mb),
+                true,
+            )
         } else {
-            format!("Raw content ({} bytes)", raw.len())
-        };
-        (raw, preview)
+            let raw = std::fs::read(&full_path).unwrap_or_default();
+            let diff_detail = get_working_tree_file_diff(repo, file_path, false, None).ok();
+            let preview = if let Some(d) = diff_detail {
+                let mut buf = String::new();
+                for h in &d.hunks {
+                    buf.push_str(&h.header);
+                    buf.push('\n');
+                    for l in &h.lines {
+                        match l.line_type {
+                            crate::git::diff::LineChangeType::Addition => buf.push('+'),
+                            crate::git::diff::LineChangeType::Deletion => buf.push('-'),
+                            crate::git::diff::LineChangeType::Context => buf.push(' '),
+                        }
+                        buf.push_str(&l.content);
+                        buf.push('\n');
+                    }
+                }
+                if buf.is_empty() {
+                    format!("Raw content ({} bytes)", raw.len())
+                } else {
+                    buf
+                }
+            } else {
+                format!("Raw content ({} bytes)", raw.len())
+            };
+            (raw, preview, false)
+        }
     } else {
         // File was deleted in workdir
-        (Vec::new(), format!("Deleted file: {file_path}"))
+        (Vec::new(), format!("Deleted file: {file_path}"), false)
     };
 
     // 2. Save snapshot in SQLite Trash Store BEFORE discarding
-    let snapshot_id = store.save_snapshot(
-        &repo_path,
+    let snapshot = NewTrashSnapshot {
         file_path,
-        &content,
-        &diff_preview,
-        head_sha.as_deref(),
-    )?;
+        content: &content,
+        diff_preview: &diff_preview,
+        head_commit_sha: head_sha.as_deref(),
+        batch_id: None,
+        is_oversized,
+    };
+    let ids = store.save_snapshots_batch(&repo_path, &[snapshot])?;
+    let snapshot_id = ids
+        .into_iter()
+        .next()
+        .ok_or_else(|| AppError::Internal("Failed to get snapshot id".into()))?;
 
     // 3. Perform discard
     let mut index = repo.index()?;
@@ -112,13 +130,122 @@ pub fn discard_file_changes(
     Ok(snapshot_id)
 }
 
+/// Atomically snapshot all unstaged & untracked changes in a single SQLite transaction, then discard
 pub fn discard_all_changes(repo: &Repository, store: &TrashStore) -> AppResult<Vec<i64>> {
-    let status = get_working_tree_status(repo)?;
-    let mut snapshot_ids = Vec::new();
+    let repo_path = repo
+        .workdir()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|| repo.path().to_string_lossy().to_string());
 
-    for item in status.unstaged.iter().chain(status.untracked.iter()) {
-        if let Ok(id) = discard_file_changes(repo, store, &item.path) {
-            snapshot_ids.push(id);
+    let workdir = repo
+        .workdir()
+        .ok_or_else(|| AppError::Internal("No workdir in bare repository".into()))?;
+
+    let status = get_working_tree_status(repo)?;
+    let target_items: Vec<_> = status.unstaged.iter().chain(status.untracked.iter()).collect();
+
+    if target_items.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let head_sha = repo
+        .head()
+        .ok()
+        .and_then(|h| h.target())
+        .map(|t| t.to_string());
+
+    let batch_id = format!("batch_{}_{}", chrono::Utc::now().timestamp_millis(), std::process::id());
+
+    // 1. Prepare all snapshot payloads in memory with size checks
+    let mut raw_contents: Vec<Vec<u8>> = Vec::with_capacity(target_items.len());
+    let mut diff_previews: Vec<String> = Vec::with_capacity(target_items.len());
+    let mut is_oversized_flags: Vec<bool> = Vec::with_capacity(target_items.len());
+
+    for item in &target_items {
+        let full_path = workdir.join(&item.path);
+        if full_path.exists() && full_path.is_file() {
+            let meta = std::fs::metadata(&full_path).ok();
+            let file_len = meta.map(|m| m.len()).unwrap_or(0);
+
+            if file_len > MAX_TRASH_FILE_SIZE as u64 {
+                let size_mb = file_len / (1024 * 1024);
+                raw_contents.push(Vec::new());
+                diff_previews.push(format!("Oversized file ({} MB exceeds 20MB limit). Content not retained in SQLite.", size_mb));
+                is_oversized_flags.push(true);
+            } else {
+                let raw = std::fs::read(&full_path).unwrap_or_default();
+                let diff_detail = get_working_tree_file_diff(repo, &item.path, false, None).ok();
+                let preview = if let Some(d) = diff_detail {
+                    let mut buf = String::new();
+                    for h in &d.hunks {
+                        buf.push_str(&h.header);
+                        buf.push('\n');
+                        for l in &h.lines {
+                            match l.line_type {
+                                crate::git::diff::LineChangeType::Addition => buf.push('+'),
+                                crate::git::diff::LineChangeType::Deletion => buf.push('-'),
+                                crate::git::diff::LineChangeType::Context => buf.push(' '),
+                            }
+                            buf.push_str(&l.content);
+                            buf.push('\n');
+                        }
+                    }
+                    if buf.is_empty() {
+                        format!("Raw content ({} bytes)", raw.len())
+                    } else {
+                        buf
+                    }
+                } else {
+                    format!("Raw content ({} bytes)", raw.len())
+                };
+                raw_contents.push(raw);
+                diff_previews.push(preview);
+                is_oversized_flags.push(false);
+            }
+        } else {
+            raw_contents.push(Vec::new());
+            diff_previews.push(format!("Deleted file: {}", item.path));
+            is_oversized_flags.push(false);
+        }
+    }
+
+    let snapshots: Vec<NewTrashSnapshot<'_>> = target_items
+        .iter()
+        .enumerate()
+        .map(|(i, item)| NewTrashSnapshot {
+            file_path: &item.path,
+            content: &raw_contents[i],
+            diff_preview: &diff_previews[i],
+            head_commit_sha: head_sha.as_deref(),
+            batch_id: Some(&batch_id),
+            is_oversized: is_oversized_flags[i],
+        })
+        .collect();
+
+    // 2. Save all snapshots atomically in one SQLite Transaction
+    let snapshot_ids = store.save_snapshots_batch(&repo_path, &snapshots)?;
+
+    // 3. Perform Git discard in batch
+    let mut index = repo.index()?;
+    let mut builder = CheckoutBuilder::new();
+    builder.force();
+
+    let mut has_tracked = false;
+    for item in &status.unstaged {
+        if index.get_path(Path::new(&item.path), 0).is_some() {
+            builder.path(&item.path);
+            has_tracked = true;
+        }
+    }
+
+    if has_tracked {
+        repo.checkout_index(Some(&mut index), Some(&mut builder))?;
+    }
+
+    for item in &status.untracked {
+        let full_path = workdir.join(&item.path);
+        if full_path.exists() {
+            let _ = std::fs::remove_file(&full_path);
         }
     }
 
@@ -149,6 +276,38 @@ pub fn restore_trash_snapshot(
     let _ = store.delete_snapshot(snapshot_id);
 
     Ok(())
+}
+
+/// Restore all snapshots belonging to a single batch_id
+pub fn restore_trash_batch(
+    repo: &Repository,
+    store: &TrashStore,
+    batch_id: &str,
+) -> AppResult<usize> {
+    let items = store.get_batch_snapshots(batch_id)?;
+    if items.is_empty() {
+        return Ok(0);
+    }
+
+    let workdir = repo
+        .workdir()
+        .ok_or_else(|| AppError::Internal("No workdir in bare repository".into()))?;
+
+    let mut restored_count = 0;
+    for item in &items {
+        if let Ok((_r, file_path, content)) = store.get_snapshot_content(item.id) {
+            let full_path = workdir.join(&file_path);
+            if let Some(parent) = full_path.parent() {
+                let _ = std::fs::create_dir_all(parent);
+            }
+            if std::fs::write(&full_path, content).is_ok() {
+                restored_count += 1;
+            }
+        }
+    }
+
+    let _ = store.delete_batch_snapshots(batch_id);
+    Ok(restored_count)
 }
 
 pub fn list_trash_snapshots(

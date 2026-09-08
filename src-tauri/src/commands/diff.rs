@@ -17,7 +17,7 @@ use crate::git::{
     safety::{
         delete_trash_snapshot as git_delete_trash, discard_all_changes as git_discard_all,
         discard_file_changes as git_discard_file, list_trash_snapshots as git_list_trash,
-        restore_trash_snapshot as git_restore_trash,
+        restore_trash_batch as git_restore_trash_batch, restore_trash_snapshot as git_restore_trash,
     },
     status::{get_working_tree_status, WorkingTreeStatus},
 };
@@ -175,6 +175,21 @@ pub async fn restore_trash_snapshot(
     tokio::task::spawn_blocking(move || {
         let repo = git_open_repo(&path)?;
         git_restore_trash(&repo, &store, snapshot_id)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn restore_trash_batch(
+    path: String,
+    batch_id: String,
+    state: State<'_, AppState>,
+) -> AppResult<usize> {
+    let store = state.trash_store.clone();
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        git_restore_trash_batch(&repo, &store, &batch_id)
     })
     .await
     .map_err(|e| AppError::Internal(e.to_string()))?

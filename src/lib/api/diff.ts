@@ -1,4 +1,3 @@
-import { invoke } from '@tauri-apps/api/core';
 import type {
   BlameHunkItem,
   FileDiffDetail,
@@ -6,12 +5,12 @@ import type {
   TrashSnapshotItem,
   WorkingTreeStatus,
 } from '../types';
-import { isTauri } from './client';
+import { isTauri, invokeWithTimeout } from './client';
 import { getMockFileDiff, getMockTrashSnapshots, getMockWorkingTreeStatus } from './mocks';
 
 export async function getWorkingTreeStatus(path: string): Promise<WorkingTreeStatus> {
   if (isTauri) {
-    return await invoke<WorkingTreeStatus>('get_status', { path });
+    return await invokeWithTimeout<WorkingTreeStatus>('get_status', { path }, 15000);
   }
   return getMockWorkingTreeStatus();
 }
@@ -23,7 +22,11 @@ export async function getFileDiff(
   ignoreWhitespace?: boolean
 ): Promise<FileDiffDetail> {
   if (isTauri) {
-    return await invoke<FileDiffDetail>('get_file_diff', { path, filePath, staged, ignoreWhitespace });
+    return await invokeWithTimeout<FileDiffDetail>(
+      'get_file_diff',
+      { path, filePath, staged, ignoreWhitespace },
+      15000
+    );
   }
   return getMockFileDiff(filePath, staged);
 }
@@ -35,83 +38,94 @@ export async function getCommitFileDiff(
   ignoreWhitespace?: boolean
 ): Promise<FileDiffDetail> {
   if (isTauri) {
-    return await invoke<FileDiffDetail>('get_commit_file_diff', { path, commitId, filePath, ignoreWhitespace });
+    return await invokeWithTimeout<FileDiffDetail>(
+      'get_commit_file_diff',
+      { path, commitId, filePath, ignoreWhitespace },
+      15000
+    );
   }
   return getMockFileDiff(filePath, false);
 }
 
 export async function stageFile(path: string, filePath: string): Promise<void> {
   if (isTauri) {
-    await invoke('stage_file', { path, filePath });
+    await invokeWithTimeout('stage_file', { path, filePath }, 15000);
   }
 }
 
 export async function unstageFile(path: string, filePath: string): Promise<void> {
   if (isTauri) {
-    await invoke('unstage_file', { path, filePath });
+    await invokeWithTimeout('unstage_file', { path, filePath }, 15000);
   }
 }
 
 export async function stageAll(path: string): Promise<void> {
   if (isTauri) {
-    await invoke('stage_all', { path });
+    await invokeWithTimeout('stage_all', { path }, 25000);
   }
 }
 
 export async function unstageAll(path: string): Promise<void> {
   if (isTauri) {
-    await invoke('unstage_all', { path });
+    await invokeWithTimeout('unstage_all', { path }, 25000);
   }
 }
 
 export async function stageHunk(path: string, filePath: string, hunkIndex: number): Promise<void> {
   if (isTauri) {
-    await invoke('stage_hunk', { path, filePath, hunkIndex });
+    await invokeWithTimeout('stage_hunk', { path, filePath, hunkIndex }, 15000);
   }
 }
 
 export async function unstageHunk(path: string, filePath: string, hunkIndex: number): Promise<void> {
   if (isTauri) {
-    await invoke('unstage_hunk', { path, filePath, hunkIndex });
+    await invokeWithTimeout('unstage_hunk', { path, filePath, hunkIndex }, 15000);
   }
 }
 
 export async function discardFileChanges(path: string, filePath: string): Promise<number> {
   if (isTauri) {
-    return await invoke<number>('discard_file_changes', { path, filePath });
+    return await invokeWithTimeout<number>('discard_file_changes', { path, filePath }, 20000);
   }
   return Date.now();
 }
 
 export async function discardAllChanges(path: string): Promise<number[]> {
   if (isTauri) {
-    return await invoke<number[]>('discard_all_changes', { path });
+    return await invokeWithTimeout<number[]>('discard_all_changes', { path }, 30000);
   }
   return [];
 }
 
 export async function listTrashSnapshots(path: string): Promise<TrashSnapshotItem[]> {
   if (isTauri) {
-    return await invoke<TrashSnapshotItem[]>('list_trash_snapshots', { path });
+    return await invokeWithTimeout<TrashSnapshotItem[]>('list_trash_snapshots', { path }, 15000);
   }
   return getMockTrashSnapshots();
 }
 
 export async function restoreTrashSnapshot(path: string, snapshotId: number): Promise<void> {
   if (isTauri) {
-    await invoke('restore_trash_snapshot', { path, snapshotId });
+    await invokeWithTimeout('restore_trash_snapshot', { path, snapshotId }, 20000);
   }
+}
+
+export async function restoreTrashBatch(path: string, batchId: string): Promise<number> {
+  if (isTauri) {
+    return await invokeWithTimeout<number>('restore_trash_batch', { path, batchId }, 30000);
+  }
+  return 0;
 }
 
 export async function deleteTrashSnapshot(snapshotId: number): Promise<void> {
   if (isTauri) {
-    await invoke('delete_trash_snapshot', { snapshotId });
+    await invokeWithTimeout('delete_trash_snapshot', { snapshotId }, 15000);
   }
 }
 
 export async function getFileBlame(path: string, filePath: string): Promise<BlameHunkItem[]> {
   if (isTauri) {
-    return await invoke<BlameHunkItem[]>('get_file_blame', { path, filePath });
+    return await invokeWithTimeout<BlameHunkItem[]>('get_file_blame', { path, filePath }, 25000);
   }
   return [];
 }
@@ -122,7 +136,7 @@ export async function getFileHistory(
   limit?: number
 ): Promise<FileHistoryItem[]> {
   if (isTauri) {
-    return await invoke<FileHistoryItem[]>('get_file_history', { path, filePath, limit });
+    return await invokeWithTimeout<FileHistoryItem[]>('get_file_history', { path, filePath, limit }, 25000);
   }
   return [];
 }

@@ -158,7 +158,12 @@
                     <span class="text-[10px] text-zinc-500 shrink-0">{formatRelativeTime(snap.created_at)}</span>
                   </div>
                   <div class="mt-1 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
-                    <span>{formatBytes(snap.file_size)}</span>
+                    <div class="flex items-center gap-1.5">
+                      <span>{formatBytes(snap.file_size)}</span>
+                      {#if snap.is_oversized}
+                        <span class="text-[9px] px-1 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-medium">Oversized</span>
+                      {/if}
+                    </div>
                     {#if snap.head_commit_sha}
                       <span class="font-mono text-[10px] text-zinc-500">{snap.head_commit_sha.slice(0, 7)}</span>
                     {/if}

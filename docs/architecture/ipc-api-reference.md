@@ -85,10 +85,11 @@ All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard
 | `get_file_diff` | `path: String, file_path: String, is_staged: bool` | `FileDiffDetail` | Retrieves diff details (hunks, added/removed lines) for working tree file. |
 | `get_commit_file_diff`| `path: String, commit_id: String, file_path: String` | `FileDiffDetail` | Retrieves diff details of a file in a historical commit. |
 | `discard_file_changes`| `path: String, file_path: String` | `i64` | **Safe Discard**: Backs up file to SQLite 48h before restoring to HEAD; returns snapshot ID for 1-click restore. |
-| `discard_all_changes` | `path: String` | `Vec<i64>` | **Safe Discard All**: Backs up all files before discarding; returns array of snapshot IDs. |
-| `list_trash_snapshots`| `repo_path: Option<String>` | `Vec<TrashSnapshotItem>` | Lists all available snapshots in 48-hour trash. |
-| `restore_trash_snapshot`| `snapshot_id: i64` | `bool` | Restores 100% of discarded file content back to working tree. |
-| `delete_trash_snapshot` | `snapshot_id: i64` | `bool` | Permanently deletes a single snapshot from trash. |
+| `discard_all_changes` | `path: String` | `Vec<i64>` | **Safe Discard All**: Atomically snapshots all files into SQLite within a single transaction under a shared batch ID before discarding; returns array of snapshot IDs. |
+| `list_trash_snapshots`| `repo_path: Option<String>` | `Vec<TrashSnapshotItem>` | Lists all available snapshots in 48-hour trash (supports batch ID and oversized markers). |
+| `restore_trash_snapshot`| `path: String, snapshot_id: i64` | `()` | Restores 100% of discarded file content back to working tree. |
+| `restore_trash_batch` | `path: String, batch_id: String` | `usize` | **Batch Restore**: Atomically restores all discarded files belonging to a specific batch ID in one click. |
+| `delete_trash_snapshot` | `snapshot_id: i64` | `()` | Permanently deletes a single snapshot from trash. |
 | `get_file_blame` | `path: String, file_path: String` | `Vec<BlameHunkItem>` | Line-by-line blame: author, email, timestamp, and commit SHA. |
 | `get_file_history` | `path: String, file_path: String, limit: usize` | `Vec<FileHistoryItem>` | Follows file modification timeline across history (`git log --follow`). |
 | `add_to_gitignore` | `repo_path: String, pattern: String` | `bool` | Appends rule to repository `.gitignore`. |
@@ -289,10 +290,11 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `get_file_diff` | `path: String, file_path: String, is_staged: bool` | `FileDiffDetail` | Lấy chi tiết diff (hunks, dòng thêm/xóa) của file trong working tree. |
 | `get_commit_file_diff`| `path: String, commit_id: String, file_path: String` | `FileDiffDetail` | Lấy chi tiết diff của một file thuộc về một commit trong lịch sử. |
 | `discard_file_changes`| `path: String, file_path: String` | `i64` | **Safe Discard**: Sao lưu nội dung vào SQLite 48h trước khi khôi phục file về HEAD, trả về snapshot ID phục vụ 1-Click Undo. |
-| `discard_all_changes` | `path: String` | `Vec<i64>` | **Safe Discard All**: Sao lưu toàn bộ working tree vào SQLite trước khi xóa sạch, trả về mảng snapshot IDs. |
-| `list_trash_snapshots`| `repo_path: Option<String>` | `Vec<TrashSnapshotItem>` | Liệt kê danh sách các bản chụp thùng rác còn hạn sử dụng (trong vòng 48h). |
-| `restore_trash_snapshot`| `snapshot_id: i64` | `bool` | Khôi phục nguyên vẹn 100% nội dung file đã lỡ tay discard. |
-| `delete_trash_snapshot` | `snapshot_id: i64` | `bool` | Xóa vĩnh viễn một bản snapshot khỏi thùng rác. |
+| `discard_all_changes` | `path: String` | `Vec<i64>` | **Safe Discard All**: Sao lưu nguyên tử toàn bộ working tree vào SQLite trong 1 Transaction duy nhất kèm mã `batch_id`, trả về mảng snapshot IDs. |
+| `list_trash_snapshots`| `repo_path: Option<String>` | `Vec<TrashSnapshotItem>` | Liệt kê danh sách các bản chụp thùng rác còn hạn sử dụng (trong vòng 48h, có gắn cờ `batch_id` và `is_oversized`). |
+| `restore_trash_snapshot`| `path: String, snapshot_id: i64` | `()` | Khôi phục nguyên vẹn 100% nội dung file đã lỡ tay discard. |
+| `restore_trash_batch` | `path: String, batch_id: String` | `usize` | **Khôi phục cả đợt (Batch Restore)**: Phục hồi đồng loạt toàn bộ các file đã discard trong cùng một batch chỉ bằng 1 thao tác. |
+| `delete_trash_snapshot` | `snapshot_id: i64` | `()` | Xóa vĩnh viễn một bản snapshot khỏi thùng rác. |
 | `get_file_blame` | `path: String, file_path: String` | `Vec<BlameHunkItem>` | Soi vết từng dòng code: tác giả, email, thời gian, commit SHA cho toàn bộ dòng trong file. |
 | `get_file_history` | `path: String, file_path: String, limit: usize` | `Vec<FileHistoryItem>` | Lọc riêng dòng thời gian các commit chỉ tác động lên tệp được chọn (`git log --follow`). |
 | `add_to_gitignore` | `repo_path: String, pattern: String` | `bool` | Bổ sung quy tắc vào file `.gitignore` của repository. |

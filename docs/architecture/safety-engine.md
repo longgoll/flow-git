@@ -56,24 +56,33 @@ CREATE TABLE IF NOT EXISTS trash_snapshots (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     repo_path TEXT NOT NULL,
     file_path TEXT NOT NULL,
-    original_content TEXT NOT NULL,
-    discarded_at INTEGER NOT NULL,      -- Unix timestamp
-    is_staged INTEGER DEFAULT 0,
-    file_hash TEXT                      -- SHA256 content deduplication hash
+    file_content BLOB NOT NULL,
+    diff_preview TEXT NOT NULL,
+    created_at INTEGER NOT NULL,        -- Unix timestamp
+    head_commit_sha TEXT,
+    file_size INTEGER NOT NULL DEFAULT 0,
+    batch_id TEXT,                      -- Shared UUID for multi-file discard batches
+    is_oversized INTEGER NOT NULL DEFAULT 0 -- 1 if file > 20MB (BLOB omitted to prevent OOM)
 );
+CREATE INDEX IF NOT EXISTS idx_trash_repo ON trash_snapshots(repo_path);
+CREATE INDEX IF NOT EXISTS idx_trash_created ON trash_snapshots(created_at);
+CREATE INDEX IF NOT EXISTS idx_trash_repo_created ON trash_snapshots(repo_path, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_trash_batch ON trash_snapshots(batch_id);
 ```
 
-### 2.3. 48-Hour TTL Auto-Eviction
-- On startup and whenever opening a repository, a background task automatically purges snapshots older than 48 hours:
-  ```sql
-  DELETE FROM trash_snapshots WHERE discarded_at < ?1;
-  ```
-- This prevents the trash store from inflating disk space while maintaining a reliable 2-day recovery safety net.
+### 2.3. Multi-File Atomic Discard & Quota Protection
+- **Single-Transaction Batch Discard (`save_snapshots_batch`):**
+  When discarding multiple files (`discard_all_changes`), all snapshot metadata and content are recorded within a single SQLite transaction under a shared `batch_id`. If an error occurs, the working tree is never left partially damaged, and users can execute **1-Click Batch Restore** (`restore_trash_batch`).
+- **Oversized BLOB Protection (`MAX_TRASH_FILE_SIZE = 20MB`):**
+  Files exceeding 20 MB have metadata and preview retained with `is_oversized = 1`, while raw binary contents are omitted from SQLite to prevent memory exhaustion (OOM) and runaway database inflation.
+- **Auto-Eviction & WAL Maintenance:**
+  Purges records older than 48 hours and caps total trash size at 500 MB. Triggers `PRAGMA wal_checkpoint(TRUNCATE)` and `PRAGMA incremental_vacuum` to reclaim physical disk space.
 
 ### 2.4. Trash Inspector Interface (`TrashInspector.svelte`)
-- Accessible via the Trash icon on the toolbar:
+- Accessible via the Shield / Trash icon on the toolbar:
   - Search discarded files by name or timestamp.
-  - Preview saved code content directly inside Monaco Editor.
+  - View file size, relative time, and distinct amber `Oversized` badges.
+  - Preview saved code diffs directly.
   - Click **"Restore"** to reconstruct the exact file back into the Working Tree in < 10ms.
 
 ---
@@ -89,23 +98,32 @@ CREATE TABLE IF NOT EXISTS action_history (
     repo_path TEXT NOT NULL,
     action_type TEXT NOT NULL,          -- 'commit', 'merge', 'rebase', 'reset', 'cherry-pick'
     description TEXT NOT NULL,          -- Human-readable action description
-    before_ref TEXT NOT NULL,           -- Commit SHA before operation
-    after_ref TEXT NOT NULL,            -- Commit SHA after operation
-    created_at INTEGER NOT NULL,
-    undone INTEGER DEFAULT 0            -- Undo status flag
+    previous_head TEXT NOT NULL,        -- Commit SHA before operation
+    new_head TEXT NOT NULL,             -- Commit SHA after operation
+    branch_name TEXT,
+    severity TEXT NOT NULL DEFAULT 'safe',
+    timestamp INTEGER NOT NULL,
+    is_undone INTEGER NOT NULL DEFAULT 0 -- Undo status flag
 );
+CREATE INDEX IF NOT EXISTS idx_action_repo ON action_history(repo_path);
+CREATE INDEX IF NOT EXISTS idx_action_time ON action_history(timestamp);
+CREATE INDEX IF NOT EXISTS idx_action_repo_undone_id ON action_history(repo_path, is_undone, id DESC);
 ```
 
-### 3.2. Synchronized Undo via `git reflog`
+### 3.2. Git GC Commit Protection Pinning (`refs/flowgit/pins/<action_id>`)
+To guarantee that dangling commits (e.g. following a `reset --hard` or rebase) are never permanently removed by Git Garbage Collection (`git gc` / `git prune`), FlowGit automatically creates an internal git reference `refs/flowgit/pins/<action_id>` pointing to `previous_head`. When the action is undone or evicted, the pin reference is deleted.
+
+### 3.3. Synchronized Undo via `git reflog` & Pointer Recovery
 When the user presses **`Ctrl + Z`** (or `Ctrl + Shift + Z` to Redo):
-1. Locate the latest entry in `action_history` where `undone = 0`.
-2. Cross-verify the target `before_ref` against repository `git reflog`.
-3. Safely restore branch pointer to `before_ref`:
+1. Locate the latest entry in `action_history` where `is_undone = 0` via the composite index.
+2. Cross-verify the target `previous_head` with `repo.find_commit(oid)`.
+3. Safely restore branch pointer and checkout tree:
    ```rust
-   let target_obj = repo.find_object(before_oid, None)?;
-   repo.reset(&target_obj, git2::ResetType::Mixed, None)?;
+   let commit = repo.find_commit(oid)?;
+   reference.set_target(oid, "Time machine rollback")?;
+   repo.checkout_tree(commit.as_object(), Some(&mut builder))?;
    ```
-4. Set `undone = 1` in SQLite and trigger instant graph UI update.
+4. Set `is_undone = 1` in SQLite, release the pin reference, and trigger instant graph UI update.
 
 ---
 
@@ -184,23 +202,32 @@ CREATE TABLE IF NOT EXISTS trash_snapshots (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     repo_path TEXT NOT NULL,
     file_path TEXT NOT NULL,
-    original_content TEXT NOT NULL,
-    discarded_at INTEGER NOT NULL,      -- Timestamp Unix
-    is_staged INTEGER DEFAULT 0,
-    file_hash TEXT                      -- SHA256 để chống trùng lặp dữ liệu
+    file_content BLOB NOT NULL,
+    diff_preview TEXT NOT NULL,
+    created_at INTEGER NOT NULL,        -- Timestamp Unix
+    head_commit_sha TEXT,
+    file_size INTEGER NOT NULL DEFAULT 0,
+    batch_id TEXT,                      -- Mã UUID chung cho các đợt multi-file discard
+    is_oversized INTEGER NOT NULL DEFAULT 0 -- 1 nếu file > 20MB (không lưu BLOB để tránh OOM)
 );
+CREATE INDEX IF NOT EXISTS idx_trash_repo ON trash_snapshots(repo_path);
+CREATE INDEX IF NOT EXISTS idx_trash_created ON trash_snapshots(created_at);
+CREATE INDEX IF NOT EXISTS idx_trash_repo_created ON trash_snapshots(repo_path, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_trash_batch ON trash_snapshots(batch_id);
 ```
 
-### 2.3. Cơ chế tự động dọn dẹp (48h TTL Auto-Eviction)
-- Mỗi khi khởi động ứng dụng hoặc khi mở kho lưu trữ mới, một tiến trình ngầm sẽ thực thi truy vấn xóa các bản chụp quá 48 giờ:
-  ```sql
-  DELETE FROM trash_snapshots WHERE discarded_at < ?1;
-  ```
-- Nhờ cơ chế này, thùng rác không bao giờ làm phình to dung lượng ổ cứng của người dùng nhưng vẫn đảm bảo cửa sổ cứu hộ an toàn trong suốt 2 ngày làm việc.
+### 2.3. Cơ chế Batch Transaction & Giới hạn Quota an toàn
+- **Batch Discard Nguyên tử (`save_snapshots_batch`):**
+  Khi discard nhiều tệp cùng lúc (`discard_all_changes`), toàn bộ bản ghi được thực thi trong **1 Transaction SQLite duy nhất** và gắn chung `batch_id`. Nhờ đó, nếu có lỗi xảy ra giữa chừng, trạng thái working tree không bị phá hủy dở dang, đồng thời hỗ trợ **Khôi phục cả đợt (Batch Restore)** chỉ trong 1 click.
+- **Bảo vệ chống tràn bộ nhớ (`MAX_TRASH_FILE_SIZE = 20MB`):**
+  Các tệp vượt quá 20MB chỉ được lưu metadata kèm cờ `is_oversized = 1` thay vì nạp toàn bộ BLOB vào RAM và SQLite, tránh tuyệt đối lỗi OOM panic và tình trạng phình đĩa.
+- **Tự động dọn dẹp & Tối ưu WAL:**
+  Tự động dọn dẹp các bản ghi quá 48 giờ và khống chế tổng dung lượng thùng rác dưới 500 MB. Thực thi `PRAGMA wal_checkpoint(TRUNCATE)` và `PRAGMA incremental_vacuum` để trả lại dung lượng thực tế cho ổ cứng.
 
 ### 2.4. Giao diện Trash Inspector (`TrashInspector.svelte`)
 - Người dùng có thể bấm vào biểu tượng thùng rác trên thanh Toolbar bất kỳ lúc nào để:
   - Tìm kiếm các file đã discard theo tên hoặc mốc thời gian.
+  - Nhận biết nhanh các file kích thước lớn với huy hiệu màu cam **Oversized**.
   - Xem trước (Preview) nội dung code được lưu trong bản chụp.
   - Nhấn nút **"Restore"** để phục hồi nguyên trạng tệp vào Working Tree trong < 10ms.
 
@@ -217,23 +244,32 @@ CREATE TABLE IF NOT EXISTS action_history (
     repo_path TEXT NOT NULL,
     action_type TEXT NOT NULL,          -- 'commit', 'merge', 'rebase', 'reset', 'cherry-pick'
     description TEXT NOT NULL,          -- Tóm tắt hành động người dùng dễ hiểu
-    before_ref TEXT NOT NULL,           -- Commit SHA trước khi thao tác
-    after_ref TEXT NOT NULL,            -- Commit SHA sau khi hoàn thành
-    created_at INTEGER NOT NULL,
-    undone INTEGER DEFAULT 0            -- Cờ trạng thái đã hoàn tác hay chưa
+    previous_head TEXT NOT NULL,        -- Commit SHA trước khi thao tác
+    new_head TEXT NOT NULL,             -- Commit SHA sau khi hoàn thành
+    branch_name TEXT,
+    severity TEXT NOT NULL DEFAULT 'safe',
+    timestamp INTEGER NOT NULL,
+    is_undone INTEGER NOT NULL DEFAULT 0 -- Cờ trạng thái đã hoàn tác hay chưa
 );
+CREATE INDEX IF NOT EXISTS idx_action_repo ON action_history(repo_path);
+CREATE INDEX IF NOT EXISTS idx_action_time ON action_history(timestamp);
+CREATE INDEX IF NOT EXISTS idx_action_repo_undone_id ON action_history(repo_path, is_undone, id DESC);
 ```
 
-### 3.2. Cơ chế hoàn tác song song (`git reflog`)
+### 3.2. Ghim tham chiếu chống dọn rác Git (`refs/flowgit/pins/<action_id>`)
+Để đảm bảo các commit bị tách nhánh (ví dụ sau khi `reset --hard` hoặc rebase) không bao giờ bị lệnh dọn rác ngầm của Git (`git gc` / `git prune`) xóa vĩnh viễn, FlowGit tự động tạo một reference ẩn `refs/flowgit/pins/<action_id>` trỏ tới commit trước đó. Tham chiếu này chỉ được dỡ bỏ khi hành động đã được Undo hoặc bản ghi hết hạn.
+
+### 3.3. Cơ chế hoàn tác song song (`git reflog`)
 Khi người dùng bấm **`Ctrl + Z`** (hoặc `Ctrl + Shift + Z` để Redo):
-1. Hệ thống tra cứu bản ghi gần nhất trong `action_history` có `undone = 0`.
-2. Kiểm tra tính toàn vẹn của con trỏ `before_ref` với nhật ký `git reflog`.
-3. Di chuyển con trỏ nhánh hiện tại về `before_ref` bằng cơ chế an toàn:
+1. Hệ thống tra cứu bản ghi gần nhất trong `action_history` có `is_undone = 0` bằng composite index.
+2. Kiểm tra tính hợp lệ của commit target bằng `repo.find_commit(oid)`.
+3. Di chuyển con trỏ nhánh hiện tại và phục hồi working tree:
    ```rust
-   let target_obj = repo.find_object(before_oid, None)?;
-   repo.reset(&target_obj, git2::ResetType::Mixed, None)?;
+   let commit = repo.find_commit(oid)?;
+   reference.set_target(oid, "Time machine rollback")?;
+   repo.checkout_tree(commit.as_object(), Some(&mut builder))?;
    ```
-4. Đánh dấu `undone = 1` trong SQLite và phát tín hiệu cập nhật giao diện đồ thị tức thì.
+4. Đánh dấu `is_undone = 1` trong SQLite, xóa ref pin và phát tín hiệu cập nhật giao diện đồ thị tức thì.
 
 ---
 

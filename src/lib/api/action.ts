@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import type { ActionRecord, ConflictSimulationResult, RebaseExecutionResult, RebaseTodoItem, ReflogEntry, RepoOperationState, SecretFinding } from '../types';
-import { isTauri } from './client';
+import { isTauri, invokeWithTimeout } from './client';
 
 export async function createCommit(
   path: string,
@@ -183,7 +183,7 @@ export async function listActions(
 
 export async function undoAction(path: string): Promise<ActionRecord> {
   if (isTauri) {
-    return await invoke<ActionRecord>('undo_action', { path });
+    return await invokeWithTimeout<ActionRecord>('undo_action', { path }, 20000);
   }
   return {
     id: 2,
@@ -200,7 +200,7 @@ export async function undoAction(path: string): Promise<ActionRecord> {
 
 export async function redoAction(path: string): Promise<ActionRecord> {
   if (isTauri) {
-    return await invoke<ActionRecord>('redo_action', { path });
+    return await invokeWithTimeout<ActionRecord>('redo_action', { path }, 20000);
   }
   return {
     id: 2,
@@ -220,7 +220,7 @@ export async function timeTravelTo(
   actionId: number
 ): Promise<ActionRecord> {
   if (isTauri) {
-    return await invoke<ActionRecord>('time_travel_to', { path, actionId });
+    return await invokeWithTimeout<ActionRecord>('time_travel_to', { path, actionId }, 25000);
   }
   return {
     id: actionId,

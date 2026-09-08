@@ -257,13 +257,23 @@ export class RemoteState {
   // --- Silent Auto-Fetch Engine ---
   isAutoFetching = $state<boolean>(false);
   lastAutoFetchTime = $state<number>(0);
-  autoFetchIntervalSeconds = $state<number>(180);
-  autoFetchEnabled = $state<boolean>(true);
+  autoFetchIntervalSeconds = $state<number>(
+    typeof localStorage !== 'undefined' && localStorage.getItem('flowgit_autofetch_interval')
+      ? parseInt(localStorage.getItem('flowgit_autofetch_interval') || '180', 10)
+      : 180
+  );
+  autoFetchEnabled = $state<boolean>(
+    typeof localStorage !== 'undefined' && localStorage.getItem('flowgit_autofetch_enabled') !== null
+      ? localStorage.getItem('flowgit_autofetch_enabled') === 'true'
+      : true
+  );
   dismissedBehindBranch = $state<string | null>(null);
   lastFetchResult = $state<BackgroundFetchResult | null>(null);
 
   private autoFetchTimer: any = null;
   private focusListener: (() => void) | null = null;
+  private currentRepoPathGetter: (() => string) | null = null;
+  private currentOnCommitsFound: ((res: BackgroundFetchResult) => Promise<void>) | null = null;
 
   async runSilentAutoFetch(
     repoPath: string,
@@ -278,10 +288,6 @@ export class RemoteState {
       this.lastFetchResult = res;
 
       if (res.success && res.has_new_commits) {
-        // Reset dismissed branch if new commit count changed
-        if (this.dismissedBehindBranch === res.current_branch && res.behind_count > 0) {
-          // keep dismissed or reset
-        }
         if (onNewCommitsFound) {
           await onNewCommitsFound(res);
         }
@@ -300,8 +306,12 @@ export class RemoteState {
     onNewCommitsFound: (res: BackgroundFetchResult) => Promise<void>
   ) {
     this.stopAutoFetch();
+    this.currentRepoPathGetter = getRepoPath;
+    this.currentOnCommitsFound = onNewCommitsFound;
 
-    // 1. Periodic Timer (default: 3 minutes)
+    if (!this.autoFetchEnabled || this.autoFetchIntervalSeconds <= 0) return;
+
+    // 1. Periodic Timer
     this.autoFetchTimer = setInterval(async () => {
       if (!this.autoFetchEnabled) return;
       const path = getRepoPath();
@@ -333,6 +343,18 @@ export class RemoteState {
     if (this.focusListener && typeof window !== 'undefined') {
       window.removeEventListener('focus', this.focusListener);
       this.focusListener = null;
+    }
+  }
+
+  setAutoFetchConfig(intervalSeconds: number, enabled: boolean = true) {
+    this.autoFetchIntervalSeconds = intervalSeconds;
+    this.autoFetchEnabled = enabled;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('flowgit_autofetch_interval', String(intervalSeconds));
+      localStorage.setItem('flowgit_autofetch_enabled', String(enabled));
+    }
+    if (this.currentRepoPathGetter && this.currentOnCommitsFound) {
+      this.startAutoFetch(this.currentRepoPathGetter, this.currentOnCommitsFound);
     }
   }
 

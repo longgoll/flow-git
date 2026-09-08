@@ -22,7 +22,7 @@
   import { createGitActions } from "./lib/services/gitActionHandlers";
   import { getRemotes } from "./lib/api/remote";
   import { getCurrentRepoIdentity } from "./lib/api/identity";
-  import { getRemoteUrl, listenRepoStatus } from "./lib/api";
+  import { getRemoteUrl, listenRepoStatus, executeRebase, stashSave, stashPop } from "./lib/api";
   import type {
     ComparisonResult,
     CurrentRepoIdentity,
@@ -374,6 +374,108 @@
     remote.stopAutoFetch();
   });
 
+  async function handleSafeSmartSync() {
+    if (!repo.currentRepoPath) return;
+    const dirtyCount = wt.workingTreeStatus?.total_dirty_count || 0;
+    let didStash = false;
+
+    if (dirtyCount > 0) {
+      try {
+        await stashSave(
+          repo.currentRepoPath,
+          `FlowGit Auto-Stash: Trước khi cập nhật từ ${repo.currentBranch?.upstream_name || 'remote'}`,
+          true
+        );
+        didStash = true;
+        toast.info(localeState.t('banners.autoStashNotice', { count: dirtyCount }));
+      } catch (e) {
+        console.warn("Auto-stash skipped:", e);
+      }
+    }
+
+    const res = await remote.runSmartSync(
+      repo.currentRepoPath,
+      undefined,
+      () => loadRepository(repo.currentRepoPath),
+    );
+    repo.statusMessage = res.message;
+
+    if (res.success) {
+      toast.success(res.message);
+      if (didStash) {
+        try {
+          await stashPop(repo.currentRepoPath, 0);
+          toast.success(localeState.t('banners.autoStashRestored'));
+        } catch {
+          toast.warning("Code dở dang đã được giữ trong Stash Shelf an toàn.");
+        }
+        await loadRepository(repo.currentRepoPath);
+      }
+    } else {
+      toast.error(res.message);
+    }
+  }
+
+  async function handleSafeRebaseUpstream() {
+    if (!repo.currentRepoPath || !repo.currentBranch) return;
+    const upstream = repo.currentBranch.upstream_name || 'origin/' + repo.currentBranch.shorthand;
+    const dirtyCount = wt.workingTreeStatus?.total_dirty_count || 0;
+    let didStash = false;
+
+    if (dirtyCount > 0) {
+      try {
+        await stashSave(
+          repo.currentRepoPath,
+          `FlowGit Auto-Stash: Trước khi rebase lên ${upstream}`,
+          true
+        );
+        didStash = true;
+        toast.info(localeState.t('banners.autoStashNotice', { count: dirtyCount }));
+      } catch (e) {
+        console.warn("Auto-stash skipped:", e);
+      }
+    }
+
+    try {
+      const res = await executeRebase(repo.currentRepoPath, upstream);
+      if (res.status === 'completed') {
+        toast.success(res.message);
+        repo.setStatus(res.message, 'success');
+        if (didStash) {
+          try {
+            await stashPop(repo.currentRepoPath, 0);
+            toast.success(localeState.t('banners.autoStashRestored'));
+          } catch {
+            toast.warning("Code dở dang đã được giữ trong Stash Shelf an toàn.");
+          }
+        }
+        await loadRepository(repo.currentRepoPath);
+      } else if (res.status === 'conflict') {
+        toast.warning(res.message);
+        repo.setStatus(res.message, 'warn');
+        safety.isRebasing = true;
+        await safety.loadConflictFiles(repo.currentRepoPath);
+        viewMode = 'conflict';
+      }
+    } catch (e: any) {
+      toast.error(e?.message || String(e));
+    }
+  }
+
+  async function handleSafeMergeUpstream() {
+    if (!repo.currentRepoPath || !repo.currentBranch) return;
+    const remoteName = repo.currentBranch.upstream_name?.split('/')[0] || 'origin';
+    const remoteBranch = repo.currentBranch.upstream_name?.split('/').slice(1).join('/') || repo.currentBranch.shorthand;
+    await remote.executeRemote(
+      repo.currentRepoPath,
+      'pull',
+      remoteName,
+      remoteBranch,
+      false,
+      () => loadRepository(repo.currentRepoPath),
+    );
+  }
+
   function handleGlobalKeydown(e: KeyboardEvent) {
     handleAppKeydown(e, {
       tabState,
@@ -446,14 +548,7 @@
     onClearAllFilters={() => repo.clearFilters()}
     onOpenTrash={() => safety.openTrash(repo.currentRepoPath)}
     onOpenWorktrees={actions.openWorktreesModal}
-    onSmartSync={async () => {
-      const res = await remote.runSmartSync(
-        repo.currentRepoPath,
-        undefined,
-        () => loadRepository(repo.currentRepoPath),
-      );
-      repo.statusMessage = res.message;
-    }}
+    onSmartSync={handleSafeSmartSync}
     onPush={actions.pushCurrentBranch}
     onPublishBranch={actions.publishBranch}
     remotesCount={remotes.length}
@@ -550,14 +645,9 @@
         <UpstreamUpdateBanner
           currentBranch={repo.currentBranch}
           isSyncing={remote.isSyncing}
-          onSmartSync={async () => {
-            const res = await remote.runSmartSync(
-              repo.currentRepoPath,
-              undefined,
-              () => loadRepository(repo.currentRepoPath),
-            );
-            repo.statusMessage = res.message;
-          }}
+          onSmartSync={handleSafeSmartSync}
+          onRebaseUpstream={handleSafeRebaseUpstream}
+          onMergeUpstream={handleSafeMergeUpstream}
           onDismiss={() => {
             if (repo.currentBranch) {
               remote.dismissBehindNotice(repo.currentBranch.shorthand);

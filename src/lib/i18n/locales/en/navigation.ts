@@ -257,6 +257,14 @@ export const sidebar: typeof viSidebar = {
   deleteRemoteRefTooltip: "Delete remote reference {branch}{protected}",
   needsTypedConfirmation: " (Typed confirmation required)",
   fetchPruneTooltip: "Fetch & Prune (Clean up deleted remote branches)",
+  tabBranches: "Branches",
+  tabRemotes: "Remotes",
+  tabTags: "Tags",
+  tabStashes: "Stashes",
+  tabWorktrees: "Worktrees",
+  collapsePanel: "Collapse panel (Rail only)",
+  expandPanel: "Expand panel",
+  moreBranchActions: "More branch actions...",
 };
 
 export const statusBar: typeof viStatusBar = {

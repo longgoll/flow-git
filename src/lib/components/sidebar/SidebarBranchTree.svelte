@@ -122,13 +122,17 @@
                 <Eye class="w-3 h-3 text-zinc-400 hover:text-cyan-500" />
               {/if}
             </button>
-            <!-- Unpin button -->
+            <!-- Branch Actions Menu Button (3-dots) -->
             <button
-              onclick={(e) => { e.stopPropagation(); repo?.togglePinBranch(shorthand); }}
-              class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-amber-500 transition-colors cursor-pointer"
-              title={localeState.t('sidebar.unpinBranchTooltip')}
+              onclick={(e) => {
+                e.stopPropagation();
+                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                onOpenContextMenu(branch, Math.min(rect.right, window.innerWidth - 220), Math.min(rect.bottom + 4, window.innerHeight - 260));
+              }}
+              class="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-400 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 transition-all cursor-pointer"
+              title={localeState.t('sidebar.branchOptions')}
             >
-              <Star class="w-3 h-3 fill-amber-400 text-amber-500" />
+              <MoreVertical class="w-3 h-3" />
             </button>
           </div>
         </div>
@@ -452,6 +456,19 @@
                 {/if}
               </button>
             {/if}
+
+            <!-- Branch Actions Menu Button (3-dots) -->
+            <button
+              onclick={(e) => {
+                e.stopPropagation();
+                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                onOpenContextMenu(branch, Math.min(rect.right, window.innerWidth - 220), Math.min(rect.bottom + 4, window.innerHeight - 260));
+              }}
+              class="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-400 dark:text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 transition-all cursor-pointer"
+              title={localeState.t('sidebar.branchOptions')}
+            >
+              <MoreVertical class="w-3 h-3" />
+            </button>
 
             {#if onDeleteBranch}
               {#if isProtectedBranch(branch)}

@@ -249,6 +249,14 @@ export const sidebar = {
   deleteRemoteRefTooltip: "Xóa reference remote {branch}{protected}",
   needsTypedConfirmation: " (Cần gõ tên xác nhận)",
   fetchPruneTooltip: "Fetch & Prune (Dọn dẹp các nhánh remote đã bị xóa)",
+  tabBranches: "Nhánh",
+  tabRemotes: "Remotes",
+  tabTags: "Thẻ (Tags)",
+  tabStashes: "Stashes",
+  tabWorktrees: "Worktrees",
+  collapsePanel: "Thu gọn panel (Chỉ hiện Rail)",
+  expandPanel: "Mở rộng panel",
+  moreBranchActions: "Thao tác nhánh khác...",
 };
 
 export const statusBar = {

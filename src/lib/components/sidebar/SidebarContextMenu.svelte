@@ -59,6 +59,42 @@
     onSoloBranch,
     isProtectedBranch,
   }: Props = $props();
+
+  let menuEl = $state<HTMLElement | null>(null);
+  let menuWidth = $state(224);
+  let menuHeight = $state(380);
+
+  $effect(() => {
+    if (menuEl) {
+      const rect = menuEl.getBoundingClientRect();
+      if (rect.width > 0) menuWidth = rect.width;
+      if (rect.height > 0) menuHeight = rect.height;
+    }
+  });
+
+  let smartPosition = $derived.by(() => {
+    if (!activeBranchMenu) return { x: 0, y: 0 };
+    const pad = 12;
+    const winW = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const winH = typeof window !== 'undefined' ? window.innerHeight : 800;
+
+    let x = activeBranchMenu.x;
+    let y = activeBranchMenu.y;
+
+    // Clamp / Shift X within viewport
+    if (x + menuWidth + pad > winW) {
+      x = Math.max(pad, winW - menuWidth - pad);
+    }
+    if (x < pad) x = pad;
+
+    // Flip / Shift Y within viewport
+    if (y + menuHeight + pad > winH) {
+      y = Math.max(pad, winH - menuHeight - pad);
+    }
+    if (y < pad) y = pad;
+
+    return { x, y };
+  });
 </script>
 
 {#if activeBranchMenu}
@@ -70,8 +106,9 @@
     oncontextmenu={(e) => { e.preventDefault(); onClose(); }}
   >
     <div
-      class="fixed w-56 bg-white/95 dark:bg-zinc-900/95 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl backdrop-blur-xl p-1 z-50 text-xs font-sans animate-in fade-in zoom-in-95 duration-100"
-      style="left: {activeBranchMenu.x}px; top: {activeBranchMenu.y}px;"
+      bind:this={menuEl}
+      class="fixed w-56 max-h-[calc(100vh-24px)] overflow-y-auto bg-white/95 dark:bg-zinc-900/95 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl backdrop-blur-xl p-1 z-50 text-xs font-sans animate-in fade-in zoom-in-95 duration-100"
+      style="left: {smartPosition.x}px; top: {smartPosition.y}px;"
       onclick={(e) => e.stopPropagation()}
     >
       <div class="px-2.5 py-1.5 border-b border-zinc-200 dark:border-zinc-800/80 mb-1">

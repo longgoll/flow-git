@@ -15,19 +15,29 @@
 <a name="-english"></a>
 # 🇬🇧 English
 
-## 🌿 1. Flexible Branch Management
+## 🌿 1. Flexible Branch Management & Icon Rail Sidebar
 
-Component: `Sidebar.svelte`, `CreateBranchModal.svelte`, `DeleteBranchModal.svelte`
+Component: `src/lib/components/Sidebar.svelte`, `SidebarBranchTree.svelte`, `SidebarSections.svelte`, `SidebarContextMenu.svelte`
 
-The FlowGit Sidebar categorizes branches into clear hierarchical sections:
-- **Local Branches:** Development branches hosted on your local machine.
-- **Remote Branches:** Remote tracking branches on servers (GitHub, GitLab, Bitbucket).
+The FlowGit Sidebar utilizes a dual-tier **Icon Rail (Activity Bar) + Resizable Active Panel** pattern:
+- **Left Icon Rail (44px):** Quick-switch rail with active badges for 5 core workspaces:
+  + 🌿 **Branches:** Local, Remote, and Pinned Favorite branches.
+  + 🌐 **Remotes:** Remote repositories (`origin`, `upstream`) with quick fetch and manager triggers.
+  + 🏷️ **Tags:** Annotated and lightweight release tags.
+  + 📦 **Stashes:** Visual stash list with 1-click diff drawer launcher.
+  + 📂 **Worktrees:** Multi-working-tree directories.
+- **Drag-to-Resize Panel (220px – 500px):** Drag the right edge border to comfortably view deeply-nested branch names (`feature/TASK-1234-...`). Dimensions persist in `localStorage`.
+- **3-Mode Collapsing:**
+  1. *Full Mode:* Rail (44px) + Active Panel (resizable).
+  2. *Rail-Only Mode:* Clicking the active tab or the bottom collapse toggle shrinks the sidebar to a 44px icon strip.
+  3. *Hidden Mode:* `Ctrl + B` toggles the entire sidebar off for full-width DAG canvas view.
 - **Ahead / Behind Badges:** Realtime divergence tracking relative to upstream (`↑ 3  ↓ 1`).
 
 ### Intuitive Visual Operations:
 - **Switch Branch (Checkout):** Double-click any branch name. Dirty working trees are safeguarded beforehand.
+- **Branch Action Menu:** Click the `...` (MoreVertical) button on any branch or right-click to access 12+ operations: Checkout, Rebase onto HEAD, Publish to remote, Push (+ahead badge), Force Push, Fetch, Create PR, Rename, Copy name, Solo branch, Pin favorite, and Safe Delete.
 - **Create Branch:** Press shortcut `B` or right-click any node ➔ **"Create Branch..."** (supports creating from HEAD or any past commit/tag).
-- **Rename Branch:** Slow double-click any branch pill to rename in place (`rename_branch`).
+- **Rename Branch:** Slow double-click any branch pill or select Rename to edit inline (`Enter` to save, `Esc` to cancel).
 - **Safe Branch Deletion:** Clear warning prompts if a branch has unmerged work (`DeleteBranchModal.svelte`).
 
 ---
@@ -134,19 +144,29 @@ Component: `src/lib/components/RecentPushBanner.svelte` & `src/lib/components/Cr
 <a name="-tiếng-việt"></a>
 # 🇻🇳 Tiếng Việt
 
-## 🌿 1. QUẢN LÝ NHÁNH LINH HOẠT (BRANCH MANAGEMENT)
+## 🌿 1. QUẢN LÝ NHÁNH LINH HOẠT & SIDEBAR ICON RAIL (BRANCH MANAGEMENT)
 
-Component: `Sidebar.svelte`, `CreateBranchModal.svelte`, `DeleteBranchModal.svelte`
+Component: `src/lib/components/Sidebar.svelte`, `SidebarBranchTree.svelte`, `SidebarSections.svelte`, `SidebarContextMenu.svelte`
 
-Sidebar của FlowGit phân loại các nhánh trong repository thành các cây thư mục rõ ràng:
-- **Local Branches:** Các nhánh làm việc trên máy tính cá nhân.
-- **Remote Branches:** Các nhánh được theo dõi trên máy chủ từ xa (GitHub, GitLab, Bitbucket).
+Sidebar của FlowGit ứng dụng mô hình 2 tầng chuẩn mực **Icon Rail (Activity Bar) + Resizable Active Panel**:
+- **Icon Rail bên trái (44px):** Thanh điều hướng icon chuyển đổi 1-click kèm huy hiệu đếm số lượng thời gian thực cho 5 không gian:
+  + 🌿 **Branches:** Toàn quyền không gian hiển thị Local Branches, Remote Branches và Pinned Favorites.
+  + 🌐 **Remotes:** Danh sách Remotes (`origin`, `upstream`), nút Fetch độc lập và Quản lý Remote.
+  + 🏷️ **Tags:** Danh sách Release Tags kèm nút xóa/tạo nhanh.
+  + 📦 **Stashes:** Danh sách Stashes kèm nút mở khay Visual Stash Shelf Drawer.
+  + 📂 **Worktrees:** Danh sách Worktrees song song.
+- **Thanh kéo chỉnh độ rộng (Drag to Resize - 220px đến 500px):** Kéo mép viền phải để thoải mái đọc các tên nhánh dài sâu (`feature/TASK-1234-...`). Kích thước được lưu tự động vào `localStorage`.
+- **3 Chế độ Thu gọn linh hoạt:**
+  1. *Chế độ Đầy đủ:* Rail (44px) + Active Panel (tùy chỉnh độ rộng).
+  2. *Chế độ Rail-Only:* Nhấp vào tab đang chọn hoặc nút thu gọn ở đáy rail để co sidebar về thanh icon 44px siêu tiết kiệm diện tích.
+  3. *Chế độ Ẩn sạch:* Phím tắt `Ctrl + B` ẩn hoàn toàn Sidebar để xem đồ thị DAG toàn màn hình.
 - **Huy hiệu Ahead / Behind:** Hiển thị thời gian thực độ lệch giữa nhánh local và remote tương ứng (`↑ 3  ↓ 1`).
 
 ### Thao tác trực quan trên nhánh:
 - **Chuyển nhánh (Checkout):** Nhấp đúp chuột vào tên nhánh bất kỳ. Hệ thống tự động kiểm tra xem working tree có an toàn để chuyển hay không.
+- **Menu Thao tác nhánh (`...` và Chuột phải):** Nhấp vào icon ba chấm `MoreVertical` hoặc nhấp chuột phải để mở menu 12+ tính năng: Checkout, Rebase lên HEAD, Publish lên remote, Push (+ahead badge), Force Push, Fetch, Tạo PR trên GitHub, Đổi tên, Sao chép tên, Solo branch, Ghim yêu thích và Xóa an toàn.
 - **Tạo nhánh mới:** Bấm phím tắt `B` hoặc nhấp chuột phải chọn **"Create Branch..."**. Cho phép tạo từ HEAD hoặc từ bất kỳ commit/tag nào trong quá khứ.
-- **Đổi tên nhánh:** Nhấp đúp chuột chậm vào nhãn nhánh để sửa tên tại chỗ (`rename_branch`).
+- **Đổi tên nhánh:** Nhấp đúp chuột chậm vào nhãn nhánh để sửa tên tại chỗ (`Enter` để lưu, `Esc` để hủy).
 - **Xóa nhánh an toàn:** Cảnh báo rõ ràng nếu nhánh chưa được merge vào nhánh chính để tránh vô tình làm mất code (`DeleteBranchModal.svelte`).
 
 ---

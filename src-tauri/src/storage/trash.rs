@@ -329,6 +329,7 @@ impl TrashStore {
         let conn = self.get_conn();
         conn.execute("DELETE FROM trash_snapshots WHERE id = ?1", params![id])
             .map_err(|e| AppError::Internal(e.to_string()))?;
+        let _ = conn.execute_batch("PRAGMA wal_checkpoint(PASSIVE);");
         Ok(())
     }
 
@@ -337,6 +338,7 @@ impl TrashStore {
         let count = conn
             .execute("DELETE FROM trash_snapshots WHERE batch_id = ?1", params![batch_id])
             .map_err(|e| AppError::Internal(e.to_string()))?;
+        let _ = conn.execute_batch("PRAGMA wal_checkpoint(PASSIVE);");
         Ok(count)
     }
 

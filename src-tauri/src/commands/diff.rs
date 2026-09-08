@@ -212,10 +212,12 @@ pub async fn delete_trash_snapshot(
 pub async fn get_file_blame(
     path: String,
     file_path: String,
+    min_line: Option<usize>,
+    max_line: Option<usize>,
 ) -> AppResult<Vec<BlameHunkItem>> {
     tokio::task::spawn_blocking(move || {
         let repo = git_open_repo(&path)?;
-        git_get_file_blame(&repo, &file_path)
+        git_get_file_blame(&repo, &file_path, min_line, max_line)
     })
     .await
     .map_err(|e| AppError::Internal(e.to_string()))?

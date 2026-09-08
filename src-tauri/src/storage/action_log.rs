@@ -359,8 +359,8 @@ fn restore_head_ref(repo: &Repository, target_sha: &str, branch_name: Option<&st
 
     // Attempt to locate commit; inform if object was pruned by git gc
     let commit = repo.find_commit(oid).map_err(|e| {
-        AppError::Internal(format!(
-            "Target commit {target_sha} could not be resolved (may have been pruned by git gc): {e}"
+        AppError::NotFound(format!(
+            "Commit {target_sha} không tồn tại hoặc đã bị Git Garbage Collection (gc) dọn sạch khỏi kho lưu trữ (lỗi: {e})"
         ))
     })?;
 

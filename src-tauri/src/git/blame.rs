@@ -25,9 +25,20 @@ pub struct FileHistoryItem {
     pub timestamp: i64,
 }
 
-/// Compute blame for a specific file in the repository
-pub fn get_file_blame(repo: &Repository, file_path: &str) -> AppResult<Vec<BlameHunkItem>> {
+/// Compute blame for a specific file in the repository (optionally restricted to a line range)
+pub fn get_file_blame(
+    repo: &Repository,
+    file_path: &str,
+    min_line: Option<usize>,
+    max_line: Option<usize>,
+) -> AppResult<Vec<BlameHunkItem>> {
     let mut opts = BlameOptions::new();
+    if let Some(min) = min_line {
+        opts.min_line(min);
+    }
+    if let Some(max) = max_line {
+        opts.max_line(max);
+    }
     let blame = repo.blame_file(Path::new(file_path), Some(&mut opts))?;
 
     let mut hunks = Vec::new();

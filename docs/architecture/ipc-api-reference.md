@@ -90,7 +90,7 @@ All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard
 | `restore_trash_snapshot`| `path: String, snapshot_id: i64` | `()` | Restores 100% of discarded file content back to working tree. |
 | `restore_trash_batch` | `path: String, batch_id: String` | `usize` | **Batch Restore**: Atomically restores all discarded files belonging to a specific batch ID in one click. |
 | `delete_trash_snapshot` | `snapshot_id: i64` | `()` | Permanently deletes a single snapshot from trash. |
-| `get_file_blame` | `path: String, file_path: String` | `Vec<BlameHunkItem>` | Line-by-line blame: author, email, timestamp, and commit SHA. |
+| `get_file_blame` | `path: String, file_path: String, min_line: Option<usize>, max_line: Option<usize>` | `Vec<BlameHunkItem>` | Line-by-line blame: author, email, timestamp, and commit SHA (supports optional line range). |
 | `get_file_history` | `path: String, file_path: String, limit: usize` | `Vec<FileHistoryItem>` | Follows file modification timeline across history (`git log --follow`). |
 | `add_to_gitignore` | `repo_path: String, pattern: String` | `bool` | Appends rule to repository `.gitignore`. |
 | `generate_standard_gitignore`| `repo_path: String, template: String` | `bool` | Generates standard `.gitignore` for Node.js, Rust, Python, Go, etc. |
@@ -295,7 +295,7 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `restore_trash_snapshot`| `path: String, snapshot_id: i64` | `()` | Khôi phục nguyên vẹn 100% nội dung file đã lỡ tay discard. |
 | `restore_trash_batch` | `path: String, batch_id: String` | `usize` | **Khôi phục cả đợt (Batch Restore)**: Phục hồi đồng loạt toàn bộ các file đã discard trong cùng một batch chỉ bằng 1 thao tác. |
 | `delete_trash_snapshot` | `snapshot_id: i64` | `()` | Xóa vĩnh viễn một bản snapshot khỏi thùng rác. |
-| `get_file_blame` | `path: String, file_path: String` | `Vec<BlameHunkItem>` | Soi vết từng dòng code: tác giả, email, thời gian, commit SHA cho toàn bộ dòng trong file. |
+| `get_file_blame` | `path: String, file_path: String, min_line: Option<usize>, max_line: Option<usize>` | `Vec<BlameHunkItem>` | Soi vết từng dòng code: tác giả, email, thời gian, commit SHA (hỗ trợ tùy chọn khoảng dòng min..max). |
 | `get_file_history` | `path: String, file_path: String, limit: usize` | `Vec<FileHistoryItem>` | Lọc riêng dòng thời gian các commit chỉ tác động lên tệp được chọn (`git log --follow`). |
 | `add_to_gitignore` | `repo_path: String, pattern: String` | `bool` | Bổ sung quy tắc vào file `.gitignore` của repository. |
 | `generate_standard_gitignore`| `repo_path: String, template: String` | `bool` | Tạo file `.gitignore` tiêu chuẩn cho Node.js, Rust, Python, Go, v.v. |

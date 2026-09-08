@@ -59,6 +59,34 @@ function getHeaders(token?: string): Record<string, string> {
   return headers;
 }
 
+async function fetchGitHub(url: string, init?: RequestInit, maxRetries = 3): Promise<Response> {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    attempt++;
+    const res = await fetch(url, init);
+
+    if ((res.status === 429 || res.status === 403) && attempt < maxRetries) {
+      const remaining = res.headers.get('x-ratelimit-remaining');
+      const retryAfter = res.headers.get('retry-after');
+
+      if (remaining === '0' || res.status === 429) {
+        let delayMs = 1000 * Math.pow(2, attempt);
+        if (retryAfter) {
+          const parsed = parseInt(retryAfter, 10);
+          if (!isNaN(parsed) && parsed > 0) {
+            delayMs = Math.min(parsed * 1000, 10000);
+          }
+        }
+        console.warn(`[GitHub API] Rate limit reached. Retrying in ${delayMs}ms (attempt ${attempt}/${maxRetries})...`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        continue;
+      }
+    }
+    return res;
+  }
+  return await fetch(url, init);
+}
+
 export async function fetchGitHubPullRequests(
   owner: string,
   repo: string,
@@ -66,7 +94,7 @@ export async function fetchGitHubPullRequests(
   state: 'open' | 'closed' | 'all' = 'open'
 ): Promise<GitHubPullRequest[]> {
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls?state=${state}&per_page=30&_t=${Date.now()}`;
-  const res = await fetch(url, { headers: getHeaders(token), cache: 'no-store' });
+  const res = await fetchGitHub(url, { headers: getHeaders(token), cache: 'no-store' });
   if (!res.ok) {
     const errorText = await res.text();
     throw new Error(`GitHub API Error (${res.status}): ${errorText}`);
@@ -81,7 +109,7 @@ export async function fetchGitHubPullRequestFiles(
   token?: string
 ): Promise<GitHubPRFile[]> {
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/files?per_page=100`;
-  const res = await fetch(url, { headers: getHeaders(token) });
+  const res = await fetchGitHub(url, { headers: getHeaders(token) });
   if (!res.ok) {
     const errorText = await res.text();
     throw new Error(`GitHub API Error (${res.status}): ${errorText}`);
@@ -96,7 +124,7 @@ export async function fetchGitHubPullRequestComments(
   token?: string
 ): Promise<GitHubPRComment[]> {
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/comments?per_page=100`;
-  const res = await fetch(url, { headers: getHeaders(token) });
+  const res = await fetchGitHub(url, { headers: getHeaders(token) });
   if (!res.ok) {
     const errorText = await res.text();
     throw new Error(`GitHub API Error (${res.status}): ${errorText}`);
@@ -116,7 +144,7 @@ export async function createGitHubInlineComment(
   token?: string
 ): Promise<GitHubPRComment> {
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/comments`;
-  const res = await fetch(url, {
+  const res = await fetchGitHub(url, {
     method: 'POST',
     headers: {
       ...getHeaders(token),
@@ -146,7 +174,7 @@ export async function submitGitHubPullRequestReview(
   token?: string
 ): Promise<any> {
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/reviews`;
-  const res = await fetch(url, {
+  const res = await fetchGitHub(url, {
     method: 'POST',
     headers: {
       ...getHeaders(token),
@@ -171,7 +199,7 @@ export async function createGitHubRepository(
   token?: string
 ): Promise<{ html_url: string; clone_url: string; full_name: string }> {
   const url = `${GITHUB_API_BASE}/user/repos`;
-  const res = await fetch(url, {
+  const res = await fetchGitHub(url, {
     method: 'POST',
     headers: {
       ...getHeaders(token),
@@ -202,7 +230,7 @@ export async function createGitHubPullRequest(
   token?: string
 ): Promise<GitHubPullRequest> {
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls`;
-  const res = await fetch(url, {
+  const res = await fetchGitHub(url, {
     method: 'POST',
     headers: {
       ...getHeaders(token),
@@ -235,7 +263,7 @@ export async function fetchGitHubPullRequestDetail(
   token?: string
 ): Promise<GitHubPullRequest> {
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}?_t=${Date.now()}`;
-  const res = await fetch(url, { headers: getHeaders(token), cache: 'no-store' });
+  const res = await fetchGitHub(url, { headers: getHeaders(token), cache: 'no-store' });
   if (!res.ok) {
     const errorText = await res.text();
     throw new Error(`GitHub API Error (${res.status}): ${errorText}`);
@@ -253,7 +281,7 @@ export async function mergeGitHubPullRequest(
   token?: string
 ): Promise<{ sha: string; merged: boolean; message: string }> {
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/merge`;
-  const res = await fetch(url, {
+  const res = await fetchGitHub(url, {
     method: 'PUT',
     headers: {
       ...getHeaders(token),
@@ -281,7 +309,7 @@ export async function updateGitHubPullRequestState(
   token?: string
 ): Promise<GitHubPullRequest> {
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}`;
-  const res = await fetch(url, {
+  const res = await fetchGitHub(url, {
     method: 'PATCH',
     headers: {
       ...getHeaders(token),
@@ -304,7 +332,7 @@ export async function deleteGitHubBranch(
   token?: string
 ): Promise<boolean> {
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/git/refs/heads/${encodeURIComponent(branchName)}`;
-  const res = await fetch(url, {
+  const res = await fetchGitHub(url, {
     method: 'DELETE',
     headers: getHeaders(token),
   });
@@ -319,7 +347,7 @@ export async function createGitHubIssueComment(
   token?: string
 ): Promise<GitHubPRComment> {
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues/${issueNumber}/comments`;
-  const res = await fetch(url, {
+  const res = await fetchGitHub(url, {
     method: 'POST',
     headers: {
       ...getHeaders(token),
@@ -341,7 +369,7 @@ export async function fetchGitHubPullRequestCommits(
   token?: string
 ): Promise<GitHubPRCommit[]> {
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/commits?per_page=100`;
-  const res = await fetch(url, { headers: getHeaders(token) });
+  const res = await fetchGitHub(url, { headers: getHeaders(token) });
   if (!res.ok) {
     const errorText = await res.text();
     throw new Error(`Failed to fetch PR commits (${res.status}): ${errorText}`);
@@ -357,7 +385,7 @@ export async function fetchGitHubCommitChecks(
 ): Promise<GitHubCommitChecks> {
   try {
     const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/commits/${ref}/check-runs`;
-    const res = await fetch(url, { headers: getHeaders(token) });
+    const res = await fetchGitHub(url, { headers: getHeaders(token) });
     if (!res.ok) {
       return { total_count: 0, check_runs: [], state: 'none' };
     }
@@ -394,7 +422,7 @@ export async function compareGitHubBranches(
   token?: string
 ): Promise<GitHubBranchComparison> {
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/compare/${encodeURIComponent(base)}...${encodeURIComponent(head)}`;
-  const res = await fetch(url, { headers: getHeaders(token) });
+  const res = await fetchGitHub(url, { headers: getHeaders(token) });
   if (!res.ok) {
     const errorText = await res.text();
     throw new Error(`Failed to compare branches (${res.status}): ${errorText}`);

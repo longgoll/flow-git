@@ -1,5 +1,7 @@
 import type { AISettings, ConflictChunk } from '../types';
 
+const AI_TIMEOUT_MS = 30000;
+
 export async function generateAICommitMessage(
   diffContext: string,
   settings: AISettings
@@ -9,6 +11,7 @@ export async function generateAICommitMessage(
       const response = await fetch(`${settings.endpoint}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(AI_TIMEOUT_MS),
         body: JSON.stringify({
           model: settings.model || 'qwen2.5-coder',
           prompt: `You are an expert Git assistant. Write a clear, concise Conventional Commit message (e.g. feat(scope): message, fix(scope): message) for the following changes:\n\n${diffContext.slice(0, 3000)}\n\nOnly respond with the commit message, nothing else.`,
@@ -102,6 +105,7 @@ Generate a professional Pull Request description in markdown with:
       const response = await fetch(`${settings.endpoint}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(AI_TIMEOUT_MS),
         body: JSON.stringify({
           model: settings.model || 'qwen2.5-coder',
           prompt,
@@ -154,6 +158,7 @@ export async function generateAIPRReview(
       const response = await fetch(`${settings.endpoint}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(AI_TIMEOUT_MS),
         body: JSON.stringify({
           model: settings.model || 'qwen2.5-coder',
           prompt: `You are a Senior Code Reviewer. Review this Pull Request: "${prTitle}".
@@ -218,6 +223,7 @@ Rules:
       const response = await fetch(`${settings.endpoint}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(AI_TIMEOUT_MS),
         body: JSON.stringify({
           model: settings.model || 'qwen2.5-coder',
           prompt,

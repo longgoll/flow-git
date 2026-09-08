@@ -46,6 +46,48 @@
   let detectedSecretFindings = $state<SecretFinding[]>([]);
   let isScanningSecrets = $state<boolean>(false);
 
+  // Auto-save draft commit message to localStorage
+  let lastLoadedRepo = '';
+  $effect(() => {
+    if (repoPath && repoPath !== lastLoadedRepo) {
+      lastLoadedRepo = repoPath;
+      try {
+        const raw = localStorage.getItem(`flowgit_draft_commit_${encodeURIComponent(repoPath)}`);
+        if (raw) {
+          const draft = JSON.parse(raw);
+          commitType = draft.type || '';
+          commitScope = draft.scope || '';
+          commitSubject = draft.subject || '';
+          commitBody = draft.body || '';
+        }
+      } catch {}
+    }
+  });
+
+  let saveTimer: any = null;
+  $effect(() => {
+    const p = repoPath;
+    const t = commitType;
+    const s = commitScope;
+    const sub = commitSubject;
+    const b = commitBody;
+
+    if (!p) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try {
+        if (!t && !s && !sub && !b) {
+          localStorage.removeItem(`flowgit_draft_commit_${encodeURIComponent(p)}`);
+        } else {
+          localStorage.setItem(
+            `flowgit_draft_commit_${encodeURIComponent(p)}`,
+            JSON.stringify({ type: t, scope: s, subject: sub, body: b })
+          );
+        }
+      } catch {}
+    }, 400);
+  });
+
   let isProtected = $derived.by(() => {
     if (!currentBranch) return false;
     const clean = currentBranch.toLowerCase().trim().replace(/^refs\/heads\//, '');
@@ -118,6 +160,11 @@
     commitType = '';
     isAmend = false;
     noVerify = false;
+    if (repoPath) {
+      try {
+        localStorage.removeItem(`flowgit_draft_commit_${encodeURIComponent(repoPath)}`);
+      } catch {}
+    }
   }
 
   async function handleFormSubmit() {

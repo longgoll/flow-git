@@ -33,6 +33,23 @@ export function getNestedTranslation(
     if (current && typeof current === "object" && part in current) {
       current = current[part];
     } else {
+      // Try fallback to Vietnamese if current dictionary is not vi
+      if (dict !== vi) {
+        let fallbackCurrent: any = vi;
+        let found = true;
+        for (const p of parts) {
+          if (fallbackCurrent && typeof fallbackCurrent === "object" && p in fallbackCurrent) {
+            fallbackCurrent = fallbackCurrent[p];
+          } else {
+            found = false;
+            break;
+          }
+        }
+        if (found && typeof fallbackCurrent === "string") {
+          return fallbackCurrent;
+        }
+      }
+      console.warn(`[i18n] Missing translation for key: "${path}"`);
       return path; // Fallback to path key if missing
     }
   }

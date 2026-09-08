@@ -123,9 +123,18 @@ export async function deleteTrashSnapshot(snapshotId: number): Promise<void> {
   }
 }
 
-export async function getFileBlame(path: string, filePath: string): Promise<BlameHunkItem[]> {
+export async function getFileBlame(
+  path: string,
+  filePath: string,
+  minLine?: number,
+  maxLine?: number
+): Promise<BlameHunkItem[]> {
   if (isTauri) {
-    return await invokeWithTimeout<BlameHunkItem[]>('get_file_blame', { path, filePath }, 25000);
+    return await invokeWithTimeout<BlameHunkItem[]>(
+      'get_file_blame',
+      { path, filePath, minLine: minLine ?? null, maxLine: maxLine ?? null },
+      25000
+    );
   }
   return [];
 }

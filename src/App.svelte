@@ -333,9 +333,12 @@
 
   onMount(async () => {
     try {
-      unlistenWatcher = await listenRepoStatus(async (_path) => {
+      unlistenWatcher = await listenRepoStatus(async (_path, eventType) => {
         if (repo.currentRepoPath && pathsEqual(_path, repo.currentRepoPath)) {
           await refreshWorkingTreeAndDiff();
+          if (eventType === 'head' || eventType === 'all') {
+            await loadRepository(repo.currentRepoPath);
+          }
         }
       });
 

@@ -117,7 +117,7 @@ jobs:
           $msi = Get-ChildItem -Path "src-tauri\target\release\bundle\msi" -Filter "*.msi" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($msi) {
             Write-Host "Packaging MSIX from MSI: $($msi.FullName)"
-            powershell -ExecutionPolicy Bypass -File scripts/create-msix.ps1 -MsiPath $msi.FullName
+            powershell -NoProfile -ExecutionPolicy Bypass -File scripts/create-msix.ps1 -MsiPath $msi.FullName
           } else {
             Write-Warning "MSI file not found in src-tauri\target\release\bundle\msi!"
           }

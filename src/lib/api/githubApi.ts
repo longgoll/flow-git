@@ -48,9 +48,6 @@ export function parseGitHubRemote(url?: string | null): { owner: string; repo: s
 function getHeaders(token?: string): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github.v3+json',
-    'User-Agent': 'FlowGit-Desktop',
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    Pragma: 'no-cache',
   };
   const activeToken = token?.trim() || getStoredGitHubToken();
   if (activeToken) {
@@ -93,8 +90,8 @@ export async function fetchGitHubPullRequests(
   token?: string,
   state: 'open' | 'closed' | 'all' = 'open'
 ): Promise<GitHubPullRequest[]> {
-  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls?state=${state}&per_page=30&_t=${Date.now()}`;
-  const res = await fetchGitHub(url, { headers: getHeaders(token), cache: 'no-store' });
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls?state=${state}&per_page=30`;
+  const res = await fetchGitHub(url, { headers: getHeaders(token) });
   if (!res.ok) {
     const errorText = await res.text();
     throw new Error(`GitHub API Error (${res.status}): ${errorText}`);

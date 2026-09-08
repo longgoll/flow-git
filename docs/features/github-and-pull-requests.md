@@ -79,6 +79,14 @@ Accessible via the **"Pull Requests"** tab or `Ctrl + Shift + P`:
 - **"Checkout PR Branch":** Automatically fetches PR branch and checks out locally.
 - **"Merge Pull Request":** Supports GitHub strategies (`Create a merge commit`, `Squash and merge`, `Rebase and merge`).
 
+### 2.6. Responsive Master-Detail Layout & Resilient Networking
+- **Adaptive Screen Scaling:**
+  - **Desktop (≥ 860px):** Dual-column layout with a draggable resize handle (`220px` - `540px`) and collapsible sidebar button (`PanelLeftClose` / `PanelLeftOpen`).
+  - **Mobile (< 860px):** Clean single-column Master-Detail navigation. Selecting a PR automatically transitions into full-width review mode with a dedicated back button (`← Quay lại danh sách`).
+- **Zero-Spam Error Recovery & CORS Resilience:**
+  - Removed browser-forbidden `User-Agent` and CORS preflight disrupters (`Cache-Control`, `Pragma`) to guarantee clean fetch requests from webviews.
+  - Replaced repetitive toast notifications with polite, actionable inline guidance cards offering immediate **"Thử lại"** (Retry) and **"Đăng nhập GitHub"** (Sign In) shortcuts.
+
 ---
 
 ## 🚀 3. Fast PR Creation
@@ -199,6 +207,14 @@ Giao diện chuyển sang chế độ chuyên biệt gồm 3 phân vùng tiêu c
   1. `Create a merge commit`
   2. `Squash and merge` (khuyên dùng để giữ lịch sử nhánh chính gọn gàng)
   3. `Rebase and merge`
+
+### 2.6. Giao Diện Master-Detail Thích Ứng & Phục Hồi Lỗi Mạng Thân Thiện
+- **Thích ứng mọi kích thước màn hình:**
+  - **Màn hình lớn / Desktop (≥ 860px):** Bố cục 2 cột với thanh kéo co giãn độ rộng linh hoạt (`220px` - `540px`) cùng nút thu gọn/mở rộng sidebar (`PanelLeftClose` / `PanelLeftOpen`).
+  - **Màn hình nhỏ / Mobile (< 860px):** Tự động chuyển đổi mô hình **Master-Detail**. Khi chọn một PR, màn hình chuyển hẳn sang không gian xem chi tiết và cung cấp nút quay lại danh sách (`← Quay lại danh sách`).
+- **Triệt tiêu lỗi CORS và khắc phục lỗi mạng mượt mà:**
+  - Loại bỏ các HTTP header bị trình duyệt chặn (`User-Agent`, `Cache-Control`, `Pragma`) trong request REST API GitHub để đảm bảo request gửi từ webview không bị lỗi CORS `Failed to fetch`.
+  - Thay thế việc bắn liên tiếp các thông báo toast màu đỏ bằng thẻ hướng dẫn nội tuyến thân thiện trong giao diện, tích hợp sẵn nút **"Thử lại"** và **"Đăng nhập GitHub"**.
 
 ---
 

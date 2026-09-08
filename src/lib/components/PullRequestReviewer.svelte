@@ -9,6 +9,7 @@
     FileText,
     MessageSquare,
     GitCommit,
+    PanelLeftOpen,
   } from 'lucide-svelte';
   import type {
     AccountProfile,
@@ -107,6 +108,15 @@
   let showCloseModal = $state(false);
   let isTogglingPRState = $state(false);
 
+  // Layout & Responsive State
+  let loadError = $state<string | null>(null);
+  let windowWidth = $state(typeof window !== 'undefined' ? window.innerWidth : 1024);
+  let isMobileView = $derived(windowWidth < 860);
+  let mobilePane = $state<'list' | 'detail'>('list');
+  let isSidebarCollapsed = $state(false);
+  let sidebarWidth = $state(320);
+  let isDraggingSidebar = $state(false);
+
   // Data state
   let prList = $state<GitHubPullRequest[]>([]);
   let isLoadingPRs = $state(false);
@@ -142,6 +152,27 @@
   let reviewEvent = $state<'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT'>('COMMENT');
   let reviewBody = $state('');
   let isSubmittingReview = $state(false);
+
+  function startResize(e: MouseEvent) {
+    e.preventDefault();
+    isDraggingSidebar = true;
+    const startX = e.clientX;
+    const startW = sidebarWidth;
+
+    function onMouseMove(moveEvent: MouseEvent) {
+      const delta = moveEvent.clientX - startX;
+      sidebarWidth = Math.max(220, Math.min(540, startW + delta));
+    }
+
+    function onMouseUp() {
+      isDraggingSidebar = false;
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    }
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }
 
   // Check if current authenticated user is PR author
   let isOwnPR = $derived(
@@ -190,6 +221,11 @@
   });
 
   onMount(() => {
+    const onResize = () => {
+      windowWidth = window.innerWidth;
+    };
+    window.addEventListener('resize', onResize);
+
     (async () => {
       if (!patToken) {
         if (parsedRemote?.type === 'gitlab') {
@@ -237,6 +273,7 @@
 
     return () => {
       window.removeEventListener('focus', onWindowFocus);
+      window.removeEventListener('resize', onResize);
       clearInterval(pollInterval);
     };
   });
@@ -247,6 +284,7 @@
       if (!isBackground) {
         isLoadingPRs = true;
       }
+      loadError = null;
       if (!patToken) {
         if (parsedRemote?.type === 'gitlab') {
           patToken = getStoredGitLabToken();
@@ -280,8 +318,10 @@
         }
       }
     } catch (err: any) {
-      if (!isBackground) {
-        toast.error(localeState.t('pullRequest.reviewer.loadPRError'), err.message || String(err));
+      const errMsg = err?.message || String(err);
+      loadError = errMsg;
+      if (!isBackground && prList.length > 0) {
+        toast.error(localeState.t('pullRequest.reviewer.loadPRError'), errMsg);
       }
     } finally {
       if (!isBackground) {
@@ -292,6 +332,9 @@
 
   async function selectPR(pr: GitHubPullRequest) {
     selectedPR = pr;
+    if (isMobileView) {
+      mobilePane = 'detail';
+    }
     inlineCommentLine = null;
     inlineCommentText = '';
     quickCommentText = '';
@@ -592,28 +635,37 @@
 
 <div class="h-full w-full flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans select-none overflow-hidden">
   <!-- Top Bar: Repo Identity & GitHub Auth -->
-  <div class="h-12 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/80 px-4 flex items-center justify-between gap-4 shrink-0">
-    <div class="flex items-center gap-3">
-      <div class="p-1.5 rounded-lg bg-violet-100 dark:bg-violet-950/60 border border-violet-300 dark:border-violet-800/40 text-violet-600 dark:text-violet-400">
+  <div class="h-12 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/80 px-4 flex items-center justify-between gap-3 shrink-0">
+    <div class="flex items-center gap-2.5 min-w-0">
+      {#if isSidebarCollapsed && !isMobileView}
+        <button
+          onclick={() => (isSidebarCollapsed = false)}
+          class="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer shrink-0"
+          title={localeState.t('pullRequest.reviewer.expandSidebar')}
+        >
+          <PanelLeftOpen class="w-4 h-4" />
+        </button>
+      {/if}
+      <div class="p-1.5 rounded-lg bg-violet-100 dark:bg-violet-950/60 border border-violet-300 dark:border-violet-800/40 text-violet-600 dark:text-violet-400 shrink-0">
         <GitPullRequest class="w-4 h-4" />
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-xs font-semibold text-zinc-800 dark:text-zinc-200">{localeState.t('pullRequest.reviewer.cloudCodeReview')}</span>
+      <div class="flex items-center gap-2 min-w-0 truncate">
+        <span class="text-xs font-semibold text-zinc-800 dark:text-zinc-200 shrink-0 hidden md:inline">{localeState.t('pullRequest.reviewer.cloudCodeReview')}</span>
         {#if repoOwner && repoName}
-          <span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono">
+          <span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono shrink-0">
             {providerLabel}
           </span>
-          <span class="text-xs font-mono px-2 py-0.5 rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-cyan-700 dark:text-cyan-300">
+          <span class="text-xs font-mono px-2 py-0.5 rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-cyan-700 dark:text-cyan-300 truncate">
             {repoOwner}/{repoName}
           </span>
         {:else}
-          <span class="text-xs text-amber-600 dark:text-amber-400">{localeState.t('pullRequest.reviewer.unidentifiedRemote')}</span>
+          <span class="text-xs text-amber-600 dark:text-amber-400 truncate">{localeState.t('pullRequest.reviewer.unidentifiedRemote')}</span>
         {/if}
       </div>
     </div>
 
     <!-- Controls: Create PR, Token, Refresh, Close -->
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
       <button
         onclick={() => {
           if (onOpenCreatePR) {
@@ -625,8 +677,8 @@
         class="px-2.5 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
         title={localeState.t('pullRequest.reviewer.createPRTitle')}
       >
-        <Plus class="w-3.5 h-3.5" />
-        <span>{prTerm === 'Merge Request' ? localeState.t('pullRequest.reviewer.createMR') : localeState.t('pullRequest.reviewer.createPR')}</span>
+        <Plus class="w-3.5 h-3.5 shrink-0" />
+        <span class="hidden sm:inline">{prTerm === 'Merge Request' ? localeState.t('pullRequest.reviewer.createMR') : localeState.t('pullRequest.reviewer.createPR')}</span>
       </button>
 
       {#if activeAccount || activeAccountUsername}
@@ -642,7 +694,7 @@
               {(activeAccount?.username || activeAccountUsername).slice(0, 2).toUpperCase()}
             </span>
           {/if}
-          <span class="font-medium text-xs">@{activeAccount?.username || activeAccountUsername}</span>
+          <span class="font-medium text-xs hidden sm:inline">@{activeAccount?.username || activeAccountUsername}</span>
         </button>
       {:else if onOpenAuth}
         <button
@@ -650,15 +702,15 @@
           class="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-800/50 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
           title={localeState.t('toolbar.signInTitle')}
         >
-          <Key class="w-3.5 h-3.5" />
-          <span>{localeState.t('toolbar.signIn')} GitHub</span>
+          <Key class="w-3.5 h-3.5 shrink-0" />
+          <span class="hidden sm:inline">{localeState.t('toolbar.signIn')} GitHub</span>
         </button>
       {/if}
 
       <button
         onclick={() => loadPullRequests(false)}
         disabled={isLoadingPRs}
-        class="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer disabled:opacity-50"
+        class="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
         title={localeState.t('pullRequest.reviewer.refreshTitle')}
       >
         <RefreshCw class="w-3.5 h-3.5 {isLoadingPRs ? 'animate-spin text-violet-600 dark:text-violet-400' : ''}" />
@@ -667,7 +719,7 @@
       {#if onClose}
         <button
           onclick={onClose}
-          class="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer"
+          class="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer shrink-0"
           title={localeState.t('pullRequest.reviewer.closeReviewTitle')}
         >
           <X class="w-4 h-4" />
@@ -677,149 +729,329 @@
   </div>
 
   <!-- Main Content Split -->
-  <div class="flex-1 flex overflow-hidden">
-    <!-- Left Panel: PR List -->
-    <PRListSidebar
-      {filteredPRs}
-      {selectedPR}
-      {isLoadingPRs}
-      bind:searchQuery
-      bind:prFilter
-      onSelectPR={selectPR}
-      onFilterChange={(f) => { prFilter = f; loadPullRequests(); }}
-      onSearchChange={(q) => { searchQuery = q; }}
-      onOpenCreatePR={() => {
-        if (onOpenCreatePR) {
-          onOpenCreatePR();
-        } else {
-          showLocalCreatePRModal = true;
-        }
-      }}
-    />
+  <div class="flex-1 flex overflow-hidden relative">
+    {#if isMobileView}
+      <!-- Mobile Layout: Switch between List and Detail -->
+      {#if mobilePane === 'list'}
+        <div class="w-full h-full flex flex-col overflow-hidden">
+          <PRListSidebar
+            {filteredPRs}
+            {selectedPR}
+            {isLoadingPRs}
+            {loadError}
+            bind:searchQuery
+            bind:prFilter
+            onSelectPR={selectPR}
+            onFilterChange={(f) => { prFilter = f; loadPullRequests(); }}
+            onSearchChange={(q) => { searchQuery = q; }}
+            onOpenCreatePR={() => {
+              if (onOpenCreatePR) {
+                onOpenCreatePR();
+              } else {
+                showLocalCreatePRModal = true;
+              }
+            }}
+            onRetry={() => loadPullRequests(false)}
+          />
+        </div>
+      {:else}
+        <!-- Mobile Detail View -->
+        <div class="w-full h-full flex flex-col overflow-hidden bg-white dark:bg-zinc-950">
+          {#if selectedPR}
+            <PRHeader
+              {selectedPR}
+              {commitChecks}
+              prFilesCount={prFiles.length}
+              {isGeneratingReview}
+              canCheckout={!!onCheckoutBranch}
+              {isTogglingPRState}
+              isMobileView={true}
+              onBackToList={() => { mobilePane = 'list'; }}
+              onAIReview={handleGenerateAIReview}
+              onCheckout={handleCheckoutToLocal}
+              onOpenMergeModal={() => (showMergeModal = true)}
+              onOpenCloseModal={() => (showCloseModal = true)}
+              onReopenPR={() => handleTogglePRState('open')}
+              onOpenReviewModal={() => {
+                if (isOwnPR) reviewEvent = 'COMMENT';
+                showReviewModal = true;
+              }}
+            />
 
-    <!-- Right Panel: PR Review Studio -->
-    {#if selectedPR}
-      <div class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-zinc-950">
-        <!-- PR Header Details -->
-        <PRHeader
-          {selectedPR}
-          {commitChecks}
-          prFilesCount={prFiles.length}
-          {isGeneratingReview}
-          canCheckout={!!onCheckoutBranch}
-          {isTogglingPRState}
-          onAIReview={handleGenerateAIReview}
-          onCheckout={handleCheckoutToLocal}
-          onOpenMergeModal={() => (showMergeModal = true)}
-          onOpenCloseModal={() => (showCloseModal = true)}
-          onReopenPR={() => handleTogglePRState('open')}
-          onOpenReviewModal={() => {
-            if (isOwnPR) reviewEvent = 'COMMENT';
-            showReviewModal = true;
-          }}
-        />
+            <!-- Tab Selector -->
+            <div class="px-4 border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-100/40 dark:bg-zinc-900/20 flex items-center gap-4 text-xs shrink-0">
+              <button
+                onclick={() => (activeTab = 'files')}
+                class="py-2.5 font-medium flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'files' ? 'border-violet-500 text-violet-700 dark:text-violet-300 font-semibold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+              >
+                <FileText class="w-3.5 h-3.5" />
+                <span>{localeState.t('pullRequest.reviewer.tabFiles')}</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {activeTab === 'files' ? 'bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 font-bold' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">
+                  {prFiles.length}
+                </span>
+              </button>
+              <button
+                onclick={() => (activeTab = 'conversation')}
+                class="py-2.5 font-medium flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'conversation' ? 'border-violet-500 text-violet-700 dark:text-violet-300 font-semibold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+              >
+                <MessageSquare class="w-3.5 h-3.5" />
+                <span>{localeState.t('pullRequest.reviewer.tabConversation')}</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {activeTab === 'conversation' ? 'bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 font-bold' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">
+                  {prComments.length}
+                </span>
+              </button>
+              <button
+                onclick={() => (activeTab = 'commits')}
+                class="py-2.5 font-medium flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'commits' ? 'border-violet-500 text-violet-700 dark:text-violet-300 font-semibold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+              >
+                <GitCommit class="w-3.5 h-3.5" />
+                <span>{localeState.t('pullRequest.reviewer.tabCommits')}</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {activeTab === 'commits' ? 'bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 font-bold' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">
+                  {prCommits.length}
+                </span>
+              </button>
+            </div>
 
-        <!-- Tab Selector: Files Changed vs Conversation vs Commits -->
-        <div class="px-4 border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-100/40 dark:bg-zinc-900/20 flex items-center gap-4 text-xs shrink-0">
-          <button
-            onclick={() => (activeTab = 'files')}
-            class="py-2.5 font-medium flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'files' ? 'border-violet-500 text-violet-700 dark:text-violet-300 font-semibold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
-          >
-            <FileText class="w-3.5 h-3.5" />
-            <span>{localeState.t('pullRequest.reviewer.tabFiles')}</span>
-            <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {activeTab === 'files' ? 'bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 font-bold' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">
-              {prFiles.length}
-            </span>
-          </button>
-          <button
-            onclick={() => (activeTab = 'conversation')}
-            class="py-2.5 font-medium flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'conversation' ? 'border-violet-500 text-violet-700 dark:text-violet-300 font-semibold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
-          >
-            <MessageSquare class="w-3.5 h-3.5" />
-            <span>{localeState.t('pullRequest.reviewer.tabConversation')}</span>
-            <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {activeTab === 'conversation' ? 'bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 font-bold' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">
-              {prComments.length}
-            </span>
-          </button>
-          <button
-            onclick={() => (activeTab = 'commits')}
-            class="py-2.5 font-medium flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'commits' ? 'border-violet-500 text-violet-700 dark:text-violet-300 font-semibold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
-          >
-            <GitCommit class="w-3.5 h-3.5" />
-            <span>{localeState.t('pullRequest.reviewer.tabCommits')}</span>
-            <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {activeTab === 'commits' ? 'bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 font-bold' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">
-              {prCommits.length}
-            </span>
-          </button>
+            <!-- Tab Body -->
+            {#if isLoadingDetails}
+              <div class="flex-1 flex flex-col items-center justify-center text-xs text-zinc-500 gap-2">
+                <RefreshCw class="w-5 h-5 animate-spin text-violet-600 dark:text-violet-400" />
+                <span>{localeState.t('pullRequest.reviewer.loadingDetails')}</span>
+              </div>
+            {:else if activeTab === 'conversation'}
+              <PRConversationTab
+                {selectedPR}
+                {prComments}
+                {aiReviewResult}
+                bind:quickCommentText
+                {isPostingQuickComment}
+                {isTogglingPRState}
+                onCloseAIReview={() => (aiReviewResult = null)}
+                onOpenMergeModal={() => (showMergeModal = true)}
+                onOpenCloseModal={() => (showCloseModal = true)}
+                onCloseWithComment={() => handleTogglePRState('closed', quickCommentText)}
+                onReopenPR={() => handleTogglePRState('open', quickCommentText)}
+                onPostQuickComment={handlePostQuickComment}
+              />
+            {:else if activeTab === 'commits'}
+              <PRCommitsTab {prCommits} />
+            {:else}
+              <PRFilesTab
+                {selectedPR}
+                {prFiles}
+                {prComments}
+                bind:selectedFileIndex
+                {viewedFiles}
+                bind:diffMode
+                bind:inlineCommentLine
+                bind:inlineCommentText
+                {isPostingComment}
+                onSelectFile={(idx) => (selectedFileIndex = idx)}
+                onToggleFileViewed={toggleFileViewed}
+                onDiffModeChange={(mode) => (diffMode = mode)}
+                onOpenInlineComment={(file, line) => {
+                  inlineCommentLine = { file, line };
+                }}
+                onCloseInlineComment={() => {
+                  inlineCommentLine = null;
+                  inlineCommentText = '';
+                }}
+                onPostInlineComment={handlePostInlineComment}
+              />
+            {/if}
+          {:else}
+            <PRLaunchpadEmpty
+              {repoOwner}
+              {repoName}
+              {prFilter}
+              {searchQuery}
+              totalPRCount={prList.length}
+              {filteredPRs}
+              {isLoadingPRs}
+              {loadError}
+              onRetry={() => loadPullRequests(false)}
+              {onOpenAuth}
+              onOpenCreatePR={() => {
+                if (onOpenCreatePR) {
+                  onOpenCreatePR();
+                } else {
+                  showLocalCreatePRModal = true;
+                }
+              }}
+              onClearSearch={() => (searchQuery = '')}
+              onSelectPR={selectPR}
+            />
+          {/if}
+        </div>
+      {/if}
+    {:else}
+      <!-- Desktop Layout: Collapsible & Resizable Sidebar + Detail Studio -->
+      {#if !isSidebarCollapsed}
+        <div style="width: {sidebarWidth}px;" class="h-full shrink-0 flex flex-col overflow-hidden">
+          <PRListSidebar
+            {filteredPRs}
+            {selectedPR}
+            {isLoadingPRs}
+            {loadError}
+            bind:searchQuery
+            bind:prFilter
+            onSelectPR={selectPR}
+            onFilterChange={(f) => { prFilter = f; loadPullRequests(); }}
+            onSearchChange={(q) => { searchQuery = q; }}
+            onOpenCreatePR={() => {
+              if (onOpenCreatePR) {
+                onOpenCreatePR();
+              } else {
+                showLocalCreatePRModal = true;
+              }
+            }}
+            onRetry={() => loadPullRequests(false)}
+          />
         </div>
 
-        <!-- Tab Body -->
-        {#if isLoadingDetails}
-          <div class="flex-1 flex flex-col items-center justify-center text-xs text-zinc-500 gap-2">
-            <RefreshCw class="w-5 h-5 animate-spin text-violet-600 dark:text-violet-400" />
-            <span>{localeState.t('pullRequest.reviewer.loadingDetails')}</span>
-          </div>
-        {:else if activeTab === 'conversation'}
-          <PRConversationTab
+        <!-- Resize Handle -->
+        <!-- svelte-ignore a11y_no_noninteractive_element_interactions, a11y_no_noninteractive_tabindex -->
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          tabindex="-1"
+          onmousedown={startResize}
+          class="w-1.5 h-full bg-zinc-200/80 dark:bg-zinc-800/80 hover:bg-violet-500 active:bg-violet-600 cursor-col-resize transition-colors flex items-center justify-center shrink-0 group relative z-10 select-none {isDraggingSidebar ? 'bg-violet-500!' : ''}"
+          title="Kéo chuột để điều chỉnh độ rộng danh sách PR"
+        >
+          <div class="w-0.5 h-10 rounded-full bg-zinc-400 dark:bg-zinc-600 group-hover:bg-white transition-colors"></div>
+        </div>
+      {/if}
+
+      <!-- Right Panel: PR Review Studio / Launchpad Empty -->
+      {#if selectedPR}
+        <div class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-zinc-950 min-w-0">
+          <PRHeader
             {selectedPR}
-            {prComments}
-            {aiReviewResult}
-            bind:quickCommentText
-            {isPostingQuickComment}
+            {commitChecks}
+            prFilesCount={prFiles.length}
+            {isGeneratingReview}
+            canCheckout={!!onCheckoutBranch}
             {isTogglingPRState}
-            onCloseAIReview={() => (aiReviewResult = null)}
+            isMobileView={false}
+            {isSidebarCollapsed}
+            onToggleSidebar={() => { isSidebarCollapsed = !isSidebarCollapsed; }}
+            onAIReview={handleGenerateAIReview}
+            onCheckout={handleCheckoutToLocal}
             onOpenMergeModal={() => (showMergeModal = true)}
             onOpenCloseModal={() => (showCloseModal = true)}
-            onCloseWithComment={() => handleTogglePRState('closed', quickCommentText)}
-            onReopenPR={() => handleTogglePRState('open', quickCommentText)}
-            onPostQuickComment={handlePostQuickComment}
-          />
-        {:else if activeTab === 'commits'}
-          <PRCommitsTab {prCommits} />
-        {:else}
-          <PRFilesTab
-            {selectedPR}
-            {prFiles}
-            {prComments}
-            bind:selectedFileIndex
-            {viewedFiles}
-            bind:diffMode
-            bind:inlineCommentLine
-            bind:inlineCommentText
-            {isPostingComment}
-            onSelectFile={(idx) => (selectedFileIndex = idx)}
-            onToggleFileViewed={toggleFileViewed}
-            onDiffModeChange={(mode) => (diffMode = mode)}
-            onOpenInlineComment={(file, line) => {
-              inlineCommentLine = { file, line };
+            onReopenPR={() => handleTogglePRState('open')}
+            onOpenReviewModal={() => {
+              if (isOwnPR) reviewEvent = 'COMMENT';
+              showReviewModal = true;
             }}
-            onCloseInlineComment={() => {
-              inlineCommentLine = null;
-              inlineCommentText = '';
-            }}
-            onPostInlineComment={handlePostInlineComment}
           />
-        {/if}
-      </div>
-    {:else}
-      <PRLaunchpadEmpty
-        {repoOwner}
-        {repoName}
-        {prFilter}
-        {searchQuery}
-        totalPRCount={prList.length}
-        {filteredPRs}
-        {isLoadingPRs}
-        onOpenCreatePR={() => {
-          if (onOpenCreatePR) {
-            onOpenCreatePR();
-          } else {
-            showLocalCreatePRModal = true;
-          }
-        }}
-        onClearSearch={() => (searchQuery = '')}
-        onSelectPR={selectPR}
-      />
+
+          <!-- Tab Selector: Files Changed vs Conversation vs Commits -->
+          <div class="px-4 border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-100/40 dark:bg-zinc-900/20 flex items-center gap-4 text-xs shrink-0">
+            <button
+              onclick={() => (activeTab = 'files')}
+              class="py-2.5 font-medium flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'files' ? 'border-violet-500 text-violet-700 dark:text-violet-300 font-semibold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+            >
+              <FileText class="w-3.5 h-3.5" />
+              <span>{localeState.t('pullRequest.reviewer.tabFiles')}</span>
+              <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {activeTab === 'files' ? 'bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 font-bold' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">
+                {prFiles.length}
+              </span>
+            </button>
+            <button
+              onclick={() => (activeTab = 'conversation')}
+              class="py-2.5 font-medium flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'conversation' ? 'border-violet-500 text-violet-700 dark:text-violet-300 font-semibold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+            >
+              <MessageSquare class="w-3.5 h-3.5" />
+              <span>{localeState.t('pullRequest.reviewer.tabConversation')}</span>
+              <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {activeTab === 'conversation' ? 'bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 font-bold' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">
+                {prComments.length}
+              </span>
+            </button>
+            <button
+              onclick={() => (activeTab = 'commits')}
+              class="py-2.5 font-medium flex items-center gap-2 border-b-2 transition-all cursor-pointer {activeTab === 'commits' ? 'border-violet-500 text-violet-700 dark:text-violet-300 font-semibold' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+            >
+              <GitCommit class="w-3.5 h-3.5" />
+              <span>{localeState.t('pullRequest.reviewer.tabCommits')}</span>
+              <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {activeTab === 'commits' ? 'bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 font-bold' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">
+                {prCommits.length}
+              </span>
+            </button>
+          </div>
+
+          <!-- Tab Body -->
+          {#if isLoadingDetails}
+            <div class="flex-1 flex flex-col items-center justify-center text-xs text-zinc-500 gap-2">
+              <RefreshCw class="w-5 h-5 animate-spin text-violet-600 dark:text-violet-400" />
+              <span>{localeState.t('pullRequest.reviewer.loadingDetails')}</span>
+            </div>
+          {:else if activeTab === 'conversation'}
+            <PRConversationTab
+              {selectedPR}
+              {prComments}
+              {aiReviewResult}
+              bind:quickCommentText
+              {isPostingQuickComment}
+              {isTogglingPRState}
+              onCloseAIReview={() => (aiReviewResult = null)}
+              onOpenMergeModal={() => (showMergeModal = true)}
+              onOpenCloseModal={() => (showCloseModal = true)}
+              onCloseWithComment={() => handleTogglePRState('closed', quickCommentText)}
+              onReopenPR={() => handleTogglePRState('open', quickCommentText)}
+              onPostQuickComment={handlePostQuickComment}
+            />
+          {:else if activeTab === 'commits'}
+            <PRCommitsTab {prCommits} />
+          {:else}
+            <PRFilesTab
+              {selectedPR}
+              {prFiles}
+              {prComments}
+              bind:selectedFileIndex
+              {viewedFiles}
+              bind:diffMode
+              bind:inlineCommentLine
+              bind:inlineCommentText
+              {isPostingComment}
+              onSelectFile={(idx) => (selectedFileIndex = idx)}
+              onToggleFileViewed={toggleFileViewed}
+              onDiffModeChange={(mode) => (diffMode = mode)}
+              onOpenInlineComment={(file, line) => {
+                inlineCommentLine = { file, line };
+              }}
+              onCloseInlineComment={() => {
+                inlineCommentLine = null;
+                inlineCommentText = '';
+              }}
+              onPostInlineComment={handlePostInlineComment}
+            />
+          {/if}
+        </div>
+      {:else}
+        <PRLaunchpadEmpty
+          {repoOwner}
+          {repoName}
+          {prFilter}
+          {searchQuery}
+          totalPRCount={prList.length}
+          {filteredPRs}
+          {isLoadingPRs}
+          {loadError}
+          onRetry={() => loadPullRequests(false)}
+          {onOpenAuth}
+          onOpenCreatePR={() => {
+            if (onOpenCreatePR) {
+              onOpenCreatePR();
+            } else {
+              showLocalCreatePRModal = true;
+            }
+          }}
+          onClearSearch={() => (searchQuery = '')}
+          onSelectPR={selectPR}
+        />
+      {/if}
     {/if}
   </div>
 </div>

@@ -279,7 +279,6 @@ export class GitLabAdapter implements RemoteProviderAdapter {
   private getHeaders(token?: string): Record<string, string> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'User-Agent': 'FlowGit-Desktop',
     };
     const activeToken = token?.trim() || getStoredGitLabToken();
     if (activeToken) {
@@ -493,7 +492,6 @@ export class BitbucketAdapter implements RemoteProviderAdapter {
   private getHeaders(token?: string): Record<string, string> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'User-Agent': 'FlowGit-Desktop',
     };
     const activeToken = token?.trim() || getStoredBitbucketToken();
     if (activeToken) {

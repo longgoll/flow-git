@@ -22,6 +22,9 @@
     totalPRCount: number;
     filteredPRs: GitHubPullRequest[];
     isLoadingPRs: boolean;
+    loadError?: string | null;
+    onRetry?: () => void;
+    onOpenAuth?: () => void;
     onOpenCreatePR: () => void;
     onClearSearch: () => void;
     onSelectPR: (pr: GitHubPullRequest) => void;
@@ -35,6 +38,9 @@
     totalPRCount,
     filteredPRs,
     isLoadingPRs,
+    loadError = null,
+    onRetry,
+    onOpenAuth,
     onOpenCreatePR,
     onClearSearch,
     onSelectPR,
@@ -42,7 +48,44 @@
 </script>
 
 <div class="flex-1 flex flex-col items-center justify-center p-8 bg-zinc-50/50 dark:bg-zinc-950/40 text-center overflow-y-auto">
-  {#if totalPRCount === 0 && !isLoadingPRs}
+  {#if loadError && !isLoadingPRs}
+    <!-- Connection / API Error State -->
+    <div class="max-w-md w-full flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
+      <div class="w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-md mb-4">
+        <Sparkles class="w-7 h-7 text-amber-500" />
+      </div>
+
+      <h2 class="text-base font-bold text-zinc-900 dark:text-zinc-100 mb-1.5">
+        {localeState.t('pullRequest.reviewer.connectionErrorTitle')}
+      </h2>
+      <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mb-4 max-w-sm">
+        {loadError}. {localeState.t('pullRequest.reviewer.connectionErrorDesc')}
+      </p>
+
+      <div class="flex items-center gap-2 mb-8">
+        {#if onRetry}
+          <button
+            type="button"
+            onclick={onRetry}
+            class="px-3.5 py-1.5 rounded-xl bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-xs font-semibold flex items-center gap-1.5 text-zinc-800 dark:text-zinc-200 cursor-pointer transition-colors"
+          >
+            <RotateCcw class="w-3.5 h-3.5" />
+            <span>{localeState.t('pullRequest.reviewer.retryBtn')}</span>
+          </button>
+        {/if}
+
+        {#if onOpenAuth}
+          <button
+            type="button"
+            onclick={onOpenAuth}
+            class="px-3.5 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-xs font-semibold flex items-center gap-1.5 text-white shadow-xs cursor-pointer transition-colors"
+          >
+            <span>{localeState.t('toolbar.signIn')} GitHub</span>
+          </button>
+        {/if}
+      </div>
+    </div>
+  {:else if totalPRCount === 0 && !isLoadingPRs}
     <!-- PR Launchpad Empty State (No PRs in Repo) -->
     <div class="max-w-md w-full flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
       <div class="relative mb-5">

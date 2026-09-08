@@ -14,28 +14,32 @@
     filteredPRs: GitHubPullRequest[];
     selectedPR: GitHubPullRequest | null;
     isLoadingPRs: boolean;
+    loadError?: string | null;
     searchQuery: string;
     prFilter: 'open' | 'closed' | 'all';
     onSelectPR: (pr: GitHubPullRequest) => void;
     onFilterChange: (filter: 'open' | 'closed' | 'all') => void;
     onSearchChange: (query: string) => void;
     onOpenCreatePR: () => void;
+    onRetry?: () => void;
   }
 
   let {
     filteredPRs,
     selectedPR,
     isLoadingPRs,
+    loadError = null,
     searchQuery = $bindable(''),
     prFilter = $bindable('open'),
     onSelectPR,
     onFilterChange,
     onSearchChange,
     onOpenCreatePR,
+    onRetry,
   }: Props = $props();
 </script>
 
-<div class="w-80 border-r border-zinc-200 dark:border-zinc-800 flex flex-col bg-zinc-50/70 dark:bg-zinc-950/60 shrink-0">
+<div class="w-full h-full border-r border-zinc-200 dark:border-zinc-800 flex flex-col bg-zinc-50/80 dark:bg-zinc-950/70 shrink-0 overflow-hidden">
 
   <!-- Search & Filters -->
   <div class="p-2.5 border-b border-zinc-200 dark:border-zinc-800/80 space-y-2">
@@ -69,6 +73,21 @@
       <div class="p-6 text-center text-xs text-zinc-500 flex flex-col items-center gap-2">
         <RefreshCw class="w-4 h-4 animate-spin text-violet-600 dark:text-violet-400" />
         <span>{localeState.t('pullRequest.reviewer.list.loadingPRs')}</span>
+      </div>
+    {:else if loadError && filteredPRs.length === 0}
+      <div class="p-4 text-center text-xs text-amber-700 dark:text-amber-400 space-y-2 bg-amber-500/10 m-2 rounded-xl border border-amber-300 dark:border-amber-800/50">
+        <div class="font-semibold text-xs">{localeState.t('pullRequest.reviewer.connectionErrorTitle')}</div>
+        <p class="text-[11px] text-zinc-600 dark:text-zinc-400">{loadError}</p>
+        {#if onRetry}
+          <button
+            type="button"
+            onclick={onRetry}
+            class="px-2.5 py-1 rounded-md bg-amber-100 dark:bg-amber-900/40 hover:bg-amber-200 dark:hover:bg-amber-800/60 text-amber-900 dark:text-amber-200 text-[11px] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
+          >
+            <RotateCcw class="w-3 h-3" />
+            <span>{localeState.t('pullRequest.reviewer.retryBtn')}</span>
+          </button>
+        {/if}
       </div>
     {:else if filteredPRs.length === 0}
       <div class="p-6 text-center text-xs text-zinc-400 dark:text-zinc-500 space-y-3">

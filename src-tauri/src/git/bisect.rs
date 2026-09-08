@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 use crate::error::{AppError, AppResult};
+use crate::git::cli::silent_command;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BisectStatus {
@@ -343,14 +344,14 @@ where
 
         #[cfg(target_os = "windows")]
         let mut cmd = {
-            let mut c = std::process::Command::new("powershell");
+            let mut c = silent_command("powershell");
             c.arg("-NoProfile").arg("-Command").arg(script);
             c
         };
 
         #[cfg(not(target_os = "windows"))]
         let mut cmd = {
-            let mut c = std::process::Command::new("sh");
+            let mut c = silent_command("sh");
             c.arg("-c").arg(script);
             c
         };

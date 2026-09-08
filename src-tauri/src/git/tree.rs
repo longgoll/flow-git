@@ -2,6 +2,7 @@ use std::path::Path;
 use git2::{ObjectType, Oid, Repository};
 use serde::{Deserialize, Serialize};
 use crate::error::{AppError, AppResult};
+use crate::git::cli::silent_command;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TreeEntryItem {
@@ -312,7 +313,7 @@ pub fn open_file_in_editor(full_path: &str, editor: Option<&str>) -> AppResult<(
         "cursor" => {
             #[cfg(target_os = "windows")]
             {
-                let _ = std::process::Command::new("cmd")
+                let _ = silent_command("cmd")
                     .args(["/c", "cursor", full_path])
                     .spawn();
             }
@@ -325,7 +326,7 @@ pub fn open_file_in_editor(full_path: &str, editor: Option<&str>) -> AppResult<(
         "code" => {
             #[cfg(target_os = "windows")]
             {
-                let _ = std::process::Command::new("cmd")
+                let _ = silent_command("cmd")
                     .args(["/c", "code", full_path])
                     .spawn();
             }
@@ -338,7 +339,7 @@ pub fn open_file_in_editor(full_path: &str, editor: Option<&str>) -> AppResult<(
         "antigravity" | "agy" => {
             #[cfg(target_os = "windows")]
             {
-                let _ = std::process::Command::new("cmd")
+                let _ = silent_command("cmd")
                     .args(["/c", "agy", full_path])
                     .spawn();
             }
@@ -351,7 +352,7 @@ pub fn open_file_in_editor(full_path: &str, editor: Option<&str>) -> AppResult<(
         "zed" => {
             #[cfg(target_os = "windows")]
             {
-                let _ = std::process::Command::new("cmd")
+                let _ = silent_command("cmd")
                     .args(["/c", "zed", full_path])
                     .spawn();
             }
@@ -364,7 +365,7 @@ pub fn open_file_in_editor(full_path: &str, editor: Option<&str>) -> AppResult<(
         _ => {
             #[cfg(target_os = "windows")]
             {
-                let _ = std::process::Command::new("cmd")
+                let _ = silent_command("cmd")
                     .args(["/c", "start", "", full_path])
                     .spawn();
             }

@@ -118,6 +118,8 @@ The backend code in `src-tauri/src/` is partitioned cleanly:
    - Long-lived network operations (Fetch, Pull, Push, Clone, GitHub OAuth polling) run in asynchronous Tokio tasks to avoid locking Tauri IPC handlers.
 3. **In-Memory Git Index Simulation:**
    - Before executing Rebase, Merge, or Cherry-pick operations, an in-memory `git2::Index` dry-run simulates the merge to detect conflicts safely without touching the actual working tree.
+4. **Silent Process Execution (Windows Zero-Flicker Standard):**
+   - All background CLI invocations (`git`, `curl.exe`, `powershell`, `cmd.exe`) utilize `crate::git::cli::silent_command` configured with `CREATE_NO_WINDOW = 0x08000000` via `std::os::windows::process::CommandExt`. This completely eliminates transient black command-prompt window popups during periodic auto-fetches or credentials polling.
 
 ---
 
@@ -252,6 +254,8 @@ Cấu trúc mã nguồn Rust trong thư mục `src-tauri/src/` được chia th�
    - Các thao tác mạng đường truyền dài (Fetch, Pull, Push, Clone, GitHub Device OAuth Poll) được đóng gói trong các tác vụ bất đồng bộ của Tokio, tránh khóa cứng luồng IPC chính của Tauri.
 3. **In-Memory Git Index Simulation:**
    - Trước khi thực hiện Rebase, Merge hoặc Cherry-pick, hệ thống khởi tạo một `git2::Index` giả lập hoàn toàn trong bộ nhớ RAM để kiểm tra xem có xung đột mã nguồn xảy ra hay không mà không làm xáo trộn working tree thực tế của người dùng.
+4. **Tiêu chuẩn Thực thi Tiến trình Ngầm Không Nháy Console (Windows Silent Execution):**
+   - Mọi tiến trình CLI chạy nền (`git`, `curl.exe`, `powershell`, `cmd.exe`) đều được khởi tạo qua tiện ích `crate::git::cli::silent_command` với cờ `CREATE_NO_WINDOW = 0x08000000` (`std::os::windows::process::CommandExt`). Cơ chế này loại bỏ triệt để hiện tượng cửa sổ CMD đen chớp nháy lên màn hình khi hệ thống chạy Auto-Fetch định kỳ hoặc kiểm tra tiến trình xác thực.
 
 ---
 

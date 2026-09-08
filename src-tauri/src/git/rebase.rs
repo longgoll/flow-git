@@ -1,7 +1,7 @@
-use std::process::Command;
 use git2::Repository;
 use serde::{Deserialize, Serialize};
 use crate::error::{AppError, AppResult};
+use crate::git::cli::silent_command;
 use crate::git::conflict::get_conflicted_files;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,7 +37,7 @@ pub fn execute_rebase(repo: &Repository, upstream: &str) -> AppResult<RebaseExec
         ));
     }
 
-    let mut cmd = Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(workdir);
     cmd.env("GIT_TERMINAL_PROMPT", "0");
     cmd.arg("rebase").arg(upstream);
@@ -92,7 +92,7 @@ pub fn continue_rebase(repo: &Repository) -> AppResult<RebaseExecutionResult> {
         });
     }
 
-    let mut cmd = Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(workdir);
     cmd.env("GIT_TERMINAL_PROMPT", "0");
     cmd.env("GIT_EDITOR", "true"); // Prevent interactive editor from hanging
@@ -142,7 +142,7 @@ pub fn continue_rebase(repo: &Repository) -> AppResult<RebaseExecutionResult> {
 pub fn skip_rebase(repo: &Repository) -> AppResult<RebaseExecutionResult> {
     let workdir = repo.workdir().ok_or_else(|| AppError::InvalidRepo("Bare repository".into()))?;
 
-    let mut cmd = Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(workdir);
     cmd.env("GIT_TERMINAL_PROMPT", "0");
     cmd.arg("rebase").arg("--skip");
@@ -206,7 +206,7 @@ pub fn abort_operation(repo: &Repository) -> AppResult<String> {
         return Ok("No in-progress operation to abort.".to_string());
     };
 
-    let mut cmd = Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(workdir);
     cmd.env("GIT_TERMINAL_PROMPT", "0");
     for arg in cmd_args {

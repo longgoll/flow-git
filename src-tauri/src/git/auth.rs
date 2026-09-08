@@ -1,8 +1,8 @@
 use std::path::Path;
-use std::process::Command;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use crate::error::{AppError, AppResult};
+use crate::git::cli::silent_command;
 pub use crate::storage::accounts::AccountProfile;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -50,7 +50,7 @@ pub fn verify_and_fetch_account(
     }
 
     if provider == "github" {
-        let mut cmd = Command::new("curl.exe");
+        let mut cmd = silent_command("curl.exe");
         cmd.arg("-s")
             .arg("-H")
             .arg(format!("Authorization: Bearer {}", token))
@@ -91,7 +91,7 @@ pub fn verify_and_fetch_account(
         let host = custom_host.unwrap_or("gitlab.com").trim_end_matches('/');
         let api_url = format!("https://{}/api/v4/user", host);
 
-        let mut cmd = Command::new("curl.exe");
+        let mut cmd = silent_command("curl.exe");
         cmd.arg("-s")
             .arg("-H")
             .arg(format!("PRIVATE-TOKEN: {}", token))
@@ -132,7 +132,7 @@ pub fn start_github_device_flow(client_id: Option<&str>) -> AppResult<DeviceCode
     // Default GitHub App client ID (can be overridden)
     let cid = client_id.unwrap_or("Iv1.b507a08c87ecfe98"); // FlowGit OAuth App / Standard Client ID
 
-    let mut cmd = Command::new("curl.exe");
+    let mut cmd = silent_command("curl.exe");
     cmd.arg("-s")
         .arg("-X")
         .arg("POST")
@@ -177,7 +177,7 @@ pub fn poll_github_device_token(
 ) -> AppResult<DevicePollResult> {
     let cid = client_id.unwrap_or("Iv1.b507a08c87ecfe98");
 
-    let mut cmd = Command::new("curl.exe");
+    let mut cmd = silent_command("curl.exe");
     cmd.arg("-s")
         .arg("-X")
         .arg("POST")
@@ -282,7 +282,7 @@ pub fn execute_remote_with_credentials(
     set_upstream: Option<bool>,
     credentials: Option<GitCredentials>,
 ) -> AppResult<RemoteActionResult> {
-    let mut cmd = Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(Path::new(repo_path));
     cmd.env("GIT_TERMINAL_PROMPT", "0");
 

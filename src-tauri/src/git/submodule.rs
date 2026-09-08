@@ -2,6 +2,7 @@ use std::path::Path;
 use git2::Repository;
 use serde::{Deserialize, Serialize};
 use crate::error::{AppError, AppResult};
+use crate::git::cli::silent_command;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SubmoduleInfo {
@@ -58,7 +59,7 @@ pub fn get_submodules(repo: &Repository) -> AppResult<Vec<SubmoduleInfo>> {
 }
 
 pub fn update_submodule_cli(repo_path: &str, name: Option<&str>, recursive: bool) -> AppResult<String> {
-    let mut cmd = std::process::Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(Path::new(repo_path));
     cmd.arg("submodule").arg("update").arg("--init");
 
@@ -83,7 +84,7 @@ pub fn update_submodule_cli(repo_path: &str, name: Option<&str>, recursive: bool
 }
 
 pub fn sync_submodule_cli(repo_path: &str, name: Option<&str>) -> AppResult<String> {
-    let mut cmd = std::process::Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(Path::new(repo_path));
     cmd.arg("submodule").arg("sync");
 

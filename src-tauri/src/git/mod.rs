@@ -2,6 +2,7 @@ pub mod auth;
 pub mod bisect;
 pub mod blame;
 pub mod branches;
+pub mod cli;
 pub mod commit_ops;
 pub mod comparison;
 pub mod conflict;
@@ -34,6 +35,7 @@ pub mod sparse;
 
 use serde::{Deserialize, Serialize};
 
+pub use cli::silent_command;
 pub use auth::{AccountProfile, DeviceCodeResponse, DevicePollResult, GitCredentials, RemoteActionResult};
 pub use bisect::BisectStatus;
 pub use blame::{BlameHunkItem, FileHistoryItem};

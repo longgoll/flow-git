@@ -2,6 +2,7 @@ use std::path::Path;
 use git2::Repository;
 use serde::{Deserialize, Serialize};
 use crate::error::{AppError, AppResult};
+use crate::git::cli::silent_command;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LfsFileInfo {
@@ -53,7 +54,7 @@ pub fn get_lfs_summary(_repo: &Repository, repo_path: &str) -> AppResult<LfsSumm
 
     // Query files using `git lfs ls-files -l`
     if is_lfs_enabled {
-        let mut cmd = std::process::Command::new("git");
+        let mut cmd = silent_command("git");
         cmd.current_dir(Path::new(repo_path));
         cmd.arg("lfs").arg("ls-files").arg("-l");
 
@@ -83,7 +84,7 @@ pub fn get_lfs_summary(_repo: &Repository, repo_path: &str) -> AppResult<LfsSumm
         }
 
         // Query locks `git lfs locks`
-        let mut lock_cmd = std::process::Command::new("git");
+        let mut lock_cmd = silent_command("git");
         lock_cmd.current_dir(Path::new(repo_path));
         lock_cmd.arg("lfs").arg("locks");
 
@@ -121,7 +122,7 @@ pub fn get_lfs_summary(_repo: &Repository, repo_path: &str) -> AppResult<LfsSumm
 }
 
 pub fn pull_lfs_cli(repo_path: &str, file_pattern: Option<&str>) -> AppResult<String> {
-    let mut cmd = std::process::Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(Path::new(repo_path));
     cmd.arg("lfs").arg("pull");
 
@@ -141,7 +142,7 @@ pub fn pull_lfs_cli(repo_path: &str, file_pattern: Option<&str>) -> AppResult<St
 }
 
 pub fn lock_lfs_cli(repo_path: &str, file_path: &str) -> AppResult<String> {
-    let mut cmd = std::process::Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(Path::new(repo_path));
     cmd.arg("lfs").arg("lock").arg(file_path);
 
@@ -155,7 +156,7 @@ pub fn lock_lfs_cli(repo_path: &str, file_path: &str) -> AppResult<String> {
 }
 
 pub fn unlock_lfs_cli(repo_path: &str, file_path: &str, force: bool) -> AppResult<String> {
-    let mut cmd = std::process::Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(Path::new(repo_path));
     cmd.arg("lfs").arg("unlock").arg(file_path);
 
@@ -173,7 +174,7 @@ pub fn unlock_lfs_cli(repo_path: &str, file_path: &str, force: bool) -> AppResul
 }
 
 pub fn track_lfs_pattern(repo_path: &str, pattern: &str) -> AppResult<String> {
-    let mut cmd = std::process::Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(Path::new(repo_path));
     cmd.arg("lfs").arg("track").arg(pattern);
 
@@ -189,7 +190,7 @@ pub fn track_lfs_pattern(repo_path: &str, pattern: &str) -> AppResult<String> {
 }
 
 pub fn untrack_lfs_pattern(repo_path: &str, pattern: &str) -> AppResult<String> {
-    let mut cmd = std::process::Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(Path::new(repo_path));
     cmd.arg("lfs").arg("untrack").arg(pattern);
 

@@ -1,6 +1,7 @@
 use std::path::Path;
 use git2::{Repository, StatusOptions};
 use crate::error::{AppError, AppResult};
+use crate::git::cli::silent_command;
 use super::RepoSummary;
 
 pub fn open_repository<P: AsRef<Path>>(path: P) -> AppResult<Repository> {
@@ -137,7 +138,7 @@ pub fn clone_repository(
         let _ = std::fs::create_dir_all(parent);
     }
 
-    let mut cmd = std::process::Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.env("GIT_TERMINAL_PROMPT", "0");
 
     if let Some(ref creds) = credentials {

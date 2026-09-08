@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use crate::error::{AppError, AppResult};
+use crate::git::cli::silent_command;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SparseCheckoutInfo {
@@ -18,7 +19,7 @@ pub fn get_sparse_checkout_info(repo_path: &str) -> AppResult<SparseCheckoutInfo
     }
 
     // 1. Check if sparse checkout is enabled and get patterns
-    let mut cmd = std::process::Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(repo_dir);
     cmd.arg("sparse-checkout").arg("list");
 
@@ -42,7 +43,7 @@ pub fn get_sparse_checkout_info(repo_path: &str) -> AppResult<SparseCheckoutInfo
     }
 
     // Double check with core.sparseCheckout config
-    let mut config_cmd = std::process::Command::new("git");
+    let mut config_cmd = silent_command("git");
     config_cmd.current_dir(repo_dir);
     config_cmd.arg("config").arg("--get").arg("core.sparseCheckout");
     if let Ok(output) = config_cmd.output() {
@@ -57,7 +58,7 @@ pub fn get_sparse_checkout_info(repo_path: &str) -> AppResult<SparseCheckoutInfo
     }
 
     // Check cone mode
-    let mut cone_cmd = std::process::Command::new("git");
+    let mut cone_cmd = silent_command("git");
     cone_cmd.current_dir(repo_dir);
     cone_cmd.arg("config").arg("--get").arg("core.sparseCheckoutCone");
     let mut is_cone = true; // default in modern git
@@ -142,7 +143,7 @@ pub fn set_sparse_checkout(repo_path: &str, patterns: Vec<String>, cone: bool) -
         return Err(AppError::GitMessage("At least one directory or pattern must be selected".to_string()));
     }
 
-    let mut cmd = std::process::Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(repo_dir);
     cmd.arg("sparse-checkout").arg("set");
 
@@ -178,7 +179,7 @@ pub fn disable_sparse_checkout(repo_path: &str) -> AppResult<String> {
         return Err(AppError::GitMessage(format!("Repository path does not exist: {}", repo_path)));
     }
 
-    let mut cmd = std::process::Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(repo_dir);
     cmd.arg("sparse-checkout").arg("disable");
 
@@ -201,7 +202,7 @@ pub fn reapply_sparse_checkout(repo_path: &str) -> AppResult<String> {
         return Err(AppError::GitMessage(format!("Repository path does not exist: {}", repo_path)));
     }
 
-    let mut cmd = std::process::Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(repo_dir);
     cmd.arg("sparse-checkout").arg("reapply");
 

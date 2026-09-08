@@ -3,6 +3,7 @@ use git2::{IndexEntry, Repository, ResetType};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{AppError, AppResult};
+use crate::git::cli::silent_command;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConflictChunk {
@@ -221,7 +222,7 @@ pub fn abort_merge_or_rebase(repo: &Repository) -> AppResult<()> {
     let git_dir = repo.path();
     if git_dir.join("rebase-merge").exists() || git_dir.join("rebase-apply").exists() {
         if let Some(workdir) = repo.workdir() {
-            let mut cmd = std::process::Command::new("git");
+            let mut cmd = silent_command("git");
             cmd.current_dir(workdir);
             let _ = cmd.arg("rebase").arg("--abort").output();
         }

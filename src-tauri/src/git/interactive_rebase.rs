@@ -1,8 +1,8 @@
 use std::fs;
-use std::process::Command;
 use git2::Repository;
 use serde::{Deserialize, Serialize};
 use crate::error::{AppError, AppResult};
+use crate::git::cli::silent_command;
 use crate::git::conflict::get_conflicted_files;
 use crate::git::rebase::{is_rebasing, RebaseExecutionResult};
 
@@ -116,7 +116,7 @@ pub fn execute_interactive_rebase(
     let todo_posix = todo_file_path.to_string_lossy().replace('\\', "/");
     let editor_cmd = format!("cp -f \"{}\"", todo_posix);
 
-    let mut cmd = Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(workdir);
     cmd.env("GIT_TERMINAL_PROMPT", "0");
     cmd.env("GIT_SEQUENCE_EDITOR", &editor_cmd);

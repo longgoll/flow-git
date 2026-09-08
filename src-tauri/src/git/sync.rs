@@ -2,6 +2,7 @@ use git2::{FetchOptions, RemoteCallbacks, Repository};
 use serde::{Deserialize, Serialize};
 use crate::error::{AppError, AppResult};
 use crate::git::auth::GitCredentials;
+use crate::git::cli::silent_command;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SmartSyncResult {
@@ -113,7 +114,7 @@ where
     // If libgit2 fetch failed, fallback to git CLI fetch with credentials
     if !fetch_success {
         if let Some(workdir) = repo.workdir() {
-            let mut cmd = std::process::Command::new("git");
+            let mut cmd = silent_command("git");
             cmd.current_dir(workdir);
             cmd.env("GIT_TERMINAL_PROMPT", "0");
 

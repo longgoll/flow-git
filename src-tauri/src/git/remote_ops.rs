@@ -190,7 +190,7 @@ pub fn silent_background_fetch(
 
     // Prepare Git CLI fetch with credentials and terminal prompt disabled
     let workdir = repo.workdir().unwrap_or_else(|| repo.path());
-    let mut cmd = std::process::Command::new("git");
+    let mut cmd = crate::git::silent_command("git");
     cmd.current_dir(workdir);
     cmd.env("GIT_TERMINAL_PROMPT", "0");
 

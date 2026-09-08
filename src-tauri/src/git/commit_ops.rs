@@ -1,5 +1,6 @@
 use git2::{Signature, StashFlags};
 use crate::error::{AppError, AppResult};
+use crate::git::cli::silent_command;
 
 pub fn run_pre_commit_hook(repo: &git2::Repository) -> AppResult<()> {
     let hooks_dir = repo.path().join("hooks");
@@ -7,11 +8,11 @@ pub fn run_pre_commit_hook(repo: &git2::Repository) -> AppResult<()> {
     if pre_commit.exists() {
         let workdir = repo.workdir().ok_or_else(|| AppError::InvalidRepo("Bare repository".into()))?;
         let mut cmd = if cfg!(target_os = "windows") {
-            let mut c = std::process::Command::new("sh");
+            let mut c = silent_command("sh");
             c.arg(&pre_commit);
             c
         } else {
-            std::process::Command::new(&pre_commit)
+            silent_command(&pre_commit)
         };
         cmd.current_dir(workdir);
         if let Ok(output) = cmd.output() {
@@ -266,7 +267,7 @@ pub fn nuke_file_from_history(repo_path: &str, file_path: &str) -> AppResult<Str
 
     let index_filter = format!("git rm -rf --cached --ignore-unmatch \"{}\"", clean_path);
 
-    let mut cmd = std::process::Command::new("git");
+    let mut cmd = silent_command("git");
     cmd.current_dir(repo_path)
         .arg("filter-branch")
         .arg("--force")
@@ -286,12 +287,12 @@ pub fn nuke_file_from_history(repo_path: &str, file_path: &str) -> AppResult<Str
     }
 
     // Expire reflogs and aggressive gc
-    let _ = std::process::Command::new("git")
+    let _ = silent_command("git")
         .current_dir(repo_path)
         .args(["reflog", "expire", "--expire=now", "--all"])
         .output();
 
-    let _ = std::process::Command::new("git")
+    let _ = silent_command("git")
         .current_dir(repo_path)
         .args(["gc", "--prune=now"])
         .output();

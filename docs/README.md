@@ -118,14 +118,14 @@ docs/
 - 🛡️ [architecture/safety-engine.md](./architecture/safety-engine.md): 48-Hour Safe Discard & `Ctrl+Z` Time-Travel engine.
 - 📊 [features/commit-graph-and-dag.md](./features/commit-graph-and-dag.md): Living Commit Graph, DAG Mini-Map, Graph Density, Pinned Branches ⭐ & Branch Visibility 👁️.
 - 🔍 [features/working-tree-and-diff.md](./features/working-tree-and-diff.md): Working Tree, Monaco Diff & Line Staging.
-- 🌿 [features/branches-and-remotes.md](./features/branches-and-remotes.md): Branches, Multi-Remotes, Smart Sync & Branch Cleanup.
+- 🌿 [features/branches-and-remotes.md](./features/branches-and-remotes.md): Branches, Multi-Remotes, Smart Sync, Realtime Upstream Tracking & Branch Cleanup.
 - 🔀 [features/rebase-and-history-ops.md](./features/rebase-and-history-ops.md): Visual Interactive Rebase Studio (Drag & Drop, Dry-Run Simulation), Squash.
 - ⚔️ [features/conflict-and-bisect.md](./features/conflict-and-bisect.md): 4-Pane Conflict Resolver & Visual Bisect Wizard.
 - 🐙 [features/github-and-pull-requests.md](./features/github-and-pull-requests.md): GitHub PR Hub, Reviewer, CI Checks & Publish Repo.
 - 📂 [features/repo-explorer-and-file-tools.md](./features/repo-explorer-and-file-tools.md): Repository Explorer, Blame, Comparison, History Nuker, .gitignore Manager & Repo Insights.
 - 🥞 [features/stacked-commits-and-hotfix.md](./features/stacked-commits-and-hotfix.md): Stacked Commits & Quick Hotfix Workflow.
 - 🌲 [features/advanced-tools.md](./features/advanced-tools.md): Git Worktrees, Git LFS, Submodules Hub & Git Hooks Manager.
-- 🔑 [features/auth-and-identity.md](./features/auth-and-identity.md): GitHub OAuth Device Flow, PAT & Identity Switcher.
+- 🔑 [features/auth-and-identity.md](./features/auth-and-identity.md): GitHub OAuth Device Flow, PAT, Identity Switcher & Repository Account Binding.
 - 🚨 [features/edge-cases-and-guards.md](./features/edge-cases-and-guards.md): Index Lock, Heavy Files & Windows File Locks.
 - 📖 [features/onboarding-and-playbook.md](./features/onboarding-and-playbook.md): Interactive User Guide (F1), Git Playbook & Pre-Commit Guard.
 - 🤖 [features/ai-assistant.md](./features/ai-assistant.md): Local AI Assistant for commit messages and conflict diagnosis.
@@ -243,14 +243,14 @@ docs/
 - 🛡️ [architecture/safety-engine.md](./architecture/safety-engine.md): Cơ chế Safe Discard & Time-Travel `Ctrl+Z`.
 - 📊 [features/commit-graph-and-dag.md](./features/commit-graph-and-dag.md): Đồ thị Living Graph, DAG Mini-Map, Mật độ đồ thị, Ghim nhánh ⭐ & Ẩn/Hiện nhánh 👁️.
 - 🔍 [features/working-tree-and-diff.md](./features/working-tree-and-diff.md): Working Tree, Monaco Diff & Staging từng dòng.
-- 🌿 [features/branches-and-remotes.md](./features/branches-and-remotes.md): Nhánh, Multi-Remotes, Smart Sync & Clean Merged Branches.
+- 🌿 [features/branches-and-remotes.md](./features/branches-and-remotes.md): Nhánh, Multi-Remotes, Smart Sync, Theo dõi Upstream Thời gian thực & Dọn dẹp nhánh.
 - 🔀 [features/rebase-and-history-ops.md](./features/rebase-and-history-ops.md): Visual Interactive Rebase Studio (Kéo-Thả, Mô phỏng Dry-Run), Squash.
 - ⚔️ [features/conflict-and-bisect.md](./features/conflict-and-bisect.md): Bộ giải quyết Conflict 4-Pane & Bisect Wizard.
 - 🐙 [features/github-and-pull-requests.md](./features/github-and-pull-requests.md): GitHub PR Hub, Reviewer, Checks & Publish Repo.
 - 📂 [features/repo-explorer-and-file-tools.md](./features/repo-explorer-and-file-tools.md): Repository Explorer, Blame, Comparison, History Nuker, Quản lý .gitignore & Repo Insights.
 - 🥞 [features/stacked-commits-and-hotfix.md](./features/stacked-commits-and-hotfix.md): Chuỗi Stacked Commits & Quy trình Quick Hotfix.
 - 🌲 [features/advanced-tools.md](./features/advanced-tools.md): Git Worktrees, Git LFS, Submodules Hub & Quản lý Git Hooks.
-- 🔑 [features/auth-and-identity.md](./features/auth-and-identity.md): GitHub OAuth Device Flow, PAT & Identity Switcher.
+- 🔑 [features/auth-and-identity.md](./features/auth-and-identity.md): GitHub OAuth Device Flow, PAT, Identity Switcher & Liên kết tài khoản theo Repository.
 - 🚨 [features/edge-cases-and-guards.md](./features/edge-cases-and-guards.md): Index Lock, Heavy Files & Windows File Locks.
 - 📖 [features/onboarding-and-playbook.md](./features/onboarding-and-playbook.md): Interactive User Guide (F1), Git Playbook & Pre-Commit Guard.
 - 🤖 [features/ai-assistant.md](./features/ai-assistant.md): Trợ lý AI Cục bộ sinh Commit Message & giải thích Conflict.

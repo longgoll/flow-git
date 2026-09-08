@@ -98,6 +98,35 @@ Component: `src/lib/components/CreateTagModal.svelte`
 
 ---
 
+## 📡 6. Realtime Upstream Tracking & Background Fetch
+
+Component: `src/lib/components/UpstreamUpdateBanner.svelte`  
+State Manager: `src/lib/state/remoteState.svelte.ts`  
+Backend Commands: `silent_background_fetch`, `get_incoming_commits`
+
+### Automated Remote Awareness:
+- **Non-Intrusive Background Fetch:** FlowGit periodically executes `silent_background_fetch` to check if collaborators have pushed new commits to the upstream branch. It runs entirely silently without blocking the user or spawning credential popups.
+- **Upstream Update Banner (`UpstreamUpdateBanner.svelte`):**
+  - Floats above the commit graph when new incoming commits are detected (`↓ N commits incoming`).
+  - Displays a preview list of incoming commits (author, message, commit SHA) via `get_incoming_commits`.
+  - **1-Click Actions:**
+    - **Fast-Forward Pull:** Instantly updates local branch when no divergence exists.
+    - **Fetch & Rebase:** Replays local work cleanly on top of upstream.
+    - **Dismiss / Snooze:** Hides banner to avoid interrupting current focus.
+
+---
+
+## 🚀 7. Recent Push Banner & Instant PR Launchpad
+
+Component: `src/lib/components/RecentPushBanner.svelte` & `src/lib/components/CreatePullRequestModal.svelte`
+
+### Seamless GitHub Hand-off:
+- Immediately after pushing a new branch to remote, FlowGit displays a contextual banner:  
+  *"You recently pushed branch `feat/user-auth`. Create a Pull Request?"*
+- **1-Click Action:** Launches `CreatePullRequestModal.svelte` pre-filled with branch targets, title, and generated release notes from commit history, eliminating the need to switch to a web browser.
+
+---
+
 <a name="-tiếng-việt"></a>
 # 🇻🇳 Tiếng Việt
 
@@ -183,3 +212,32 @@ Component: `src/lib/components/CreateTagModal.svelte`
   - **Lightweight Tag:** Gắn nhãn con trỏ đơn giản.
   - **Annotated Tag:** Gắn kèm thông điệp phát hành và định danh người tạo.
 - Xóa Tag an toàn bằng menu chuột phải.
+
+---
+
+## 📡 6. THEO DÕI UPSTREAM THỜI GIAN THỰC & AUTO-FETCH NGẦM (UPSTREAM TRACKING)
+
+Component: `src/lib/components/UpstreamUpdateBanner.svelte`  
+Quản lý trạng thái: `src/lib/state/remoteState.svelte.ts`  
+Backend Commands: `silent_background_fetch`, `get_incoming_commits`
+
+### Tự động nhận diện thay đổi từ đồng đội:
+- **Chế độ Fetch ngầm êm ái (Silent Background Fetch):** FlowGit tự động thực hiện fetch kiểm tra định kỳ bằng `silent_background_fetch` trong nền mà không làm đơ giao diện hay bật popup xác thực phiền toái.
+- **Banner thông báo Upstream (`UpstreamUpdateBanner.svelte`):**
+  - Xuất hiện tinh tế trên đỉnh Commit Graph ngay khi phát hiện có commit mới trên remote (`↓ N commit mới trên upstream`).
+  - Cho phép xem nhanh danh sách tóm tắt các commit sắp kéo về (tác giả, thông điệp, mã SHA) thông qua `get_incoming_commits`.
+  - **Thao tác 1-chạm:**
+    - **Fast-Forward Pull:** Cập nhật ngay lập tức nếu nhánh local không có commit lệch.
+    - **Fetch & Rebase:** Tự động đặt các commit dở dang của bạn lên đỉnh nhánh remote.
+    - **Bỏ qua / Đóng:** Tạm thời ẩn banner nếu bạn đang tập trung chỉnh sửa tệp hiện tại.
+
+---
+
+## 🚀 7. BANNER PUSH GẦN ĐÂY & MỞ PULL REQUEST NHANH (RECENT PUSH BANNER)
+
+Component: `src/lib/components/RecentPushBanner.svelte` & `src/lib/components/CreatePullRequestModal.svelte`
+
+### Tối ưu tốc độ làm việc nhóm:
+- Ngay sau khi bạn push thành công một nhánh mới lên remote, FlowGit tự động phát hiện và bật banner thông minh:  
+  *"Bạn vừa đẩy nhánh `feat/user-auth`. Bạn có muốn tạo Pull Request ngay không?"*
+- **Tạo PR 1-chạm:** Nhấp vào nút mở trực tiếp modal `CreatePullRequestModal.svelte` được điền sẵn tên nhánh nguồn, nhánh đích, tiêu đề và mô tả tự động sinh từ lịch sử commit mà không cần chuyển qua trình duyệt web.

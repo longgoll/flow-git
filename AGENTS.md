@@ -64,9 +64,15 @@ Tài liệu này chứa các quy tắc bắt buộc và ngữ cảnh chung dành
 5. **Chuẩn hiển thị Mã nguồn & Diff:**
    - Mọi khu vực xem nội dung tệp, so sánh diff hoặc soi blame phải sử dụng `MonacoEditor.svelte` hoặc `MonacoDiffEditor.svelte`.
 
-6. **Đồng bộ Tài liệu khi Thay đổi Code:**
-   - Khi thêm mới hoặc thay đổi bất kỳ IPC command nào, bắt buộc cập nhật danh mục trong [`docs/architecture/ipc-api-reference.md`](./docs/architecture/ipc-api-reference.md).
-   - Khi hoàn thành hoặc mở rộng tính năng, cập nhật tài liệu tương ứng trong `docs/features/`.
+6. **Quy Chuẩn Bắt Buộc Ghi Chép & Đồng Bộ Tài Liệu (Mandatory Documentation - No Doc No Done):**
+   - **Định nghĩa hoàn thành (Definition of Done):** Mọi tác vụ lập trình (thêm tính năng mới, tối ưu hóa hiệu năng, refactor tái cấu trúc, nâng cấp UI/UX, thêm API/IPC) **chỉ được coi là hoàn thành khi và chỉ khi tài liệu kỹ thuật tương ứng đã được viết hoặc cập nhật đầy đủ**.
+   - **Tạo hoặc cập nhật tài liệu tính năng:**
+     + Khi thêm tính năng mới hoặc mở rộng tính năng: Bắt buộc viết mới hoặc cập nhật file tương ứng trong `docs/features/` theo chuẩn song ngữ (Tiếng Anh & Tiếng Việt), nêu rõ components UI, backend logic, tình huống sử dụng thực tế và cách vận hành.
+     + Nếu tạo file tài liệu mới trong `docs/features/`, bắt buộc cập nhật sitemap tại `docs/README.md`.
+   - **Đồng bộ IPC API:**
+     + Bất kỳ command Rust mới nào hoặc thay đổi tham số/kiểu dữ liệu IPC đều bắt buộc phải ghi lại chi tiết vào [`docs/architecture/ipc-api-reference.md`](./docs/architecture/ipc-api-reference.md) ở cả 2 phần (English và Tiếng Việt).
+   - **Ghi chép tối ưu hóa & kiến trúc:**
+     + Mọi cải tiến hiệu năng (như tối ưu bộ nhớ, tăng tốc Canvas graph, cache SQLite, Worker thread) phải được giải thích rõ cơ chế trong `docs/architecture/` để team và AI các phiên sau luôn nắm bắt được bối cảnh kỹ thuật.
 
 7. **Bắt buộc Song ngữ Toàn diện (i18n - Tiếng Việt & Tiếng Anh):**
    - Ứng dụng bắt buộc hỗ trợ đầy đủ 2 ngôn ngữ: Tiếng Việt (`vi`) và Tiếng Anh (`en`).

@@ -67,6 +67,36 @@ Accidentally committing personal emails (`myname@gmail.com`) to corporate repos 
 
 ---
 
+## 🏷️ 4. Project-Specific Account & Identity Binding System
+
+Components: `src/lib/components/RepoBindingBanner.svelte`, `src/lib/components/RepoTagBadge.svelte`, `src/lib/components/toolbar/WorkspaceTabBar.svelte`, `src/lib/components/CommitBox.svelte`  
+State Manager: `src/lib/state/repoBindingState.svelte.ts`  
+Backend Storage: `src-tauri/src/storage/accounts.rs` (SQLite `repo_bindings` table)  
+IPC Commands: `get_repo_binding`, `save_repo_binding`, `list_repo_bindings`, `delete_repo_binding`
+
+### 4.1. The Multi-Account Dilemma
+Developers routinely operate multiple Git accounts on the same workstation:
+- Enterprise GitHub / GitLab account for work projects (`@work-enterprise`).
+- Personal GitHub account for side-projects & open source (`@personal-dev`).
+
+Mixing up remote credentials or committer identities can lead to permission errors during push or leak corporate identity into public repositories.
+
+### 4.2. Repository-Level Binding Architecture
+FlowGit permanently links an individual repository path to a specific developer account profile in SQLite:
+- **Auto-Detection on Load:** When a workspace is opened, FlowGit inspects the remote origin URL and analyzes connected accounts to detect an affinity.
+- **Repository Binding Banner (`RepoBindingBanner.svelte`):**
+  - Appears if a repository does not yet have an explicit binding or if the remote URL suggests an account mismatch.
+  - One-click confirmation: `"Bind this repo to @username"`.
+- **Visual Workspace Badge (`RepoTagBadge.svelte`):**
+  - Displays the bound account avatar and badge in the **Workspace Tab Bar** (`WorkspaceTabBar.svelte`) and the **Welcome Screen**.
+  - Provides instant glanceable clarity of which account owns each open workspace tab.
+
+### 4.3. Pre-Commit Identity Guard (`CommitBox.svelte`)
+- Before creating a commit, FlowGit verifies that the current Git committer email matches the email of the repository's bound account.
+- If a mismatch is detected, a warning chip illuminates with 1-click **"Sync Identity"** to update `.git/config` locally before committing, completely eliminating accidental cross-account leakage.
+
+---
+
 <a name="-tiếng-việt"></a>
 # 🇻🇳 Tiếng Việt
 
@@ -126,3 +156,33 @@ Lập trình viên làm việc song song trên máy tính cá nhân:
   - Chọn áp dụng cho:
     - **Chỉ Repository này (Local):** Ghi đè cấu hình `.git/config`.
     - **Toàn bộ máy tính (Global):** Ghi đè cấu hình `~/.gitconfig`.
+
+---
+
+## 🏷️ 4. HỆ THỐNG LIÊN KẾT TÀI KHOẢN & DANH TÍNH THEO REPOSITORY (REPO BINDING)
+
+Components: `src/lib/components/RepoBindingBanner.svelte`, `src/lib/components/RepoTagBadge.svelte`, `src/lib/components/toolbar/WorkspaceTabBar.svelte`, `src/lib/components/CommitBox.svelte`  
+Quản lý trạng thái: `src/lib/state/repoBindingState.svelte.ts`  
+Lưu trữ Backend: `src-tauri/src/storage/accounts.rs` (Bảng SQLite `repo_bindings`)  
+Tauri IPC Commands: `get_repo_binding`, `save_repo_binding`, `list_repo_bindings`, `delete_repo_binding`
+
+### 4.1. Vấn nạn nhầm lẫn tài khoản & danh tính (Multi-Account Conflict)
+Lập trình viên hiện đại thường xuyên sử dụng nhiều tài khoản Git trên cùng một máy tính:
+- Tài khoản GitHub / GitLab công ty cho các dự án nội bộ (`@work-enterprise`).
+- Tài khoản GitHub cá nhân cho các dự án ngoài giờ & mã nguồn mở (`@personal-dev`).
+
+Việc sử dụng sai token hoặc commit nhầm email cá nhân vào repo công ty thường dẫn đến lỗi 403/401 khi push hoặc vi phạm quy chế bảo mật mã nguồn doanh nghiệp.
+
+### 4.2. Kiến trúc liên kết bền vững theo Repository (Repository-Level Binding)
+FlowGit thiết lập liên kết 1-1 chặt chẽ giữa đường dẫn repository và hồ sơ tài khoản (Account Profile) được lưu trữ bền vững trong SQLite:
+- **Tự động nhận diện (Auto-Detection):** Khi mở một dự án, FlowGit tự động phân tích remote URL (ví dụ: tên tổ chức, tên chủ sở hữu repo) và đối chiếu với danh sách các tài khoản đang kết nối.
+- **Banner liên kết thông minh (`RepoBindingBanner.svelte`):**
+  - Hiển thị thông báo gợi ý ngay trên đỉnh màn hình nếu repository chưa được gắn tài khoản hoặc phát hiện lệch tài khoản.
+  - Thao tác 1-chạm: Bấm `"Liên kết với tài khoản @username"` để ghi nhận ràng buộc vĩnh viễn.
+- **Huy hiệu trực quan trên Workspace (`RepoTagBadge.svelte`):**
+  - Hiển thị avatar và tên tài khoản liên kết ngay trên từng tab repository tại **Workspace Tab Bar** (`WorkspaceTabBar.svelte`) và màn hình chào đón (Welcome Screen).
+  - Giúp lập trình viên nhận diện ngay lập tức tab đang mở thuộc tài khoản công ty hay cá nhân.
+
+### 4.3. Lá chắn kiểm tra danh tính trước khi Commit (`CommitBox.svelte`)
+- Trước khi nhấn Commit, hệ thống tự động kiểm tra xem `user.email` trong `.git/config` hiện tại có khớp với tài khoản đã được liên kết với repo hay không.
+- Nếu phát hiện sai lệch (ví dụ đang dùng email cá nhân nhưng repo liên kết tài khoản công ty), FlowGit sẽ hiển thị cảnh báo trực quan kèm nút **"Đồng bộ danh tính" (Sync Identity)** 1-click để tự động cập nhật cấu hình local trước khi commit.

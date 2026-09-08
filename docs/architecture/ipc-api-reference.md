@@ -188,6 +188,10 @@ All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard
 | `list_identity_profiles`| None | `Vec<IdentityProfile>` | Lists identity presets (Work, Personal, Open-Source). |
 | `save_identity_profile` | `profile: IdentityProfile` | `bool` | Saves new identity profile for 1-click switching. |
 | `delete_identity_profile`| `id: String` | `bool` | Deletes identity profile. |
+| `get_repo_binding` | `repo_path: String` | `Option<RepoBinding>` | Retrieves account binding configuration linked to specified repository path. |
+| `save_repo_binding` | `binding: RepoBinding` | `()` | Persists repository-to-account binding record into SQLite. |
+| `list_repo_bindings` | None | `Vec<RepoBinding>` | Lists all configured repository account bindings. |
+| `delete_repo_binding` | `repo_path: String` | `()` | Unbinds account association from the repository. |
 
 ---
 
@@ -388,6 +392,10 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `list_identity_profiles`| Không | `Vec<IdentityProfile>` | Liệt kê các hồ sơ danh tính có sẵn (Công việc, Cá nhân, Open-source). |
 | `save_identity_profile` | `profile: IdentityProfile` | `bool` | Lưu một hồ sơ danh tính mới vào danh mục chuyển đổi nhanh. |
 | `delete_identity_profile`| `id: String` | `bool` | Xóa hồ sơ danh tính. |
+| `get_repo_binding` | `repo_path: String` | `Option<RepoBinding>` | Đọc cấu hình liên kết tài khoản tương ứng với đường dẫn repository. |
+| `save_repo_binding` | `binding: RepoBinding` | `()` | Lưu cấu hình liên kết tài khoản - repository vào cơ sở dữ liệu SQLite. |
+| `list_repo_bindings` | Không | `Vec<RepoBinding>` | Liệt kê toàn bộ các liên kết tài khoản theo repository đã thiết lập. |
+| `delete_repo_binding` | `repo_path: String` | `()` | Gỡ bỏ liên kết tài khoản khỏi repository được chọn. |
 
 ---
 

@@ -300,15 +300,19 @@ pub fn stash_branch(repo: &mut Repository, target_index: usize, branch_name: &st
         AppError::InvalidRepo(format!("Không tìm thấy bản Stash tại vị trí {}", target_index))
     })?;
 
-    let stash_commit = repo.find_commit(oid)?;
-    if stash_commit.parent_count() == 0 {
-        return Err(AppError::InvalidRepo("Bản stash không có commit gốc để tạo nhánh.".to_string()));
+    let base_commit_id = {
+        let stash_commit = repo.find_commit(oid)?;
+        if stash_commit.parent_count() == 0 {
+            return Err(AppError::InvalidRepo("Bản stash không có commit gốc để tạo nhánh.".to_string()));
+        }
+        stash_commit.parent_id(0)?
+    };
+
+    {
+        let base_commit = repo.find_commit(base_commit_id)?;
+        // 1. Tạo nhánh mới tại base commit
+        repo.branch(branch_name, &base_commit, false)?;
     }
-
-    let base_commit = stash_commit.parent(0)?;
-
-    // 1. Tạo nhánh mới tại base commit
-    repo.branch(branch_name, &base_commit, false)?;
 
     // 2. Checkout sang nhánh mới
     repo.set_head(&format!("refs/heads/{}", branch_name))?;
@@ -330,6 +334,6 @@ pub fn stash_branch(repo: &mut Repository, target_index: usize, branch_name: &st
         upstream_name: None,
         ahead_count: 0,
         behind_count: 0,
-        target_commit_id: base_commit.id().to_string(),
+        target_commit_id: base_commit_id.to_string(),
     })
 }

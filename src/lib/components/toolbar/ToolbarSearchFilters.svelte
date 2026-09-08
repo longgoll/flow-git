@@ -17,6 +17,7 @@
     Code2,
     Loader2,
     FileText,
+    SlidersHorizontal,
   } from 'lucide-svelte';
 
   interface Props {
@@ -97,7 +98,16 @@
   let isPickaxeLoading = $state<boolean>(false);
   let pickaxeResults = $state<PickaxeSearchResult[]>([]);
   let isPickaxeDropdownOpen = $state<boolean>(false);
+  let isFilterPopoverOpen = $state<boolean>(false);
   let pickaxeDebounceTimer: any = null;
+
+  let activeFilterCount = $derived(
+    (filterHideMerges ? 1 : 0) +
+    (filterMyCommits ? 1 : 0) +
+    (filterAuthor ? 1 : 0) +
+    (filterDateRange !== 'all' ? 1 : 0) +
+    (isPickaxeMode ? 1 : 0)
+  );
 
   async function triggerPickaxeSearch() {
     if (!repoPath || !searchQuery.trim()) {
@@ -165,7 +175,7 @@
 
 <div class="flex items-center gap-1.5 shrink-0">
   <!-- Commit Search Filter -->
-  <div class="relative min-w-[60px] w-20 sm:w-28 md:w-32 lg:w-36 focus-within:!w-48 transition-all duration-150 shrink-0">
+  <div class="relative min-w-[50px] w-20 sm:w-24 md:w-28 lg:w-32 focus-within:!w-40 transition-all duration-150 shrink-0">
     <Search class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 absolute left-2 top-2 pointer-events-none" />
     <input
       type="text"
@@ -237,9 +247,140 @@
     {/if}
   </div>
 
-  <!-- Pickaxe Code Search Toggle Button -->
-  <button
-    onclick={togglePickaxeMode}
+  <!-- Compact Filters Popover Button (visible on < xl) -->
+  <div class="relative xl:hidden shrink-0">
+    <button
+      onclick={() => (isFilterPopoverOpen = !isFilterPopoverOpen)}
+      class="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border transition-all cursor-pointer {activeFilterCount > 0 ? 'bg-cyan-50 dark:bg-cyan-950/70 border-cyan-300 dark:border-cyan-700/60 text-cyan-800 dark:text-cyan-300 shadow-2xs font-semibold' : 'bg-zinc-100 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+      title="Bộ lọc commit"
+    >
+      <SlidersHorizontal class="w-3.5 h-3.5 {activeFilterCount > 0 ? 'text-cyan-600 dark:text-cyan-400' : 'text-zinc-400'}" />
+      {#if activeFilterCount > 0}
+        <span class="w-4 h-4 rounded-full bg-cyan-600 text-white font-mono text-[9px] flex items-center justify-center font-bold">
+          {activeFilterCount}
+        </span>
+      {/if}
+      <ChevronDown class="w-2.5 h-2.5 opacity-60 transition-transform {isFilterPopoverOpen ? 'rotate-180' : ''}" />
+    </button>
+
+    {#if isFilterPopoverOpen}
+      <!-- Backdrop -->
+      <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+      <div class="fixed inset-0 z-40" onclick={() => (isFilterPopoverOpen = false)}></div>
+
+      <!-- Popover Menu -->
+      <div class="absolute right-0 mt-1 w-64 max-h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl z-50 p-2.5 text-xs font-sans animate-in fade-in zoom-in-95 duration-100 space-y-2">
+        <div class="flex items-center justify-between pb-1.5 border-b border-zinc-100 dark:border-zinc-800/80">
+          <span class="font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+            <SlidersHorizontal class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+            Bộ lọc commit
+          </span>
+          {#if hasActiveFilters && onClearAllFilters}
+            <button
+              onclick={() => {
+                onClearAllFilters();
+                isFilterPopoverOpen = false;
+              }}
+              class="text-[10px] text-rose-600 hover:text-rose-500 font-medium cursor-pointer"
+            >
+              Đặt lại
+            </button>
+          {/if}
+        </div>
+
+        <!-- Quick Toggles -->
+        <div class="space-y-1">
+          {#if onToggleHideMerges}
+            <button
+              type="button"
+              onclick={onToggleHideMerges}
+              class="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-left transition-colors cursor-pointer {filterHideMerges ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 font-medium' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300'}"
+            >
+              <span class="flex items-center gap-2">
+                <GitMerge class="w-3.5 h-3.5 {filterHideMerges ? 'text-amber-600' : 'text-zinc-400'}" />
+                {localeState.t('toolbar.hideMergesActive')}
+              </span>
+              {#if filterHideMerges}
+                <Check class="w-3.5 h-3.5 text-amber-600" />
+              {/if}
+            </button>
+          {/if}
+
+          {#if onToggleMyCommits}
+            <button
+              type="button"
+              onclick={onToggleMyCommits}
+              class="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-left transition-colors cursor-pointer {filterMyCommits ? 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-900 dark:text-cyan-200 font-medium' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300'}"
+            >
+              <span class="flex items-center gap-2">
+                <UserCheck class="w-3.5 h-3.5 {filterMyCommits ? 'text-cyan-600' : 'text-zinc-400'}" />
+                {localeState.t('toolbar.myCommitsActive')}
+              </span>
+              {#if filterMyCommits}
+                <Check class="w-3.5 h-3.5 text-cyan-600" />
+              {/if}
+            </button>
+          {/if}
+
+          <button
+            type="button"
+            onclick={togglePickaxeMode}
+            class="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-left transition-colors cursor-pointer {isPickaxeMode ? 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-900 dark:text-cyan-200 font-medium' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300'}"
+          >
+            <span class="flex items-center gap-2">
+              <Code2 class="w-3.5 h-3.5 {isPickaxeMode ? 'text-cyan-600' : 'text-zinc-400'}" />
+              Tìm diff code (-S)
+            </span>
+            {#if isPickaxeMode}
+              <Check class="w-3.5 h-3.5 text-cyan-600" />
+            {/if}
+          </button>
+        </div>
+
+        <!-- Filter Author Selector Button -->
+        {#if onSelectAuthor}
+          <div class="pt-1 border-t border-zinc-100 dark:border-zinc-800/80">
+            <div class="text-[10px] font-semibold text-zinc-400 uppercase mb-1">Tác giả</div>
+            <button
+              type="button"
+              onclick={() => {
+                isAuthorMenuOpen = true;
+                isFilterPopoverOpen = false;
+              }}
+              class="w-full flex items-center justify-between px-2 py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-left cursor-pointer"
+            >
+              <span class="truncate">{filterAuthor ? (authors.find(a => a.email === filterAuthor || a.name === filterAuthor)?.name || filterAuthor) : 'Tất cả tác giả'}</span>
+              <ChevronDown class="w-3 h-3 text-zinc-400" />
+            </button>
+          </div>
+        {/if}
+
+        <!-- Filter Date Range Selector Button -->
+        {#if onSelectDateRange}
+          <div class="pt-1 border-t border-zinc-100 dark:border-zinc-800/80">
+            <div class="text-[10px] font-semibold text-zinc-400 uppercase mb-1">Khoảng ngày</div>
+            <button
+              type="button"
+              onclick={() => {
+                isDateMenuOpen = true;
+                isFilterPopoverOpen = false;
+              }}
+              class="w-full flex items-center justify-between px-2 py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-left cursor-pointer"
+            >
+              <span class="truncate">{filterDateRange === 'all' ? 'Toàn thời gian' : filterDateRange}</span>
+              <ChevronDown class="w-3 h-3 text-zinc-400" />
+            </button>
+          </div>
+        {/if}
+      </div>
+    {/if}
+  </div>
+
+  <!-- Desktop Individual Filter Buttons (visible on >= xl) -->
+  <div class="hidden xl:flex items-center gap-1.5 shrink-0">
+    <!-- Pickaxe Code Search Toggle Button -->
+    <button
+      onclick={togglePickaxeMode}
     class="px-1.5 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-all cursor-pointer {isPickaxeMode ? 'bg-cyan-500/20 dark:bg-cyan-500/25 text-cyan-700 dark:text-cyan-300 border border-cyan-500/40 shadow-xs' : 'bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800/80 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
     title="Pickaxe Code Diff Search (-S): Tìm commit theo nội dung code bị thêm/xóa"
   >
@@ -282,7 +423,7 @@
         title={localeState.t('toolbar.filterAuthor')}
       >
         <User class="w-3.5 h-3.5 {filterAuthor ? 'text-cyan-600 dark:text-cyan-400' : 'text-zinc-400'}" />
-        <span class="max-w-[75px] truncate font-sans text-[11px]">
+        <span class="{filterAuthor ? 'inline' : 'hidden 2xl:inline'} max-w-[75px] truncate font-sans text-[11px]">
           {filterAuthor ? (authors.find(a => a.email === filterAuthor || a.name === filterAuthor)?.name || filterAuthor) : localeState.t('toolbar.filterAuthor')}
         </span>
         <ChevronDown class="w-2.5 h-2.5 opacity-60" />
@@ -363,7 +504,7 @@
         title={localeState.t('toolbar.filterDate')}
       >
         <Calendar class="w-3.5 h-3.5 {filterDateRange !== 'all' ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-400'}" />
-        <span class="text-[11px] font-sans">
+        <span class="{filterDateRange !== 'all' ? 'inline' : 'hidden 2xl:inline'} text-[11px] font-sans">
           {#if filterDateRange === '24h'}
             24h
           {:else if filterDateRange === '7d'}
@@ -480,4 +621,5 @@
       </button>
     </div>
   {/if}
+  </div>
 </div>

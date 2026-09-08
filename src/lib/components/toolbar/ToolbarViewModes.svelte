@@ -4,7 +4,6 @@
     GitGraph,
     Layers,
     GitPullRequest,
-    Activity,
     Split,
     ChevronDown,
     Crosshair,
@@ -22,7 +21,6 @@
     conflictedFilesCount?: number;
     openPRCount?: number;
     onChangeViewMode: (mode: ViewMode) => void;
-    onOpenInsights?: () => void;
   }
 
   let {
@@ -32,7 +30,6 @@
     conflictedFilesCount = 0,
     openPRCount = 0,
     onChangeViewMode,
-    onOpenInsights,
   }: Props = $props();
 
   let showMoreDropdown = $state(false);
@@ -75,7 +72,7 @@
     title={localeState.t('toolbar.viewModes.graphTitle')}
   >
     <GitGraph class="w-3.5 h-3.5 shrink-0 text-cyan-600 dark:text-cyan-400" />
-    <span class="hidden sm:inline">{localeState.t('toolbar.viewModes.graph')}</span>
+    <span class="hidden xl:inline">{localeState.t('toolbar.viewModes.graph')}</span>
   </button>
 
   <!-- 2. PINNED TAB: Changes (Working Tree) -->
@@ -85,7 +82,7 @@
     title={localeState.t('toolbar.viewModes.changesTitle')}
   >
     <Layers class="w-3.5 h-3.5 shrink-0 text-amber-500 dark:text-amber-400" />
-    <span class="{viewMode === 'changes' ? 'inline' : 'hidden md:inline'} text-[11px]">{localeState.t('toolbar.viewModes.changes')}</span>
+    <span class="{viewMode === 'changes' ? 'inline' : 'hidden xl:inline'} text-[11px]">{localeState.t('toolbar.viewModes.changes')}</span>
     {#if dirtyFilesCount > 0 || stagedFilesCount > 0}
       <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono {stagedFilesCount > 0 ? 'bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 dark:border-emerald-500/40 font-bold' : 'bg-amber-500/15 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 dark:border-amber-500/40 font-bold'}">
         {stagedFilesCount > 0 ? `${stagedFilesCount}S` : dirtyFilesCount}
@@ -105,7 +102,7 @@
         <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-zinc-900 animate-pulse {viewMode === 'pr' ? 'hidden' : 'sm:hidden'}"></span>
       {/if}
     </div>
-    <span class="{viewMode === 'pr' || openPRCount > 0 ? 'inline' : 'hidden md:inline'} text-[11px]">{localeState.t('toolbar.viewModes.prs')}</span>
+    <span class="{viewMode === 'pr' ? 'inline' : 'hidden xl:inline'} text-[11px]">{localeState.t('toolbar.viewModes.prs')}</span>
     {#if openPRCount > 0}
       <span
         class="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold flex items-center gap-1 shrink-0 {viewMode === 'pr' ? 'bg-amber-500/15 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 dark:border-amber-500/40' : 'bg-amber-500/20 dark:bg-amber-500/30 text-amber-800 dark:text-amber-200 border border-amber-500/40 dark:border-amber-500/50 shadow-xs'}"
@@ -115,18 +112,6 @@
       </span>
     {/if}
   </button>
-
-  <!-- 4. PINNED TAB: Insights -->
-  {#if onOpenInsights}
-    <button
-      onclick={onOpenInsights}
-      class="px-2 py-1 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/40"
-      title={localeState.t('toolbar.viewModes.insightsTitle')}
-    >
-      <Activity class="w-3.5 h-3.5 shrink-0 text-emerald-500 dark:text-emerald-400" />
-      <span class="hidden lg:inline text-[11px]">{localeState.t('toolbar.viewModes.insights')}</span>
-    </button>
-  {/if}
 
   <!-- 5. DYNAMIC TAB: Conflicts Resolver (Only visible when conflicts exist or active) -->
   {#if viewMode === 'conflict' || conflictedFilesCount > 0}
@@ -152,7 +137,7 @@
       class="px-2 py-1 rounded-md flex items-center gap-1 text-xs font-medium transition-all cursor-pointer {isExtendedModeActive ? 'bg-white dark:bg-zinc-800 text-cyan-700 dark:text-cyan-300 font-semibold shadow-xs border border-cyan-300 dark:border-cyan-700/60' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/40'}"
       title={localeState.t('toolbar.viewModes.moreViewsTitle')}
     >
-      <span class="text-[11px]">
+      <span class="text-[11px] {isExtendedModeActive ? 'inline' : 'hidden lg:inline'}">
         {isExtendedModeActive ? getExtendedModeLabel(viewMode) : localeState.t('toolbar.viewModes.moreViews')}
       </span>
       <ChevronDown class="w-3 h-3 transition-transform {showMoreDropdown ? 'rotate-180' : ''}" />

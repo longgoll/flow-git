@@ -165,9 +165,9 @@
 
 <svelte:window onclick={handleWindowClick} />
 
-<header class="relative z-40 h-12 border-b border-zinc-200 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md px-2 sm:px-3 flex items-center justify-between select-none shrink-0 gap-1 sm:gap-2 w-full max-w-full">
+<header class="relative z-40 h-12 border-b border-zinc-200 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md px-2 sm:px-3 flex items-center justify-between select-none shrink-0 gap-1.5 sm:gap-2 w-full max-w-full overflow-x-clip">
   <!-- Left: Sidebar Toggle, App Logo & Unified Repo/Branch Breadcrumb or Tabs -->
-  <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink">
+  <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
     <!-- Sidebar Toggle Button -->
     {#if onToggleSidebar}
       <button
@@ -225,8 +225,10 @@
         {/if}
       </div>
     {/if}
+  </div>
 
-    <!-- Main View Mode Switcher: Clean, Unified Segmented Control -->
+  <!-- Center: Main View Mode Switcher -->
+  <div class="flex items-center justify-center shrink-0 px-0.5">
     <ToolbarViewModes
       {viewMode}
       {dirtyFilesCount}
@@ -234,7 +236,6 @@
       {conflictedFilesCount}
       {openPRCount}
       {onChangeViewMode}
-      {onOpenInsights}
     />
   </div>
 

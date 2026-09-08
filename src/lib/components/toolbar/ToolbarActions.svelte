@@ -79,11 +79,11 @@
     title={isBehind ? localeState.t('toolbar.smartSyncBehindTooltip', { count: currentBranch?.behind_count ?? 0, upstream: currentBranch?.upstream_name || 'origin' }) : localeState.t('toolbar.smartSyncTooltip')}
   >
     <CloudDownload class="w-3.5 h-3.5 transition-transform group-hover:scale-105 {isBehind ? 'text-amber-600 dark:text-amber-400 animate-pulse' : 'text-cyan-600 dark:text-cyan-400'} {isSyncing ? 'animate-bounce' : ''}" />
-    <span class="text-[11px] hidden xl:inline">
+    <span class="text-[11px] hidden 2xl:inline">
       {isSyncing ? localeState.t('toolbar.syncing') : isBehind ? localeState.t('toolbar.syncBehindBadge', { count: currentBranch?.behind_count ?? 0 }) : localeState.t('toolbar.sync')}
     </span>
     {#if isBehind}
-      <span class="xl:hidden flex items-center text-[10px] font-bold text-amber-600 dark:text-amber-400">
+      <span class="2xl:hidden flex items-center text-[10px] font-bold text-amber-600 dark:text-amber-400">
         ↓{currentBranch?.behind_count}
       </span>
     {/if}
@@ -100,7 +100,7 @@
       title={localeState.t('toolbar.publishBranchTooltip', { branch: currentBranch.shorthand })}
     >
       <CloudUpload class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 group-hover:scale-110 transition-transform {isPushing ? 'animate-bounce' : ''}" />
-      <span class="text-[11px] font-semibold hidden xl:inline">{isPushing ? localeState.t('toolbar.publishing') : localeState.t('toolbar.publish')}</span>
+      <span class="text-[11px] font-semibold hidden 2xl:inline">{isPushing ? localeState.t('toolbar.publishing') : localeState.t('toolbar.publish')}</span>
     </button>
   {:else}
     <button
@@ -114,7 +114,7 @@
         : localeState.t('toolbar.pushSyncedTooltip')}
     >
       <Upload class="w-3.5 h-3.5 {currentBranch && currentBranch.ahead_count > 0 ? 'text-emerald-600 dark:text-emerald-400 group-hover:scale-105' : 'text-zinc-400 dark:text-zinc-500'} transition-transform {isPushing ? 'animate-bounce' : ''}" />
-      <span class="text-[11px] hidden xl:inline">{isPushing ? localeState.t('toolbar.pushing') : localeState.t('toolbar.push')}</span>
+      <span class="text-[11px] hidden 2xl:inline">{isPushing ? localeState.t('toolbar.pushing') : localeState.t('toolbar.push')}</span>
       {#if currentBranch && currentBranch.ahead_count > 0}
         <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-emerald-600 text-white font-bold">
           {currentBranch.ahead_count}
@@ -152,11 +152,11 @@
 {#if onOpenAI}
   <button
     onclick={onOpenAI}
-    class="flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/80 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-all cursor-pointer group shadow-xs shrink-0"
+    class="hidden md:flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/80 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-all cursor-pointer group shadow-xs shrink-0"
     title={localeState.t('toolbar.aiAssistant')}
   >
     <Sparkles class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors" />
-    <span class="font-medium text-[11px] hidden sm:inline">AI</span>
+    <span class="font-medium text-[11px] hidden 2xl:inline">AI</span>
   </button>
 {/if}
 
@@ -178,7 +178,7 @@
 {:else if onOpenQuickHotfix}
   <button
     onclick={onOpenQuickHotfix}
-    class="flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/80 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-all cursor-pointer group shadow-xs shrink-0"
+    class="hidden md:flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/80 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-all cursor-pointer group shadow-xs shrink-0"
     title={localeState.t('toolbar.quickHotfixTooltip')}
   >
     <Flame class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 group-hover:text-amber-500 transition-colors" />
@@ -214,7 +214,7 @@
 {#if onOpenInsights}
   <button
     onclick={onOpenInsights}
-    class="flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 border border-zinc-200 dark:border-zinc-800 hover:border-cyan-300 dark:hover:border-cyan-700/60 text-xs text-zinc-700 dark:text-zinc-300 hover:text-cyan-900 dark:hover:text-cyan-200 transition-all cursor-pointer group shadow-xs shrink-0"
+    class="hidden 2xl:flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 border border-zinc-200 dark:border-zinc-800 hover:border-cyan-300 dark:hover:border-cyan-700/60 text-xs text-zinc-700 dark:text-zinc-300 hover:text-cyan-900 dark:hover:text-cyan-200 transition-all cursor-pointer group shadow-xs shrink-0"
     title={localeState.t('insights.title')}
   >
     <Activity class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors" />

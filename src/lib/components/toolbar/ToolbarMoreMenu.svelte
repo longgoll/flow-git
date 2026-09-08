@@ -87,7 +87,7 @@
   </button>
 
   {#if showToolsMenu}
-    <div class="absolute right-0 top-full mt-1.5 w-64 rounded-xl bg-white/95 dark:bg-zinc-900/95 border border-zinc-200 dark:border-zinc-800 shadow-2xl backdrop-blur-xl p-1.5 z-50 text-xs font-sans animate-in fade-in slide-in-from-top-1 duration-150">
+    <div class="absolute right-0 top-full mt-1.5 w-68 sm:w-72 max-h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain rounded-xl bg-white/95 dark:bg-zinc-900/95 border border-zinc-200 dark:border-zinc-800 shadow-2xl backdrop-blur-xl p-1.5 z-50 text-xs font-sans animate-in fade-in slide-in-from-top-1 duration-150">
       <!-- Language Switcher in Dropdown -->
       <div class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500 flex items-center justify-between">
         <span>{localeState.t('language.title')}</span>

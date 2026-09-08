@@ -39,37 +39,28 @@
     onRevealInExplorer,
   }: Props = $props();
 
-  let scrollContainer = $state<HTMLElement | null>(null);
-  let showNewMenu = $state(false);
-  let newMenuPos = $state<{ x: number; y: number }>({ x: 0, y: 0 });
-  let showTabsList = $state(false);
-  let tabsListPos = $state<{ x: number; y: number }>({ x: 0, y: 0 });
+  let triggerEl = $state<HTMLElement | null>(null);
+  let showDropdown = $state(false);
+  let dropdownPos = $state<{ x: number; y: number }>({ x: 0, y: 0 });
   let contextMenuTab = $state<WorkspaceTab | null>(null);
   let contextMenuPos = $state<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  function handleToggleNewMenu(e: MouseEvent) {
-    e.stopPropagation();
-    const target = e.currentTarget as HTMLElement;
-    const rect = target.getBoundingClientRect();
-    newMenuPos = {
-      x: Math.max(10, Math.min(window.innerWidth - 260, rect.left)),
-      y: rect.bottom + 6,
-    };
-    showNewMenu = !showNewMenu;
-    showTabsList = false;
-    contextMenuTab = null;
-  }
+  let activeTab = $derived(tabs.find((t) => t.id === activeTabId) || tabs[0]);
 
-  function handleToggleTabsList(e: MouseEvent) {
+  function handleToggleDropdown(e: MouseEvent) {
     e.stopPropagation();
-    const target = e.currentTarget as HTMLElement;
-    const rect = target.getBoundingClientRect();
-    tabsListPos = {
-      x: Math.max(10, Math.min(window.innerWidth - 280, rect.left)),
-      y: rect.bottom + 6,
-    };
-    showTabsList = !showTabsList;
-    showNewMenu = false;
+    if (showDropdown) {
+      showDropdown = false;
+      return;
+    }
+    if (triggerEl) {
+      const rect = triggerEl.getBoundingClientRect();
+      dropdownPos = {
+        x: Math.max(8, Math.min(window.innerWidth - 300, rect.left)),
+        y: rect.bottom + 6,
+      };
+    }
+    showDropdown = true;
     contextMenuTab = null;
   }
 
@@ -78,32 +69,12 @@
     e.stopPropagation();
     contextMenuTab = tab;
     contextMenuPos = { x: e.clientX, y: e.clientY };
-    showNewMenu = false;
-    showTabsList = false;
   }
 
   function closeAllMenus() {
+    showDropdown = false;
     contextMenuTab = null;
-    showNewMenu = false;
-    showTabsList = false;
   }
-
-  function handleWheel(e: WheelEvent) {
-    if (!scrollContainer) return;
-    if (e.deltaY !== 0) {
-      e.preventDefault();
-      scrollContainer.scrollLeft += e.deltaY;
-    }
-  }
-
-  $effect(() => {
-    if (activeTabId && scrollContainer) {
-      const activeEl = scrollContainer.querySelector('[aria-selected="true"]') as HTMLElement | null;
-      if (activeEl) {
-        activeEl.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
-      }
-    }
-  });
 
   async function copyTabPath(path: string) {
     try {
@@ -118,232 +89,223 @@
 
 <svelte:window onclick={closeAllMenus} />
 
-<div class="relative flex items-center min-w-0 max-w-[280px] sm:max-w-[420px] md:max-w-[580px] lg:max-w-[740px] xl:max-w-[920px] shrink bg-zinc-100/90 dark:bg-zinc-900/90 border border-zinc-200/90 dark:border-zinc-800/90 rounded-lg p-0.5 gap-1 shadow-2xs">
-  <!-- 1. Tabs Horizontal Scroll Area (Mouse-wheel scrollable) -->
-  <div
-    bind:this={scrollContainer}
-    onwheel={handleWheel}
-    class="flex items-center gap-1 overflow-x-auto no-scrollbar scroll-smooth flex-1 min-w-0"
+<div class="relative flex items-center gap-1 shrink-0">
+  <!-- Workspace Selector Dropdown Trigger (Select-Style) -->
+  <button
+    type="button"
+    bind:this={triggerEl}
+    onclick={handleToggleDropdown}
+    class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/80 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 transition-all cursor-pointer select-none max-w-[200px] sm:max-w-[240px] md:max-w-[280px] shadow-xs group text-xs shrink-0"
+    title={activeTab ? `${activeTab.isWorktree ? 'Worktree' : 'Repo'}: ${activeTab.name} (${activeTab.branch || 'HEAD'})` : 'Chọn kho lưu trữ'}
   >
-    {#each tabs as tab (tab.id)}
-      {@const isActive = tab.id === activeTabId}
-      <div
-        role="tab"
-        tabindex="0"
-        aria-selected={isActive}
-        onclick={() => onSelectTab(tab)}
-        onkeydown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onSelectTab(tab);
-          }
-        }}
-        oncontextmenu={(e) => handleContextMenu(e, tab)}
-        class="group relative flex items-center justify-between gap-1.5 px-2.5 py-1 rounded-md text-xs transition-all duration-150 cursor-pointer select-none shrink-0 min-w-[120px] max-w-[190px] border {isActive
-          ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-zinc-50 font-medium border-zinc-300 dark:border-zinc-700 shadow-xs ring-1 ring-cyan-500/30 dark:ring-cyan-400/30'
-          : 'bg-zinc-200/70 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-zinc-100 border-zinc-300/60 dark:border-zinc-750'}"
-        title="{tab.isWorktree ? 'Linked Worktree' : 'Repository'}: {tab.name}&#10;Branch: {tab.branch || 'HEAD'}&#10;Path: {tab.path}"
-      >
-        <!-- Left: Icon & Info -->
-        <div class="flex items-center gap-1.5 min-w-0 flex-1">
-          <!-- Icon: Worktree (Fork/Tree) vs Main Repo -->
-          {#if tab.isWorktree}
-            <div class="flex items-center gap-0.5 shrink-0">
-              <FolderTree class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span class="text-[8px] font-mono px-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-700/60 leading-tight">
-                WT
-              </span>
-            </div>
-          {:else}
-            <FolderGit2 class="w-3.5 h-3.5 shrink-0 {isActive ? 'text-cyan-600 dark:text-cyan-400' : 'text-zinc-500 dark:text-zinc-400'}" />
-          {/if}
-
-          <!-- Project Tag Badge (Work/Personal/Client/OpenSource) -->
-          {#if tab.path && repoBindingState.getTagForRepo(tab.path)}
-            {@const pTag = repoBindingState.getTagForRepo(tab.path)}
-            <span class="text-[10px] shrink-0 select-none">
-              {pTag === 'work' ? '🏢' : pTag === 'personal' ? '👤' : pTag === 'client' ? '💼' : '🚀'}
-            </span>
-          {/if}
-
-          <!-- Tab Repo / Worktree Name -->
-          <span class="truncate font-mono text-[11px] leading-tight font-medium">
-            {tab.name}
-          </span>
-
-          <!-- Current Branch Shorthand -->
-          {#if tab.branch}
-            <div class="flex items-center gap-0.5 font-mono text-[10px] text-zinc-500 dark:text-zinc-400 shrink-0 max-w-[65px] truncate">
-              <span class="text-zinc-400 dark:text-zinc-600 select-none">/</span>
-              <GitBranch class="w-2.5 h-2.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-              <span class="truncate">{tab.branch}</span>
-            </div>
-          {/if}
-        </div>
-
-        <!-- Right: PR Badge & Dirty Indicator Dot & Close Button -->
-        <div class="flex items-center gap-1 shrink-0 ml-1">
-          {#if tab.openPRCount && tab.openPRCount > 0}
-            <span
-              class="flex items-center gap-0.5 px-1 py-0.2 rounded-full text-[9px] font-mono font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shrink-0"
-              title={localeState.t('tabBar.openPrsTooltip', { count: tab.openPRCount })}
-            >
-              <span class="w-1 h-1 rounded-full bg-amber-500 shrink-0 animate-pulse"></span>
-              <span>{tab.openPRCount} PR</span>
-            </span>
-          {/if}
-
-          {#if tab.dirtyFilesCount && tab.dirtyFilesCount > 0}
-            <span
-              class="w-1.5 h-1.5 rounded-full bg-amber-500 ring-2 ring-amber-500/20 shrink-0 animate-pulse"
-              title={localeState.t('tabBar.dirtyFilesTooltip', { count: tab.dirtyFilesCount })}
-            ></span>
-          {/if}
-
-          {#if tabs.length > 1}
-            <button
-              type="button"
-              onclick={(e) => {
-                e.stopPropagation();
-                onCloseTab(tab.id);
-              }}
-              class="p-0.5 rounded hover:bg-zinc-300/80 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all shrink-0 {isActive ? 'opacity-70 hover:opacity-100' : 'opacity-0 group-hover:opacity-100'}"
-              title={localeState.t('tabBar.closeTabTooltip')}
-            >
-              <X class="w-3 h-3" />
-            </button>
-          {/if}
-        </div>
+    <!-- Icon: Worktree vs Main Repo -->
+    {#if activeTab?.isWorktree}
+      <div class="flex items-center gap-0.5 shrink-0">
+        <FolderTree class="w-3.5 h-3.5 text-amber-500" />
+        <span class="text-[8px] font-mono px-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-700/60 leading-tight">
+          WT
+        </span>
       </div>
-    {/each}
-  </div>
-
-  <!-- 2. Pinned Action Buttons on Right: Always visible regardless of scrolling -->
-  <div class="flex items-center gap-0.5 shrink-0 pl-1 border-l border-zinc-200/80 dark:border-zinc-800/80">
-    {#if tabs.length > 2}
-      <button
-        type="button"
-        onclick={handleToggleTabsList}
-        class="p-1 rounded-md hover:bg-zinc-200/80 dark:hover:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer shrink-0 flex items-center gap-0.5 text-[10px] font-mono px-1.5"
-        title={localeState.t('tabBar.viewAllTabsTooltip', { count: tabs.length })}
-      >
-        <span>{tabs.length}</span>
-        <ChevronDown class="w-3 h-3" />
-      </button>
+    {:else}
+      <FolderGit2 class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
     {/if}
 
-    <button
-      type="button"
-      onclick={handleToggleNewMenu}
-      class="p-1 rounded-md hover:bg-zinc-200/80 dark:hover:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer shrink-0"
-      title={localeState.t('tabBar.openMoreTabsTooltip')}
-    >
-      <Plus class="w-3.5 h-3.5" />
-    </button>
-  </div>
+    <!-- Project Tag Badge (if configured) -->
+    {#if activeTab?.path && repoBindingState.getTagForRepo(activeTab.path)}
+      {@const pTag = repoBindingState.getTagForRepo(activeTab.path)}
+      <span class="text-[10px] shrink-0 select-none">
+        {pTag === 'work' ? '🏢' : pTag === 'personal' ? '👤' : pTag === 'client' ? '💼' : '🚀'}
+      </span>
+    {/if}
+
+    <!-- Tab Name -->
+    <span class="truncate font-mono text-[11px] font-semibold text-zinc-900 dark:text-zinc-100 min-w-0">
+      {activeTab?.name || 'Chọn repo...'}
+    </span>
+
+    <!-- Branch Shorthand -->
+    {#if activeTab?.branch}
+      <span class="text-zinc-400 dark:text-zinc-600 text-[10px] select-none">/</span>
+      <div class="flex items-center gap-0.5 font-mono text-[10px] text-zinc-500 dark:text-zinc-400 shrink-0 max-w-[70px] truncate">
+        <GitBranch class="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+        <span class="truncate">{activeTab.branch}</span>
+      </div>
+    {/if}
+
+    <!-- Dirty Dot Indicator -->
+    {#if activeTab?.dirtyFilesCount && activeTab.dirtyFilesCount > 0}
+      <span
+        class="w-1.5 h-1.5 rounded-full bg-amber-500 ring-2 ring-amber-500/20 shrink-0 animate-pulse"
+        title={localeState.t('tabBar.dirtyFilesTooltip', { count: activeTab.dirtyFilesCount })}
+      ></span>
+    {/if}
+
+    <!-- Open PR Badge -->
+    {#if activeTab?.openPRCount && activeTab.openPRCount > 0}
+      <span
+        class="px-1 py-0.2 rounded-full text-[9px] font-mono font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shrink-0"
+        title={localeState.t('tabBar.openPrsTooltip', { count: activeTab.openPRCount })}
+      >
+        {activeTab.openPRCount} PR
+      </span>
+    {/if}
+
+    <!-- Multiple Tabs Count Badge -->
+    {#if tabs.length > 1}
+      <span class="text-[9px] font-mono px-1 py-0.2 rounded bg-zinc-200/90 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-semibold shrink-0 ml-0.5">
+        {tabs.length}
+      </span>
+    {/if}
+
+    <ChevronDown class="w-3 h-3 text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-200 transition-transform shrink-0 ml-auto {showDropdown ? 'rotate-180' : ''}" />
+  </button>
+
+  <!-- Quick Add / Open New Repo Button -->
+  <button
+    type="button"
+    onclick={onOpenNewRepo}
+    class="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/80 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer shrink-0 shadow-xs"
+    title={localeState.t('tabBar.openOtherRepo')}
+  >
+    <Plus class="w-3.5 h-3.5" />
+  </button>
 </div>
 
-<!-- New Tab Dropdown Menu (Rendered Fixed to avoid overflow clipping) -->
-{#if showNewMenu}
+<!-- Dropdown Menu (Fixed Position to avoid clipping) -->
+{#if showDropdown}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
   <div
     role="menu"
     tabindex="-1"
-    class="fixed z-[100] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl py-1.5 w-60 text-xs animate-in fade-in zoom-in-95 duration-100"
-    style="top: {newMenuPos.y}px; left: {newMenuPos.x}px;"
+    class="fixed z-[100] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl py-1.5 w-72 max-h-96 overflow-y-auto text-xs animate-in fade-in zoom-in-95 duration-100"
+    style="top: {dropdownPos.y}px; left: {dropdownPos.x}px;"
     onclick={(e) => e.stopPropagation()}
   >
-    <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-      {localeState.t('tabBar.addTabTitle')}
-    </div>
-
-    <button
-      type="button"
-      onclick={() => {
-        showNewMenu = false;
-        onOpenNewRepo();
-      }}
-      class="w-full px-3 py-2 flex items-center gap-2.5 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left cursor-pointer transition-colors"
-    >
-      <div class="p-1.5 rounded-lg bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400">
-        <FolderPlus class="w-4 h-4" />
-      </div>
-      <div>
-        <div class="font-medium text-zinc-900 dark:text-zinc-100">{localeState.t('tabBar.openOtherRepo')}</div>
-        <div class="text-[10px] text-zinc-500 dark:text-zinc-400">{localeState.t('tabBar.openOtherRepoDesc')}</div>
-      </div>
-    </button>
-
-    {#if onOpenWorktrees}
-      <button
-        type="button"
-        onclick={() => {
-          showNewMenu = false;
-          onOpenWorktrees();
-        }}
-        class="w-full px-3 py-2 flex items-center gap-2.5 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left cursor-pointer transition-colors border-t border-zinc-100 dark:border-zinc-800/80"
-      >
-        <div class="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
-          <GitFork class="w-4 h-4" />
-        </div>
-        <div>
-          <div class="font-medium text-zinc-900 dark:text-zinc-100">{localeState.t('tabBar.createParallelWorktree')}</div>
-          <div class="text-[10px] text-zinc-500 dark:text-zinc-400">{localeState.t('tabBar.createParallelWorktreeDesc')}</div>
-        </div>
-      </button>
-    {/if}
-  </div>
-{/if}
-
-<!-- All Tabs Quick Switcher Dropdown Menu -->
-{#if showTabsList}
-  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-  <div
-    role="menu"
-    tabindex="-1"
-    class="fixed z-[100] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl py-1.5 w-64 max-h-80 overflow-y-auto text-xs animate-in fade-in zoom-in-95 duration-100"
-    style="top: {tabsListPos.y}px; left: {tabsListPos.x}px;"
-    onclick={(e) => e.stopPropagation()}
-  >
-    <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center justify-between">
+    <!-- Section Header -->
+    <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/80 pb-1 mb-1">
       <span>{localeState.t('tabBar.openTabsTitle')}</span>
       <span class="font-mono text-[9px]">{localeState.t('tabBar.tabsCount', { count: tabs.length })}</span>
     </div>
 
-    {#each tabs as t (t.id)}
-      {@const isActive = t.id === activeTabId}
-      <button
-        type="button"
-        onclick={() => {
-          showTabsList = false;
-          onSelectTab(t);
-        }}
-        class="w-full px-3 py-1.5 flex items-center justify-between text-left cursor-pointer transition-colors {isActive ? 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-900 dark:text-cyan-200 font-medium' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300'}"
-      >
-        <div class="flex items-center gap-2 truncate pr-2">
-          {#if t.isWorktree}
-            <FolderTree class="w-3.5 h-3.5 text-amber-500 shrink-0" />
-          {:else}
-            <FolderGit2 class="w-3.5 h-3.5 text-cyan-500 shrink-0" />
-          {/if}
-          <div class="truncate">
-            <div class="truncate font-mono text-[11px] leading-tight">{t.name}</div>
-            {#if t.branch}
-              <div class="text-[9px] text-zinc-400 truncate">{t.branch}</div>
+    <!-- Tabs List -->
+    <div class="space-y-0.5 px-1">
+      {#each tabs as t (t.id)}
+        {@const isActive = t.id === activeTabId}
+        <div
+          role="menuitem"
+          tabindex="0"
+          onclick={() => {
+            showDropdown = false;
+            onSelectTab(t);
+          }}
+          onkeydown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              showDropdown = false;
+              onSelectTab(t);
+            }
+          }}
+          oncontextmenu={(e) => handleContextMenu(e, t)}
+          class="group w-full px-2.5 py-1.5 rounded-lg flex items-center justify-between text-left cursor-pointer transition-colors {isActive ? 'bg-cyan-50 dark:bg-cyan-950/50 text-cyan-950 dark:text-cyan-100 font-medium' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300'}"
+        >
+          <!-- Left: Icon & Info -->
+          <div class="flex items-center gap-2 truncate pr-2 min-w-0 flex-1">
+            {#if t.isWorktree}
+              <FolderTree class="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            {:else}
+              <FolderGit2 class="w-3.5 h-3.5 {isActive ? 'text-cyan-600 dark:text-cyan-400' : 'text-zinc-400'} shrink-0" />
+            {/if}
+
+            <div class="truncate min-w-0 flex-1">
+              <div class="truncate font-mono text-[11px] leading-tight flex items-center gap-1.5">
+                <span class="font-semibold">{t.name}</span>
+                {#if t.isWorktree}
+                  <span class="text-[8px] font-mono px-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-700/60 leading-tight">
+                    WT
+                  </span>
+                {/if}
+              </div>
+              {#if t.branch}
+                <div class="text-[10px] text-zinc-400 dark:text-zinc-500 truncate flex items-center gap-0.5 font-mono">
+                  <GitBranch class="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>{t.branch}</span>
+                </div>
+              {/if}
+            </div>
+          </div>
+
+          <!-- Right: Badges & Close Button -->
+          <div class="flex items-center gap-1.5 shrink-0">
+            {#if t.dirtyFilesCount && t.dirtyFilesCount > 0}
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500" title="{t.dirtyFilesCount} dirty files"></span>
+            {/if}
+
+            {#if isActive}
+              <Check class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+            {/if}
+
+            {#if tabs.length > 1}
+              <button
+                type="button"
+                onclick={(e) => {
+                  e.stopPropagation();
+                  onCloseTab(t.id);
+                }}
+                class="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+                title={localeState.t('tabBar.closeTabTooltip')}
+              >
+                <X class="w-3 h-3" />
+              </button>
             {/if}
           </div>
         </div>
+      {/each}
+    </div>
 
-        <div class="flex items-center gap-1 shrink-0">
-          {#if t.dirtyFilesCount && t.dirtyFilesCount > 0}
-            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-          {/if}
-          {#if isActive}
-            <Check class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-          {/if}
-        </div>
+    <div class="h-px bg-zinc-100 dark:border-zinc-800/80 my-1.5"></div>
+
+    <!-- Actions -->
+    <div class="space-y-0.5 px-1">
+      <button
+        type="button"
+        onclick={() => {
+          showDropdown = false;
+          onOpenNewRepo();
+        }}
+        class="w-full px-2.5 py-1.5 rounded-lg flex items-center gap-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left cursor-pointer transition-colors"
+      >
+        <FolderPlus class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
+        <span class="text-[11px] font-medium">{localeState.t('tabBar.openOtherRepo')}</span>
       </button>
-    {/each}
+
+      {#if onOpenWorktrees}
+        <button
+          type="button"
+          onclick={() => {
+            showDropdown = false;
+            onOpenWorktrees();
+          }}
+          class="w-full px-2.5 py-1.5 rounded-lg flex items-center gap-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left cursor-pointer transition-colors"
+        >
+          <GitFork class="w-3.5 h-3.5 text-amber-500 shrink-0" />
+          <span class="text-[11px] font-medium">{localeState.t('tabBar.createParallelWorktree')}</span>
+        </button>
+      {/if}
+
+      {#if tabs.length > 1 && onCloseOtherTabs}
+        <button
+          type="button"
+          onclick={() => {
+            showDropdown = false;
+            if (activeTabId && onCloseOtherTabs) onCloseOtherTabs(activeTabId);
+          }}
+          class="w-full px-2.5 py-1.5 rounded-lg flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left cursor-pointer transition-colors text-[11px]"
+        >
+          <X class="w-3.5 h-3.5 shrink-0" />
+          <span>{localeState.t('tabBar.closeOtherTabs')}</span>
+        </button>
+      {/if}
+    </div>
   </div>
 {/if}
 
@@ -353,7 +315,7 @@
   <div
     role="menu"
     tabindex="-1"
-    class="fixed z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl py-1 w-48 text-xs animate-in fade-in zoom-in-95 duration-75"
+    class="fixed z-[110] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl py-1 w-48 text-xs animate-in fade-in zoom-in-95 duration-75"
     style="top: {contextMenuPos.y}px; left: {contextMenuPos.x}px;"
     onclick={(e) => e.stopPropagation()}
   >
@@ -396,30 +358,6 @@
         <X class="w-3.5 h-3.5" />
         <span>{localeState.t('tabBar.closeTab')}</span>
       </button>
-
-      {#if onCloseOtherTabs}
-        <button
-          type="button"
-          onclick={() => {
-            if (contextMenuTab && onCloseOtherTabs) onCloseOtherTabs(contextMenuTab.id);
-            closeAllMenus();
-          }}
-          class="w-full px-3 py-1.5 flex items-center gap-2 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left cursor-pointer"
-        >
-          <span>{localeState.t('tabBar.closeOtherTabs')}</span>
-        </button>
-      {/if}
     {/if}
   </div>
 {/if}
-
-<style>
-  /* Ẩn thanh cuộn nhưng vẫn cuộn ngang mượt mà */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-</style>

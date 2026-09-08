@@ -2,11 +2,15 @@ import type { AccountProfile, GitCredentials, GitHubPullRequest, BackgroundFetch
 import { executeRemoteWithAuth, getActiveAccount, saveAccountAuth, smartSync, silentBackgroundFetch, isTauri } from '../api';
 import { listen } from '@tauri-apps/api/event';
 import {
-  fetchGitHubPullRequests,
-  parseGitHubRemote,
   getStoredGitHubToken,
   saveGitHubToken,
 } from '../api/githubApi';
+import {
+  getRemoteAdapter,
+  getStoredGitLabToken,
+  getStoredBitbucketToken,
+} from '../api/remoteProviderApi';
+
 
 export class RemoteState {
   activeAccount = $state<AccountProfile | null>(null);
@@ -244,25 +248,37 @@ export class RemoteState {
       this.openPRCount = 0;
       return 0;
     }
-    const parsed = parseGitHubRemote(remoteUrl);
-    if (!parsed) {
+    const adapter = getRemoteAdapter(remoteUrl);
+    if (!adapter) {
       this.openPRCount = 0;
       return 0;
     }
     try {
       this.isCheckingPRs = true;
-      let token = this.activeAccount?.token || getStoredGitHubToken();
+      const providerType = adapter.providerInfo.type;
+      let token = this.activeAccount?.token;
+
       if (!token) {
-        const acc = await getActiveAccount('github').catch(() => null);
-        if (acc?.token) {
-          token = acc.token;
-          saveGitHubToken(acc.token);
+        if (providerType === 'github') {
+          token = getStoredGitHubToken();
+          if (!token) {
+            const acc = await getActiveAccount('github').catch(() => null);
+            if (acc?.token) {
+              token = acc.token;
+              saveGitHubToken(acc.token);
+            }
+          }
+        } else if (providerType === 'gitlab') {
+          token = getStoredGitLabToken();
+        } else if (providerType === 'bitbucket') {
+          token = getStoredBitbucketToken();
         }
       }
-      const list = await fetchGitHubPullRequests(parsed.owner, parsed.repo, token, 'open');
+
+      const list = await adapter.fetchPullRequests('open', token);
       const count = Array.isArray(list) ? list.length : 0;
       this.openPRCount = count;
-      this.lastPRCheckRepo = `${parsed.owner}/${parsed.repo}`;
+      this.lastPRCheckRepo = `${adapter.providerInfo.owner}/${adapter.providerInfo.repo}`;
       return count;
     } catch (e) {
       console.debug('Background PR count check skipped/failed:', e);

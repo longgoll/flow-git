@@ -14,10 +14,15 @@
   import {
     createGitHubPullRequest,
     compareGitHubBranches,
-    parseGitHubRemote,
     getStoredGitHubToken,
     saveGitHubToken,
   } from '../api/githubApi';
+  import {
+    getRemoteAdapter,
+    parseRemoteProvider,
+    getStoredGitLabToken,
+    getStoredBitbucketToken,
+  } from '../api/remoteProviderApi';
   import { generateAIPRDescription } from '../api/ai';
   import { getActiveAccount } from '../api/auth';
   import { toast } from '../state/toastState.svelte';
@@ -47,9 +52,12 @@
     onSuccess,
   }: Props = $props();
 
-  let parsedRemote = $derived(parseGitHubRemote(remoteOriginUrl));
+  let adapter = $derived(getRemoteAdapter(remoteOriginUrl));
+  let parsedRemote = $derived(parseRemoteProvider(remoteOriginUrl));
   let repoOwner = $derived(parsedRemote?.owner || '');
   let repoName = $derived(parsedRemote?.repo || '');
+  let providerLabel = $derived(adapter?.getLabel() || 'GitHub');
+  let prTerm = $derived(adapter?.getPRTerm() || 'Pull Request');
 
   // Filter list of valid branch names (excluding remotes / origin prefix if local)
   let branchNames = $derived.by(() => {
@@ -93,14 +101,23 @@
     if (isOpen) {
       errorMessage = '';
       if (!patToken) {
-        getActiveAccount('github')
-          .then((acc) => {
-            if (acc?.token) {
-              patToken = acc.token;
-              saveGitHubToken(acc.token);
-            }
-          })
-          .catch(() => {});
+        if (parsedRemote?.type === 'gitlab') {
+          patToken = getStoredGitLabToken();
+        } else if (parsedRemote?.type === 'bitbucket') {
+          patToken = getStoredBitbucketToken();
+        } else {
+          patToken = getStoredGitHubToken();
+          if (!patToken) {
+            getActiveAccount('github')
+              .then((acc) => {
+                if (acc?.token) {
+                  patToken = acc.token;
+                  saveGitHubToken(acc.token);
+                }
+              })
+              .catch(() => {});
+          }
+        }
       }
 
       // Determine default base branch
@@ -218,16 +235,25 @@
 
     try {
       isSubmitting = true;
-      const newPR = await createGitHubPullRequest(
-        repoOwner,
-        repoName,
-        title.trim(),
-        description.trim(),
-        sourceBranch,
-        targetBranch,
-        isDraft,
-        currentToken
-      );
+      const newPR = adapter
+        ? await adapter.createPullRequest({
+            title: title.trim(),
+            body: description.trim(),
+            head: sourceBranch,
+            base: targetBranch,
+            draft: isDraft,
+            token: currentToken,
+          })
+        : await createGitHubPullRequest(
+            repoOwner,
+            repoName,
+            title.trim(),
+            description.trim(),
+            sourceBranch,
+            targetBranch,
+            isDraft,
+            currentToken
+          );
 
       toast.success(
         localeState.t('pullRequest.create.createdSuccessToast', { number: newPR.number }),
@@ -262,11 +288,14 @@
             <GitPullRequest class="w-5 h-5" />
           </div>
           <div>
-            <h2 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-              {localeState.t('pullRequest.create.title')}
+            <h2 class="text-base font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <span>{prTerm === 'Merge Request' ? localeState.t('pullRequest.reviewer.createMR') : localeState.t('pullRequest.create.title')}</span>
+              <span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono">
+                {providerLabel}
+              </span>
             </h2>
             <p class="text-xs text-zinc-500 font-mono">
-              {repoOwner ? `${repoOwner}/${repoName}` : 'GitHub Remote'}
+              {repoOwner ? `${repoOwner}/${repoName}` : providerLabel}
             </p>
           </div>
         </div>
@@ -514,7 +543,7 @@
               <span>{localeState.t('pullRequest.create.creating')}</span>
             {:else}
               <Check class="w-4 h-4" />
-              <span>{localeState.t('pullRequest.create.createBtn')}</span>
+              <span>{isDraft ? localeState.t('pullRequest.create.createDraftBtn') : (prTerm === 'Merge Request' ? localeState.t('pullRequest.reviewer.createMR') : localeState.t('pullRequest.create.createBtn'))}</span>
             {/if}
           </button>
         </div>

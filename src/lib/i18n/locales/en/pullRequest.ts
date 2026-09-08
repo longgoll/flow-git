@@ -26,6 +26,7 @@ export const pullRequest = {
     inputTokenBtn: "Enter GitHub Token",
     cancelBtn: "Cancel",
     createBtn: "Create Pull Request",
+    createDraftBtn: "Create Draft",
     creating: "Creating PR...",
     comparing: "Checking commit differences between branches...",
     readyToMerge: "Ready to merge:",
@@ -47,7 +48,8 @@ export const pullRequest = {
   reviewer: {
     title: "Pull Request Reviewer",
     createPR: "Create Pull Request",
-    createPRTitle: "Create new Pull Request on GitHub",
+    createMR: "Create Merge Request",
+    createPRTitle: "Create new Pull Request",
     inputToken: "Enter GitHub Token (PAT)",
     tokenConnected: "Token connected",
     changeTokenTitle: "Change GitHub Personal Access Token",

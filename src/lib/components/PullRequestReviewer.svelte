@@ -32,10 +32,15 @@
     mergeGitHubPullRequest,
     updateGitHubPullRequestState,
     deleteGitHubBranch,
-    parseGitHubRemote,
     saveGitHubToken,
     getStoredGitHubToken,
   } from '../api/githubApi';
+  import {
+    getRemoteAdapter,
+    parseRemoteProvider,
+    getStoredGitLabToken,
+    getStoredBitbucketToken,
+  } from '../api/remoteProviderApi';
   import { getActiveAccount } from '../api/auth';
   import { generateAIPRReview } from '../api/ai';
   import { toast } from '../state/toastState.svelte';
@@ -79,10 +84,14 @@
   }: Props = $props();
 
   // Detection & Config
-  let parsedRemote = $derived(parseGitHubRemote(remoteOriginUrl));
-  let repoOwner = $state('');
-  let repoName = $state('');
-  let patToken = $state(getStoredGitHubToken());
+  let adapter = $derived(getRemoteAdapter(remoteOriginUrl));
+  let parsedRemote = $derived(parseRemoteProvider(remoteOriginUrl));
+  let providerType = $derived(parsedRemote?.type || 'github');
+  let providerLabel = $derived(adapter?.getLabel() || 'GitHub');
+  let prTerm = $derived(adapter?.getPRTerm() || 'Pull Request');
+  let repoOwner = $derived(parsedRemote?.owner || '');
+  let repoName = $derived(parsedRemote?.repo || '');
+  let patToken = $state('');
   let showLocalCreatePRModal = $state(false);
   let activeAccountUsername = $state('');
 
@@ -183,25 +192,27 @@
   onMount(() => {
     (async () => {
       if (!patToken) {
-        try {
-          const activeAcc = await getActiveAccount('github');
-          if (activeAcc?.token) {
-            patToken = activeAcc.token;
-            saveGitHubToken(activeAcc.token);
+        if (parsedRemote?.type === 'gitlab') {
+          patToken = getStoredGitLabToken();
+        } else if (parsedRemote?.type === 'bitbucket') {
+          patToken = getStoredBitbucketToken();
+        } else {
+          patToken = getStoredGitHubToken();
+          if (!patToken) {
+            try {
+              const activeAcc = await getActiveAccount('github');
+              if (activeAcc?.token) {
+                patToken = activeAcc.token;
+                saveGitHubToken(activeAcc.token);
+              }
+              if (activeAcc?.username) {
+                activeAccountUsername = activeAcc.username;
+              }
+            } catch (err) {
+              console.warn('Could not load active account token', err);
+            }
           }
-          if (activeAcc?.username) {
-            activeAccountUsername = activeAcc.username;
-          }
-        } catch (err) {
-          console.warn('Could not load active account token', err);
         }
-      } else {
-        try {
-          const activeAcc = await getActiveAccount('github');
-          if (activeAcc?.username) {
-            activeAccountUsername = activeAcc.username;
-          }
-        } catch {}
       }
 
       if (repoOwner && repoName) {
@@ -237,15 +248,23 @@
         isLoadingPRs = true;
       }
       if (!patToken) {
-        try {
-          const activeAcc = await getActiveAccount('github');
-          if (activeAcc?.token) {
-            patToken = activeAcc.token;
-            saveGitHubToken(activeAcc.token);
-          }
-        } catch {}
+        if (parsedRemote?.type === 'gitlab') {
+          patToken = getStoredGitLabToken();
+        } else if (parsedRemote?.type === 'bitbucket') {
+          patToken = getStoredBitbucketToken();
+        } else {
+          try {
+            const activeAcc = await getActiveAccount('github');
+            if (activeAcc?.token) {
+              patToken = activeAcc.token;
+              saveGitHubToken(activeAcc.token);
+            }
+          } catch {}
+        }
       }
-      const list = await fetchGitHubPullRequests(repoOwner, repoName, patToken, prFilter);
+      const list = adapter
+        ? await adapter.fetchPullRequests(prFilter, patToken)
+        : await fetchGitHubPullRequests(repoOwner, repoName, patToken, prFilter);
       prList = list;
       const openCount = prFilter === 'open' ? list.length : list.filter((p) => p.state === 'open').length;
       onPRCountChange?.(openCount);
@@ -286,11 +305,11 @@
     try {
       isLoadingDetails = true;
       const [files, comments, detail, commits, checks] = await Promise.all([
-        fetchGitHubPullRequestFiles(repoOwner, repoName, pr.number, patToken).catch(() => []),
-        fetchGitHubPullRequestComments(repoOwner, repoName, pr.number, patToken).catch(() => []),
-        fetchGitHubPullRequestDetail(repoOwner, repoName, pr.number, patToken).catch(() => null),
-        fetchGitHubPullRequestCommits(repoOwner, repoName, pr.number, patToken).catch(() => []),
-        fetchGitHubCommitChecks(repoOwner, repoName, pr.head.sha, patToken).catch(() => null),
+        adapter ? adapter.fetchPullRequestFiles(pr.number, patToken).catch(() => []) : fetchGitHubPullRequestFiles(repoOwner, repoName, pr.number, patToken).catch(() => []),
+        adapter ? adapter.fetchPullRequestComments(pr.number, patToken).catch(() => []) : fetchGitHubPullRequestComments(repoOwner, repoName, pr.number, patToken).catch(() => []),
+        providerType === 'github' ? fetchGitHubPullRequestDetail(repoOwner, repoName, pr.number, patToken).catch(() => null) : null,
+        providerType === 'github' ? fetchGitHubPullRequestCommits(repoOwner, repoName, pr.number, patToken).catch(() => []) : [],
+        providerType === 'github' ? fetchGitHubCommitChecks(repoOwner, repoName, pr.head.sha, patToken).catch(() => null) : null,
       ]);
       prFiles = files;
       prComments = comments;
@@ -359,15 +378,24 @@
     if (!selectedPR) return;
     try {
       isMerging = true;
-      await mergeGitHubPullRequest(
-        repoOwner,
-        repoName,
-        selectedPR.number,
-        mergeMethod,
-        mergeCommitTitle.trim() || undefined,
-        mergeCommitMessage.trim() || undefined,
-        patToken
-      );
+      if (adapter?.mergePullRequest) {
+        await adapter.mergePullRequest(
+          selectedPR.number,
+          mergeMethod,
+          mergeCommitMessage.trim() || undefined,
+          patToken
+        );
+      } else {
+        await mergeGitHubPullRequest(
+          repoOwner,
+          repoName,
+          selectedPR.number,
+          mergeMethod,
+          mergeCommitTitle.trim() || undefined,
+          mergeCommitMessage.trim() || undefined,
+          patToken
+        );
+      }
 
       toast.success(
         localeState.t('pullRequest.reviewer.mergeSuccess'),
@@ -422,15 +450,21 @@
     try {
       isTogglingPRState = true;
       if (comment && comment.trim()) {
-        await createGitHubIssueComment(repoOwner, repoName, selectedPR.number, comment.trim(), patToken);
+        await createGitHubIssueComment(repoOwner, repoName, selectedPR.number, comment.trim(), patToken).catch(() => {});
       }
-      const updated = await updateGitHubPullRequestState(
-        repoOwner,
-        repoName,
-        selectedPR.number,
-        targetState,
-        patToken
-      );
+      let updated: GitHubPullRequest;
+      if (adapter?.closePullRequest && targetState === 'closed') {
+        await adapter.closePullRequest(selectedPR.number, patToken);
+        updated = { ...selectedPR, state: 'closed' };
+      } else {
+        updated = await updateGitHubPullRequestState(
+          repoOwner,
+          repoName,
+          selectedPR.number,
+          targetState,
+          patToken
+        );
+      }
       selectedPR = updated;
       showCloseModal = false;
       if (prFilter === 'open' && targetState === 'closed') {
@@ -566,6 +600,9 @@
       <div class="flex items-center gap-2">
         <span class="text-xs font-semibold text-zinc-800 dark:text-zinc-200">{localeState.t('pullRequest.reviewer.cloudCodeReview')}</span>
         {#if repoOwner && repoName}
+          <span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono">
+            {providerLabel}
+          </span>
           <span class="text-xs font-mono px-2 py-0.5 rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-cyan-700 dark:text-cyan-300">
             {repoOwner}/{repoName}
           </span>
@@ -589,7 +626,7 @@
         title={localeState.t('pullRequest.reviewer.createPRTitle')}
       >
         <Plus class="w-3.5 h-3.5" />
-        <span>{localeState.t('pullRequest.reviewer.createPR')}</span>
+        <span>{prTerm === 'Merge Request' ? localeState.t('pullRequest.reviewer.createMR') : localeState.t('pullRequest.reviewer.createPR')}</span>
       </button>
 
       {#if activeAccount || activeAccountUsername}

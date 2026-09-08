@@ -5,6 +5,7 @@ export const common = {
   delete: "Xóa",
   close: "Đóng",
   copy: "Sao chép",
+  copied: "Đã chép",
   search: "Tìm kiếm...",
   loading: "Đang tải...",
   error: "Lỗi",

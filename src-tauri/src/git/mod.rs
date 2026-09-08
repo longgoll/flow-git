@@ -29,6 +29,7 @@ pub mod hooks;
 pub mod search;
 pub mod patch;
 pub mod stats;
+pub mod signing;
 
 use serde::{Deserialize, Serialize};
 
@@ -45,6 +46,7 @@ pub use lfs::{LfsFileInfo, LfsLockInfo, LfsSummary};
 pub use patch::{PatchApplyResult, PatchCheckResult, PatchFileItem};
 pub use rebase::RebaseExecutionResult;
 pub use remote_ops::RemoteInfo;
+pub use signing::{SignatureInfo, SigningConfig};
 pub use stash_ops::{StashDetail, StashFileItem};
 pub use stats::FileChurnInfo;
 pub use submodule::SubmoduleInfo;
@@ -135,6 +137,7 @@ pub struct CommitDetail {
     pub committer_timestamp: i64,
     pub message: String,
     pub files_changed: Vec<FileChangeInfo>,
+    pub signature_info: Option<SignatureInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

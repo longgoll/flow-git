@@ -343,6 +343,8 @@ pub fn get_commit_detail(repo: &Repository, commit_id: &str) -> AppResult<Commit
         commit_id.to_string()
     };
 
+    let signature_info = crate::git::signing::get_commit_signature(repo, commit_id).ok();
+
     Ok(CommitDetail {
         id: commit_id.to_string(),
         short_id,
@@ -355,6 +357,7 @@ pub fn get_commit_detail(repo: &Repository, commit_id: &str) -> AppResult<Commit
         committer_timestamp: committer.when().seconds(),
         message: commit.message().unwrap_or("").to_string(),
         files_changed,
+        signature_info,
     })
 }
 

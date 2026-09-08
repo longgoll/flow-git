@@ -53,11 +53,14 @@ pub fn run() {
             search_commits_pickaxe,
             open_in_external_editor,
             reveal_in_file_manager,
-            // Patch & Churn
+            // Patch & Churn & Signing
             export_commit_patch,
             check_patch,
             apply_patch,
             get_repo_file_churn,
+            get_commit_signature,
+            get_signing_config,
+            set_signing_config,
             // Branches, Stashes & Tags
             get_branches,
             create_branch,

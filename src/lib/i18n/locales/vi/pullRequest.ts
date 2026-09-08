@@ -26,6 +26,7 @@ export const pullRequest = {
     inputTokenBtn: "Nhập Token GitHub",
     cancelBtn: "Hủy",
     createBtn: "Tạo Pull Request",
+    createDraftBtn: "Tạo Bản nháp (Draft)",
     creating: "Đang tạo PR...",
     comparing: "Đang kiểm tra độ lệch commits giữa 2 nhánh...",
     readyToMerge: "Sẵn sàng hợp nhất:",
@@ -47,7 +48,8 @@ export const pullRequest = {
   reviewer: {
     title: "Pull Request Reviewer",
     createPR: "Tạo Pull Request",
-    createPRTitle: "Tạo Pull Request mới lên GitHub",
+    createMR: "Tạo Merge Request",
+    createPRTitle: "Tạo Pull Request mới",
     inputToken: "Nhập GitHub Token (PAT)",
     tokenConnected: "Token đã kết nối",
     changeTokenTitle: "Thay đổi GitHub Personal Access Token",

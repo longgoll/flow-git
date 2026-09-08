@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { CurrentRepoIdentity, GitIdentity } from '../types';
+  import type { CurrentRepoIdentity, GitIdentity, SigningConfig } from '../types';
   import {
     getCurrentRepoIdentity,
     setRepoIdentity,
@@ -7,6 +7,7 @@
     saveIdentityProfile,
     deleteIdentityProfile,
   } from '../api/identity';
+  import { getSigningConfig, setSigningConfig } from '../api/signing';
   import {
     UserCheck,
     X,
@@ -14,6 +15,9 @@
     Trash2,
     Check,
     RefreshCw,
+    ShieldCheck,
+    Key,
+    Lock,
   } from 'lucide-svelte';
   import { toast } from '../state/toastState.svelte';
   import { localeState } from '../state/localeState.svelte';
@@ -27,9 +31,18 @@
 
   let { isOpen = false, repoPath = '', onClose, onIdentityChanged }: Props = $props();
 
+  let activeTab = $state<'profiles' | 'signing'>('profiles');
   let currentRepoIdentity = $state<CurrentRepoIdentity | null>(null);
   let profiles = $state<GitIdentity[]>([]);
   let isLoading = $state<boolean>(false);
+
+  // Signing state
+  let signingConfig = $state<SigningConfig | null>(null);
+  let isSigningLoading = $state<boolean>(false);
+  let signEnabled = $state<boolean>(false);
+  let signFormat = $state<'ssh' | 'openpgp'>('ssh');
+  let signingKey = $state<string>('');
+  let isSavingSigning = $state<boolean>(false);
 
   // Form to create or edit a profile
   let showAddForm = $state<boolean>(false);
@@ -41,8 +54,45 @@
   $effect(() => {
     if (isOpen && repoPath) {
       loadData();
+      loadSigningData();
     }
   });
+
+  async function loadSigningData() {
+    if (!repoPath) return;
+    isSigningLoading = true;
+    try {
+      const cfg = await getSigningConfig(repoPath);
+      signingConfig = cfg;
+      signEnabled = cfg.gpg_sign;
+      signFormat = cfg.gpg_format === 'ssh' ? 'ssh' : 'openpgp';
+      signingKey = cfg.signing_key || '';
+      if (!signingKey && cfg.available_ssh_keys.length > 0 && signFormat === 'ssh') {
+        signingKey = cfg.available_ssh_keys[0];
+      }
+    } catch (e) {
+      console.error('Failed to load signing config:', e);
+    } finally {
+      isSigningLoading = false;
+    }
+  }
+
+  async function handleSaveSigningConfig() {
+    if (!repoPath) return;
+    isSavingSigning = true;
+    try {
+      const res = await setSigningConfig(repoPath, signEnabled, signFormat, signingKey, applyGlobal);
+      signingConfig = res;
+      toast.success(
+        localeState.t('auth.signing.saveSuccessTitle'),
+        localeState.t('auth.signing.saveSuccessMsg')
+      );
+    } catch (e: any) {
+      toast.error(localeState.t('auth.signing.saveErrorTitle'), e?.message || String(e));
+    } finally {
+      isSavingSigning = false;
+    }
+  }
 
   async function loadData() {
     if (!repoPath) return;
@@ -200,8 +250,30 @@
         </button>
       </div>
 
-      <!-- Current Repo Active Author -->
-      <div class="px-6 py-3.5 bg-zinc-50 dark:bg-zinc-950/40 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+      <!-- Tabs (Profiles vs Signing) -->
+      <div class="px-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-4 bg-white dark:bg-zinc-900 text-xs font-medium">
+        <button
+          onclick={() => (activeTab = 'profiles')}
+          class="py-2.5 border-b-2 flex items-center gap-1.5 transition-colors cursor-pointer {activeTab === 'profiles' ? 'border-teal-500 text-teal-600 dark:text-teal-400 font-semibold' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+        >
+          <UserCheck class="w-3.5 h-3.5" />
+          <span>{localeState.t('auth.signing.tabProfiles')}</span>
+        </button>
+        <button
+          onclick={() => (activeTab = 'signing')}
+          class="py-2.5 border-b-2 flex items-center gap-1.5 transition-colors cursor-pointer {activeTab === 'signing' ? 'border-teal-500 text-teal-600 dark:text-teal-400 font-semibold' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}"
+        >
+          <ShieldCheck class="w-3.5 h-3.5" />
+          <span>{localeState.t('auth.signing.tabSigning')}</span>
+          {#if signingConfig?.gpg_sign}
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          {/if}
+        </button>
+      </div>
+
+      {#if activeTab === 'profiles'}
+        <!-- Current Repo Active Author -->
+        <div class="px-6 py-3.5 bg-zinc-50 dark:bg-zinc-950/40 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
         <div>
           <span class="text-[11px] uppercase tracking-wider text-zinc-500 font-bold">
             {localeState.t('modals.identitySwitcher.currentAuthorLabel')}
@@ -337,6 +409,148 @@
           {/each}
         {/if}
       </div>
+      {:else if activeTab === 'signing'}
+        <div class="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+          {#if isSigningLoading}
+            <div class="py-12 flex flex-col items-center justify-center text-zinc-500 gap-2">
+              <RefreshCw class="w-6 h-6 animate-spin text-teal-600 dark:text-teal-400" />
+              <span class="text-xs font-mono">{localeState.t('auth.signing.loadingConfig')}</span>
+            </div>
+          {:else}
+            <!-- Feature explanation banner -->
+            <div class="p-3.5 rounded-xl bg-teal-50/50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800/60 flex items-start gap-3">
+              <div class="p-2 rounded-lg bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 shrink-0">
+                <ShieldCheck class="w-5 h-5" />
+              </div>
+              <div class="text-xs space-y-1">
+                <h4 class="font-semibold text-zinc-900 dark:text-zinc-100">
+                  {localeState.t('auth.signing.bannerTitle')}
+                </h4>
+                <p class="text-zinc-500 dark:text-zinc-400 leading-relaxed text-[11px]">
+                  {localeState.t('auth.signing.bannerDesc')}
+                </p>
+              </div>
+            </div>
+
+            <!-- Toggle commit.gpgsign -->
+            <div class="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/40 flex items-center justify-between">
+              <div>
+                <span class="text-xs font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                  <Lock class="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                  {localeState.t('auth.signing.enableSigning')}
+                </span>
+                <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  {localeState.t('auth.signing.enableSigningHint')} (<code>commit.gpgsign</code>)
+                </p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  bind:checked={signEnabled}
+                  class="sr-only peer"
+                />
+                <div class="w-10 h-5 bg-zinc-300 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-600"></div>
+              </label>
+            </div>
+
+            <!-- Format selection (SSH vs OpenPGP) -->
+            <div class="space-y-2 {signEnabled ? 'opacity-100' : 'opacity-50 pointer-events-none transition-opacity'}">
+              <span class="block text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                {localeState.t('auth.signing.formatLabel')}
+              </span>
+              <div class="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onclick={() => (signFormat = 'ssh')}
+                  class="p-3 rounded-xl border text-left flex items-start gap-2.5 transition-all cursor-pointer {signFormat === 'ssh' ? 'bg-teal-50/60 dark:bg-teal-950/30 border-teal-400 dark:border-teal-600 text-teal-900 dark:text-teal-200 shadow-xs' : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'}"
+                >
+                  <Key class="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div class="text-xs font-semibold flex items-center gap-1.5">
+                      SSH Key
+                      <span class="text-[9px] px-1 py-0.2 rounded bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300 font-mono font-normal">Git 2.34+</span>
+                    </div>
+                    <p class="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">
+                      {localeState.t('auth.signing.sshDesc')}
+                    </p>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onclick={() => (signFormat = 'openpgp')}
+                  class="p-3 rounded-xl border text-left flex items-start gap-2.5 transition-all cursor-pointer {signFormat === 'openpgp' ? 'bg-teal-50/60 dark:bg-teal-950/30 border-teal-400 dark:border-teal-600 text-teal-900 dark:text-teal-200 shadow-xs' : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'}"
+                >
+                  <ShieldCheck class="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div class="text-xs font-semibold">GPG / OpenPGP</div>
+                    <p class="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">
+                      {localeState.t('auth.signing.gpgDesc')}
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Key selection -->
+            <div class="space-y-2 {signEnabled ? 'opacity-100' : 'opacity-50 pointer-events-none transition-opacity'}">
+              <span class="block text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                {signFormat === 'ssh' ? localeState.t('auth.signing.sshKeyPath') : localeState.t('auth.signing.gpgKeyId')}
+              </span>
+
+              {#if signFormat === 'ssh'}
+                {#if signingConfig?.available_ssh_keys && signingConfig.available_ssh_keys.length > 0}
+                  <div class="space-y-1.5">
+                    <select
+                      bind:value={signingKey}
+                      class="w-full px-3 py-2 text-xs font-mono rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-teal-500 text-zinc-800 dark:text-zinc-200"
+                    >
+                      {#each signingConfig.available_ssh_keys as k}
+                        <option value={k}>{k}</option>
+                      {/each}
+                      <option value="">{localeState.t('auth.signing.customKeyOption')}</option>
+                    </select>
+                  </div>
+                {/if}
+                <input
+                  type="text"
+                  bind:value={signingKey}
+                  placeholder="~/.ssh/id_ed25519.pub hoặc ssh-ed25519 AAAAC3NzaC1..."
+                  class="w-full px-3 py-2 text-xs font-mono rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-teal-500 text-zinc-800 dark:text-zinc-200"
+                />
+              {:else}
+                <input
+                  type="text"
+                  bind:value={signingKey}
+                  placeholder="Ví dụ: 3AA5C34371567BD2 hoặc email@example.com"
+                  class="w-full px-3 py-2 text-xs font-mono rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-teal-500 text-zinc-800 dark:text-zinc-200"
+                />
+              {/if}
+              <p class="text-[10px] text-zinc-400 dark:text-zinc-500">
+                {signFormat === 'ssh' ? localeState.t('auth.signing.sshKeyHint') : localeState.t('auth.signing.gpgKeyHint')}
+              </p>
+            </div>
+
+            <!-- Save button inside tab -->
+            <div class="pt-2 flex justify-end">
+              <button
+                type="button"
+                onclick={handleSaveSigningConfig}
+                disabled={isSavingSigning}
+                class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+              >
+                {#if isSavingSigning}
+                  <RefreshCw class="w-3.5 h-3.5 animate-spin" />
+                  <span>{localeState.t('auth.signing.saving')}</span>
+                {:else}
+                  <Check class="w-3.5 h-3.5" />
+                  <span>{localeState.t('auth.signing.saveConfig')}</span>
+                {/if}
+              </button>
+            </div>
+          {/if}
+        </div>
+      {/if}
 
       <!-- Footer -->
       <div class="px-6 py-3.5 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 flex items-center justify-between">

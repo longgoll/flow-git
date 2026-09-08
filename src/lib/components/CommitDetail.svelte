@@ -17,6 +17,7 @@
     Search,
     Code2,
     ExternalLink,
+    ShieldCheck,
   } from 'lucide-svelte';
   import { localeState } from '../state/localeState.svelte';
 
@@ -45,6 +46,8 @@
   }: Props = $props();
 
   let copied = $state(false);
+  let showSignatureDetails = $state(false);
+  let copiedSignature = $state(false);
   let selectedFilePath = $state<string | null>(null);
   let fileDiffDetail = $state<FileDiffDetail | null>(null);
   let isDiffLoading = $state(false);
@@ -56,6 +59,15 @@
     copied = true;
     setTimeout(() => {
       copied = false;
+    }, 2000);
+  }
+
+  function copySignature() {
+    if (!commitDetail?.signature_info?.signature) return;
+    navigator.clipboard.writeText(commitDetail.signature_info.signature);
+    copiedSignature = true;
+    setTimeout(() => {
+      copiedSignature = false;
     }, 2000);
   }
 
@@ -211,6 +223,69 @@
                 {parent.slice(0, 7)}
               </button>
             {/each}
+          </div>
+        {/if}
+
+        <!-- Commit Signing Badge -->
+        {#if commitDetail.signature_info?.is_signed}
+          <div class="relative">
+            <button
+              onclick={() => showSignatureDetails = !showSignatureDetails}
+              class="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold font-mono border transition-all cursor-pointer shadow-xs {commitDetail.signature_info.key_type === 'ssh' ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/40' : 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-800/60 hover:bg-blue-100 dark:hover:bg-blue-900/40'}"
+              title={localeState.t('auth.signing.verifiedBadge')}
+            >
+              <ShieldCheck class="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+              <span>{localeState.t('auth.signing.verified')} ({commitDetail.signature_info.key_type?.toUpperCase()})</span>
+            </button>
+
+            {#if showSignatureDetails}
+              <div class="absolute left-0 top-full mt-1.5 w-80 p-3 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl z-50 text-xs">
+                <div class="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                  <div class="flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400">
+                    <ShieldCheck class="w-4 h-4" />
+                    <span>{localeState.t('auth.signing.verifiedSignature')}</span>
+                  </div>
+                  <button
+                    onclick={() => showSignatureDetails = false}
+                    class="p-0.5 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                  >
+                    <X class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div class="py-2 space-y-1.5 text-zinc-600 dark:text-zinc-300 text-[11px]">
+                  <div class="flex justify-between">
+                    <span class="text-zinc-400">{localeState.t('auth.signing.keyFormat')}:</span>
+                    <span class="font-mono font-medium uppercase">{commitDetail.signature_info.key_type}</span>
+                  </div>
+                  {#if commitDetail.signature_info.signer}
+                    <div class="flex justify-between">
+                      <span class="text-zinc-400">{localeState.t('auth.signing.signer')}:</span>
+                      <span class="font-mono truncate max-w-[180px]">{commitDetail.signature_info.signer}</span>
+                    </div>
+                  {/if}
+                </div>
+                {#if commitDetail.signature_info.signature}
+                  <div class="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-[10px] text-zinc-400 uppercase font-mono tracking-wider">{localeState.t('auth.signing.rawSignature')}</span>
+                      <button
+                        onclick={copySignature}
+                        class="flex items-center gap-1 text-[10px] text-cyan-600 dark:text-cyan-400 hover:underline cursor-pointer"
+                      >
+                        {#if copiedSignature}
+                          <Check class="w-2.5 h-2.5" />
+                          <span>{localeState.t('common.copied')}</span>
+                        {:else}
+                          <Copy class="w-2.5 h-2.5" />
+                          <span>{localeState.t('common.copy')}</span>
+                        {/if}
+                      </button>
+                    </div>
+                    <pre class="p-1.5 rounded bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800/80 font-mono text-[9px] text-zinc-500 dark:text-zinc-400 max-h-24 overflow-y-auto whitespace-pre-wrap break-all">{commitDetail.signature_info.signature}</pre>
+                  </div>
+                {/if}
+              </div>
+            {/if}
           </div>
         {/if}
 

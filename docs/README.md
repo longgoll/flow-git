@@ -54,6 +54,7 @@ docs/
 │   ├── onboarding-and-playbook.md      # In-App User Guide (F1), Git Playbook & Pre-Commit Guard
 │   ├── repo-insights-and-statistics.md # Repository Pulse & Insights Studio: 52-Week Heatmap & Hotspots
 │   ├── patch-file-manager.md           # Patch File Manager: Format-Patch Export & Dry-Run Import
+│   ├── remote-providers-and-signing.md # Multi-Cloud Remote Adapters (GitLab/Bitbucket) & Commit Signing
 │   └── ai-assistant.md                 # Local AI Assistant: Conventional Commits & Conflict Solver
 │
 ├── playbook/                           # PRACTICAL PLAYBOOK
@@ -181,6 +182,7 @@ docs/
 │   ├── onboarding-and-playbook.md      # Interactive In-App User Guide (F1), Git Playbook & Pre-Commit Guard
 │   ├── repo-insights-and-statistics.md # Studio Phân Tích Nhịp Độ Dự Án: Heatmap 52 Tuần & Điểm Nóng Mã Nguồn
 │   ├── patch-file-manager.md           # Trình Quản Lý & Áp Dụng Tệp Patch Ngoại Vi
+│   ├── remote-providers-and-signing.md # Tích Hợp Đa Nền Tảng (GitHub, GitLab, Bitbucket) & Ký Commit Bảo Mật
 │   └── ai-assistant.md                 # Trợ lý AI Cục bộ (Ollama/Local LLM): Conventional Commits & Conflict Solver
 │
 ├── playbook/                           # SỔ TAY THỰC CHIẾN

@@ -17,11 +17,11 @@ pub use state::AppState;
 
 pub use repo::{
     apply_patch, check_patch, clone_repository, compare_two_commits, export_commit_patch,
-    get_commit_history, get_commit_info, get_file_content, get_focus_branch_info,
-    get_paginated_commit_history, get_remote_url, get_repo_file_churn, get_trash_snapshot_diff,
+    get_commit_history, get_commit_info, get_commit_signature, get_file_content, get_focus_branch_info,
+    get_paginated_commit_history, get_remote_url, get_repo_file_churn, get_signing_config, get_trash_snapshot_diff,
     get_tree_entries, get_unpushed_stacked_commits, grep_repository_content, init_repository,
     nuke_file_from_history, open_in_external_editor, open_repository, reorder_stacked_commits,
-    reveal_in_file_manager, save_file_content, search_commits_pickaxe,
+    reveal_in_file_manager, save_file_content, search_commits_pickaxe, set_signing_config,
 };
 
 pub use branch::{

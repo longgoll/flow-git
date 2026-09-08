@@ -199,6 +199,7 @@ export interface CommitDetail {
   committer_timestamp: number;
   message: string;
   files_changed: FileChangeInfo[];
+  signature_info?: SignatureInfo;
 }
 
 export type FileDeltaStatus =
@@ -783,6 +784,31 @@ export interface FileChurnInfo {
   additions: number;
   deletions: number;
 }
+
+export interface SignatureInfo {
+  is_signed: boolean;
+  key_type?: 'ssh' | 'gpg' | 'unknown' | string;
+  signature?: string;
+  signer?: string;
+}
+
+export interface SigningConfig {
+  gpg_sign: boolean;
+  gpg_format: string; // 'ssh' | 'openpgp'
+  signing_key?: string;
+  available_ssh_keys: string[];
+}
+
+export type RemoteProviderType = 'github' | 'gitlab' | 'bitbucket' | 'custom' | 'unknown';
+
+export interface RemoteProviderInfo {
+  type: RemoteProviderType;
+  host: string;
+  owner: string;
+  repo: string;
+  apiUrl: string;
+}
+
 
 
 

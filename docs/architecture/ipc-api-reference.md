@@ -47,6 +47,9 @@ All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard
 | `check_patch` | `path: String, patch_content: String` | `PatchCheckResult` | **Patch Engine**: Dry-run validates a patch, verifying affected files and applicability without modifying disk. |
 | `apply_patch` | `path: String, patch_content: String, stage_to_index: Option<bool>, reverse: Option<bool>` | `PatchApplyResult` | **Patch Engine**: Applies patch directly to the working directory and optionally stages changes to index. |
 | `get_repo_file_churn` | `path: String, max_commits: Option<usize>` | `Vec<FileChurnInfo>` | **Insights Studio**: Analyzes commit history to detect top modified files, revision counts, additions, and deletions. |
+| `get_commit_signature` | `path: String, commit_id: String` | `SignatureInfo` | **Commit Signing**: Extracts cryptographic signature (SSH or GPG) from commit object header. |
+| `get_signing_config` | `path: String` | `SigningConfig` | **Commit Signing**: Retrieves `commit.gpgsign`, `gpg.format`, `user.signingkey`, and discovered local SSH keys from `~/.ssh/`. |
+| `set_signing_config` | `path: String, gpg_sign: bool, gpg_format: String, signing_key: Option<String>, is_global: Option<bool>` | `SigningConfig` | **Commit Signing**: Configures commit signing (SSH/GPG) locally or globally (`--global`). |
 
 ---
 
@@ -260,6 +263,9 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `check_patch` | `path: String, patch_content: String` | `PatchCheckResult` | **Patch Engine**: Kiểm tra thử (Dry-run) patch mà không ghi đĩa, xác thực danh sách file ảnh hưởng và tính sạch sẽ. |
 | `apply_patch` | `path: String, patch_content: String, stage_to_index: Option<bool>, reverse: Option<bool>` | `PatchApplyResult` | **Patch Engine**: Áp dụng patch vào working tree (và index nếu chọn stage) an toàn. |
 | `get_repo_file_churn` | `path: String, max_commits: Option<usize>` | `Vec<FileChurnInfo>` | **Insights Studio**: Quét lịch sử commit để tìm các điểm nóng thay đổi mã nguồn (File Churn Hotspots), số lần sửa và dòng thêm/xóa. |
+| `get_commit_signature` | `path: String, commit_id: String` | `SignatureInfo` | **Commit Signing**: Trích xuất chữ ký mật mã (SSH hoặc GPG) từ header của raw commit object. |
+| `get_signing_config` | `path: String` | `SigningConfig` | **Commit Signing**: Lấy trạng thái `commit.gpgsign`, `gpg.format`, `user.signingkey`, và danh sách SSH public key phát hiện được trong `~/.ssh/`. |
+| `set_signing_config` | `path: String, gpg_sign: bool, gpg_format: String, signing_key: Option<String>, is_global: Option<bool>` | `SigningConfig` | **Commit Signing**: Thiết lập cấu hình tự động ký commit (SSH hoặc GPG) ở cấp độ local repo hoặc `--global`. |
 
 ---
 

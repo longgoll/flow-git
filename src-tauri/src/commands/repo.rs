@@ -19,6 +19,12 @@ use crate::git::{
         FileGrepMatch,
     },
     CommitDetail, CommitNode, FileContentResponse, RepoSummary, TreeEntryItem,
+    signing::{
+        get_commit_signature as git_get_commit_signature,
+        get_signing_config as git_get_signing_config,
+        set_signing_config as git_set_signing_config,
+        SignatureInfo, SigningConfig,
+    },
 };
 
 #[command]
@@ -413,6 +419,53 @@ pub async fn get_repo_file_churn(
     .await
     .map_err(|e| AppError::Internal(e.to_string()))?
 }
+
+#[command]
+pub async fn get_commit_signature(
+    path: String,
+    commit_id: String,
+) -> AppResult<SignatureInfo> {
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        git_get_commit_signature(&repo, &commit_id)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn get_signing_config(path: String) -> AppResult<SigningConfig> {
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        git_get_signing_config(&repo)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn set_signing_config(
+    path: String,
+    gpg_sign: bool,
+    gpg_format: String,
+    signing_key: Option<String>,
+    is_global: Option<bool>,
+) -> AppResult<SigningConfig> {
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        git_set_signing_config(
+            &repo,
+            gpg_sign,
+            &gpg_format,
+            signing_key.as_deref(),
+            is_global.unwrap_or(false),
+        )?;
+        git_get_signing_config(&repo)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
 
 
 

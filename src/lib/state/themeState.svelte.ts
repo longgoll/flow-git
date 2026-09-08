@@ -3,8 +3,8 @@ export type ThemeMode = 'dark' | 'light' | 'system';
 const STORAGE_KEY = 'flowgit_theme';
 
 export class ThemeState {
-  theme = $state<ThemeMode>('dark');
-  systemIsDark = $state<boolean>(true);
+  theme = $state<ThemeMode>('light');
+  systemIsDark = $state<boolean>(false);
 
   private mediaQuery: MediaQueryList | null = null;
   private mediaListener: ((e: MediaQueryListEvent) => void) | null = null;
@@ -15,7 +15,8 @@ export class ThemeState {
       if (saved === 'dark' || saved === 'light' || saved === 'system') {
         this.theme = saved;
       } else {
-        this.theme = 'dark';
+        // Khi mới cài đặt: Mặc định ở chế độ sáng (Light mode)
+        this.theme = 'light';
       }
 
       this.mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');

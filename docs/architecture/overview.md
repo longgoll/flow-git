@@ -88,8 +88,10 @@ FlowGit uses class-based reactive state stores located in `src/lib/state/`:
 4. **`GitSafetyState` (`src/lib/state/gitSafetyState.svelte.ts`):**
    - Controls the **Time Machine Drawer (`Ctrl + Z`)** and the **Safe Recycle Bin (Trash Inspector)**.
 5. **`ThemeState` (`src/lib/state/themeState.svelte.ts`):**
-   - Controls Dark/Light themes, accent palettes, and theme synchronization with Monaco Editor.
-6. **`ToastState` (`src/lib/state/toastState.svelte.ts`):**
+   - Controls Dark/Light/System themes (defaults to **Light mode** on fresh installs), accent palettes, and theme synchronization with Monaco Editor.
+6. **`LocaleState` (`src/lib/state/localeState.svelte.ts`):**
+   - Manages bilingual localization (Vietnamese & English), prioritizing host OS system language on clean installations (`navigator.languages` / `navigator.language`).
+7. **`ToastState` (`src/lib/state/toastState.svelte.ts`):**
    - Global notification system for copyable error logs, conflict alerts, and sync progress.
 
 ### 2.2. Monaco Editor & Monaco Diff Editor
@@ -222,8 +224,10 @@ FlowGit áp dụng **100% Svelte 5 Runes** dạng Class-based Reactive Stores tr
 4. **`GitSafetyState` (`src/lib/state/gitSafetyState.svelte.ts`):**
    - Điều khiển ngăn kéo **Time Machine Drawer (`Ctrl + Z`)** và danh mục các bản lưu trữ trong **Safe Recycle Bin (Trash Inspector)**.
 5. **`ThemeState` (`src/lib/state/themeState.svelte.ts`):**
-   - Quản lý Dark/Light mode, màu nhấn (accent color) và tích hợp đồng bộ theme với Monaco Editor.
-6. **`ToastState` (`src/lib/state/toastState.svelte.ts`):**
+   - Quản lý Dark/Light/System mode (mặc định ở **Chế độ Sáng (Light mode)** khi vừa cài mới ứng dụng), màu nhấn (accent color) và tích hợp đồng bộ theme với Monaco Editor.
+6. **`LocaleState` (`src/lib/state/localeState.svelte.ts`):**
+   - Quản lý song ngữ Tiếng Việt & Tiếng Anh, tự động ưu tiên nhận diện theo ngôn ngữ của hệ điều hành máy (`navigator.languages` / `navigator.language`) khi khởi chạy lần đầu.
+7. **`ToastState` (`src/lib/state/toastState.svelte.ts`):**
    - Hệ thống thông báo toast toàn cục hỗ trợ hiển thị lỗi có thể copy, cảnh báo conflict và tiến trình đồng bộ.
 
 ### 2.2. Trình soạn thảo Monaco Editor & Monaco Diff Editor

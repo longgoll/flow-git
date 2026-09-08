@@ -7,6 +7,7 @@
   import RepoAlertBanner from "./lib/components/RepoAlertBanner.svelte";
   import UpstreamUpdateBanner from "./lib/components/UpstreamUpdateBanner.svelte";
   import RecentPushBanner from "./lib/components/RecentPushBanner.svelte";
+  import RepoBindingBanner from "./lib/components/RepoBindingBanner.svelte";
   import ToastContainer from "./lib/components/ToastContainer.svelte";
   import MainViewSwitcher from "./lib/components/MainViewSwitcher.svelte";
   import { toast } from "./lib/state/toastState.svelte";
@@ -16,6 +17,7 @@
   import { RemoteState } from "./lib/state/remoteState.svelte";
   import { GitSafetyState } from "./lib/state/gitSafetyState.svelte";
   import { WorkspaceTabState, pathsEqual } from "./lib/state/workspaceTabState.svelte";
+  import { repoBindingState } from "./lib/state/repoBindingState.svelte";
   import { modalState } from "./lib/state/modalState.svelte";
   import { updateState } from "./lib/state/updateState.svelte";
   import { handleAppKeydown } from "./lib/utils/appShortcuts";
@@ -79,6 +81,13 @@
       console.error("Failed to load repo identity:", e);
     }
   }
+
+  $effect(() => {
+    if (repo.currentRepoPath) {
+      repoBindingState.setActiveRepo(repo.currentRepoPath);
+    }
+  });
+
 
   function saveCurrentTabContext() {
     const currentTab = tabState.activeTab;
@@ -712,6 +721,7 @@
             tabState.updateActiveTabMeta({ recentPushedBranch: null });
           }}
         />
+        <RepoBindingBanner repoPath={repo.currentRepoPath} />
       {/if}
 
       <!-- Main Dynamic Content Views Switcher -->

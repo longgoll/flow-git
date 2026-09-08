@@ -201,6 +201,10 @@ pub fn run() {
             list_identity_profiles,
             save_identity_profile,
             delete_identity_profile,
+            get_repo_binding,
+            save_repo_binding,
+            list_repo_bindings,
+            delete_repo_binding,
             // Interactive Rebase
             prepare_interactive_rebase,
             execute_interactive_rebase,

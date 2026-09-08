@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Sparkles, GitCommitHorizontal, History, ShieldAlert, GitFork } from 'lucide-svelte';
   import PreCommitWarningModal, { type RiskyFileItem } from './PreCommitWarningModal.svelte';
+  import RepoTagBadge from './RepoTagBadge.svelte';
   import type { FileStatusItem, SecretFinding } from '../types';
   import { scanStagedSecrets } from '../api';
   import { localeState } from '../state/localeState.svelte';
@@ -215,6 +216,17 @@
           <span>{localeState.t('workingTree.commitBox.allowDirectCommit')}</span>
         </label>
       </div>
+    </div>
+  {/if}
+
+  <!-- Project Tag & Author Identity Indicator -->
+  {#if repoPath}
+    <div class="flex items-center justify-between gap-2 pb-0.5 text-xs">
+      <span class="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium flex items-center gap-1">
+        <span>✍️</span>
+        <span>{localeState.t('auth.token.projectTagging.committingAs')}</span>
+      </span>
+      <RepoTagBadge {repoPath} />
     </div>
   {/if}
 

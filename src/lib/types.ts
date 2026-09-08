@@ -157,6 +157,16 @@ export interface CurrentRepoIdentity {
   is_local: boolean;
 }
 
+export type ProjectType = 'work' | 'personal' | 'client' | 'opensource' | 'other';
+
+export interface RepoBinding {
+  repo_path: string;
+  project_type: ProjectType;
+  account_id?: string | null;
+  identity_id?: string | null;
+  updated_at: number;
+}
+
 export interface LockedFileInfo {
   path: string;
   is_locked: boolean;

@@ -69,9 +69,11 @@ pub use advanced::{
 
 pub use auth::{
     check_github_device_login, delete_account, delete_identity_profile,
-    execute_remote_with_auth, get_active_account, get_current_repo_identity,
-    list_accounts, list_identity_profiles, save_account_auth, save_identity_profile,
-    set_repo_identity, start_github_device_login, verify_token_and_get_profile,
+    delete_repo_binding, execute_remote_with_auth, get_active_account,
+    get_current_repo_identity, get_repo_binding, list_accounts,
+    list_identity_profiles, list_repo_bindings, save_account_auth,
+    save_identity_profile, save_repo_binding, set_repo_identity,
+    start_github_device_login, verify_token_and_get_profile,
 };
 
 pub use edge_cases::{

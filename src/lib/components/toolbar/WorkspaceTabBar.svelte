@@ -15,6 +15,7 @@
   } from 'lucide-svelte';
   import { toast } from '../../state/toastState.svelte';
   import { localeState } from '../../state/localeState.svelte';
+  import { repoBindingState } from '../../state/repoBindingState.svelte';
 
   interface Props {
     tabs: WorkspaceTab[];
@@ -155,6 +156,14 @@
             </div>
           {:else}
             <FolderGit2 class="w-3.5 h-3.5 shrink-0 {isActive ? 'text-cyan-600 dark:text-cyan-400' : 'text-zinc-500 dark:text-zinc-400'}" />
+          {/if}
+
+          <!-- Project Tag Badge (Work/Personal/Client/OpenSource) -->
+          {#if tab.path && repoBindingState.getTagForRepo(tab.path)}
+            {@const pTag = repoBindingState.getTagForRepo(tab.path)}
+            <span class="text-[10px] shrink-0 select-none">
+              {pTag === 'work' ? '🏢' : pTag === 'personal' ? '👤' : pTag === 'client' ? '💼' : '🚀'}
+            </span>
           {/if}
 
           <!-- Tab Repo / Worktree Name -->

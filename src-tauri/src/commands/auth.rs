@@ -13,6 +13,7 @@ use crate::git::{
     },
     repo::open_repository as git_open_repo,
 };
+use crate::storage::accounts::RepoBinding;
 
 #[command]
 pub async fn execute_remote_with_auth(
@@ -28,16 +29,56 @@ pub async fn execute_remote_with_auth(
     let effective_creds = match credentials {
         Some(c) => Some(c),
         None => {
-            if let Ok(Some(acc)) = state.account_store.get_active_account(None) {
-                Some(GitCredentials {
-                    auth_type: "https_token".to_string(),
-                    ssh_passphrase: None,
-                    username: Some(acc.username),
-                    token: Some(acc.token),
-                })
+            // Priority 1: Check repo-bound account
+            let bound_acc = state
+                .account_store
+                .get_repo_binding(&path)
+                .ok()
+                .flatten()
+                .and_then(|b| b.account_id)
+                .and_then(|id| state.account_store.get_account_by_id(&id).ok().flatten());
+
+            let account = if bound_acc.is_some() {
+                bound_acc
             } else {
-                None
-            }
+                // Priority 2: Auto-detect by remote URL
+                let auto_provider = if let Ok(r) = git_open_repo(&path) {
+                    r.find_remote(&remote).ok().and_then(|rem| {
+                        rem.url().and_then(|u| {
+                            let lower = u.to_lowercase();
+                            if lower.contains("github.com") {
+                                Some("github")
+                            } else if lower.contains("gitlab") {
+                                Some("gitlab")
+                            } else {
+                                None
+                            }
+                        })
+                    })
+                } else {
+                    None
+                };
+
+                if let Some(provider) = auto_provider {
+                    state.account_store.get_active_account(Some(provider)).ok().flatten()
+                } else {
+                    None
+                }
+            };
+
+            // Priority 3: Fallback to global active account
+            let final_acc = if account.is_some() {
+                account
+            } else {
+                state.account_store.get_active_account(None).ok().flatten()
+            };
+
+            final_acc.map(|acc| GitCredentials {
+                auth_type: "https_token".to_string(),
+                ssh_passphrase: None,
+                username: Some(acc.username),
+                token: Some(acc.token),
+            })
         }
     };
     tokio::task::spawn_blocking(move || {
@@ -54,6 +95,7 @@ pub async fn execute_remote_with_auth(
     .await
     .map_err(|e| AppError::Internal(e.to_string()))?
 }
+
 
 #[command]
 pub async fn save_account_auth(
@@ -176,3 +218,47 @@ pub async fn delete_identity_profile(
         .await
         .map_err(|e| AppError::Internal(e.to_string()))?
 }
+
+#[command]
+pub async fn get_repo_binding(
+    repo_path: String,
+    state: State<'_, AppState>,
+) -> AppResult<Option<RepoBinding>> {
+    let store = state.account_store.clone();
+    tokio::task::spawn_blocking(move || store.get_repo_binding(&repo_path))
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn save_repo_binding(
+    binding: RepoBinding,
+    state: State<'_, AppState>,
+) -> AppResult<()> {
+    let store = state.account_store.clone();
+    tokio::task::spawn_blocking(move || store.save_repo_binding(&binding))
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn list_repo_bindings(
+    state: State<'_, AppState>,
+) -> AppResult<Vec<RepoBinding>> {
+    let store = state.account_store.clone();
+    tokio::task::spawn_blocking(move || store.list_repo_bindings())
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn delete_repo_binding(
+    repo_path: String,
+    state: State<'_, AppState>,
+) -> AppResult<()> {
+    let store = state.account_store.clone();
+    tokio::task::spawn_blocking(move || store.delete_repo_binding(&repo_path))
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?
+}
+

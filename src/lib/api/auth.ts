@@ -5,6 +5,7 @@ import type {
   DevicePollResult,
   GitCredentials,
   RemoteActionResult,
+  RepoBinding,
 } from '../types';
 import { isTauri } from './client';
 
@@ -126,3 +127,30 @@ export async function checkGithubDeviceLogin(
     },
   };
 }
+
+export async function getRepoBinding(repoPath: string): Promise<RepoBinding | null> {
+  if (isTauri) {
+    return await invoke<RepoBinding | null>('get_repo_binding', { repoPath });
+  }
+  return null;
+}
+
+export async function saveRepoBinding(binding: RepoBinding): Promise<void> {
+  if (isTauri) {
+    await invoke('save_repo_binding', { binding });
+  }
+}
+
+export async function listRepoBindings(): Promise<RepoBinding[]> {
+  if (isTauri) {
+    return await invoke<RepoBinding[]>('list_repo_bindings');
+  }
+  return [];
+}
+
+export async function deleteRepoBinding(repoPath: string): Promise<void> {
+  if (isTauri) {
+    await invoke('delete_repo_binding', { repoPath });
+  }
+}
+

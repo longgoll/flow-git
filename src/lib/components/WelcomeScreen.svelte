@@ -3,6 +3,7 @@
   import { cloneRepository, isTauri } from '../api';
   import type { AccountProfile, GitCredentials } from '../types';
   import { localeState } from '../state/localeState.svelte';
+  import { repoBindingState } from '../state/repoBindingState.svelte';
 
   let {
     isOpen = true,
@@ -360,9 +361,17 @@
                     class="w-full px-3 py-2 rounded-lg bg-white dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800/90 border border-neutral-200 dark:border-neutral-800 text-left transition-colors cursor-pointer group flex items-center justify-between shadow-2xs"
                   >
                     <div class="truncate mr-2">
-                      <span class="text-xs font-medium text-neutral-800 dark:text-neutral-200 group-hover:text-cyan-600 dark:group-hover:text-cyan-300 block truncate">
-                        {repoPath.split(/[\/\\]/).filter(Boolean).pop() || repoPath}
-                      </span>
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-medium text-neutral-800 dark:text-neutral-200 group-hover:text-cyan-600 dark:group-hover:text-cyan-300 block truncate">
+                          {repoPath.split(/[\/\\]/).filter(Boolean).pop() || repoPath}
+                        </span>
+                        {#if repoBindingState.getTagForRepo(repoPath)}
+                          {@const tag = repoBindingState.getTagForRepo(repoPath)}
+                          <span class="text-[9px] px-1.5 py-0.2 rounded font-mono font-medium shrink-0 {tag === 'work' ? 'bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800/60' : tag === 'personal' ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60' : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60'}">
+                            {tag === 'work' ? '🏢 Công ty' : tag === 'personal' ? '👤 Cá nhân' : tag === 'client' ? '💼 Khách hàng' : '🚀 Open Source'}
+                          </span>
+                        {/if}
+                      </div>
                       <span class="text-[10px] font-mono text-neutral-400 dark:text-neutral-500 block truncate">{repoPath}</span>
                     </div>
                     <svg class="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500 group-hover:text-cyan-600 dark:group-hover:text-cyan-300 shrink-0 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

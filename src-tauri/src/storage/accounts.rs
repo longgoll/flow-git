@@ -20,6 +20,15 @@ pub struct AccountProfile {
     pub created_at: i64,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RepoBinding {
+    pub repo_path: String,
+    pub project_type: String, // "work" | "personal" | "client" | "opensource" | "other"
+    pub account_id: Option<String>,
+    pub identity_id: Option<String>,
+    pub updated_at: i64,
+}
+
 pub struct AccountStore {
     conn: Mutex<Connection>,
 }
@@ -51,9 +60,17 @@ impl AccountStore {
                 name TEXT NOT NULL,
                 email TEXT NOT NULL,
                 signing_key TEXT
+            );
+            CREATE TABLE IF NOT EXISTS repo_bindings (
+                repo_path TEXT PRIMARY KEY,
+                project_type TEXT NOT NULL,
+                account_id TEXT,
+                identity_id TEXT,
+                updated_at INTEGER NOT NULL
             );",
         )
         .map_err(|e| AppError::Internal(format!("Failed to init accounts schema: {e}")))?;
+
 
         Ok(Self {
             conn: Mutex::new(conn),
@@ -219,6 +236,116 @@ impl AccountStore {
         let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
         conn.execute("DELETE FROM git_identities WHERE id = ?1", params![id])
             .map_err(|e| AppError::Internal(format!("Failed to delete identity: {e}")))?;
+        Ok(())
+    }
+
+    pub fn get_account_by_id(&self, id: &str) -> AppResult<Option<AccountProfile>> {
+        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        let mut stmt = conn.prepare(
+            "SELECT id, username, name, avatar_url, provider, token, auth_method, is_active, created_at
+             FROM accounts WHERE id = ?1 LIMIT 1"
+        )
+        .map_err(|e| AppError::Internal(format!("SQLite prepare error: {e}")))?;
+
+        let mut rows = stmt.query(params![id])
+            .map_err(|e| AppError::Internal(format!("SQLite query error: {e}")))?;
+
+        if let Some(row) = rows.next().map_err(|e| AppError::Internal(format!("SQLite row error: {e}")))? {
+            let is_active_int: i64 = row.get(7)?;
+            Ok(Some(AccountProfile {
+                id: row.get(0)?,
+                username: row.get(1)?,
+                name: row.get(2)?,
+                avatar_url: row.get(3)?,
+                provider: row.get(4)?,
+                token: row.get(5)?,
+                auth_method: row.get(6)?,
+                is_active: is_active_int == 1,
+                created_at: row.get(8)?,
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn get_repo_binding(&self, repo_path: &str) -> AppResult<Option<RepoBinding>> {
+        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        let mut stmt = conn.prepare(
+            "SELECT repo_path, project_type, account_id, identity_id, updated_at
+             FROM repo_bindings WHERE repo_path = ?1 LIMIT 1"
+        )
+        .map_err(|e| AppError::Internal(format!("SQLite prepare error: {e}")))?;
+
+        let mut rows = stmt.query(params![repo_path])
+            .map_err(|e| AppError::Internal(format!("SQLite query error: {e}")))?;
+
+        if let Some(row) = rows.next().map_err(|e| AppError::Internal(format!("SQLite row error: {e}")))? {
+            Ok(Some(RepoBinding {
+                repo_path: row.get(0)?,
+                project_type: row.get(1)?,
+                account_id: row.get(2)?,
+                identity_id: row.get(3)?,
+                updated_at: row.get(4)?,
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn save_repo_binding(&self, binding: &RepoBinding) -> AppResult<()> {
+        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        conn.execute(
+            "INSERT INTO repo_bindings (repo_path, project_type, account_id, identity_id, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5)
+             ON CONFLICT(repo_path) DO UPDATE SET
+                project_type = excluded.project_type,
+                account_id = excluded.account_id,
+                identity_id = excluded.identity_id,
+                updated_at = excluded.updated_at",
+            params![
+                binding.repo_path,
+                binding.project_type,
+                binding.account_id,
+                binding.identity_id,
+                if binding.updated_at == 0 { Utc::now().timestamp() } else { binding.updated_at }
+            ],
+        )
+        .map_err(|e| AppError::Internal(format!("Failed to save repo binding: {e}")))?;
+        Ok(())
+    }
+
+    pub fn list_repo_bindings(&self) -> AppResult<Vec<RepoBinding>> {
+        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        let mut stmt = conn.prepare(
+            "SELECT repo_path, project_type, account_id, identity_id, updated_at
+             FROM repo_bindings ORDER BY updated_at DESC"
+        )
+        .map_err(|e| AppError::Internal(format!("SQLite prepare error: {e}")))?;
+
+        let binding_iter = stmt.query_map([], |row| {
+            Ok(RepoBinding {
+                repo_path: row.get(0)?,
+                project_type: row.get(1)?,
+                account_id: row.get(2)?,
+                identity_id: row.get(3)?,
+                updated_at: row.get(4)?,
+            })
+        })
+        .map_err(|e| AppError::Internal(format!("SQLite query error: {e}")))?;
+
+        let mut list = Vec::new();
+        for b in binding_iter {
+            if let Ok(item) = b {
+                list.push(item);
+            }
+        }
+        Ok(list)
+    }
+
+    pub fn delete_repo_binding(&self, repo_path: &str) -> AppResult<()> {
+        let conn = self.conn.lock().map_err(|_| AppError::Internal("Database mutex poisoned".into()))?;
+        conn.execute("DELETE FROM repo_bindings WHERE repo_path = ?1", params![repo_path])
+            .map_err(|e| AppError::Internal(format!("Failed to delete repo binding: {e}")))?;
         Ok(())
     }
 }

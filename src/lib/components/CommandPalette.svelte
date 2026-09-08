@@ -14,7 +14,6 @@
     Bug,
     Split,
     FolderGit2,
-    Sparkles,
     Undo2,
     Redo2,
     Tag,
@@ -31,7 +30,7 @@
   interface PaletteItem {
     id: string;
     title: string;
-    category: 'View' | 'Action' | 'Branch' | 'Tag' | 'AI' | 'Help' | 'Tools';
+    category: 'View' | 'Action' | 'Branch' | 'Tag' | 'Help' | 'Tools';
     icon: any;
     shortcut?: string;
     action: () => void;
@@ -49,7 +48,6 @@
     onOpenTimeMachine: () => void;
     onOpenLostAndFound?: () => void;
     onOpenStashShelf?: () => void;
-    onOpenAI: () => void;
     onSmartSync: () => void;
     onStageAll: () => void;
     onUnstageAll: () => void;
@@ -77,7 +75,6 @@
     onOpenTimeMachine,
     onOpenLostAndFound,
     onOpenStashShelf,
-    onOpenAI,
     onSmartSync,
     onStageAll,
     onUnstageAll,
@@ -202,14 +199,7 @@
         },
       },
 
-      // AI
-      {
-        id: 'open-ai',
-        title: 'AI Assistant: Generate Conventional Commit / Explain Conflict',
-        category: 'AI',
-        icon: Sparkles,
-        action: () => { onOpenAI(); onClose(); },
-      },
+
 
       // Actions
       {

@@ -43,7 +43,6 @@
     getStoredBitbucketToken,
   } from '../api/remoteProviderApi';
   import { getActiveAccount } from '../api/auth';
-  import { generateAIPRReview } from '../api/ai';
   import { toast } from '../state/toastState.svelte';
   import { localeState } from '../state/localeState.svelte';
   import type { RemoteState } from '../state/remoteState.svelte';
@@ -133,11 +132,9 @@
   let isLoadingDetails = $state(false);
   let selectedFileIndex = $state(0);
 
-  // Quick Comment & AI Review state
+  // Quick Comment state
   let quickCommentText = $state('');
   let isPostingQuickComment = $state(false);
-  let isGeneratingReview = $state(false);
-  let aiReviewResult = $state<string | null>(null);
 
   // Viewed Files & Diff Mode state
   let viewedFiles = $state<Record<string, boolean>>({});
@@ -338,7 +335,6 @@
     inlineCommentLine = null;
     inlineCommentText = '';
     quickCommentText = '';
-    aiReviewResult = null;
     selectedFileIndex = 0;
     mergeCommitTitle = `Merge pull request #${pr.number} from ${pr.head.ref}`;
     mergeCommitMessage = pr.title;
@@ -392,24 +388,7 @@
     }
   }
 
-  async function handleGenerateAIReview() {
-    if (!selectedPR || prFiles.length === 0) return;
-    try {
-      isGeneratingReview = true;
-      aiReviewResult = null;
-      const review = await generateAIPRReview(selectedPR.title, prFiles);
-      aiReviewResult = review;
-      activeTab = 'conversation';
-      toast.success(
-        localeState.t('pullRequest.reviewer.aiReviewSuccess'),
-        localeState.t('pullRequest.reviewer.aiReviewSuccessDesc')
-      );
-    } catch (err: any) {
-      toast.error(localeState.t('pullRequest.reviewer.aiReviewError'), err.message || String(err));
-    } finally {
-      isGeneratingReview = false;
-    }
-  }
+
 
   function toggleFileViewed(filename: string) {
     if (!selectedPR) return;
@@ -761,13 +740,10 @@
             <PRHeader
               {selectedPR}
               {commitChecks}
-              prFilesCount={prFiles.length}
-              {isGeneratingReview}
               canCheckout={!!onCheckoutBranch}
               {isTogglingPRState}
               isMobileView={true}
               onBackToList={() => { mobilePane = 'list'; }}
-              onAIReview={handleGenerateAIReview}
               onCheckout={handleCheckoutToLocal}
               onOpenMergeModal={() => (showMergeModal = true)}
               onOpenCloseModal={() => (showCloseModal = true)}
@@ -822,11 +798,9 @@
               <PRConversationTab
                 {selectedPR}
                 {prComments}
-                {aiReviewResult}
                 bind:quickCommentText
                 {isPostingQuickComment}
                 {isTogglingPRState}
-                onCloseAIReview={() => (aiReviewResult = null)}
                 onOpenMergeModal={() => (showMergeModal = true)}
                 onOpenCloseModal={() => (showCloseModal = true)}
                 onCloseWithComment={() => handleTogglePRState('closed', quickCommentText)}
@@ -929,14 +903,11 @@
           <PRHeader
             {selectedPR}
             {commitChecks}
-            prFilesCount={prFiles.length}
-            {isGeneratingReview}
             canCheckout={!!onCheckoutBranch}
             {isTogglingPRState}
             isMobileView={false}
             {isSidebarCollapsed}
             onToggleSidebar={() => { isSidebarCollapsed = !isSidebarCollapsed; }}
-            onAIReview={handleGenerateAIReview}
             onCheckout={handleCheckoutToLocal}
             onOpenMergeModal={() => (showMergeModal = true)}
             onOpenCloseModal={() => (showCloseModal = true)}
@@ -991,11 +962,9 @@
             <PRConversationTab
               {selectedPR}
               {prComments}
-              {aiReviewResult}
               bind:quickCommentText
               {isPostingQuickComment}
               {isTogglingPRState}
-              onCloseAIReview={() => (aiReviewResult = null)}
               onOpenMergeModal={() => (showMergeModal = true)}
               onOpenCloseModal={() => (showCloseModal = true)}
               onCloseWithComment={() => handleTogglePRState('closed', quickCommentText)}

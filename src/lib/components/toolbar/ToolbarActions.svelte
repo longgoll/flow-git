@@ -6,7 +6,6 @@
     CloudUpload,
     Upload,
     RefreshCw,
-    Sparkles,
     Flame,
   } from 'lucide-svelte';
 
@@ -22,7 +21,6 @@
     onPublishBranch?: (branch: BranchInfo) => void;
     onPublishRepo?: () => void;
     onRefresh: () => void;
-    onOpenAI?: () => void;
     onRestoreHotfixStash?: () => void;
   }
 
@@ -38,7 +36,6 @@
     onPublishBranch,
     onPublishRepo,
     onRefresh,
-    onOpenAI,
     onRestoreHotfixStash,
   }: Props = $props();
 </script>
@@ -133,15 +130,4 @@
   </div>
 {/if}
 
-<div class="h-4 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5 shrink-0"></div>
 
-<!-- AI Assistant Quick Button -->
-{#if onOpenAI}
-  <button
-    onclick={onOpenAI}
-    class="flex items-center justify-center p-1.5 rounded-md bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200/80 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all cursor-pointer group shadow-xs shrink-0"
-    title={localeState.t('toolbar.aiAssistant')}
-  >
-    <Sparkles class="w-3.5 h-3.5" />
-  </button>
-{/if}

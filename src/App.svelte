@@ -579,7 +579,6 @@
     onOpenTimeMachine={() => safety.openTimeMachine(repo.currentRepoPath)}
     onOpenLostAndFound={() => safety.openLostAndFound(repo.currentRepoPath)}
     onOpenStashShelf={() => modalState.openStashShelf(0)}
-    onOpenAI={actions.openAI}
     onOpenSubmodules={() => (modalState.showSubmoduleModal = true)}
     onOpenLfs={() => (modalState.showLfsModal = true)}
     onOpenGuide={() => (modalState.showGuideModal = true)}
@@ -821,7 +820,6 @@
     handleConfirmInitRepo={actions.confirmInitRepo}
     {loadRemotesList}
     {loadIdentity}
-    handleOpenAI={actions.openAI}
     handleOpenWorktreesModal={actions.openWorktreesModal}
   />
 </div>

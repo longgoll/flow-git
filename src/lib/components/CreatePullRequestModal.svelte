@@ -7,7 +7,6 @@
     Check,
     AlertCircle,
     Loader2,
-    Sparkles,
     Key,
   } from 'lucide-svelte';
   import type { AccountProfile, BranchInfo, GitHubPullRequest, GitHubBranchComparison } from '../types';
@@ -23,7 +22,6 @@
     getStoredGitLabToken,
     getStoredBitbucketToken,
   } from '../api/remoteProviderApi';
-  import { generateAIPRDescription } from '../api/ai';
   import { getActiveAccount } from '../api/auth';
   import { toast } from '../state/toastState.svelte';
   import { localeState } from '../state/localeState.svelte';
@@ -80,10 +78,9 @@
   let isSubmitting = $state(false);
   let errorMessage = $state('');
 
-  // Branch Comparison & AI state
+  // Branch Comparison state
   let branchComparison = $state<GitHubBranchComparison | null>(null);
   let isComparing = $state(false);
-  let isGeneratingAI = $state(false);
 
   // Token state
   let patToken = $state(getStoredGitHubToken());
@@ -167,25 +164,7 @@
     }
   }
 
-  async function handleAIGenerate() {
-    if (!sourceBranch || !targetBranch) return;
-    try {
-      isGeneratingAI = true;
-      const commitSummaries = branchComparison?.commits.map((c) => c.commit.message.split('\n')[0]) || [];
-      const files = branchComparison?.files.map((f) => f.filename) || [];
-      const res = await generateAIPRDescription(sourceBranch, targetBranch, commitSummaries, files);
-      title = res.title;
-      description = res.description;
-      toast.success(
-        localeState.t('pullRequest.create.aiGeneratedSuccess'),
-        localeState.t('pullRequest.create.aiGeneratedSuccessDesc')
-      );
-    } catch (err: any) {
-      toast.error(localeState.t('pullRequest.create.aiGenerateError'), err.message || String(err));
-    } finally {
-      isGeneratingAI = false;
-    }
-  }
+
 
   function initDefaultContent(src: string, tgt: string) {
     if (!title.trim() && src) {
@@ -430,22 +409,6 @@
               {localeState.t('pullRequest.create.descriptionLabel')}
             </label>
             <div class="flex items-center gap-3">
-              <button
-                type="button"
-                onclick={handleAIGenerate}
-                disabled={isGeneratingAI}
-                class="text-[11px] text-violet-600 dark:text-violet-400 hover:text-violet-500 flex items-center gap-1 cursor-pointer font-medium disabled:opacity-50"
-                title={localeState.t('pullRequest.create.generateWithAITitle')}
-              >
-                {#if isGeneratingAI}
-                  <Loader2 class="w-3 h-3 animate-spin" />
-                  <span>{localeState.t('pullRequest.create.generatingAI')}</span>
-                {:else}
-                  <Sparkles class="w-3 h-3" />
-                  <span>{localeState.t('pullRequest.create.generateWithAI')}</span>
-                {/if}
-              </button>
-
               <button
                 type="button"
                 onclick={() => initDefaultContent(sourceBranch, targetBranch)}

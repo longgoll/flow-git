@@ -4,7 +4,6 @@
     CheckCircle2,
     Download,
     GitMerge,
-    Sparkles,
     Loader2,
     CheckCircle,
     Clock,
@@ -23,15 +22,12 @@
   interface Props {
     selectedPR: GitHubPullRequest;
     commitChecks: GitHubCommitChecks | null;
-    prFilesCount: number;
-    isGeneratingReview: boolean;
     canCheckout: boolean;
     isTogglingPRState?: boolean;
     isMobileView?: boolean;
     isSidebarCollapsed?: boolean;
     onBackToList?: () => void;
     onToggleSidebar?: () => void;
-    onAIReview: () => void;
     onCheckout: () => void;
     onOpenMergeModal: () => void;
     onOpenReviewModal: () => void;
@@ -42,15 +38,12 @@
   let {
     selectedPR,
     commitChecks,
-    prFilesCount,
-    isGeneratingReview,
     canCheckout,
     isTogglingPRState = false,
     isMobileView = false,
     isSidebarCollapsed = false,
     onBackToList,
     onToggleSidebar,
-    onAIReview,
     onCheckout,
     onOpenMergeModal,
     onOpenReviewModal,
@@ -134,22 +127,7 @@
 
   <!-- Actions: Checkout to Local, Review, Open GitHub -->
   <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap">
-    <!-- AI Review PR Button -->
-    <button
-      type="button"
-      onclick={onAIReview}
-      disabled={isGeneratingReview || prFilesCount === 0}
-      class="px-2.5 py-1.5 rounded-lg bg-violet-50 dark:bg-violet-950/60 hover:bg-violet-100 dark:hover:bg-violet-900/60 border border-violet-200 dark:border-violet-800/60 text-violet-700 dark:text-violet-300 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
-      title={localeState.t('pullRequest.reviewer.header.aiReviewTooltip')}
-    >
-      {#if isGeneratingReview}
-        <Loader2 class="w-3.5 h-3.5 animate-spin" />
-        <span class="hidden sm:inline">{localeState.t('pullRequest.reviewer.header.aiReviewing')}</span>
-      {:else}
-        <Sparkles class="w-3.5 h-3.5" />
-        <span class="hidden sm:inline">{localeState.t('pullRequest.reviewer.header.aiReviewBtn')}</span>
-      {/if}
-    </button>
+
 
     {#if canCheckout}
       <button

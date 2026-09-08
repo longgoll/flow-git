@@ -1,8 +1,7 @@
 <script lang="ts">
-  import type { ConflictFileDetail, ConflictChunk } from '../types';
+  import type { ConflictFileDetail } from '../types';
   import MonacoEditor from './MonacoEditor.svelte';
   import MonacoDiffEditor from './MonacoDiffEditor.svelte';
-  import { resolveConflictChunkAI, resolveConflictFileAI } from '../api/ai';
   import { toast } from '../state/toastState.svelte';
   import { localeState } from '../state/localeState.svelte';
   import {
@@ -12,7 +11,6 @@
     Save,
     RotateCcw,
     Play,
-    Sparkles,
     Search,
     Columns,
     Layers,
@@ -53,8 +51,6 @@
   let resolvedText = $state<string>('');
   let searchQuery = $state<string>('');
   let layoutMode = $state<'2way' | '3way' | 'chunks'>('2way');
-  let isAiResolving = $state<boolean>(false);
-  let aiResolvingChunkIdx = $state<number | null>(null);
   let chunkChoices = $state<Record<number, 'ours' | 'theirs' | 'both-ours' | 'both-theirs' | 'base'>>({});
   let lastLoadedFile = $state<string | null>(null);
 
@@ -199,55 +195,7 @@
     toast.warning(localeState.t('workflows.conflictResolver.toastInsertGitMarkers'));
   }
 
-  // AI Conflict Resolutions
-  async function handleAiResolveChunk(chunk: ConflictChunk) {
-    if (!selectedFile) return;
-    aiResolvingChunkIdx = chunk.chunk_index;
-    try {
-      const merged = await resolveConflictChunkAI(chunk, selectedFile);
-      chunkChoices = { ...chunkChoices, [chunk.chunk_index]: 'ours' };
-      let text = '';
-      for (const c of conflictDetail?.chunks || []) {
-        if (!c.is_conflict) {
-          text += (c.our_content || c.their_content || '') + '\n';
-        } else if (c.chunk_index === chunk.chunk_index) {
-          text += merged + '\n';
-        } else {
-          const choice = chunkChoices[c.chunk_index];
-          if (choice === 'ours') text += c.our_content + '\n';
-          else if (choice === 'theirs') text += c.their_content + '\n';
-          else if (choice === 'both-ours') text += c.our_content + '\n' + c.their_content + '\n';
-          else if (choice === 'both-theirs') text += c.their_content + '\n' + c.our_content + '\n';
-          else text += c.our_content + '\n';
-        }
-      }
-      resolvedText = text.trimEnd();
-      toast.success(localeState.t('workflows.conflictResolver.toastAiChunkSuccess', { index: chunk.chunk_index + 1 }));
-    } catch (e: any) {
-      toast.error(localeState.t('workflows.conflictResolver.toastAiChunkError', { error: e?.message || e }));
-    } finally {
-      aiResolvingChunkIdx = null;
-    }
-  }
 
-  async function handleAiResolveEntireFile() {
-    if (!conflictDetail || !selectedFile) return;
-    isAiResolving = true;
-    try {
-      const resolved = await resolveConflictFileAI(conflictDetail.chunks, selectedFile);
-      resolvedText = resolved.trimEnd();
-      const newChoices: Record<number, 'ours'> = {};
-      for (const chunk of conflictChunks) {
-        newChoices[chunk.chunk_index] = 'ours';
-      }
-      chunkChoices = newChoices;
-      toast.success(localeState.t('workflows.conflictResolver.toastAiFileSuccess'));
-    } catch (e: any) {
-      toast.error(localeState.t('workflows.conflictResolver.toastAiFileError', { error: e?.message || e }));
-    } finally {
-      isAiResolving = false;
-    }
-  }
 
   function handleStage() {
     if (!selectedFile || isLoading) return;
@@ -321,22 +269,7 @@
 
     <!-- Right: Actions Toolbar -->
     <div class="flex items-center gap-2 shrink-0">
-      {#if conflictDetail}
-        <button
-          onclick={handleAiResolveEntireFile}
-          disabled={isAiResolving || isLoading}
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-medium text-xs shadow-xs transition-all cursor-pointer"
-          title={localeState.t('workflows.conflictResolver.aiAutoMergeTooltip')}
-        >
-          {#if isAiResolving}
-            <RefreshCw class="w-3.5 h-3.5 animate-spin" />
-            <span>{localeState.t('workflows.conflictResolver.aiResolving')}</span>
-          {:else}
-            <Sparkles class="w-3.5 h-3.5 text-amber-300" />
-            <span class="hidden sm:inline">{localeState.t('workflows.conflictResolver.aiAutoMerge')}</span>
-          {/if}
-        </button>
-      {/if}
+
 
       <button
         onclick={handleStage}
@@ -640,19 +573,6 @@
                         class="px-2.5 py-1 rounded text-[11px] font-medium cursor-pointer transition-colors {currentChoice === 'both-ours' ? 'bg-purple-600 text-white shadow-xs' : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-800/40'}"
                       >
                         {localeState.t('workflows.conflictResolver.takeBoth')}
-                      </button>
-                      <button
-                        onclick={() => handleAiResolveChunk(chunk)}
-                        disabled={aiResolvingChunkIdx === chunk.chunk_index}
-                        class="px-2.5 py-1 rounded text-[11px] font-medium bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white cursor-pointer transition-all flex items-center gap-1 shadow-xs"
-                        title={localeState.t('workflows.conflictResolver.aiChunkTooltip')}
-                      >
-                        {#if aiResolvingChunkIdx === chunk.chunk_index}
-                          <RefreshCw class="w-3 h-3 animate-spin" />
-                        {:else}
-                          <Sparkles class="w-3 h-3 text-amber-300" />
-                        {/if}
-                        <span>AI</span>
                       </button>
                     </div>
                   </div>

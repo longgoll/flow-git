@@ -1,6 +1,5 @@
 <script lang="ts">
   import {
-    Bot,
     User,
     Check,
     GitMerge,
@@ -18,11 +17,9 @@
   interface Props {
     selectedPR: GitHubPullRequest;
     prComments: GitHubPRComment[];
-    aiReviewResult: string | null;
     quickCommentText: string;
     isPostingQuickComment: boolean;
     isTogglingPRState?: boolean;
-    onCloseAIReview: () => void;
     onOpenMergeModal: () => void;
     onPostQuickComment: () => void;
     onOpenCloseModal?: () => void;
@@ -33,11 +30,9 @@
   let {
     selectedPR,
     prComments = [],
-    aiReviewResult = null,
     quickCommentText = $bindable(''),
     isPostingQuickComment = false,
     isTogglingPRState = false,
-    onCloseAIReview,
     onOpenMergeModal,
     onPostQuickComment,
     onOpenCloseModal,
@@ -47,25 +42,6 @@
 </script>
 
 <div class="flex-1 overflow-y-auto p-6 space-y-4 max-w-3xl">
-  <!-- AI Code Review Banner (if generated) -->
-  {#if aiReviewResult}
-    <div class="p-4 rounded-xl bg-violet-50/80 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/60 shadow-xs space-y-2.5 animate-in fade-in duration-200">
-      <div class="flex items-center justify-between border-b border-violet-200/60 dark:border-violet-800/40 pb-2">
-        <div class="flex items-center gap-2 text-xs font-bold text-violet-900 dark:text-violet-200">
-          <Bot class="w-4 h-4 text-violet-600 dark:text-violet-400" />
-          <span>{localeState.t('pullRequest.reviewer.conversation.aiReviewerTitle')}</span>
-        </div>
-        <button
-          type="button"
-          onclick={onCloseAIReview}
-          class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-xs cursor-pointer"
-        >
-          {localeState.t('pullRequest.reviewer.conversation.closeAI')}
-        </button>
-      </div>
-      <MarkdownViewer content={aiReviewResult} />
-    </div>
-  {/if}
 
   <!-- Author PR Description Card -->
   <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-800 space-y-2">

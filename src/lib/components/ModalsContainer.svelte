@@ -1,6 +1,5 @@
 <script lang="ts">
   import { GitFork } from 'lucide-svelte';
-  import AIAssistantModal from './AIAssistantModal.svelte';
   import AuthCredentialModal from './AuthCredentialModal.svelte';
   import BisectWizard from './BisectWizard.svelte';
   import CleanMergedBranchesModal from './CleanMergedBranchesModal.svelte';
@@ -85,7 +84,6 @@
     handleConfirmInitRepo: (defaultBranch: string) => Promise<void>;
     loadRemotesList: (path: string) => Promise<void>;
     loadIdentity: (path: string) => Promise<void>;
-    handleOpenAI: () => void;
     handleOpenWorktreesModal: () => void;
   }
 
@@ -120,7 +118,6 @@
     handleConfirmInitRepo,
     loadRemotesList,
     loadIdentity,
-    handleOpenAI,
     handleOpenWorktreesModal,
   }: Props = $props();
 </script>
@@ -323,7 +320,6 @@
   onOpenTimeMachine={() => safety.openTimeMachine(repo.currentRepoPath)}
   onOpenLostAndFound={() => safety.openLostAndFound(repo.currentRepoPath)}
   onOpenStashShelf={() => modalState.openStashShelf(0)}
-  onOpenAI={handleOpenAI}
   onSmartSync={async () => {
     const res = await remote.runSmartSync(
       repo.currentRepoPath,
@@ -381,15 +377,7 @@
   onClose={() => (modalState.showCommandPalette = false)}
 />
 
-<!-- Local AI Assistant Modal -->
-<AIAssistantModal
-  isOpen={modalState.showAIModal}
-  diffContext={modalState.aiDiffContext}
-  conflictDetail={safety.conflictFileDetail}
-  onApplyCommitMessage={(msg) =>
-    (repo.statusMessage = `AI message: ${msg.slice(0, 40)}...`)}
-  onClose={() => (modalState.showAIModal = false)}
-/>
+
 
 <!-- Git Submodules Explorer Modal -->
 <SubmoduleManager

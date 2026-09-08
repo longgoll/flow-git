@@ -69,7 +69,6 @@
     onOpenTimeMachine?: () => void;
     onOpenLostAndFound?: () => void;
     onOpenStashShelf?: () => void;
-    onOpenAI?: () => void;
     onOpenSubmodules?: () => void;
     onOpenLfs?: () => void;
     onOpenGuide?: () => void;
@@ -137,7 +136,6 @@
     onOpenTimeMachine,
     onOpenLostAndFound,
     onOpenStashShelf,
-    onOpenAI,
     onOpenSubmodules,
     onOpenLfs,
     onOpenGuide,
@@ -278,7 +276,6 @@
       {onPublishBranch}
       {onPublishRepo}
       {onRefresh}
-      {onOpenAI}
       {onRestoreHotfixStash}
     />
 

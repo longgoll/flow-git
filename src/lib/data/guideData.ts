@@ -13,7 +13,6 @@ import {
   Layers,
   Bug,
   Split,
-  Lightbulb,
   CheckCircle2,
   ShieldCheck,
   Rewind,
@@ -536,25 +535,6 @@ export const guideItems: GuideItem[] = [
       {
         title: 'Discard Hunk an toàn',
         desc: 'Bấm "Discard Hunk" để loại bỏ thay đổi của khối đó (vẫn được lưu vào Thùng rác 48h).',
-      },
-    ],
-  },
-  {
-    id: 'ai-assistant',
-    category: 'features',
-    title: 'Local AI Assistant (Ollama & Offline LLM)',
-    subtitle: 'Tự động tạo Commit Message chuẩn Conventional và giải thích xung đột',
-    icon: Lightbulb,
-    problem: 'Viết commit message chuẩn mất thời gian, và khi gặp xung đột (conflict) phức tạp rất khó hiểu code của cả 2 bên.',
-    solution: 'Tích hợp AI cục bộ riêng tư 100%: Tự động đọc diff để sinh commit message súc tích chỉ sau 1 click, hoặc bấm icon AI để giải thích nguyên nhân conflict.',
-    steps: [
-      {
-        title: 'Sinh Commit Message tự động',
-        desc: 'Tại bảng Commit Box, bấm icon tia sáng ✨ "AI Generate" để tự động sinh commit message theo chuẩn Conventional Commits.',
-      },
-      {
-        title: 'Giải thích và gợi ý giải quyết Conflict',
-        desc: 'Trong bộ giải quyết xung đột ConflictResolver, bấm nút "AI Explain" để AI phân tích logic đè code và gợi ý cách gộp tối ưu.',
       },
     ],
   },

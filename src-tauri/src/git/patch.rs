@@ -30,7 +30,7 @@ pub struct PatchApplyResult {
 /// Generate a standard git format-patch compatible patch string from a commit.
 pub fn export_commit_patch(repo: &Repository, commit_id: &str) -> AppResult<String> {
     let oid = Oid::from_str(commit_id)
-        .map_err(|e| AppError::Git(format!("Invalid commit SHA {commit_id}: {e}")))?;
+        .map_err(|e| AppError::GitMessage(format!("Invalid commit SHA {commit_id}: {e}")))?;
     let commit = repo.find_commit(oid)?;
     let tree = commit.tree()?;
 
@@ -176,7 +176,7 @@ pub fn apply_patch(
 ) -> AppResult<PatchApplyResult> {
     let trimmed = patch_content.trim();
     if trimmed.is_empty() {
-        return Err(AppError::InvalidOperation("Cannot apply empty patch".into()));
+        return Err(AppError::GitMessage("Cannot apply empty patch".into()));
     }
 
     let diff = Diff::from_buffer(trimmed.as_bytes())?;

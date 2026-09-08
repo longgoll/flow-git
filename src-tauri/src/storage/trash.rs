@@ -70,14 +70,14 @@ impl TrashStore {
             );
             CREATE INDEX IF NOT EXISTS idx_trash_repo ON trash_snapshots(repo_path);
             CREATE INDEX IF NOT EXISTS idx_trash_created ON trash_snapshots(created_at);
-            CREATE INDEX IF NOT EXISTS idx_trash_repo_created ON trash_snapshots(repo_path, created_at DESC);
-            CREATE INDEX IF NOT EXISTS idx_trash_batch ON trash_snapshots(batch_id);",
+            CREATE INDEX IF NOT EXISTS idx_trash_repo_created ON trash_snapshots(repo_path, created_at DESC);",
         )
         .map_err(|e| AppError::Internal(format!("Failed to init trash schema: {e}")))?;
 
         // Idempotent column migrations for backward compatibility
         let _ = conn.execute("ALTER TABLE trash_snapshots ADD COLUMN batch_id TEXT;", []);
         let _ = conn.execute("ALTER TABLE trash_snapshots ADD COLUMN is_oversized INTEGER NOT NULL DEFAULT 0;", []);
+        let _ = conn.execute("CREATE INDEX IF NOT EXISTS idx_trash_batch ON trash_snapshots(batch_id);", []);
 
         let store = Self {
             conn: Mutex::new(conn),
@@ -337,6 +337,16 @@ impl TrashStore {
         let conn = self.get_conn();
         let count = conn
             .execute("DELETE FROM trash_snapshots WHERE batch_id = ?1", params![batch_id])
+            .map_err(|e| AppError::Internal(e.to_string()))?;
+        let _ = conn.execute_batch("PRAGMA wal_checkpoint(PASSIVE);");
+        Ok(count)
+    }
+
+    pub fn clear_snapshots(&self, repo_path: &str) -> AppResult<usize> {
+        let conn = self.get_conn();
+        let normalized = normalize_repo_path(repo_path);
+        let count = conn
+            .execute("DELETE FROM trash_snapshots WHERE repo_path = ?1", params![normalized])
             .map_err(|e| AppError::Internal(e.to_string()))?;
         let _ = conn.execute_batch("PRAGMA wal_checkpoint(PASSIVE);");
         Ok(count)

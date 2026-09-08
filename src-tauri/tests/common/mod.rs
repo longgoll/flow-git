@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use git2::{Repository, Signature};
 use std::path::Path;
 use tempfile::tempdir;
@@ -14,10 +16,13 @@ pub fn setup_test_repo() -> (tempfile::TempDir, Repository) {
     let sig = Signature::now("FlowGit Tester", "tester@flowgit.local").expect("Failed to create signature");
     let mut index = repo.index().expect("Failed to get repo index");
     index.add_path(Path::new("file1.txt")).expect("Failed to add file to index");
+    index.write().expect("Failed to write index");
     let tree_id = index.write_tree().expect("Failed to write index tree");
-    let tree = repo.find_tree(tree_id).expect("Failed to find tree");
-    repo.commit(Some("HEAD"), &sig, &sig, "Initial commit", &tree, &[])
-        .expect("Failed to create initial commit");
+    {
+        let tree = repo.find_tree(tree_id).expect("Failed to find tree");
+        repo.commit(Some("HEAD"), &sig, &sig, "Initial commit", &tree, &[])
+            .expect("Failed to create initial commit");
+    }
 
     (dir, repo)
 }
@@ -34,6 +39,7 @@ pub fn commit_file(repo: &Repository, relative_path: &str, content: &str, messag
     let sig = Signature::now("FlowGit Tester", "tester@flowgit.local").expect("Signature error");
     let mut index = repo.index().expect("Index error");
     index.add_path(Path::new(relative_path)).expect("Add path error");
+    index.write().expect("Failed to write index");
     let tree_id = index.write_tree().expect("Write tree error");
     let tree = repo.find_tree(tree_id).expect("Find tree error");
 

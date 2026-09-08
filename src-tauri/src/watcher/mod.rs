@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::Duration;
 use notify_debouncer_mini::{new_debouncer, DebouncedEvent, Debouncer};

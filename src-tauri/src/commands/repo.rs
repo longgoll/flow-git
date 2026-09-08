@@ -329,8 +329,9 @@ pub async fn get_trash_snapshot_diff(
     snapshot_id: i64,
     state: State<'_, AppState>,
 ) -> AppResult<TrashSnapshotDiffResult> {
+    let trash_store = state.trash_store.clone();
     tokio::task::spawn_blocking(move || {
-        let (repo_path, file_path, content_bytes) = state.trash_store.get_snapshot_content(snapshot_id)?;
+        let (repo_path, file_path, content_bytes) = trash_store.get_snapshot_content(snapshot_id)?;
         let snapshot_content = String::from_utf8_lossy(&content_bytes).to_string();
 
         let full_path = std::path::Path::new(&repo_path).join(&file_path);

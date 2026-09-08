@@ -321,6 +321,10 @@ pub fn delete_trash_snapshot(store: &TrashStore, snapshot_id: i64) -> AppResult<
     store.delete_snapshot(snapshot_id)
 }
 
+pub fn clear_trash_snapshots(store: &TrashStore, repo_path: &str) -> AppResult<usize> {
+    store.clear_snapshots(repo_path)
+}
+
 fn mask_secret(val: &str) -> String {
     let len = val.len();
     if len <= 8 {
@@ -404,10 +408,16 @@ pub fn scan_staged_secrets(repo: &Repository) -> AppResult<Vec<SecretFinding>> {
             Regex::new(r"\b(AKIA[0-9A-Z]{16})\b").unwrap(),
         ),
         (
+            "aws_secret_key",
+            "AWS Secret Access Key",
+            "AWS Secret Access Key found in staged content",
+            Regex::new(r#"(?i)\b(?:aws_secret_access_key|aws_secret_key)\s*[:=]\s*['"]?([A-Za-z0-9/+=]{40})['"]?"#).unwrap(),
+        ),
+        (
             "openai_key",
             "OpenAI API Key",
             "OpenAI API Secret Key found in staged content",
-            Regex::new(r"\b(sk-[a-zA-Z0-9]{20,T3BlbkFJ[a-zA-Z0-9]{20,}|sk-proj-[a-zA-Z0-9_-]{30,})\b").unwrap(),
+            Regex::new(r"\b(sk-[a-zA-Z0-9]{20}T3BlbkFJ[a-zA-Z0-9]{20,}|sk-proj-[a-zA-Z0-9_-]{30,})\b").unwrap(),
         ),
         (
             "github_token",
@@ -565,6 +575,15 @@ pub fn restore_lost_commit(repo: &Repository, commit_id: &str, branch_name: &str
 
     let refname = branch.get().name().unwrap_or("").to_string();
     Ok(refname)
+}
+
+pub fn recover_reflog_target(
+    repo: &Repository,
+    commit_id: &str,
+    target_branch: Option<String>,
+) -> AppResult<String> {
+    let branch = target_branch.unwrap_or_else(|| format!("rescue-{}", &commit_id[..7.min(commit_id.len())]));
+    restore_lost_commit(repo, commit_id, &branch)
 }
 
 #[cfg(test)]

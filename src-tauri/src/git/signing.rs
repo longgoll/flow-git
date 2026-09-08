@@ -23,7 +23,7 @@ pub struct SigningConfig {
 /// Extract and analyze signature for a commit from its object header
 pub fn get_commit_signature(repo: &Repository, commit_id: &str) -> AppResult<SignatureInfo> {
     let oid = Oid::from_str(commit_id)
-        .map_err(|e| AppError::Git(format!("Invalid commit SHA {commit_id}: {e}")))?;
+        .map_err(|e| AppError::GitMessage(format!("Invalid commit SHA {commit_id}: {e}")))?;
     let commit = repo.find_commit(oid)?;
 
     // Read the "gpgsig" header field from the raw commit object

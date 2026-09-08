@@ -58,8 +58,8 @@ fn test_discard_all_changes_and_clear_trash() {
     std::fs::write(&file2, "Brand new file 2\n").unwrap();
 
     // Discard toàn bộ thay đổi
-    let discarded_count = discard_all_changes(&repo, &store).expect("Failed to discard all changes");
-    assert!(discarded_count >= 1, "At least 1 change discarded");
+    let discarded_ids = discard_all_changes(&repo, &store).expect("Failed to discard all changes");
+    assert!(!discarded_ids.is_empty(), "At least 1 change discarded");
 
     let repo_path = repo.workdir().unwrap().to_string_lossy().to_string();
     let trash_items = list_trash_snapshots(&store, &repo_path).expect("Failed to list trash");

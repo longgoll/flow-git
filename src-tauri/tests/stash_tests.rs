@@ -98,11 +98,15 @@ fn test_stash_branch_workflow_integration() {
     assert!(branch_info.is_head);
 
     // Kiểm tra HEAD hiện tại trỏ đúng nhánh mới
-    let head = repo.head().expect("Failed to get HEAD");
-    assert_eq!(head.shorthand().unwrap(), "feature-from-stash");
+    {
+        let head = repo.head().expect("Failed to get HEAD");
+        assert_eq!(head.shorthand().unwrap(), "feature-from-stash");
+    }
 
     // Kiểm tra nội dung trong workdir đã được apply
-    let content = std::fs::read_to_string(&file_path).expect("Failed to read file");
+    let content = std::fs::read_to_string(&file_path)
+        .expect("Failed to read file")
+        .replace("\r\n", "\n");
     assert_eq!(content, "Branch isolated work\n");
 
     // Kiểm tra stash đã được tự động xóa (drop) khỏi stack

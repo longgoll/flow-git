@@ -27,7 +27,13 @@ pub fn smart_sync_upstream(
     target_branch_name: Option<&str>,
     credentials: Option<GitCredentials>,
 ) -> AppResult<SmartSyncResult> {
-    smart_sync_upstream_with_progress(repo, remote_name, target_branch_name, credentials, None)
+    smart_sync_upstream_with_progress(
+        repo,
+        remote_name,
+        target_branch_name,
+        credentials,
+        None::<fn(TransferProgressPayload)>,
+    )
 }
 
 pub fn smart_sync_upstream_with_progress<F>(

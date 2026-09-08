@@ -177,6 +177,11 @@ export const banners: typeof viBanners = {
   autoStashNotice: "Safely auto-stashed {count} uncommitted file(s) before syncing.",
   autoStashRestored: "Successfully restored uncommitted changes after sync.",
   viewDetails: "View Graph",
+  previewCommitsBtn: "Preview {count} commit(s)",
+  hidePreviewBtn: "Collapse",
+  previewCommitsTooltip: "Preview incoming commits from remote before syncing",
+  incomingCommitsTitle: "Incoming commits on {upstream}",
+  noIncomingCommits: "No incoming commit details available.",
   dismissNotice: "Dismiss",
 };
 

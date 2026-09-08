@@ -25,7 +25,7 @@ use commands::{
     get_file_history, get_status, list_trash_snapshots, restore_trash_snapshot, stage_all,
     stage_file, stage_hunk, unstage_all, unstage_file, unstage_hunk,
     // Remotes
-    add_remote, fetch_remote, get_remotes, remove_remote, set_remote_url,
+    add_remote, fetch_remote, get_incoming_commits, get_remotes, remove_remote, set_remote_url,
     silent_background_fetch,
     // Action, Simulation, Cherry-pick, Merge, Rebase, Time Machine
     abort_current_operation, check_is_rebasing, continue_rebase_branch, create_commit,
@@ -143,6 +143,7 @@ pub fn run() {
             set_remote_url,
             fetch_remote,
             silent_background_fetch,
+            get_incoming_commits,
             // Actions, Rebase & Time Machine
             create_commit,
             simulate_drag_action,

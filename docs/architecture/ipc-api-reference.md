@@ -105,7 +105,8 @@ All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard
 | `remove_remote` | `path: String, name: String` | `bool` | Removes a configured remote. |
 | `set_remote_url` | `path: String, name: String, url: String` | `bool` | Updates remote URL endpoint. |
 | `fetch_remote` | `path: String, remote_name: Option<String>` | `bool` | Fetches updates from remote. |
-| `silent_background_fetch` | `path: String, remote: Option<String>, credentials: Option<GitCredentials>` | `BackgroundFetchResult` | **Silent Auto-Fetch**: Performs non-blocking background fetch without noisy auth prompts, computing ahead/behind metrics. |
+| `silent_background_fetch` | `path: String, remote: Option<String>, credentials: Option<GitCredentials>` | `BackgroundFetchResult` | **Silent Auto-Fetch**: Performs non-blocking background fetch without noisy auth prompts, computing ahead/behind metrics and incoming commits preview. |
+| `get_incoming_commits` | `path: String, branch: Option<String>` | `Vec<CommitSummary>` | **Preview Incoming**: Reads commit list from upstream that are not yet pulled locally (`HEAD..upstream`). |
 
 ---
 
@@ -304,7 +305,8 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `remove_remote` | `path: String, name: String` | `bool` | Xóa bỏ cấu hình một Remote không còn dùng. |
 | `set_remote_url` | `path: String, name: String, url: String` | `bool` | Thay đổi đường dẫn URL kết nối của Remote. |
 | `fetch_remote` | `path: String, remote_name: Option<String>` | `bool` | Tải về các nhánh và commit mới từ Remote về máy tính. |
-| `silent_background_fetch` | `path: String, remote: Option<String>, credentials: Option<GitCredentials>` | `BackgroundFetchResult` | **Silent Auto-Fetch**: Chạy ngầm kiểm tra commit mới từ remote an toàn, không bung popup làm phiền, tính toán chênh lệch ahead/behind. |
+| `silent_background_fetch` | `path: String, remote: Option<String>, credentials: Option<GitCredentials>` | `BackgroundFetchResult` | **Silent Auto-Fetch**: Chạy ngầm kiểm tra commit mới từ remote an toàn, không bung popup làm phiền, tính toán chênh lệch ahead/behind và commit mới. |
+| `get_incoming_commits` | `path: String, branch: Option<String>` | `Vec<CommitSummary>` | **Xem trước Commit mới**: Lấy danh sách các commit mới trên remote chưa được kéo về local (`HEAD..upstream`). |
 
 ---
 

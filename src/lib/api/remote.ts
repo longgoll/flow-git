@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { BackgroundFetchResult, GitCredentials, RemoteInfo } from '../types';
+import type { BackgroundFetchResult, CommitSummary, GitCredentials, RemoteInfo } from '../types';
 import { isTauri } from './client';
 
 export async function getRemotes(path: string): Promise<RemoteInfo[]> {
@@ -57,4 +57,15 @@ export async function silentBackgroundFetch(
     message: 'Mock auto-fetch completed.',
   };
 }
+
+export async function getIncomingCommits(
+  path: string,
+  branch?: string
+): Promise<CommitSummary[]> {
+  if (isTauri) {
+    return await invoke<CommitSummary[]>('get_incoming_commits', { path, branch });
+  }
+  return [];
+}
+
 

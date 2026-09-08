@@ -4,9 +4,10 @@ use crate::git::{
     auth::GitCredentials,
     remote_ops::{
         add_remote as git_add_remote, fetch_specific_remote as git_fetch_remote,
-        get_remotes as git_get_remotes, remove_remote as git_remove_remote,
-        set_remote_url as git_set_remote_url, silent_background_fetch as git_silent_background_fetch,
-        BackgroundFetchResult, RemoteInfo,
+        get_incoming_commits as git_get_incoming_commits, get_remotes as git_get_remotes,
+        remove_remote as git_remove_remote, set_remote_url as git_set_remote_url,
+        silent_background_fetch as git_silent_background_fetch, BackgroundFetchResult,
+        CommitSummary, RemoteInfo,
     },
     repo::open_repository as git_open_repo,
 };
@@ -78,4 +79,18 @@ pub async fn silent_background_fetch(
     .await
     .map_err(|e| AppError::Internal(e.to_string()))?
 }
+
+#[command]
+pub async fn get_incoming_commits(
+    path: String,
+    branch: Option<String>,
+) -> AppResult<Vec<CommitSummary>> {
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        git_get_incoming_commits(&repo, branch.as_deref())
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
 

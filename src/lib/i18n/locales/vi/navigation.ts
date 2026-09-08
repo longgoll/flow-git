@@ -169,6 +169,11 @@ export const banners = {
   autoStashNotice: "Đã tự động lưu {count} file sửa dở vào Stash an toàn trước khi cập nhật.",
   autoStashRestored: "Đã tự động khôi phục lại code sửa dở sau khi đồng bộ thành công.",
   viewDetails: "Xem đồ thị",
+  previewCommitsBtn: "Xem {count} commit mới",
+  hidePreviewBtn: "Thu gọn",
+  previewCommitsTooltip: "Xem danh sách các commit từ remote sắp được kéo về",
+  incomingCommitsTitle: "Commit mới trên {upstream}",
+  noIncomingCommits: "Không có thông tin commit mới.",
   dismissNotice: "Bỏ qua",
 };
 

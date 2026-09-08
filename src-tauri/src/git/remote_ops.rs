@@ -83,6 +83,16 @@ pub fn fetch_specific_remote(
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CommitSummary {
+    pub id: String,
+    pub short_id: String,
+    pub message: String,
+    pub author_name: String,
+    pub author_email: String,
+    pub timestamp: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackgroundFetchResult {
     pub success: bool,
     pub has_new_commits: bool,
@@ -90,7 +100,68 @@ pub struct BackgroundFetchResult {
     pub upstream_branch: Option<String>,
     pub ahead_count: usize,
     pub behind_count: usize,
+    pub incoming_commits: Vec<CommitSummary>,
     pub message: String,
+}
+
+/// Retrieve commits present in target_oid but missing in base_oid
+pub fn get_commits_between(
+    repo: &Repository,
+    base_oid: git2::Oid,
+    target_oid: git2::Oid,
+    max_count: usize,
+) -> AppResult<Vec<CommitSummary>> {
+    let mut revwalk = repo.revwalk()?;
+    revwalk.set_sorting(git2::Sort::TIME | git2::Sort::TOPOLOGICAL)?;
+    revwalk.push(target_oid)?;
+    let _ = revwalk.hide(base_oid);
+
+    let mut commits = Vec::new();
+    for oid_res in revwalk {
+        if commits.len() >= max_count {
+            break;
+        }
+        if let Ok(oid) = oid_res {
+            if let Ok(commit) = repo.find_commit(oid) {
+                let id = oid.to_string();
+                let short_id = if id.len() >= 7 { id[..7].to_string() } else { id.clone() };
+                let message = commit.summary().unwrap_or("").to_string();
+                let author = commit.author();
+                let author_name = author.name().unwrap_or("Unknown").to_string();
+                let author_email = author.email().unwrap_or("").to_string();
+                let timestamp = commit.time().seconds();
+
+                commits.push(CommitSummary {
+                    id,
+                    short_id,
+                    message,
+                    author_name,
+                    author_email,
+                    timestamp,
+                });
+            }
+        }
+    }
+    Ok(commits)
+}
+
+/// Get preview of incoming commits from upstream for a branch
+pub fn get_incoming_commits(
+    repo: &Repository,
+    branch_name: Option<&str>,
+) -> AppResult<Vec<CommitSummary>> {
+    let head = repo.head().ok();
+    let target_branch_name = branch_name.or_else(|| head.as_ref().and_then(|h| h.shorthand()));
+    if let Some(b_name) = target_branch_name {
+        if let Ok(branch) = repo.find_branch(b_name, git2::BranchType::Local) {
+            if let Ok(upstream) = branch.upstream() {
+                if let (Some(local_oid), Some(up_oid)) = (branch.get().target(), upstream.get().target()) {
+                    return get_commits_between(repo, local_oid, up_oid, 50);
+                }
+            }
+        }
+    }
+    Ok(Vec::new())
 }
 
 /// Perform a silent background fetch without showing noisy auth popups on network/auth failure.
@@ -109,6 +180,7 @@ pub fn silent_background_fetch(
             upstream_branch: None,
             ahead_count: 0,
             behind_count: 0,
+            incoming_commits: Vec::new(),
             message: "No remotes configured".to_string(),
         });
     }
@@ -147,6 +219,7 @@ pub fn silent_background_fetch(
                 upstream_branch: None,
                 ahead_count: 0,
                 behind_count: 0,
+                incoming_commits: Vec::new(),
                 message: format!("Fetch skipped (git spawn error): {}", e),
             });
         }
@@ -161,6 +234,7 @@ pub fn silent_background_fetch(
             upstream_branch: None,
             ahead_count: 0,
             behind_count: 0,
+            incoming_commits: Vec::new(),
             message: format!("Fetch skipped or offline: {}", stderr.trim()),
         });
     }
@@ -171,6 +245,8 @@ pub fn silent_background_fetch(
     let mut upstream_branch = None;
     let mut ahead_count = 0;
     let mut behind_count = 0;
+    let mut local_oid_opt = None;
+    let mut up_oid_opt = None;
 
     if let Some(ref b_name) = current_branch {
         if let Ok(branch) = repo.find_branch(b_name, git2::BranchType::Local) {
@@ -179,6 +255,8 @@ pub fn silent_background_fetch(
                     upstream_branch = Some(up_name.to_string());
                 }
                 if let (Some(local_oid), Some(up_oid)) = (branch.get().target(), upstream.get().target()) {
+                    local_oid_opt = Some(local_oid);
+                    up_oid_opt = Some(up_oid);
                     if let Ok((ahead, behind)) = repo.graph_ahead_behind(local_oid, up_oid) {
                         ahead_count = ahead;
                         behind_count = behind;
@@ -189,6 +267,16 @@ pub fn silent_background_fetch(
     }
 
     let has_new_commits = behind_count > 0;
+    let incoming_commits = if has_new_commits {
+        if let (Some(local_oid), Some(up_oid)) = (local_oid_opt, up_oid_opt) {
+            get_commits_between(repo, local_oid, up_oid, 20).unwrap_or_default()
+        } else {
+            Vec::new()
+        }
+    } else {
+        Vec::new()
+    };
+
     Ok(BackgroundFetchResult {
         success: true,
         has_new_commits,
@@ -196,6 +284,7 @@ pub fn silent_background_fetch(
         upstream_branch,
         ahead_count,
         behind_count,
+        incoming_commits,
         message: if has_new_commits {
             format!("Found {} new commit(s) on remote.", behind_count)
         } else {

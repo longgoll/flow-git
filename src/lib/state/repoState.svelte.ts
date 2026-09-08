@@ -469,6 +469,13 @@ export class RepoState {
     await this.loadCommitDetail(commit.id);
   }
 
+  async selectCommitById(commitId: string) {
+    this.selectedCommitId = commitId;
+    this.selectedCommitIds = [commitId];
+    this.isDetailOpen = true;
+    await this.loadCommitDetail(commitId);
+  }
+
   handleSelectBranch(branch: BranchInfo) {
     const targetCommit = this.rawCommits.find((c) => c.id === branch.target_commit_id);
     if (targetCommit) {

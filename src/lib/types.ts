@@ -458,6 +458,15 @@ export interface SmartSyncResult {
   updated_commit_id?: string;
 }
 
+export interface CommitSummary {
+  id: string;
+  short_id: string;
+  message: string;
+  author_name: string;
+  author_email: string;
+  timestamp: number;
+}
+
 export interface BackgroundFetchResult {
   success: boolean;
   has_new_commits: boolean;
@@ -465,6 +474,7 @@ export interface BackgroundFetchResult {
   upstream_branch?: string;
   ahead_count: number;
   behind_count: number;
+  incoming_commits?: CommitSummary[];
   message: string;
 }
 

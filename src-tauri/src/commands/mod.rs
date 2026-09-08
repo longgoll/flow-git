@@ -37,8 +37,8 @@ pub use diff::{
 };
 
 pub use remote::{
-    add_remote, fetch_remote, get_remotes, remove_remote, set_remote_url,
-    silent_background_fetch,
+    add_remote, fetch_remote, get_incoming_commits, get_remotes, remove_remote,
+    set_remote_url, silent_background_fetch,
 };
 
 pub use action::{

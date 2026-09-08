@@ -644,10 +644,13 @@
       {#if repo.currentBranch && (repo.currentBranch.behind_count ?? 0) > 0 && remote.dismissedBehindBranch !== repo.currentBranch.shorthand}
         <UpstreamUpdateBanner
           currentBranch={repo.currentBranch}
+          incomingCommits={remote.lastFetchResult?.incoming_commits || []}
+          repoPath={repo.currentRepoPath}
           isSyncing={remote.isSyncing}
           onSmartSync={handleSafeSmartSync}
           onRebaseUpstream={handleSafeRebaseUpstream}
           onMergeUpstream={handleSafeMergeUpstream}
+          onSelectCommit={(sha) => repo.selectCommitById(sha)}
           onDismiss={() => {
             if (repo.currentBranch) {
               remote.dismissBehindNotice(repo.currentBranch.shorthand);

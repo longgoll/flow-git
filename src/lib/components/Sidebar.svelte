@@ -111,7 +111,7 @@
   const savedTab = typeof localStorage !== 'undefined' ? localStorage.getItem('flowgit_sidebar_rail_tab') : null;
   const savedCollapsed = typeof localStorage !== 'undefined' ? localStorage.getItem('flowgit_sidebar_panel_collapsed') : null;
 
-  let sidebarWidth = $state<number>(savedWidth ? Math.max(220, Math.min(500, parseInt(savedWidth, 10))) : 260);
+  let sidebarWidth = $state<number>(savedWidth ? Math.max(250, Math.min(520, parseInt(savedWidth, 10))) : 280);
   let activeRailTab = $state<RailTab>((savedTab as RailTab) || 'branches');
   let isPanelCollapsed = $state<boolean>(savedCollapsed === 'true');
   let isDragging = $state<boolean>(false);
@@ -186,7 +186,7 @@
 
     function onMouseMove(event: MouseEvent) {
       const delta = event.clientX - startX;
-      sidebarWidth = Math.max(220, Math.min(520, startWidth + delta));
+      sidebarWidth = Math.max(240, Math.min(550, startWidth + delta));
     }
 
     function onMouseUp() {
@@ -448,16 +448,13 @@
             bind:editingBranchName
             bind:inlineNewName
             {onSelectBranch}
-            {onDeleteBranch}
             onRenameConfirm={handleConfirmRename}
             onRenameCancel={handleCancelRename}
             onStartRename={startRename}
             {onPublishBranch}
             {onPushBranch}
-            {onFetchBranch}
             {onFetchPrune}
             {onCreateBranch}
-            {onCleanMergedBranches}
             onOpenContextMenu={(branch, x, y) => {
               activeBranchMenu = { branch, x, y };
             }}

@@ -24,6 +24,7 @@
     Anchor,
     FileDiff,
     FolderTree,
+    Flame,
   } from 'lucide-svelte';
   import { themeState } from '../../state/themeState.svelte';
   import { localeState } from '../../state/localeState.svelte';
@@ -40,6 +41,7 @@
     onOpenPlaybook?: () => void;
     onPush?: () => void;
     onOpenPalette?: () => void;
+    onOpenQuickHotfix?: () => void;
     onOpenTimeMachine?: () => void;
     onOpenLostAndFound?: () => void;
     onOpenStashShelf?: () => void;
@@ -63,6 +65,7 @@
     onOpenPlaybook,
     onPush,
     onOpenPalette,
+    onOpenQuickHotfix,
     onOpenTimeMachine,
     onOpenLostAndFound,
     onOpenStashShelf,
@@ -243,6 +246,19 @@
             <span>{localeState.t('toolbar.commandPalette')}</span>
           </div>
           <span class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">Ctrl+K</span>
+        </button>
+      {/if}
+
+      {#if onOpenQuickHotfix}
+        <button
+          onclick={() => { onCloseToolsMenu(); onOpenQuickHotfix(); }}
+          class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-amber-700 dark:hover:text-amber-300 transition-colors cursor-pointer"
+        >
+          <div class="flex items-center gap-2">
+            <Flame class="w-3.5 h-3.5 text-amber-500" />
+            <span>{localeState.t('toolbar.quickHotfixBtn')}</span>
+          </div>
+          <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Hotfix</span>
         </button>
       {/if}
 

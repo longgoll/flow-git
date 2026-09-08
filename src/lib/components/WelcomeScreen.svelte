@@ -22,7 +22,7 @@
   } = $props();
 
   let activeTab = $state<'open' | 'clone'>('open');
-  let manualPath = $state('f:/Dev/product/git-tool');
+  let manualPath = $state('');
   let cloneUrl = $state('');
   let cloneTargetPath = $state('');
   let isCloning = $state(false);

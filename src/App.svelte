@@ -355,12 +355,17 @@
       await remote.initAccount();
 
       const initialTab = tabState.activeTab;
-      const repoToOpen = initialTab?.path || repo.recentRepos[0] || "f:/Dev/product/git-tool";
-      try {
-        await loadRepository(repoToOpen);
-        tabState.initDefaultTab(repoToOpen, repo.repoSummary?.current_branch);
-        viewMode = 'graph';
-      } catch {
+      const repoToOpen = initialTab?.path || repo.recentRepos[0];
+      if (repoToOpen) {
+        try {
+          await loadRepository(repoToOpen);
+          tabState.initDefaultTab(repoToOpen, repo.repoSummary?.current_branch);
+          viewMode = 'graph';
+        } catch {
+          repo.showWelcomeScreen = true;
+        }
+      } else {
+        // App mới cài đặt lần đầu (chưa mở repo nào) -> Mở màn hình chào đón
         repo.showWelcomeScreen = true;
       }
 

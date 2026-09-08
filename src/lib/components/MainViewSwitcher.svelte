@@ -10,6 +10,7 @@
   import DagCanvasMap from './DagCanvasMap.svelte';
   import RepositoryExplorer from './RepositoryExplorer.svelte';
   import PullRequestReviewer from './PullRequestReviewer.svelte';
+  import GitHubActionsViewer from './GitHubActionsViewer.svelte';
   import { toast } from '../state/toastState.svelte';
   import { localeState } from '../state/localeState.svelte';
   import type { RepoState } from '../state/repoState.svelte';
@@ -498,5 +499,16 @@
     onPRCountChange={(count) => {
       remote.openPRCount = count;
     }}
+  />
+{:else if viewMode === 'actions'}
+  <GitHubActionsViewer
+    remoteOriginUrl={originRemoteUrl}
+    activeAccount={remote.activeAccount}
+    onOpenAuth={() => (remote.showAuthModal = true)}
+    onSelectCommit={(commitId) => {
+      repo.selectCommitById(commitId);
+      onChangeViewMode('graph');
+    }}
+    onClose={() => onChangeViewMode('graph')}
   />
 {/if}

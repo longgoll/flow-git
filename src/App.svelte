@@ -659,6 +659,7 @@
         onPublishRepo={() => (modalState.showPublishModal = true)}
         onCloseSidebar={() => (isSidebarOpen = false)}
         onOpenStashShelf={(index) => modalState.openStashShelf(index ?? 0)}
+        onOpenActions={() => (viewMode = 'actions')}
       />
     {/if}
 

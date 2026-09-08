@@ -103,6 +103,8 @@ export const toolbar = {
     insightsTitle: "Báo cáo & Thống kê Repository",
     conflicts: "Conflicts",
     conflictsTitle: "Xử lý xung đột (Conflict Resolver)",
+    actions: "Actions",
+    actionsTitle: "GitHub Actions & CI/CD Workflows",
   },
 };
 

@@ -21,6 +21,7 @@ import { insights } from "./insights";
 import { gitHooks } from "./gitHooks";
 import { patch } from "./patch";
 import { sparse } from "./sparse";
+import { githubActions } from "./githubActions";
 
 export const en: TranslationSchema = {
   common,
@@ -51,4 +52,5 @@ export const en: TranslationSchema = {
   gitHooks,
   patch,
   sparse,
+  githubActions,
 };

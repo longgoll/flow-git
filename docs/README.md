@@ -46,6 +46,7 @@ docs/
 │   ├── rebase-and-history-ops.md       # Interactive Rebase Timeline, Drag-and-Drop, Squash
 │   ├── conflict-and-bisect.md          # 4-Pane 3-Way Conflict Resolver & Visual Bisect Wizard
 │   ├── github-and-pull-requests.md     # GitHub Workspace: PR Reviewer, Checks, Publish Repo
+│   ├── github-actions-integration.md   # GitHub Actions: CI/CD Studio, Workflow Runs & Job Steps
 │   ├── repo-explorer-and-file-tools.md # Tree Explorer, 2-Commit Comparison, Blame, History Nuker
 │   ├── stacked-commits-and-hotfix.md   # Stacked Commits Reordering & 1-Click Quick Hotfix
 │   ├── advanced-tools.md               # Git Worktrees, Git LFS Manager & Submodules Hub
@@ -175,6 +176,7 @@ docs/
 │   ├── rebase-and-history-ops.md       # Interactive Rebase Timeline, Drag-and-Drop, Squash, Revert, Reset
 │   ├── conflict-and-bisect.md          # 3-Way Merge Conflict Resolver (4-Pane) & Visual Bisect Wizard
 │   ├── github-and-pull-requests.md     # GitHub Workspace: PR Reviewer, Create PR, Recent Push Banner, Publish Repo
+│   ├── github-actions-integration.md   # Giám Sát CI/CD & Workflow Runs GitHub Actions Trực Tiếp
 │   ├── repo-explorer-and-file-tools.md # Repository File Tree Explorer, 2-Commit Comparison, Blame, History Nuker
 │   ├── stacked-commits-and-hotfix.md   # Chuỗi Stacked Commits, Kéo thả đổi thứ tự commit & Quick Hotfix 1-chạm
 │   ├── advanced-tools.md               # Git Worktrees, Git LFS Manager & Submodules Hub

@@ -303,7 +303,7 @@ export interface TrashSnapshotItem {
 
 export type LayoutMode = 'horizontal' | 'three-column';
 
-export type ViewMode = 'graph' | 'changes' | 'compare' | 'conflict' | 'focus' | 'stacked' | 'dag' | 'files' | 'pr';
+export type ViewMode = 'graph' | 'changes' | 'compare' | 'conflict' | 'focus' | 'stacked' | 'dag' | 'files' | 'pr' | 'actions';
 
 export interface GitHubUser {
   login: string;
@@ -398,6 +398,134 @@ export interface GitHubCommitChecks {
   total_count: number;
   check_runs: GitHubCheckRun[];
   state: 'success' | 'failure' | 'pending' | 'none';
+}
+
+export interface GitHubWorkflow {
+  id: number;
+  node_id: string;
+  name: string;
+  path: string;
+  state: string;
+  html_url: string;
+  badge_url?: string;
+}
+
+export interface GitHubWorkflowRun {
+  id: number;
+  name: string;
+  node_id: string;
+  head_branch: string | null;
+  head_sha: string;
+  path: string;
+  display_title: string;
+  run_number: number;
+  event: string;
+  status: 'queued' | 'in_progress' | 'completed' | 'waiting' | 'requested' | 'pending' | string;
+  conclusion: 'success' | 'failure' | 'neutral' | 'cancelled' | 'timed_out' | 'action_required' | 'skipped' | 'stale' | null;
+  workflow_id: number;
+  url: string;
+  html_url: string;
+  created_at: string;
+  updated_at: string;
+  run_started_at?: string;
+  actor?: GitHubUser | null;
+  triggering_actor?: GitHubUser | null;
+  run_attempt?: number;
+}
+
+export interface GitHubWorkflowJobStep {
+  name: string;
+  status: 'queued' | 'in_progress' | 'completed' | string;
+  conclusion: 'success' | 'failure' | 'neutral' | 'cancelled' | 'skipped' | null;
+  number: number;
+  started_at?: string | null;
+  completed_at?: string | null;
+}
+
+export interface GitHubWorkflowJob {
+  id: number;
+  run_id: number;
+  name: string;
+  status: 'queued' | 'in_progress' | 'completed' | string;
+  conclusion: 'success' | 'failure' | 'neutral' | 'cancelled' | 'timed_out' | 'action_required' | 'skipped' | null;
+  started_at: string;
+  completed_at?: string | null;
+  html_url: string;
+  steps?: GitHubWorkflowJobStep[];
+}
+
+export interface GitHubArtifact {
+  id: number;
+  node_id: string;
+  name: string;
+  size_in_bytes: number;
+  url: string;
+  archive_download_url: string;
+  expired: boolean;
+  created_at: string;
+  expires_at: string;
+  updated_at: string;
+}
+
+export interface GitHubCacheItem {
+  id: number;
+  ref: string;
+  key: string;
+  version: string;
+  last_accessed_at: string;
+  created_at: string;
+  size_in_bytes: number;
+}
+
+export interface GitHubCacheUsage {
+  active_caches_size_in_bytes: number;
+  active_caches_count: number;
+}
+
+export interface GitHubRunnerLabel {
+  id?: number;
+  name: string;
+  type?: 'read-only' | 'custom' | string;
+}
+
+export interface GitHubRunnerItem {
+  id: number;
+  name: string;
+  os: string;
+  status: 'online' | 'offline' | string;
+  busy: boolean;
+  labels: GitHubRunnerLabel[];
+}
+
+export interface GitHubDeploymentStatusItem {
+  id: number;
+  state: 'error' | 'failure' | 'inactive' | 'in_progress' | 'queued' | 'pending' | 'success' | string;
+  creator?: GitHubUser | null;
+  description?: string | null;
+  environment_url?: string | null;
+  log_url?: string | null;
+  created_at: string;
+}
+
+export interface GitHubDeploymentItem {
+  id: number;
+  sha: string;
+  ref: string;
+  task: string;
+  environment: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  creator?: GitHubUser | null;
+  statuses?: GitHubDeploymentStatusItem[];
+  latest_status?: GitHubDeploymentStatusItem;
+}
+
+export interface GitHubAttestationItem {
+  id: number;
+  bundle: any;
+  repository_id?: number;
+  bundle_url?: string;
 }
 
 export interface GitHubBranchComparison {

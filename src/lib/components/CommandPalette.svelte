@@ -25,6 +25,7 @@
     Archive,
     Activity,
     Anchor,
+    Workflow,
   } from 'lucide-svelte';
 
   interface PaletteItem {
@@ -131,6 +132,13 @@
         category: 'View',
         icon: Split,
         action: () => { onChangeViewMode('conflict'); onClose(); },
+      },
+      {
+        id: 'view-actions',
+        title: 'Open GitHub Actions & CI/CD Workflow Runs',
+        category: 'View',
+        icon: Workflow,
+        action: () => { onChangeViewMode('actions'); onClose(); },
       },
       {
         id: 'open-bisect',

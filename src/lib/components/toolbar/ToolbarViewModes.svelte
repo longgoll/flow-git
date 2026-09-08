@@ -113,7 +113,7 @@
     {/if}
   </button>
 
-  <!-- 5. DYNAMIC TAB: Conflicts Resolver (Only visible when conflicts exist or active) -->
+  <!-- 4. DYNAMIC TAB: Conflicts Resolver (Only visible when conflicts exist or active) -->
   {#if viewMode === 'conflict' || conflictedFilesCount > 0}
     <button
       onclick={() => onChangeViewMode('conflict')}

@@ -6,6 +6,16 @@ import type {
   GitHubCommitChecks,
   GitHubBranchComparison,
   GitHubRelease,
+  GitHubWorkflow,
+  GitHubWorkflowRun,
+  GitHubWorkflowJob,
+  GitHubArtifact,
+  GitHubCacheItem,
+  GitHubCacheUsage,
+  GitHubRunnerItem,
+  GitHubDeploymentItem,
+  GitHubDeploymentStatusItem,
+  GitHubAttestationItem,
 } from '../types';
 
 const GITHUB_API_BASE = 'https://api.github.com';
@@ -459,4 +469,365 @@ export async function getGitHubReleaseByTag(
   return await res.json();
 }
 
+export interface ListWorkflowRunsOptions {
+  workflowId?: number | string;
+  branch?: string;
+  event?: string;
+  status?: string;
+  perPage?: number;
+  page?: number;
+}
 
+export async function listGitHubWorkflows(
+  owner: string,
+  repo: string,
+  token?: string
+): Promise<GitHubWorkflow[]> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/actions/workflows`;
+  const res = await fetchGitHub(url, { headers: getHeaders(token) });
+  if (!res.ok) {
+    if (res.status === 404) return [];
+    const errorText = await res.text();
+    throw new Error(`Failed to list workflows (${res.status}): ${errorText}`);
+  }
+  const data = await res.json();
+  return data.workflows || [];
+}
+
+export async function listGitHubWorkflowRuns(
+  owner: string,
+  repo: string,
+  options?: ListWorkflowRunsOptions,
+  token?: string
+): Promise<{ total_count: number; workflow_runs: GitHubWorkflowRun[] }> {
+  const params = new URLSearchParams();
+  if (options?.branch) params.set('branch', options.branch);
+  if (options?.event) params.set('event', options.event);
+  if (options?.status) params.set('status', options.status);
+  params.set('per_page', String(options?.perPage || 30));
+  if (options?.page) params.set('page', String(options.page));
+
+  let url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/actions/runs`;
+  if (options?.workflowId) {
+    url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/actions/workflows/${options.workflowId}/runs`;
+  }
+  const fullUrl = `${url}?${params.toString()}`;
+  const res = await fetchGitHub(fullUrl, { headers: getHeaders(token) });
+  if (!res.ok) {
+    if (res.status === 404) return { total_count: 0, workflow_runs: [] };
+    const errorText = await res.text();
+    throw new Error(`Failed to list workflow runs (${res.status}): ${errorText}`);
+  }
+  const data = await res.json();
+  return {
+    total_count: data.total_count || 0,
+    workflow_runs: data.workflow_runs || [],
+  };
+}
+
+export async function getGitHubWorkflowRun(
+  owner: string,
+  repo: string,
+  runId: number,
+  token?: string
+): Promise<GitHubWorkflowRun> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/actions/runs/${runId}`;
+  const res = await fetchGitHub(url, { headers: getHeaders(token) });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to get workflow run ${runId} (${res.status}): ${errorText}`);
+  }
+  return await res.json();
+}
+
+export async function listGitHubWorkflowJobs(
+  owner: string,
+  repo: string,
+  runId: number,
+  token?: string
+): Promise<GitHubWorkflowJob[]> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/actions/runs/${runId}/jobs?per_page=100`;
+  const res = await fetchGitHub(url, { headers: getHeaders(token) });
+  if (!res.ok) {
+    if (res.status === 404) return [];
+    const errorText = await res.text();
+    throw new Error(`Failed to list workflow jobs (${res.status}): ${errorText}`);
+  }
+  const data = await res.json();
+  return data.jobs || [];
+}
+
+export async function rerunGitHubWorkflow(
+  owner: string,
+  repo: string,
+  runId: number,
+  failedOnly: boolean = false,
+  token?: string
+): Promise<void> {
+  const endpoint = failedOnly ? 'rerun-failed-jobs' : 'rerun';
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/actions/runs/${runId}/${endpoint}`;
+  const res = await fetchGitHub(url, {
+    method: 'POST',
+    headers: getHeaders(token),
+  });
+  if (!res.ok && res.status !== 201) {
+    const errorText = await res.text();
+    throw new Error(`Failed to rerun workflow (${res.status}): ${errorText}`);
+  }
+}
+
+export async function cancelGitHubWorkflowRun(
+  owner: string,
+  repo: string,
+  runId: number,
+  token?: string
+): Promise<void> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/actions/runs/${runId}/cancel`;
+  const res = await fetchGitHub(url, {
+    method: 'POST',
+    headers: getHeaders(token),
+  });
+  if (!res.ok && res.status !== 202) {
+    const errorText = await res.text();
+    throw new Error(`Failed to cancel workflow run (${res.status}): ${errorText}`);
+  }
+}
+
+export async function fetchGitHubJobLogs(
+  owner: string,
+  repo: string,
+  jobId: number,
+  token?: string
+): Promise<string> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/actions/jobs/${jobId}/logs`;
+  const headers = getHeaders(token);
+
+  try {
+    const res = await fetch(url, {
+      headers,
+      redirect: 'follow',
+    });
+
+    if (res.ok) {
+      return await res.text();
+    }
+
+    if (res.status === 404) {
+      // 404 means the job is currently in_progress or logs have expired (> 90 days)
+      return '';
+    }
+
+    // If redirected failed due to auth header conflict on third-party storage, retry without headers
+    const resWithoutAuth = await fetch(url, { redirect: 'follow' });
+    if (resWithoutAuth.ok) {
+      return await resWithoutAuth.text();
+    }
+  } catch (e: any) {
+    console.warn('fetchGitHubJobLogs error', e);
+  }
+
+  return '';
+}
+
+export async function dispatchGitHubWorkflow(
+  owner: string,
+  repo: string,
+  workflowId: number | string,
+  ref: string,
+  inputs?: Record<string, any>,
+  token?: string
+): Promise<void> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
+  const res = await fetchGitHub(url, {
+    method: 'POST',
+    headers: {
+      ...getHeaders(token),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      ref,
+      inputs: inputs || {},
+    }),
+  });
+  if (!res.ok && res.status !== 204) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || `Failed to dispatch workflow (${res.status})`);
+  }
+}
+
+export async function listGitHubWorkflowRunArtifacts(
+  owner: string,
+  repo: string,
+  runId: number,
+  token?: string
+): Promise<GitHubArtifact[]> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/actions/runs/${runId}/artifacts`;
+  try {
+    const res = await fetchGitHub(url, {
+      headers: getHeaders(token),
+    });
+    if (!res.ok) {
+      return [];
+    }
+    const data = await res.json();
+    return data.artifacts || [];
+  } catch (e) {
+    console.warn('Failed to list run artifacts', e);
+    return [];
+  }
+}
+
+export async function listGitHubActionsCaches(
+  owner: string,
+  repo: string,
+  token?: string
+): Promise<{ total_count: number; actions_caches: GitHubCacheItem[] }> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/actions/caches?per_page=100`;
+  try {
+    const res = await fetchGitHub(url, { headers: getHeaders(token) });
+    if (!res.ok) {
+      return { total_count: 0, actions_caches: [] };
+    }
+    const data = await res.json();
+    return {
+      total_count: data.total_count || 0,
+      actions_caches: data.actions_caches || [],
+    };
+  } catch (e) {
+    console.warn('Failed to list actions caches', e);
+    return { total_count: 0, actions_caches: [] };
+  }
+}
+
+export async function getGitHubActionsCacheUsage(
+  owner: string,
+  repo: string,
+  token?: string
+): Promise<GitHubCacheUsage> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/actions/cache/usage`;
+  try {
+    const res = await fetchGitHub(url, { headers: getHeaders(token) });
+    if (!res.ok) {
+      return { active_caches_size_in_bytes: 0, active_caches_count: 0 };
+    }
+    const data = await res.json();
+    return {
+      active_caches_size_in_bytes: data.active_caches_size_in_bytes || 0,
+      active_caches_count: data.active_caches_count || 0,
+    };
+  } catch (e) {
+    console.warn('Failed to get cache usage', e);
+    return { active_caches_size_in_bytes: 0, active_caches_count: 0 };
+  }
+}
+
+export async function deleteGitHubActionsCache(
+  owner: string,
+  repo: string,
+  cacheId: number,
+  token?: string
+): Promise<void> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/actions/caches/${cacheId}`;
+  const res = await fetchGitHub(url, {
+    method: 'DELETE',
+    headers: getHeaders(token),
+  });
+  if (!res.ok && res.status !== 204) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || `Failed to delete cache (${res.status})`);
+  }
+}
+
+export async function listGitHubRunners(
+  owner: string,
+  repo: string,
+  token?: string
+): Promise<GitHubRunnerItem[]> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/actions/runners`;
+  try {
+    const res = await fetchGitHub(url, { headers: getHeaders(token) });
+    if (!res.ok) {
+      return [];
+    }
+    const data = await res.json();
+    return data.runners || [];
+  } catch (e) {
+    console.warn('Failed to list runners', e);
+    return [];
+  }
+}
+
+export async function listGitHubDeploymentStatuses(
+  owner: string,
+  repo: string,
+  deploymentId: number,
+  token?: string
+): Promise<GitHubDeploymentStatusItem[]> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/deployments/${deploymentId}/statuses`;
+  try {
+    const res = await fetchGitHub(url, { headers: getHeaders(token) });
+    if (!res.ok) {
+      return [];
+    }
+    return await res.json();
+  } catch (e) {
+    console.warn('Failed to list deployment statuses', e);
+    return [];
+  }
+}
+
+export async function listGitHubDeployments(
+  owner: string,
+  repo: string,
+  token?: string
+): Promise<GitHubDeploymentItem[]> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/deployments?per_page=30`;
+  try {
+    const res = await fetchGitHub(url, { headers: getHeaders(token) });
+    if (!res.ok) {
+      return [];
+    }
+    const deployments: GitHubDeploymentItem[] = await res.json();
+    if (!Array.isArray(deployments)) return [];
+
+    // Concurrently fetch latest status for top 15 deployments
+    const enriched = await Promise.all(
+      deployments.slice(0, 15).map(async (dep) => {
+        try {
+          const statuses = await listGitHubDeploymentStatuses(owner, repo, dep.id, token);
+          return {
+            ...dep,
+            statuses,
+            latest_status: statuses[0] || undefined,
+          };
+        } catch {
+          return dep;
+        }
+      })
+    );
+
+    return [...enriched, ...deployments.slice(15)];
+  } catch (e) {
+    console.warn('Failed to list deployments', e);
+    return [];
+  }
+}
+
+export async function listGitHubAttestations(
+  owner: string,
+  repo: string,
+  token?: string
+): Promise<GitHubAttestationItem[]> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/attestations`;
+  try {
+    const res = await fetchGitHub(url, { headers: getHeaders(token) });
+    if (!res.ok) {
+      return [];
+    }
+    const data = await res.json();
+    return data.attestations || [];
+  } catch (e) {
+    console.warn('Failed to list attestations', e);
+    return [];
+  }
+}

@@ -14,6 +14,7 @@
     Copy,
     Check,
     GitBranch,
+    Workflow,
   } from 'lucide-svelte';
   import type { RemoteInfo, StashInfo, TagInfo, WorktreeInfo } from '../../types';
   import { localeState } from '../../state/localeState.svelte';
@@ -40,6 +41,7 @@
     onCreateBranchFromTag?: (tag: TagInfo) => void;
     onOpenReleases?: (tag?: TagInfo) => void;
     onOpenStashShelf?: (index?: number) => void;
+    onOpenActions?: () => void;
   }
 
   let {
@@ -64,6 +66,7 @@
     onCreateBranchFromTag,
     onOpenReleases,
     onOpenStashShelf,
+    onOpenActions,
   }: Props = $props();
 
   let copiedTagName = $state<string | null>(null);
@@ -231,6 +234,23 @@
                 <span>{localeState.t('sidebar.manageRemotesTitle')}</span>
               </button>
             {/if}
+          </div>
+        {/if}
+
+        {#if onOpenActions}
+          <div class="pt-2 px-1">
+            <button
+              type="button"
+              onclick={onOpenActions}
+              class="w-full py-1.5 px-2.5 rounded-lg border border-violet-200 dark:border-violet-900/60 bg-violet-50/60 dark:bg-violet-950/30 hover:bg-violet-100 dark:hover:bg-violet-900/50 text-violet-700 dark:text-violet-300 text-xs font-medium flex items-center justify-between transition-all cursor-pointer shadow-xs group"
+              title={localeState.t('githubActions.title')}
+            >
+              <div class="flex items-center gap-1.5 truncate">
+                <Workflow class="w-3.5 h-3.5 text-violet-600 dark:text-violet-400 shrink-0 group-hover:scale-110 transition-transform" />
+                <span class="truncate font-semibold">{localeState.t('githubActions.title')}</span>
+              </div>
+              <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-violet-200/80 dark:bg-violet-900/80 text-violet-800 dark:text-violet-200 font-bold shrink-0">CI/CD</span>
+            </button>
           </div>
         {/if}
       </div>

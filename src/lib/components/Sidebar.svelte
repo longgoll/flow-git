@@ -13,6 +13,7 @@
     RefreshCw,
     Trash2,
     CloudUpload,
+    Workflow,
   } from 'lucide-svelte';
   import { localeState } from '../state/localeState.svelte';
   import SidebarBranchTree from './sidebar/SidebarBranchTree.svelte';
@@ -50,6 +51,7 @@
     onCreatePullRequest?: (branch: BranchInfo) => void;
     onCloseSidebar?: () => void;
     onOpenStashShelf?: (index?: number) => void;
+    onOpenActions?: () => void;
     isPushing?: boolean;
     viewMode?: import('../types').ViewMode;
   }
@@ -85,6 +87,7 @@
     onCreatePullRequest,
     onCloseSidebar,
     onOpenStashShelf,
+    onOpenActions,
     isPushing = false,
     viewMode,
   }: Props = $props();
@@ -296,6 +299,20 @@
           <span class="absolute left-0 top-1.5 bottom-1.5 w-0.75 bg-cyan-600 dark:bg-cyan-400 rounded-r"></span>
         {/if}
       </button>
+
+      <!-- GitHub Actions (CI/CD) Button -->
+      {#if onOpenActions}
+        <button
+          onclick={onOpenActions}
+          class="relative p-2 rounded-lg transition-all cursor-pointer group {viewMode === 'actions' ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400 font-bold shadow-xs' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-zinc-900'}"
+          title={localeState.t('toolbar.viewModes.actionsTitle')}
+        >
+          <Workflow class="w-4 h-4 transition-transform group-hover:scale-110" />
+          {#if viewMode === 'actions'}
+            <span class="absolute left-0 top-1.5 bottom-1.5 w-0.75 bg-violet-600 dark:bg-violet-400 rounded-r"></span>
+          {/if}
+        </button>
+      {/if}
     </div>
 
     <!-- Bottom Collapse / Expand Action -->
@@ -488,6 +505,7 @@
             {onOpenRemoteManager}
             {onFetchRemote}
             {onPublishRepo}
+            {onOpenActions}
           />
         {:else if activeRailTab === 'tags'}
           <SidebarSections

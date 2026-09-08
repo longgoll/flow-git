@@ -111,6 +111,8 @@ export const toolbar: typeof viToolbar = {
     insightsTitle: "Repository Analytics & Insights",
     conflicts: "Conflicts",
     conflictsTitle: "Conflict Resolver",
+    actions: "Actions",
+    actionsTitle: "GitHub Actions & CI/CD Workflows",
   },
 };
 

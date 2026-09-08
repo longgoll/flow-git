@@ -48,6 +48,16 @@ The Working Tree panel monitors all live file changes occurring inside your work
 - Backed by the **`notify`** crate in Rust (`src-tauri/src/watcher/mod.rs`), FlowGit captures saves from any external IDE (VS Code, Neovim, JetBrains) with an 80ms debounce.
 - You **never have to press F5 or Refresh** to see modified files.
 
+### 1.3. Instant Search & File Filtering
+- Filter changed files in real time through the quick search bar at the top of the working tree list.
+- Dynamically filters across all categories (Conflicted, Staged, Unstaged, Untracked) without lagging the UI.
+- Auto-selects the first dirty file when opening the Changes view so the diff viewer is never blank.
+
+### 1.4. Adaptive Responsive Master-Detail & Panel Collapse
+- **Small Screens / Narrow Windows (< 860px):** Automatically switches to an ergonomic Master-Detail view with top tabs `[Changed Files]` ⟷ `[View Diff]`. Clicking any file smoothly transitions to the diff view with a prominent `← Back to files` button.
+- **Desktop Panel Collapse:** Collapse the file list panel via `PanelLeftClose` or expand it via `PanelLeftOpen` to inspect complex multi-column diffs in full width.
+- **Fullscreen Diff Studio:** Click the Maximize button on the Diff toolbar or press `ESC` to view Monaco Diff Editor in an immersive fullscreen overlay.
+
 ---
 
 ## 🔍 2. Monaco Diff Editor
@@ -61,6 +71,7 @@ FlowGit integrates the core **Monaco Editor** engine powering VS Code:
 - **Ignore Whitespace & Line Endings:** Filters out Windows `CRLF` vs `LF` line-ending noise.
 - **In-Place Full File Toggle (`Diff` ↔ `Full File`):** Switch between diff comparison and the entire file source code at that specific commit instantly with 0 latency using `MonacoEditor`, without context switching.
 - **Context-Preserved Explorer Navigation:** When opening a file in the Repository Explorer from Commit Details, the target commit SHA is preserved with a 1-click "Back to Commit" shortcut.
+- **1-Click Path Copy:** Click on the filename in the header to instantly copy its relative path to the clipboard.
 
 ---
 
@@ -74,13 +85,14 @@ Eliminates tedious `git add -p` CLI interactions:
 
 ---
 
-## ✍️ 4. Commit Box & Conventional Commits
+## ✍️ 4. Commit Box & Ergonomics
 
 Component: `src/lib/components/CommitBox.svelte`
 
-- **Conventional Commit Quick Chips:** 1-Click prefix insertion:
-  - `feat:`, `fix:`, `docs:`, `refactor:`, `perf:`, `chore:`
-- **Local AI Integration:** Click **"AI Generate"** to let local Ollama models inspect staged diffs and suggest concise commit messages.
+- **Conventional Commit Quick Chips:** 1-Click prefix insertion (`feat:`, `fix:`, `docs:`, `refactor:`, `perf:`, `chore:`).
+- **Expandable Description:** Commit body textarea is expandable on demand, preserving maximum vertical screen space for the working tree file list.
+- **Smart "Stage All & Commit":** When 0 files are staged but changes exist, the commit button automatically adapts to "Stage All & Commit", removing unnecessary friction.
+- **Compact Safety Shield Ribbon:** Sleek protection banner on `main`/`master` with inline bypass toggle and feature branch generator.
 - **Bypass Git Hooks (`--no-verify`):** Checkbox to bypass pre-commit hooks for urgent hotfixes.
 
 ---
@@ -174,6 +186,16 @@ Bảng Working Tree quản lý toàn bộ các thay đổi đang diễn ra trong
 - Nhờ tích hợp crate **`notify`** trong Rust backend (`src-tauri/src/watcher/mod.rs`), mỗi khi bạn gõ code và lưu file trong bất kỳ trình soạn thảo nào (VS Code, Neovim, JetBrains), FlowGit tự động bắt sự kiện qua cơ chế Debounce 80ms.
 - Bạn **không bao giờ phải bấm nút Refresh (F5)** để xem các thay đổi mới nhất.
 
+### 1.3. Tìm kiếm & Lọc Tệp Tức Thì (Instant Search)
+- Thanh tìm kiếm nhanh ở đầu danh sách tệp cho phép lọc tức thì đường dẫn tệp trong Working Tree.
+- Tự động lọc mượt mà trên tất cả các nhóm (Conflicted, Staged, Unstaged, Untracked).
+- Tự động chọn tệp thay đổi đầu tiên khi vào trang Changes giúp giao diện Diff luôn sẵn sàng ngay tức khắc.
+
+### 1.4. Thiết Kế Đáp Ứng Đa Màn Hình (Responsive Master-Detail & Panel Collapse)
+- **Màn hình nhỏ / Cửa sổ hẹp (< 860px):** Tự động chuyển sang chế độ Master-Detail với thanh tab chuyển đổi `[Tệp thay đổi]` ⟷ `[So sánh Diff]`. Khi click vào bất kỳ tệp nào, app tự chuyển sang Diff kèm nút quay lại `← Danh sách tệp`.
+- **Thu gọn / Mở rộng Cột (Panel Collapse):** Cho phép ẩn cột danh sách tệp bằng nút `PanelLeftClose` và mở lại bằng `PanelLeftOpen` để soi diff rộng 100% màn hình.
+- **Studio Soi Diff Toàn Màn Hình (Fullscreen Diff):** Bấm nút Maximize trên thanh công cụ Diff (hoặc phím `ESC` để thoát) để phóng to Monaco Diff Editor chiếm trọn màn hình.
+
 ---
 
 ## 🔍 2. DIFF VIEWER CHUYÊN NGHIỆP (MONACO DIFF EDITOR)
@@ -187,6 +209,7 @@ Diff Viewer của FlowGit được trang bị sức mạnh của **Monaco Editor
 - **Tùy chọn Bỏ qua Whitespace & Line Endings:** Giúp lập trình viên Windows không bị phân tâm bởi các thay đổi do khác biệt ký tự xuống dòng `CRLF` vs `LF`.
 - **Xem Toàn bộ Tệp ngay tại chỗ (`Diff` ↔ `Toàn bộ tệp`):** Cho phép chuyển đổi linh hoạt giữa xem diff thay đổi và đọc trọn vẹn toàn bộ mã nguồn của file tại chính commit đó bằng `MonacoEditor` mà không cần đổi view hay rời khỏi trang Commit Details.
 - **Bảo toàn ngữ cảnh khi Xem trong Explorer:** Khi bấm "Xem trong Explorer" từ chi tiết commit, Explorer sẽ mở file tại đúng phiên bản `Commit OID` lịch sử tương ứng, kèm lối tắt "Quay lại Commit" 1-click.
+- **1-Click Sao chép Đường dẫn:** Nhấn vào tên tệp trên thanh tiêu đề để sao chép ngay đường dẫn tương đối vào clipboard.
 
 ---
 
@@ -202,18 +225,14 @@ Tính năng này giúp bạn dễ dàng bóc tách các thay đổi nháp, commi
 
 ---
 
-## ✍️ 4. COMMIT BOX & QUY CHUẨN CONVENTIONAL COMMITS
+## ✍️ 4. COMMIT BOX & TỐI ƯU CÔNG THÁI HỌC (ERGONOMICS)
 
 Component: `src/lib/components/CommitBox.svelte`
 
-- **Conventional Commit Quick Chips:** Cung cấp sẵn các thẻ thể loại commit chuẩn công nghiệp:
-  - `feat:` Tính năng mới
-  - `fix:` Sửa lỗi
-  - `docs:` Viết tài liệu
-  - `refactor:` Tái cấu trúc mã nguồn
-  - `perf:` Tối ưu hiệu năng
-  - `chore:` Công việc bảo trì
-- **Tích hợp Local AI:** Bấm nút **"AI Generate"** để mô hình AI cục bộ (Ollama) tự động đọc toàn bộ staged diff và viết một commit message ngắn gọn, chuẩn xác.
+- **Conventional Commit Quick Chips:** Thẻ thể loại commit chuẩn công nghiệp (`feat:`, `fix:`, `docs:`, `refactor:`, `perf:`, `chore:`).
+- **Mở rộng / Thu gọn Mô tả Linh Hoạt:** Ô nhập mô tả chi tiết (`commitBody`) có thể thu gọn lại giúp trả về tối đa không gian cuộn cho danh sách tệp.
+- **Hành động Thông Minh "Stage tất cả & Commit":** Khi có file thay đổi nhưng chưa stage, nút Commit tự động kích hoạt chế độ "Stage tất cả & Commit" 1-click, loại bỏ thao tác bấm thừa.
+- **Dải Băng Cảnh Báo Nhánh Bảo Vệ Nhỏ Gọn (Safety Shield Ribbon):** Tinh gọn cảnh báo khi commit vào `main`/`master` kèm nút tạo nhánh Feature và tùy chọn Bypass nhanh.
 - **Cờ Bỏ qua Git Hooks (`--no-verify`):** Checkbox cho phép bypass các pre-commit hooks khi cần thực hiện hotfix khẩn cấp mà không bị kẹt linter.
 
 ---

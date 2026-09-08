@@ -36,6 +36,24 @@ export const workingTree = {
   openGitignoreManager: "Quản lý .gitignore",
   gitignoreManagerTooltip: "Mở trình quản lý và chỉnh sửa file .gitignore",
 
+  // Responsive & Search & Controls
+  filterPlaceholder: "Lọc tệp thay đổi...",
+  clearFilter: "Xóa bộ lọc",
+  noMatchingFiles: "Không tìm thấy tệp phù hợp bộ lọc",
+  totalChangesCount: "{count} tệp thay đổi",
+  refreshStatus: "Làm mới trạng thái",
+  moreOptions: "Tùy chọn khác",
+  collapsePanel: "Thu gọn danh sách tệp",
+  expandPanel: "Mở rộng danh sách tệp",
+  backToFiles: "Danh sách tệp",
+  viewDiffTab: "So sánh Diff",
+  viewFilesTab: "Tệp thay đổi",
+  maximizeDiff: "Phóng to diff toàn màn hình",
+  restoreDiff: "Thu nhỏ diff",
+  cleanTitle: "Thư mục làm việc sạch sẽ",
+  cleanSubtitle: "Không có thay đổi nào chưa stage hoặc commit.",
+  viewGraphBtn: "Xem đồ thị Git",
+
   // Context Menu for files
   contextMenu: {
     stage: "Stage tệp",
@@ -81,6 +99,10 @@ export const workingTree = {
     scopePlaceholder: "scope (tùy chọn)",
     summaryPlaceholder: "Tiêu đề tóm tắt commit...",
     descriptionPlaceholder: "Mô tả chi tiết mở rộng (hỗ trợ Markdown)...",
+    addDescription: "Thêm mô tả",
+    hideDescription: "Ẩn mô tả",
+    stageAllAndCommit: "Stage tất cả & Commit",
+    stageAllAndCommitTooltip: "Tự động stage toàn bộ thay đổi và commit",
     amend: "Amend",
     noVerifyTooltip: "Bỏ qua Git pre-commit hooks (Husky, formatters, linters) khi cần commit khẩn cấp",
     committing: "Đang commit...",

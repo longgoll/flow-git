@@ -1,5 +1,13 @@
 <script lang="ts">
-  import { Sparkles, GitCommitHorizontal, History, ShieldAlert, GitFork } from 'lucide-svelte';
+  import {
+    Sparkles,
+    GitCommitHorizontal,
+    History,
+    ShieldAlert,
+    GitFork,
+    FileText,
+    CheckCheck,
+  } from 'lucide-svelte';
   import PreCommitWarningModal, { type RiskyFileItem } from './PreCommitWarningModal.svelte';
   import RepoTagBadge from './RepoTagBadge.svelte';
   import type { FileStatusItem, SecretFinding } from '../types';
@@ -10,11 +18,13 @@
 
   interface Props {
     stagedCount: number;
+    unstagedCount?: number;
     isLoading?: boolean;
     currentBranch?: string;
     repoPath?: string;
     stagedFiles?: FileStatusItem[];
     onCommit: (message: string, amend: boolean, noVerify?: boolean) => Promise<void>;
+    onStageAll?: () => Promise<void>;
     onCreateBranch?: (baseBranch: string) => void;
     onUnstageFiles?: (files: string[]) => Promise<void>;
     onAddToGitignore?: (pattern: string) => Promise<void>;
@@ -22,11 +32,13 @@
 
   let {
     stagedCount,
+    unstagedCount = 0,
     isLoading = false,
     currentBranch = '',
     repoPath = '',
     stagedFiles = [],
     onCommit,
+    onStageAll,
     onCreateBranch,
     onUnstageFiles,
     onAddToGitignore,
@@ -39,6 +51,7 @@
   let isAmend = $state<boolean>(false);
   let noVerify = $state<boolean>(false);
   let bypassSafetyShield = $state<boolean>(false);
+  let showBodyInput = $state<boolean>(false);
 
   // Pre-commit Scan State
   let showPreCommitModal = $state<boolean>(false);
@@ -59,6 +72,9 @@
           commitScope = draft.scope || '';
           commitSubject = draft.subject || '';
           commitBody = draft.body || '';
+          if (commitBody.trim()) {
+            showBodyInput = true;
+          }
         }
       } catch {}
     }
@@ -128,6 +144,11 @@
     return header;
   });
 
+  // Có thể commit dạng "Stage All & Commit" khi stagedCount === 0 nhưng có unstaged
+  let canSmartStageAndCommit = $derived(
+    stagedCount === 0 && !isAmend && unstagedCount > 0 && typeof onStageAll === 'function'
+  );
+
   function scanRiskyFiles(): RiskyFileItem[] {
     const list: RiskyFileItem[] = [];
     for (const f of stagedFiles) {
@@ -158,6 +179,7 @@
     commitBody = '';
     commitScope = '';
     commitType = '';
+    showBodyInput = false;
     isAmend = false;
     noVerify = false;
     if (repoPath) {
@@ -169,8 +191,16 @@
 
   async function handleFormSubmit() {
     if (!fullMessage.trim() || isLoading || isScanningSecrets) return;
-    if (stagedCount === 0 && !isAmend) return;
     if (isProtected && !bypassSafetyShield) return;
+
+    // Nếu stagedCount === 0 nhưng có unstaged files -> tự động stage all trước
+    if (stagedCount === 0 && !isAmend) {
+      if (canSmartStageAndCommit && onStageAll) {
+        await onStageAll();
+      } else {
+        return;
+      }
+    }
 
     // Scan for dangerous secrets or heavy binary before commit
     if (!isAmend) {
@@ -218,122 +248,110 @@
   }
 </script>
 
-<div class="border-t border-zinc-200 dark:border-zinc-800/80 bg-white/90 dark:bg-zinc-950/90 p-3.5 space-y-3 font-sans select-none">
-  <!-- Commit Safety Shield Banner -->
+<div class="border-t border-zinc-200 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-950/95 p-3 space-y-2.5 font-sans select-none shrink-0 shadow-xs backdrop-blur-md">
+  <!-- Commit Safety Shield Compact Ribbon -->
   {#if isProtected}
-    <div class="p-2.5 rounded-xl border transition-all {bypassSafetyShield ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800/40 text-amber-800 dark:text-amber-300' : 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800/50 text-rose-800 dark:text-rose-300'}">
-      <div class="flex items-start justify-between gap-2">
-        <div class="flex items-start gap-2 min-w-0">
-          <ShieldAlert class="w-4 h-4 shrink-0 mt-0.5 {bypassSafetyShield ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}" />
-          <div class="text-[11px] leading-snug">
-            <p class="font-semibold flex items-center gap-1.5">
-              <span>{localeState.t('workingTree.commitBox.safetyShieldTitle')}</span>
-              <span class="px-1.5 py-0.2 rounded text-[10px] font-mono {bypassSafetyShield ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/40' : 'bg-rose-100 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-700/50'}">
-                {currentBranch}
-              </span>
-            </p>
-            <p class="text-zinc-600 dark:text-zinc-400 mt-0.5">
-              {bypassSafetyShield
-                ? localeState.t('workingTree.commitBox.safetyShieldBypassActive')
-                : localeState.t('workingTree.commitBox.safetyShieldWarning')}
-            </p>
-          </div>
-        </div>
+    <div class="px-2.5 py-1.5 rounded-lg border text-[11px] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 {bypassSafetyShield ? 'bg-amber-500/10 border-amber-400/40 text-amber-800 dark:text-amber-300' : 'bg-rose-500/10 border-rose-400/40 text-rose-800 dark:text-rose-300'}">
+      <div class="flex items-center gap-1.5 min-w-0">
+        <ShieldAlert class="w-3.5 h-3.5 shrink-0 {bypassSafetyShield ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}" />
+        <span class="font-semibold truncate">
+          {localeState.t('workingTree.commitBox.safetyShieldTitle')}:
+          <span class="font-mono underline decoration-rose-400">{currentBranch}</span>
+        </span>
+      </div>
 
+      <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
         {#if onCreateBranch}
           <button
             type="button"
             onclick={() => onCreateBranch(currentBranch)}
-            class="px-2.5 py-1 rounded-lg bg-cyan-100 dark:bg-cyan-950/60 hover:bg-cyan-200 dark:hover:bg-cyan-900/80 border border-cyan-300 dark:border-cyan-800/50 hover:border-cyan-400 text-cyan-800 dark:text-cyan-300 text-[11px] font-medium flex items-center gap-1 shrink-0 transition-all cursor-pointer shadow-xs active:scale-98"
+            class="px-2 py-0.5 rounded bg-cyan-100 dark:bg-cyan-950/60 hover:bg-cyan-200 dark:hover:bg-cyan-900/80 border border-cyan-300 dark:border-cyan-800/50 text-cyan-800 dark:text-cyan-300 text-[10px] font-medium flex items-center gap-1 cursor-pointer transition-colors"
             title={localeState.t('workingTree.commitBox.createFeatureBranchTooltip')}
           >
-            <GitFork class="w-3 h-3" />
+            <GitFork class="w-2.5 h-2.5" />
             <span>{localeState.t('workingTree.commitBox.createFeatureBranch')}</span>
           </button>
         {/if}
-      </div>
 
-      <div class="mt-2 pt-1.5 border-t border-rose-200 dark:border-rose-900/30 flex items-center justify-between text-[11px]">
-        <label class="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-300 cursor-pointer select-none">
+        <label class="flex items-center gap-1 text-[10px] text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 cursor-pointer select-none">
           <input
             type="checkbox"
             bind:checked={bypassSafetyShield}
-            class="w-3.5 h-3.5 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-amber-500 focus:ring-0 cursor-pointer"
+            class="w-3 h-3 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-amber-500 focus:ring-0 cursor-pointer"
           />
-          <span>{localeState.t('workingTree.commitBox.allowDirectCommit')}</span>
+          <span>{bypassSafetyShield ? 'Bypass' : localeState.t('workingTree.commitBox.allowDirectCommit')}</span>
         </label>
       </div>
     </div>
   {/if}
 
-  <!-- Project Tag & Author Identity Indicator -->
-  {#if repoPath}
-    <div class="flex items-center justify-between gap-2 pb-0.5 text-xs">
-      <span class="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium flex items-center gap-1">
-        <span>✍️</span>
-        <span>{localeState.t('auth.token.projectTagging.committingAs')}</span>
-      </span>
-      <RepoTagBadge {repoPath} />
-    </div>
-  {/if}
-
-  <!-- Conventional Commits Quick Pickers -->
-  <div class="space-y-1.5">
-    <div class="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
-      <span class="font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
-        <Sparkles class="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
-        {localeState.t('workingTree.commitBox.conventionalCommits')}
-      </span>
-      <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">{localeState.t('workingTree.commitBox.ctrlEnterTip')}</span>
-    </div>
-
-    <div class="flex flex-wrap gap-1">
+  <!-- Author Identity & Conventional Commits in Compact Flex Bar -->
+  <div class="flex items-center justify-between gap-1.5 text-xs">
+    <div class="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+      <Sparkles class="w-3 h-3 text-cyan-600 dark:text-cyan-400 shrink-0 mr-0.5" />
       {#each conventionalTypes as item}
         <button
           type="button"
           onclick={() => selectType(item.type)}
-          class="px-2 py-0.5 rounded text-[11px] font-mono border transition-all cursor-pointer {item.color} {commitType === item.type ? 'ring-1 ring-cyan-500 font-bold shadow-xs' : 'opacity-80'}"
+          class="px-1.5 py-0.5 rounded text-[10px] font-mono border transition-all cursor-pointer whitespace-nowrap {item.color} {commitType === item.type ? 'ring-1 ring-cyan-500 font-bold shadow-2xs' : 'opacity-85'}"
           title={item.desc}
         >
           {item.label}
         </button>
       {/each}
     </div>
+
+    {#if repoPath}
+      <div class="shrink-0 hidden sm:flex items-center">
+        <RepoTagBadge {repoPath} />
+      </div>
+    {/if}
   </div>
 
-  <!-- Message Fields -->
-  <div class="space-y-2">
-    <!-- Scope & Subject -->
-    <div class="flex items-center gap-2">
+  <!-- Message Fields: Scope & Subject -->
+  <div class="space-y-1.5">
+    <div class="flex items-center gap-1.5">
       <input
         type="text"
         placeholder={localeState.t('workingTree.commitBox.scopePlaceholder')}
         bind:value={commitScope}
-        class="w-24 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700/80 rounded-lg px-2.5 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 font-mono shadow-xs focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 transition-all"
+        class="w-20 sm:w-24 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700/80 rounded-lg px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 font-mono shadow-2xs focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 transition-all shrink-0"
       />
       <input
         type="text"
         placeholder={localeState.t('workingTree.commitBox.summaryPlaceholder')}
         bind:value={commitSubject}
         onkeydown={handleKeyDown}
-        class="flex-1 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700/80 rounded-lg px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 transition-all font-sans font-medium shadow-xs"
+        class="flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700/80 rounded-lg px-2.5 py-1 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 transition-all font-sans font-medium shadow-2xs"
       />
+
+      <!-- Description Toggle Button -->
+      <button
+        type="button"
+        onclick={() => (showBodyInput = !showBodyInput)}
+        class="p-1.5 rounded-lg border transition-colors cursor-pointer shrink-0 {showBodyInput || commitBody.trim() ? 'bg-cyan-50 dark:bg-cyan-950/60 border-cyan-300 dark:border-cyan-700 text-cyan-700 dark:text-cyan-300' : 'bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'}"
+        title={showBodyInput ? localeState.t('workingTree.commitBox.hideDescription') : localeState.t('workingTree.commitBox.addDescription')}
+      >
+        <FileText class="w-3.5 h-3.5" />
+      </button>
     </div>
 
-    <!-- Extended Description -->
-    <textarea
-      placeholder={localeState.t('workingTree.commitBox.descriptionPlaceholder')}
-      bind:value={commitBody}
-      onkeydown={handleKeyDown}
-      rows={2}
-      class="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700/80 rounded-lg px-3 py-2 text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 transition-all font-sans resize-none shadow-xs"
-    ></textarea>
+    <!-- Optional Expandable Description -->
+    {#if showBodyInput || commitBody.trim()}
+      <textarea
+        placeholder={localeState.t('workingTree.commitBox.descriptionPlaceholder')}
+        bind:value={commitBody}
+        onkeydown={handleKeyDown}
+        rows={2}
+        class="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700/80 rounded-lg px-2.5 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15 transition-all font-sans resize-none shadow-2xs animate-in fade-in duration-100"
+      ></textarea>
+    {/if}
   </div>
 
-  <!-- Bottom Controls: Amend toggle & Commit Button -->
-  <div class="flex items-center justify-between pt-1">
-    <div class="flex items-center gap-3">
-      <label class="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 cursor-pointer select-none">
+  <!-- Bottom Controls: Amend & no-verify & Smart Commit Action -->
+  <div class="flex items-center justify-between pt-0.5 gap-2">
+    <div class="flex items-center gap-2.5 text-xs">
+      <label class="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 cursor-pointer select-none">
         <input
           type="checkbox"
           bind:checked={isAmend}
@@ -341,36 +359,43 @@
         />
         <span class="flex items-center gap-1">
           <History class="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
-          {localeState.t('workingTree.commitBox.amend')}
+          <span class="hidden sm:inline">{localeState.t('workingTree.commitBox.amend')}</span>
         </span>
       </label>
 
       <label
-        class="flex items-center gap-1.5 text-xs transition-colors cursor-pointer select-none px-1.5 py-0.5 rounded {noVerify ? 'text-amber-700 dark:text-amber-300 font-semibold bg-amber-100/70 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-700/80 shadow-2xs' : 'text-zinc-500 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-amber-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}"
+        class="flex items-center gap-1 text-xs transition-colors cursor-pointer select-none px-1.5 py-0.5 rounded {noVerify ? 'text-amber-700 dark:text-amber-300 font-semibold bg-amber-100/70 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-700/80 shadow-2xs' : 'text-zinc-500 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-amber-300'}"
         title={localeState.t('workingTree.commitBox.noVerifyTooltip')}
       >
         <input
           type="checkbox"
           bind:checked={noVerify}
-          class="w-3.5 h-3.5 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-amber-500 focus:ring-0 focus:outline-none cursor-pointer"
+          class="w-3 h-3 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-amber-500 focus:ring-0 focus:outline-none cursor-pointer"
         />
-        <span class="text-[11px] font-mono">--no-verify</span>
+        <span class="text-[10px] font-mono">--no-verify</span>
       </label>
     </div>
 
+    <!-- Commit Button (Adaptive for Staged vs Smart Stage All) -->
     <button
       type="button"
       onclick={() => handleFormSubmit()}
-      disabled={isLoading || (!fullMessage.trim()) || (stagedCount === 0 && !isAmend) || (isProtected && !bypassSafetyShield)}
-      class="px-4 py-2 rounded-lg font-semibold text-xs flex items-center gap-2 shadow-lg active:scale-98 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed {isProtected && !bypassSafetyShield ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-700' : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-600/20'}"
-      title={isProtected && !bypassSafetyShield ? localeState.t('workingTree.commitBox.protectedBranchTooltip') : ''}
+      disabled={isLoading || (!fullMessage.trim()) || (stagedCount === 0 && !isAmend && !canSmartStageAndCommit) || (isProtected && !bypassSafetyShield)}
+      class="px-3 py-1.5 rounded-lg font-semibold text-xs flex items-center gap-1.5 shadow-md active:scale-98 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 {canSmartStageAndCommit ? 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white' : isProtected && !bypassSafetyShield ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-700' : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-600/20'}"
+      title={canSmartStageAndCommit ? localeState.t('workingTree.commitBox.stageAllAndCommitTooltip') : isProtected && !bypassSafetyShield ? localeState.t('workingTree.commitBox.protectedBranchTooltip') : localeState.t('workingTree.commitBox.ctrlEnterTip')}
     >
       {#if isLoading}
-        <div class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        <div class="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
         <span>{localeState.t('workingTree.commitBox.committing')}</span>
+      {:else if isAmend}
+        <GitCommitHorizontal class="w-3.5 h-3.5" />
+        <span>{localeState.t('workingTree.commitBox.amendCommit')}</span>
+      {:else if stagedCount === 0 && canSmartStageAndCommit}
+        <CheckCheck class="w-3.5 h-3.5" />
+        <span>{localeState.t('workingTree.commitBox.stageAllAndCommit')}</span>
       {:else}
-        <GitCommitHorizontal class="w-4 h-4" />
-        <span>{isAmend ? localeState.t('workingTree.commitBox.amendCommit') : localeState.t('workingTree.commitBox.commitWithCount', { count: stagedCount })}</span>
+        <GitCommitHorizontal class="w-3.5 h-3.5" />
+        <span>{localeState.t('workingTree.commitBox.commitWithCount', { count: stagedCount })}</span>
       {/if}
     </button>
   </div>
@@ -387,4 +412,3 @@
     onCancel={() => (showPreCommitModal = false)}
   />
 {/if}
-

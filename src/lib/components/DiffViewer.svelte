@@ -20,6 +20,11 @@
     ListOrdered,
     Database,
     Download,
+    ArrowLeft,
+    PanelLeftOpen,
+    PanelLeftClose,
+    Maximize2,
+    Minimize2,
   } from 'lucide-svelte';
   import { toast } from '../state/toastState.svelte';
 
@@ -28,6 +33,10 @@
     isLoading?: boolean;
     ignoreWhitespace?: boolean;
     repoPath?: string;
+    isPanelCollapsed?: boolean;
+    isMobileView?: boolean;
+    onTogglePanel?: () => void;
+    onBackToFiles?: () => void;
     onToggleIgnoreWhitespace?: () => void;
     onStageHunk?: (hunkIndex: number) => void;
     onUnstageHunk?: (hunkIndex: number) => void;
@@ -41,6 +50,10 @@
     isLoading = false,
     ignoreWhitespace = $bindable(false),
     repoPath = '',
+    isPanelCollapsed = false,
+    isMobileView = false,
+    onTogglePanel,
+    onBackToFiles,
     onToggleIgnoreWhitespace,
     onStageHunk,
     onUnstageHunk,
@@ -48,6 +61,8 @@
     onUnstageFile,
     onDiscardFile,
   }: Props = $props();
+
+  let isMaximized = $state<boolean>(false);
 
   // Content view mode: 'diff' | 'full' (view whole file at this commit)
   let contentMode = $state<'diff' | 'full'>('diff');
@@ -120,18 +135,63 @@
 
 
 
-<div class="h-full flex flex-col bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 select-text overflow-hidden font-mono text-xs">
+<svelte:window
+  onkeydown={(e) => {
+    if (e.key === 'Escape' && isMaximized) {
+      isMaximized = false;
+    }
+  }}
+/>
+
+<div class="h-full flex flex-col bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 select-text overflow-hidden font-mono text-xs transition-all {isMaximized ? 'fixed inset-0 z-50 bg-white dark:bg-zinc-950 shadow-2xl' : ''}">
   <!-- Diff Toolbar -->
-  <div class="h-10 px-3 md:px-4 border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-100/70 dark:bg-zinc-900/60 flex items-center justify-between gap-2 select-none shrink-0 overflow-hidden">
-    <div class="flex items-center gap-2 min-w-0 flex-1 overflow-hidden mr-1">
+  <div class="h-10 px-2 sm:px-3 md:px-4 border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-100/70 dark:bg-zinc-900/60 flex items-center justify-between gap-1.5 sm:gap-2 select-none shrink-0 overflow-hidden">
+    <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 overflow-hidden mr-1">
+      {#if isMobileView && onBackToFiles}
+        <button
+          type="button"
+          onclick={onBackToFiles}
+          class="flex items-center gap-1 px-2 py-1 rounded-md bg-cyan-100 dark:bg-cyan-950/60 hover:bg-cyan-200 dark:hover:bg-cyan-900/80 border border-cyan-300 dark:border-cyan-800/60 text-cyan-800 dark:text-cyan-300 text-[11px] font-sans font-semibold transition-colors cursor-pointer shrink-0"
+          title={localeState.t('workingTree.backToFiles')}
+        >
+          <ArrowLeft class="w-3.5 h-3.5" />
+          <span class="hidden xs:inline">{localeState.t('workingTree.backToFiles')}</span>
+        </button>
+      {:else if onTogglePanel}
+        <button
+          type="button"
+          onclick={onTogglePanel}
+          class="p-1 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors cursor-pointer shrink-0"
+          title={isPanelCollapsed ? localeState.t('workingTree.expandPanel') : localeState.t('workingTree.collapsePanel')}
+        >
+          {#if isPanelCollapsed}
+            <PanelLeftOpen class="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+          {:else}
+            <PanelLeftClose class="w-4 h-4" />
+          {/if}
+        </button>
+      {/if}
+
       <FileCode class="w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
       {#if diffDetail}
-        <span class="font-bold text-zinc-900 dark:text-zinc-100 truncate min-w-0" title={diffDetail.path}>{diffDetail.path}</span>
+        <button
+          type="button"
+          onclick={() => {
+            if (diffDetail?.path) {
+              navigator.clipboard.writeText(diffDetail.path);
+              toast.info(localeState.t('diff.copyFullFileTooltip'), diffDetail.path);
+            }
+          }}
+          class="font-bold text-zinc-900 dark:text-zinc-100 truncate min-w-0 text-left hover:underline cursor-pointer"
+          title="{diffDetail.path} (Click to copy)"
+        >
+          {diffDetail.path}
+        </button>
         {#if diffDetail.old_path}
           <span class="text-zinc-500 text-[11px] truncate min-w-0 shrink hidden lg:inline" title={diffDetail.old_path}>{localeState.t('diff.renamedFrom', { path: diffDetail.old_path })}</span>
         {/if}
 
-        <div class="flex items-center gap-1.5 ml-1 text-[11px] font-mono shrink-0">
+        <div class="flex items-center gap-1 ml-1 text-[11px] font-mono shrink-0">
           {#if diffDetail.additions > 0}
             <span class="text-emerald-600 dark:text-emerald-400 font-semibold">+{diffDetail.additions}</span>
           {/if}
@@ -289,6 +349,22 @@
             </button>
           </div>
         {/if}
+
+        <div class="h-4 w-px bg-zinc-200 dark:bg-zinc-800 shrink-0"></div>
+
+        <!-- Maximize Diff Button -->
+        <button
+          type="button"
+          onclick={() => (isMaximized = !isMaximized)}
+          class="p-1 rounded-md bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 cursor-pointer transition-colors shrink-0 shadow-2xs"
+          title={isMaximized ? localeState.t('workingTree.restoreDiff') : localeState.t('workingTree.maximizeDiff')}
+        >
+          {#if isMaximized}
+            <Minimize2 class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+          {:else}
+            <Maximize2 class="w-3.5 h-3.5" />
+          {/if}
+        </button>
       </div>
     {/if}
   </div>

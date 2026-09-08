@@ -38,6 +38,24 @@ export const workingTree: typeof viWorkingTree = {
   openGitignoreManager: "Manage .gitignore",
   gitignoreManagerTooltip: "Open .gitignore rules manager and editor",
 
+  // Responsive & Search & Controls
+  filterPlaceholder: "Filter changed files...",
+  clearFilter: "Clear filter",
+  noMatchingFiles: "No files match the current filter",
+  totalChangesCount: "{count} changed files",
+  refreshStatus: "Refresh status",
+  moreOptions: "More options",
+  collapsePanel: "Collapse file list",
+  expandPanel: "Expand file list",
+  backToFiles: "Back to files",
+  viewDiffTab: "View Diff",
+  viewFilesTab: "Changed Files",
+  maximizeDiff: "Maximize diff to fullscreen",
+  restoreDiff: "Restore diff",
+  cleanTitle: "Working Tree Clean",
+  cleanSubtitle: "No uncommitted or unstaged changes found.",
+  viewGraphBtn: "View Git Graph",
+
   // Context Menu for files
   contextMenu: {
     stage: "Stage file",
@@ -83,6 +101,10 @@ export const workingTree: typeof viWorkingTree = {
     scopePlaceholder: "scope (opt)",
     summaryPlaceholder: "Commit summary message...",
     descriptionPlaceholder: "Optional extended description (Markdown supported)...",
+    addDescription: "Add description",
+    hideDescription: "Hide description",
+    stageAllAndCommit: "Stage All & Commit",
+    stageAllAndCommitTooltip: "Automatically stage all changes and create commit",
     amend: "Amend",
     noVerifyTooltip: "Bypass Git pre-commit hooks (Husky, formatters, linters) for emergency commit",
     committing: "Committing...",

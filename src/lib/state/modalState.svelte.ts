@@ -102,12 +102,27 @@ export class ModalState {
   // Repository Pulse & Insights Modal
   showInsightsModal = $state<boolean>(false);
 
+  // Patch Manager Modal (Export / Apply)
+  showPatchModal = $state<boolean>(false);
+  patchModalMode = $state<'export' | 'apply'>('export');
+  patchModalCommitId = $state<string>('');
+
   // --- HELPER ACTIONS ---
   openInsights() {
     this.showInsightsModal = true;
   }
   closeInsights() {
     this.showInsightsModal = false;
+  }
+
+  openPatchModal(mode: 'export' | 'apply' = 'export', commitId: string = '') {
+    this.patchModalMode = mode;
+    this.patchModalCommitId = commitId;
+    this.showPatchModal = true;
+  }
+  closePatchModal() {
+    this.showPatchModal = false;
+    this.patchModalCommitId = '';
   }
 
   openCreateBranch(baseRef = '') {

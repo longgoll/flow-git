@@ -756,4 +756,33 @@ export interface SubmoduleDiffResult {
   modified_files: string[];
 }
 
+export interface PatchFileItem {
+  path: string;
+  old_path?: string;
+  status: string;
+  additions: number;
+  deletions: number;
+  hunks_count: number;
+}
+
+export interface PatchCheckResult {
+  can_apply: boolean;
+  files: PatchFileItem[];
+  error_message?: string;
+}
+
+export interface PatchApplyResult {
+  success: boolean;
+  files_applied: string[];
+  message: string;
+}
+
+export interface FileChurnInfo {
+  path: string;
+  changes_count: number;
+  additions: number;
+  deletions: number;
+}
+
+
 

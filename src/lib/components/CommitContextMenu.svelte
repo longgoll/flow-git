@@ -12,8 +12,10 @@
     GitFork,
     Eye,
     GitPullRequest,
+    FileDiff,
   } from 'lucide-svelte';
   import { localeState } from '../state/localeState.svelte';
+  import { modalState } from '../state/modalState.svelte';
 
   interface Props {
     x: number;
@@ -294,6 +296,19 @@
         {/if}
       </div>
     {/if}
+
+    <!-- Export Commit as Patch -->
+    <button
+      onclick={() => {
+        modalState.openPatchModal('export', commit.id);
+        onClose();
+      }}
+      class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
+      role="menuitem"
+    >
+      <FileDiff class="w-3.5 h-3.5 text-indigo-500" />
+      <span>{localeState.t('patch.contextExport')}</span>
+    </button>
 
     <div class="my-1 border-t border-zinc-200 dark:border-zinc-800"></div>
 

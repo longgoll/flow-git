@@ -52,6 +52,8 @@ docs/
 │   ├── auth-and-identity.md            # OAuth Device Flow, PAT, Identity Switcher
 │   ├── edge-cases-and-guards.md        # Index Lock Resolver, Windows File Locks, Heavy Files
 │   ├── onboarding-and-playbook.md      # In-App User Guide (F1), Git Playbook & Pre-Commit Guard
+│   ├── repo-insights-and-statistics.md # Repository Pulse & Insights Studio: 52-Week Heatmap & Hotspots
+│   ├── patch-file-manager.md           # Patch File Manager: Format-Patch Export & Dry-Run Import
 │   └── ai-assistant.md                 # Local AI Assistant: Conventional Commits & Conflict Solver
 │
 ├── playbook/                           # PRACTICAL PLAYBOOK
@@ -177,6 +179,8 @@ docs/
 │   ├── auth-and-identity.md            # GitHub OAuth Device Flow, PAT, Multi-Account & Git Identity Switcher
 │   ├── edge-cases-and-guards.md        # Index Lock Resolver, Windows File Locks, Heavy Files & Detached HEAD
 │   ├── onboarding-and-playbook.md      # Interactive In-App User Guide (F1), Git Playbook & Pre-Commit Guard
+│   ├── repo-insights-and-statistics.md # Studio Phân Tích Nhịp Độ Dự Án: Heatmap 52 Tuần & Điểm Nóng Mã Nguồn
+│   ├── patch-file-manager.md           # Trình Quản Lý & Áp Dụng Tệp Patch Ngoại Vi
 │   └── ai-assistant.md                 # Trợ lý AI Cục bộ (Ollama/Local LLM): Conventional Commits & Conflict Solver
 │
 ├── playbook/                           # SỔ TAY THỰC CHIẾN

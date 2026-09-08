@@ -22,10 +22,12 @@
     Archive,
     Activity,
     Anchor,
+    FileDiff,
   } from 'lucide-svelte';
   import { themeState } from '../../state/themeState.svelte';
   import { localeState } from '../../state/localeState.svelte';
   import { updateState } from '../../state/updateState.svelte';
+  import { modalState } from '../../state/modalState.svelte';
 
   interface Props {
     currentBranch?: BranchInfo;
@@ -347,6 +349,17 @@
           <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Hooks</span>
         </button>
       {/if}
+
+      <button
+        onclick={() => { onCloseToolsMenu(); modalState.openPatchModal('apply'); }}
+        class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors cursor-pointer"
+      >
+        <div class="flex items-center gap-2">
+          <FileDiff class="w-3.5 h-3.5 text-indigo-500" />
+          <span>{localeState.t('patch.title')}</span>
+        </div>
+        <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">Patch</span>
+      </button>
 
       <button
         onclick={() => { onCloseToolsMenu(); onOpenTrash(); }}

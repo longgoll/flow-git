@@ -3,10 +3,16 @@ import type { insights as viInsights } from "../vi/insights";
 export const insights: typeof viInsights = {
   title: "Repository Pulse & Insights",
   subtitle: "Analyze commit velocity, team contributions, and development habits for this repository",
-  badge: "Git Analytics",
+  badge: "Insights Studio",
   commandTitle: "Open Repository Pulse & Insights Dashboard (Git Analytics)",
   refresh: "Refresh",
   close: "Close",
+
+  // Tabs
+  tabOverview: "Overview",
+  tabActivity: "Activity & Heatmap",
+  tabContributors: "Contributors",
+  tabHotspots: "Code Churn & Hotspots",
 
   // Metric cards
   totalCommits: "Total Commits",
@@ -18,6 +24,18 @@ export const insights: typeof viInsights = {
   repoAge: "Repository Age",
   repoAgeDesc: "Since first commit",
 
+  // 52-Week Year Heatmap & Streaks
+  heatmapTitle: "52-Week Activity Heatmap",
+  heatmapSubtitle: "Daily commit intensity across the trailing 365 days",
+  currentStreak: "Current Streak",
+  longestStreak: "Longest Streak",
+  activeDays: "Active Days",
+  busiestDay: "Busiest Day",
+  daysCount: "{count} days",
+  less: "Less",
+  more: "More",
+  commitsOnDate: "{count} commits on {date}",
+
   // Sections
   activityTitle: "Commit Velocity Over Time",
   activitySubtitle: "Commit volume across months/weeks",
@@ -26,6 +44,15 @@ export const insights: typeof viInsights = {
   contributorsTitle: "Top Contributors Leaderboard",
   contributorsSubtitle: "Contribution volume and percentage across developers",
   distributionTitle: "Work Habit Distribution",
+
+  // Hotspots / Code Churn
+  hotspotsTitle: "Code Churn & Hotspots",
+  hotspotsSubtitle: "Most frequently modified files across git history",
+  loadingHotspots: "Analyzing file change frequency...",
+  hotspotEmpty: "No file churn data recorded.",
+  changesCount: "{count} revisions",
+  additions: "+{count}",
+  deletions: "-{count}",
 
   // Punch Card Days & Hours
   days: {

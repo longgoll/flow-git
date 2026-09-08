@@ -3,11 +3,14 @@ import type {
   CommitDetail,
   CommitNode,
   ComparisonResult,
+  FileChurnInfo,
   FileContentResponse,
   FileGrepMatch,
   FocusBranchResult,
   GitCredentials,
   PaginatedCommitHistory,
+  PatchApplyResult,
+  PatchCheckResult,
   PickaxeSearchResult,
   RepoSummary,
   StackedCommitItem,
@@ -296,6 +299,82 @@ export async function searchCommitsPickaxe(
   }
   return [];
 }
+
+export async function exportCommitPatch(
+  path: string,
+  commitId: string
+): Promise<string> {
+  if (isTauri) {
+    return await invoke<string>('export_commit_patch', {
+      path,
+      commitId,
+    });
+  }
+  return `From ${commitId} Mon Sep 17 00:00:00 2001\nSubject: [PATCH] Mock Commit Patch\n---\n mock.txt | 1 +\n 1 file changed, 1 insertion(+)\n`;
+}
+
+export async function checkPatch(
+  path: string,
+  patchContent: string
+): Promise<PatchCheckResult> {
+  if (isTauri) {
+    return await invoke<PatchCheckResult>('check_patch', {
+      path,
+      patchContent,
+    });
+  }
+  return {
+    can_apply: true,
+    files: [
+      {
+        path: 'example.ts',
+        status: 'modified',
+        additions: 12,
+        deletions: 4,
+        hunks_count: 2,
+      },
+    ],
+  };
+}
+
+export async function applyPatch(
+  path: string,
+  patchContent: string,
+  stageToIndex?: boolean,
+  reverse?: boolean
+): Promise<PatchApplyResult> {
+  if (isTauri) {
+    return await invoke<PatchApplyResult>('apply_patch', {
+      path,
+      patchContent,
+      stageToIndex: stageToIndex ?? false,
+      reverse: reverse ?? false,
+    });
+  }
+  return {
+    success: true,
+    files_applied: ['example.ts'],
+    message: 'Mock: Patch applied successfully',
+  };
+}
+
+export async function getRepoFileChurn(
+  path: string,
+  maxCommits?: number
+): Promise<FileChurnInfo[]> {
+  if (isTauri) {
+    return await invoke<FileChurnInfo[]>('get_repo_file_churn', {
+      path,
+      maxCommits: maxCommits ?? 500,
+    });
+  }
+  return [
+    { path: 'src/lib/types.ts', changes_count: 42, additions: 350, deletions: 80 },
+    { path: 'src-tauri/src/lib.rs', changes_count: 38, additions: 280, deletions: 40 },
+    { path: 'package.json', changes_count: 15, additions: 45, deletions: 12 },
+  ];
+}
+
 
 
 

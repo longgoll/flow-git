@@ -19,6 +19,7 @@ import { updater } from "./updater";
 import { stash } from "./stash";
 import { insights } from "./insights";
 import { gitHooks } from "./gitHooks";
+import { patch } from "./patch";
 
 export const en: TranslationSchema = {
   common,
@@ -47,4 +48,5 @@ export const en: TranslationSchema = {
   stash,
   insights,
   gitHooks,
+  patch,
 };

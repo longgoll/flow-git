@@ -360,6 +360,61 @@ pub async fn search_commits_pickaxe(
     .map_err(|e| AppError::Internal(e.to_string()))?
 }
 
+#[command]
+pub async fn export_commit_patch(
+    path: String,
+    commit_id: String,
+) -> AppResult<String> {
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        crate::git::patch::export_commit_patch(&repo, &commit_id)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn check_patch(
+    path: String,
+    patch_content: String,
+) -> AppResult<crate::git::patch::PatchCheckResult> {
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        crate::git::patch::check_patch(&repo, &patch_content)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn apply_patch(
+    path: String,
+    patch_content: String,
+    stage_to_index: Option<bool>,
+    reverse: Option<bool>,
+) -> AppResult<crate::git::patch::PatchApplyResult> {
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        crate::git::patch::apply_patch(&repo, &patch_content, stage_to_index.unwrap_or(false), reverse.unwrap_or(false))
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+#[command]
+pub async fn get_repo_file_churn(
+    path: String,
+    max_commits: Option<usize>,
+) -> AppResult<Vec<crate::git::stats::FileChurnInfo>> {
+    tokio::task::spawn_blocking(move || {
+        let repo = git_open_repo(&path)?;
+        crate::git::stats::get_repo_file_churn(&repo, max_commits)
+    })
+    .await
+    .map_err(|e| AppError::Internal(e.to_string()))?
+}
+
+
 
 
 

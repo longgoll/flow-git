@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { BranchInfo, TagInfo, ViewMode } from '../types';
   import { localeState } from '../state/localeState.svelte';
+  import { modalState } from '../state/modalState.svelte';
   import {
     BookOpen,
     Search,
@@ -188,6 +189,16 @@
         action: () => {
           onClose();
           onOpenGitHooks?.();
+        },
+      },
+      {
+        id: 'open-patch-manager',
+        title: localeState.t('patch.commandTitle'),
+        category: 'Tools',
+        icon: FileDiff,
+        action: () => {
+          onClose();
+          modalState.openPatchModal('apply');
         },
       },
 

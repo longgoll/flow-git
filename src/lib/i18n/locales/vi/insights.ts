@@ -1,10 +1,16 @@
 export const insights = {
   title: "Repository Pulse & Insights",
   subtitle: "Phân tích nhịp độ commit, đóng góp của các thành viên và thói quen làm việc của dự án",
-  badge: "Insights",
+  badge: "Insights Studio",
   commandTitle: "Mở Repository Pulse & Insights Dashboard (Thống kê nhịp độ dự án)",
   refresh: "Làm mới",
   close: "Đóng",
+
+  // Tabs
+  tabOverview: "Tổng quan",
+  tabActivity: "Hoạt động & Heatmap",
+  tabContributors: "Thành viên",
+  tabHotspots: "Code Churn & Hotspots",
 
   // Metric cards
   totalCommits: "Tổng số Commits",
@@ -16,6 +22,18 @@ export const insights = {
   repoAge: "Tuổi thọ dự án",
   repoAgeDesc: "Từ commit đầu tiên",
 
+  // 52-Week Year Heatmap & Streaks
+  heatmapTitle: "Biểu Đồ Nhiệt Commit Cả Năm (52-Week Contribution Grid)",
+  heatmapSubtitle: "Tần suất commit theo từng ngày trong 365 ngày qua",
+  currentStreak: "Chuỗi ngày hiện tại",
+  longestStreak: "Chuỗi ngày dài nhất",
+  activeDays: "Số ngày hoạt động",
+  busiestDay: "Ngày bận rộn nhất",
+  daysCount: "{count} ngày",
+  less: "Ít",
+  more: "Nhiều",
+  commitsOnDate: "{count} commit vào ngày {date}",
+
   // Sections
   activityTitle: "Nhịp Độ Commit Theo Thời Gian (Commit Velocity)",
   activitySubtitle: "Số lượng commit qua các tháng/tuần",
@@ -24,6 +42,15 @@ export const insights = {
   contributorsTitle: "Bảng Xếp Hạng Đóng Góp (Top Contributors)",
   contributorsSubtitle: "Tỷ lệ và số lượng đóng góp của các lập trình viên",
   distributionTitle: "Phân Bố Thời Gian Làm Việc",
+
+  // Hotspots / Code Churn
+  hotspotsTitle: "Điểm Nóng Thay Đổi Mã Nguồn (Code Churn & Hotspots)",
+  hotspotsSubtitle: "Các tệp tin bị chỉnh sửa nhiều nhất trong lịch sử dự án",
+  loadingHotspots: "Đang phân tích tần suất thay đổi tệp tin...",
+  hotspotEmpty: "Chưa ghi nhận dữ liệu thay đổi tệp tin.",
+  changesCount: "{count} lần sửa",
+  additions: "{count} thêm",
+  deletions: "{count} xóa",
 
   // Punch Card Days & Hours
   days: {

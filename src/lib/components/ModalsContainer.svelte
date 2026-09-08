@@ -31,6 +31,7 @@
   import UpdateModal from './UpdateModal.svelte';
   import RepoInsightsModal from './RepoInsightsModal.svelte';
   import GitHooksModal from './GitHooksModal.svelte';
+  import PatchManagerModal from './PatchManagerModal.svelte';
   import { resetToCommit } from '../api';
   import { toast } from '../state/toastState.svelte';
   import { localeState } from '../state/localeState.svelte';
@@ -639,4 +640,16 @@
     onClose={() => modalState.closeGitHooks()}
   />
 {/if}
+
+<!-- Patch File Manager Modal (Export / Apply) -->
+{#if modalState.showPatchModal}
+  <PatchManagerModal
+    {repo}
+    initialMode={modalState.patchModalMode}
+    initialCommitId={modalState.patchModalCommitId}
+    onApplySuccess={refreshWorkingTreeAndDiff}
+    onClose={() => modalState.closePatchModal()}
+  />
+{/if}
+
 

@@ -43,6 +43,10 @@ All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard
 | `get_unpushed_stacked_commits` | `path: String` | `Vec<StackedCommitItem>` | Lists unpushed commits in active branch for Stacked PR workflows. |
 | `reorder_stacked_commits` | `path: String, new_order_ids: Vec<String>` | `bool` | Reorders unpushed commits using the Reorder Sequencer. |
 | `search_commits_pickaxe` | `path: String, query: String, max_results: Option<usize>` | `Vec<PickaxeSearchResult>` | **Pickaxe Search (`-S`)**: Finds commits that introduced or removed specific lines/strings across diffs. |
+| `export_commit_patch` | `path: String, commit_id: String` | `String` | **Patch Engine**: Exports a commit as a standard `git format-patch` compatible patch string. |
+| `check_patch` | `path: String, patch_content: String` | `PatchCheckResult` | **Patch Engine**: Dry-run validates a patch, verifying affected files and applicability without modifying disk. |
+| `apply_patch` | `path: String, patch_content: String, stage_to_index: Option<bool>, reverse: Option<bool>` | `PatchApplyResult` | **Patch Engine**: Applies patch directly to the working directory and optionally stages changes to index. |
+| `get_repo_file_churn` | `path: String, max_commits: Option<usize>` | `Vec<FileChurnInfo>` | **Insights Studio**: Analyzes commit history to detect top modified files, revision counts, additions, and deletions. |
 
 ---
 
@@ -252,6 +256,10 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `get_unpushed_stacked_commits` | `path: String` | `Vec<StackedCommitItem>` | Lấy chuỗi các commit chưa được push lên remote để quản lý Stacked Commits / Stacked PRs. |
 | `reorder_stacked_commits` | `path: String, new_order_ids: Vec<String>` | `bool` | Sắp xếp lại thứ tự của các commit trong chuỗi Stacked Commits bằng bộ Reorder Sequencer. |
 | `search_commits_pickaxe` | `path: String, query: String, max_results: Option<usize>` | `Vec<PickaxeSearchResult>` | **Pickaxe Search (`-S`)**: Tìm kiếm commit đã thêm hoặc xóa chuỗi/đoạn mã cụ thể trong diffs. |
+| `export_commit_patch` | `path: String, commit_id: String` | `String` | **Patch Engine**: Xuất một commit thành chuỗi patch tương thích chuẩn `git format-patch`. |
+| `check_patch` | `path: String, patch_content: String` | `PatchCheckResult` | **Patch Engine**: Kiểm tra thử (Dry-run) patch mà không ghi đĩa, xác thực danh sách file ảnh hưởng và tính sạch sẽ. |
+| `apply_patch` | `path: String, patch_content: String, stage_to_index: Option<bool>, reverse: Option<bool>` | `PatchApplyResult` | **Patch Engine**: Áp dụng patch vào working tree (và index nếu chọn stage) an toàn. |
+| `get_repo_file_churn` | `path: String, max_commits: Option<usize>` | `Vec<FileChurnInfo>` | **Insights Studio**: Quét lịch sử commit để tìm các điểm nóng thay đổi mã nguồn (File Churn Hotspots), số lần sửa và dòng thêm/xóa. |
 
 ---
 

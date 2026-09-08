@@ -4,8 +4,6 @@
     Globe,
     ChevronDown,
     ChevronRight,
-    ArrowUp,
-    ArrowDown,
     Check,
     RefreshCw,
     Trash2,
@@ -110,6 +108,25 @@
           </button>
 
           <div class="flex items-center gap-1 shrink-0">
+            <!-- Ahead / Behind Badge -->
+            {#if branch.ahead_count > 0 || branch.behind_count > 0}
+              <div
+                class="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-400 shrink-0"
+                title={`${branch.ahead_count > 0 ? `+${branch.ahead_count} ahead` : ''} ${branch.behind_count > 0 ? `-${branch.behind_count} behind` : ''}`}
+              >
+                {#if branch.ahead_count > 0}
+                  <span class="flex items-center text-emerald-600 dark:text-emerald-400 font-bold">
+                    ↑{branch.ahead_count}
+                  </span>
+                {/if}
+                {#if branch.behind_count > 0}
+                  <span class="flex items-center text-amber-600 dark:text-amber-400 font-bold">
+                    ↓{branch.behind_count}
+                  </span>
+                {/if}
+              </div>
+            {/if}
+
             <!-- Toggle Visibility -->
             <button
               onclick={(e) => { e.stopPropagation(); repo?.toggleBranchVisibility(shorthand); }}
@@ -268,15 +285,18 @@
             {:else}
               <!-- Ahead / Behind Badge -->
               {#if branch.ahead_count > 0 || branch.behind_count > 0}
-                <div class="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-400 shrink-0">
+                <div
+                  class="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-400 shrink-0"
+                  title={`${branch.ahead_count > 0 ? `+${branch.ahead_count} ahead (${branch.upstream_name || 'origin'})` : ''} ${branch.behind_count > 0 ? `-${branch.behind_count} behind (${branch.upstream_name || 'origin'})` : ''}`}
+                >
                   {#if branch.ahead_count > 0}
-                    <span class="flex items-center text-emerald-600 dark:text-emerald-400 font-semibold">
-                      <ArrowUp class="w-2.5 h-2.5" />{branch.ahead_count}
+                    <span class="flex items-center text-emerald-600 dark:text-emerald-400 font-bold">
+                      ↑{branch.ahead_count}
                     </span>
                   {/if}
                   {#if branch.behind_count > 0}
-                    <span class="flex items-center text-amber-600 dark:text-amber-400 font-semibold">
-                      <ArrowDown class="w-2.5 h-2.5" />{branch.behind_count}
+                    <span class="flex items-center text-amber-600 dark:text-amber-400 font-bold">
+                      ↓{branch.behind_count}
                     </span>
                   {/if}
                 </div>

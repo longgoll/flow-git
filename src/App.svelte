@@ -148,8 +148,18 @@
       originRemoteUrl = await getRemoteUrl(path).catch(() => null);
       if (sessionId !== currentLoadSessionId) return;
 
-      if (originRemoteUrl) {
-        remote.refreshPRCount(originRemoteUrl).then((count) => {
+      await loadRemotesList(path);
+      if (sessionId !== currentLoadSessionId) return;
+
+      const effectiveRemoteUrl =
+        originRemoteUrl ||
+        remotes.find((r) => r.name === 'origin')?.fetch_url ||
+        remotes.find((r) => r.name === 'upstream')?.fetch_url ||
+        remotes[0]?.fetch_url ||
+        null;
+
+      if (effectiveRemoteUrl) {
+        remote.refreshPRCount(effectiveRemoteUrl).then((count) => {
           if (sessionId === currentLoadSessionId) {
             tabState.updateActiveTabMeta({ openPRCount: count });
           }
@@ -157,9 +167,6 @@
       } else {
         remote.openPRCount = 0;
       }
-
-      await loadRemotesList(path);
-      if (sessionId !== currentLoadSessionId) return;
 
       await loadIdentity(path);
       if (sessionId !== currentLoadSessionId) return;
@@ -589,6 +596,7 @@
     {#if isSidebarOpen}
       <Sidebar
         {repo}
+        {viewMode}
         repoSummary={repo.repoSummary}
         branches={repo.branches}
         tags={repo.tags}

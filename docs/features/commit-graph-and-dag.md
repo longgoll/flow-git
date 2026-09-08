@@ -111,6 +111,21 @@ Right-click any commit node on the living graph for contextual actions:
 
 ---
 
+## 🧭 8. Clean Top Nav & View Modes Segmented Control
+
+Component: `src/lib/components/toolbar/ToolbarViewModes.svelte`
+
+To eliminate clutter on high-DPI and compact laptop displays, the Top Nav is structured around **4 Pinned Primary Tabs + More Views Dropdown**:
+- **Pinned Tabs (95% Daily Usage):**
+  + 🌿 **Graph:** Primary Living Commit Graph & Canvas.
+  + 📑 **Changes:** Working Tree uncommitted diff & staging inspector (with real-time modified/staged count badges).
+  + 🔀 **PRs:** GitHub Pull Requests & Cloud Review (with open count indicator).
+  + 📊 **Insights:** Repository analytics, commit frequency heatmaps, and contributor velocity.
+- **Dynamic Conflicts Tab (`⚠️ Conflicts`):** Automatically appears in illuminated red whenever merge or rebase conflicts are active.
+- **More Views Dropdown:** Convenient popover housing extended views (`Focus Mode`, `Stacked Commits`, `2D DAG Map`, `Repository File Explorer`, and `Commit Comparison`). When an extended view is active, the dropdown button highlights and displays the active mode name.
+
+---
+
 <a name="-tiếng-việt"></a>
 # 🇻🇳 Tiếng Việt
 
@@ -214,4 +229,19 @@ Nhấp chuột phải vào bất kỳ node commit nào trên đồ thị động
 - **Gộp commit nhanh (Squash Commits):** Gộp chuỗi commit gần nhất thành 1 commit duy nhất kèm tự động soạn thảo commit message.
 - **Safe Reset (`--soft`, `--mixed`, `--hard`):** Luôn được bảo vệ bởi thùng rác Safe Discard 48h và Time Machine hoàn tác (`Ctrl + Z`).
 - **Cherry-pick & Revert:** Sao chép hoặc đảo ngược commit không phá hủy, tự động định tuyến đến nhánh đích mong muốn.
+
+---
+
+## 🧭 8. ĐIỀU HƯỚNG ĐỈNH TINH GỌN (TOP NAV VIEW MODES)
+
+Component: `src/lib/components/toolbar/ToolbarViewModes.svelte`
+
+Nhằm xóa bỏ tình trạng nhồi nhét và cuộn ngang trên màn hình laptop nhỏ, thanh điều hướng Top Nav được thiết kế theo chuẩn **4 Pinned Tabs cốt lõi + Menu Chế độ xem mở rộng (More Views)**:
+- **4 Tabs Ghim Cố định (Chiếm 95% thao tác thường ngày):**
+  + 🌿 **Graph:** Đồ thị động học và Canvas phân nhánh chính.
+  + 📑 **Changes:** Khu vực Working Tree xem file thay đổi, diff và stage/unstage (kèm huy hiệu đếm số file thời gian thực).
+  + 🔀 **PRs:** Quản lý Pull Request và review mã nguồn đám mây (kèm huy hiệu số PR đang mở).
+  + 📊 **Insights:** Bảng phân tích thống kê repository, biểu đồ tần suất commit và năng suất lập trình viên.
+- **Tab Xung đột Động (`⚠️ Conflicts`):** Tự động phát sáng màu đỏ cảnh báo ngay khi xuất hiện xung đột trong quá trình merge hoặc rebase.
+- **Menu Chế độ xem mở rộng (More Views ▾):** Hộp xổ nhỏ gọn chứa các view chuyên sâu (`Focus Mode`, `Stacked Commits`, `Bản đồ 2D DAG Map`, `Duyệt cây file Repository Explorer`, và `So sánh Commit Compare`). Khi một chế độ xem mở rộng đang hoạt động, nút dropdown tự động đổi nhãn và tô sáng để báo hiệu cho người dùng.
 

@@ -200,10 +200,17 @@ export class RemoteState {
     creds: GitCredentials,
     profile: AccountProfile | undefined,
     repoPath: string,
-    onSuccess: () => Promise<void>
+    onSuccess: () => Promise<void>,
+    remoteUrl?: string
   ): Promise<{ rerunAction: string | null }> {
     this.showAuthModal = false;
     this.cachedCredentials = creds;
+    this.activeAccount = profile || null;
+    if (this.activeAccount?.token) {
+      saveGitHubToken(this.activeAccount.token);
+    }
+    this.refreshPRCount(remoteUrl || this.authModalRemoteUrl).catch(() => {});
+
     if (profile) {
       this.activeAccount = profile;
       await saveAccountAuth(profile).catch(console.error);

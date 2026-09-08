@@ -48,6 +48,7 @@
     onCloseSidebar?: () => void;
     onOpenStashShelf?: (index?: number) => void;
     isPushing?: boolean;
+    viewMode?: import('../types').ViewMode;
   }
 
   let {
@@ -79,10 +80,31 @@
     onCloseSidebar,
     onOpenStashShelf,
     isPushing = false,
+    viewMode,
   }: Props = $props();
 
   // Rail Navigation Tab Type
   type RailTab = 'branches' | 'remotes' | 'tags' | 'stashes' | 'worktrees';
+
+  // Context-Aware Sidebar Adaptation
+  let previousViewMode = $state<import('../types').ViewMode | undefined>(undefined);
+
+  $effect(() => {
+    if (viewMode && viewMode !== previousViewMode) {
+      previousViewMode = viewMode;
+      if (viewMode === 'graph' || viewMode === 'focus' || viewMode === 'stacked' || viewMode === 'dag' || viewMode === 'compare') {
+        activeRailTab = 'branches';
+      } else if (viewMode === 'changes') {
+        if (stashes.length > 0) {
+          activeRailTab = 'stashes';
+        }
+      } else if (viewMode === 'pr') {
+        if (remotes.length > 0) {
+          activeRailTab = 'remotes';
+        }
+      }
+    }
+  });
 
   // Persistent States
   const savedWidth = typeof localStorage !== 'undefined' ? localStorage.getItem('flowgit_sidebar_width') : null;

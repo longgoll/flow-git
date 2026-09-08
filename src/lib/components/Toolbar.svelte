@@ -234,6 +234,7 @@
       {conflictedFilesCount}
       {openPRCount}
       {onChangeViewMode}
+      {onOpenInsights}
     />
   </div>
 

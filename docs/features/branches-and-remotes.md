@@ -31,6 +31,11 @@ The FlowGit Sidebar utilizes a dual-tier **Icon Rail (Activity Bar) + Resizable 
   1. *Full Mode:* Rail (44px) + Active Panel (resizable).
   2. *Rail-Only Mode:* Clicking the active tab or the bottom collapse toggle shrinks the sidebar to a 44px icon strip.
   3. *Hidden Mode:* `Ctrl + B` toggles the entire sidebar off for full-width DAG canvas view.
+- **Context-Aware Sidebar Adaptation:**
+  + Automatically switches the active rail tab based on the active View Mode (`Graph/Focus/DAG` ➔ `Branches`, `Changes` ➔ `Stashes`, `PR` ➔ `Remotes`), while respecting manual user overrides.
+- **Live PR Count Badge & Synchronization:**
+  + Connects seamlessly to GitHub/GitLab remote endpoints (evaluating `origin` and `upstream` fallbacks).
+  + Displays the real-time open PR count directly on the Top Nav PR Tab with immediate refresh upon authentication or tab switching.
 - **Ahead / Behind Badges:** Realtime divergence tracking relative to upstream (`↑ 3  ↓ 1`).
 
 ### Intuitive Visual Operations:
@@ -160,6 +165,12 @@ Sidebar của FlowGit ứng dụng mô hình 2 tầng chuẩn mực **Icon Rail 
   1. *Chế độ Đầy đủ:* Rail (44px) + Active Panel (tùy chỉnh độ rộng).
   2. *Chế độ Rail-Only:* Nhấp vào tab đang chọn hoặc nút thu gọn ở đáy rail để co sidebar về thanh icon 44px siêu tiết kiệm diện tích.
   3. *Chế độ Ẩn sạch:* Phím tắt `Ctrl + B` ẩn hoàn toàn Sidebar để xem đồ thị DAG toàn màn hình.
+- **Tự thích ứng ngữ cảnh thông minh (Context-Aware Sidebar):**
+  + Tự động kích hoạt tab phù hợp theo chế độ xem đang mở trên Top Nav (`Graph/Focus/DAG` ➔ `Branches`, `Changes` ➔ `Stashes`, `PRs` ➔ `Remotes`).
+  + Không can thiệp nếu người dùng tự tay nhấp chuyển tab trong cùng một chế độ xem.
+- **Huy hiệu số lượng PR trực tiếp (Live PR Count Badge):**
+  + Tự động kết nối với API GitHub/GitLab theo endpoint remote (tự động thử `origin` và `upstream`).
+  + Hiển thị trực tiếp số lượng PR đang mở trên thanh Top Nav và tự động cập nhật ngay sau khi đăng nhập hoặc chuyển Workspace Tab.
 - **Huy hiệu Ahead / Behind:** Hiển thị thời gian thực độ lệch giữa nhánh local và remote tương ứng (`↑ 3  ↓ 1`).
 
 ### Thao tác trực quan trên nhánh:

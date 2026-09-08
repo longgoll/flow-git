@@ -105,6 +105,12 @@ export const toolbar: typeof viToolbar = {
     prsOpen: "{count} Open PRs",
     compare: "Compare",
     compareTitle: "Branch Comparison (Branch vs Branch Diff)",
+    moreViews: "More Views",
+    moreViewsTitle: "More Extended Views",
+    insights: "Insights",
+    insightsTitle: "Repository Analytics & Insights",
+    conflicts: "Conflicts",
+    conflictsTitle: "Conflict Resolver",
   },
 };
 

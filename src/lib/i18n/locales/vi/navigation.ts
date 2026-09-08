@@ -97,6 +97,12 @@ export const toolbar = {
     prsOpen: "{count} PRs đang mở",
     compare: "Compare",
     compareTitle: "So sánh nhánh (Branch vs Branch Diff)",
+    moreViews: "Xem thêm",
+    moreViewsTitle: "Chế độ xem mở rộng khác",
+    insights: "Insights",
+    insightsTitle: "Báo cáo & Thống kê Repository",
+    conflicts: "Conflicts",
+    conflictsTitle: "Xử lý xung đột (Conflict Resolver)",
   },
 };
 

@@ -1,8 +1,6 @@
-use std::path::Path;
 use git2::{DiffOptions, Repository};
 use serde::{Deserialize, Serialize};
 use crate::error::{AppError, AppResult};
-use crate::git::branches::BranchInfo;
 use crate::git::diff::{get_tree_blob_content, parse_git_diff, DiffLine, FileDiffDetail, HunkDiff, LineChangeType};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

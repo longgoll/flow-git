@@ -30,7 +30,7 @@
     onClose?: () => void;
     onSelectParent?: (parentId: string) => void;
     onSelectFile?: (filePath: string) => void;
-    onOpenFileInExplorer?: (filePath: string) => void;
+    onOpenFileInExplorer?: (filePath: string, commitId?: string) => void;
   }
 
   let {
@@ -195,12 +195,12 @@
     </div>
   {:else if commitDetail}
     <!-- Detail Header Bar -->
-    <div class="px-3.5 py-1.5 border-b border-zinc-200 dark:border-zinc-800/60 flex items-center justify-between bg-zinc-100/70 dark:bg-zinc-900/50 gap-3 shrink-0">
-      <div class="flex items-center gap-3 flex-wrap min-w-0 flex-1">
+    <div class="px-3 py-1.5 border-b border-zinc-200 dark:border-zinc-800/60 flex items-center justify-between bg-zinc-100/70 dark:bg-zinc-900/50 gap-2 shrink-0 overflow-hidden">
+      <div class="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto no-scrollbar">
         <!-- Hash pill -->
         <button
           onclick={copyHash}
-          class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white font-mono text-[11px] transition-colors cursor-pointer group shadow-xs"
+          class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-800 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white font-mono text-[11px] transition-colors cursor-pointer group shadow-xs shrink-0"
           title={localeState.t('graph.clickToCopySha')}
         >
           <GitCommit class="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
@@ -213,7 +213,7 @@
         </button>
 
         {#if commitDetail.parents.length > 0}
-          <div class="flex items-center gap-1 text-[11px] text-zinc-500 font-mono">
+          <div class="flex items-center gap-1 text-[11px] text-zinc-500 font-mono shrink-0">
             <span>{localeState.t('graph.parents')}:</span>
             {#each commitDetail.parents as parent}
               <button
@@ -228,7 +228,7 @@
 
         <!-- Commit Signing Badge -->
         {#if commitDetail.signature_info?.is_signed}
-          <div class="relative">
+          <div class="relative shrink-0">
             <button
               onclick={() => showSignatureDetails = !showSignatureDetails}
               class="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold font-mono border transition-all cursor-pointer shadow-xs {commitDetail.signature_info.key_type === 'ssh' ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/40' : 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-800/60 hover:bg-blue-100 dark:hover:bg-blue-900/40'}"
@@ -290,7 +290,7 @@
         {/if}
 
         <!-- Author with Avatar Initials & Date inline -->
-        <div class="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 border-l border-zinc-200 dark:border-zinc-800/60 pl-3">
+        <div class="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 border-l border-zinc-200 dark:border-zinc-800/60 pl-3 shrink-0">
           <div class="flex items-center gap-1.5 text-zinc-800 dark:text-zinc-300">
             <div
               class="w-5 h-5 rounded-full bg-gradient-to-tr {getAvatarGradient(commitDetail.author_name)} text-white font-semibold text-[9px] flex items-center justify-center shadow-xs shrink-0"
@@ -298,24 +298,24 @@
             >
               {getInitials(commitDetail.author_name)}
             </div>
-            <span class="font-medium text-[11px]">{commitDetail.author_name}</span>
+            <span class="font-medium text-[11px] truncate max-w-[120px]">{commitDetail.author_name}</span>
             <span class="text-zinc-400 dark:text-zinc-500 text-[10px] font-mono hidden xl:inline">&lt;{commitDetail.author_email}&gt;</span>
           </div>
 
           <div class="flex items-center gap-1 text-zinc-500 text-[11px] font-mono hidden sm:flex">
-            <Clock class="w-3 h-3 text-zinc-400" />
-            <span>{formatDate(commitDetail.author_timestamp)}</span>
+            <Clock class="w-3 h-3 text-zinc-400 shrink-0" />
+            <span class="whitespace-nowrap">{formatDate(commitDetail.author_timestamp)}</span>
           </div>
         </div>
 
         <!-- Total Stats Pill -->
-        <div class="flex items-center gap-1.5 text-[11px] font-mono border-l border-zinc-200 dark:border-zinc-800/60 pl-3">
-          <span class="text-zinc-600 dark:text-zinc-400 font-medium">{localeState.t('graph.filesChanged', { count: commitDetail.files_changed.length })}</span>
+        <div class="flex items-center gap-1.5 text-[11px] font-mono border-l border-zinc-200 dark:border-zinc-800/60 pl-3 shrink-0">
+          <span class="text-zinc-600 dark:text-zinc-400 font-medium whitespace-nowrap">{localeState.t('graph.filesChanged', { count: commitDetail.files_changed.length })}</span>
           {#if totalAdditions > 0}
-            <span class="text-emerald-600 dark:text-emerald-400 font-semibold">+{totalAdditions}</span>
+            <span class="text-emerald-600 dark:text-emerald-400 font-semibold whitespace-nowrap">+{totalAdditions}</span>
           {/if}
           {#if totalDeletions > 0}
-            <span class="text-rose-600 dark:text-rose-400 font-semibold">-{totalDeletions}</span>
+            <span class="text-rose-600 dark:text-rose-400 font-semibold whitespace-nowrap">-{totalDeletions}</span>
           {/if}
         </div>
       </div>
@@ -348,10 +348,10 @@
       </div>
     </div>
 
-    <!-- Main Content: 3-Column Split (Message ~25% | Files ~27% | Inline Diff Preview ~48%) -->
+    <!-- Main Content: 3-Column Split (Message | Files | Inline Diff Preview) -->
     <div class="flex-1 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-zinc-200 dark:divide-zinc-800/60 overflow-hidden">
       <!-- 1. Commit Message Pane -->
-      <div class="w-full md:w-[25%] min-w-[190px] p-3 overflow-y-auto bg-zinc-50/60 dark:bg-zinc-950 shrink-0 flex flex-col">
+      <div class="w-full md:w-[220px] lg:w-[250px] xl:w-[280px] p-3 overflow-y-auto bg-zinc-50/60 dark:bg-zinc-950 shrink-0 flex flex-col">
         <h4 class="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5 shrink-0">
           {localeState.t('graph.commitMessage')}
         </h4>
@@ -366,7 +366,7 @@
       </div>
 
       <!-- 2. Changed Files List Pane -->
-      <div class="w-full md:w-[27%] min-w-[210px] p-2.5 flex flex-col bg-zinc-50/30 dark:bg-zinc-950/60 shrink-0 overflow-hidden">
+      <div class="w-full md:w-[220px] lg:w-[250px] xl:w-[280px] p-2.5 flex flex-col bg-zinc-50/30 dark:bg-zinc-950/60 shrink-0 overflow-hidden">
         <div class="flex items-center justify-between mb-1.5 shrink-0 gap-2">
           <h4 class="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
             {localeState.t('graph.changedFiles', { count: commitDetail.files_changed.length })}
@@ -449,8 +449,8 @@
         {#if onOpenFileInExplorer && selectedFilePath}
           <div class="pt-2 mt-auto border-t border-zinc-200/60 dark:border-zinc-800/60">
             <button
-              onclick={() => onOpenFileInExplorer(selectedFilePath!)}
-              class="w-full flex items-center justify-center gap-1 py-1 text-[10px] text-zinc-500 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded transition-colors cursor-pointer"
+              onclick={() => onOpenFileInExplorer(selectedFilePath!, commitDetail.id)}
+              class="w-full flex items-center justify-center gap-1.5 py-1 text-[10px] text-zinc-500 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded transition-colors cursor-pointer"
               title={localeState.t('graph.openInExplorerTooltip')}
             >
               <ExternalLink class="w-3 h-3" />

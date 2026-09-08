@@ -56,7 +56,11 @@ Backend IPC: `get_tree_entries`, `get_file_content`
 
 ### 2.1. Tree Browsing Without Checkout
 - Switch seamlessly between the **active Working Tree** and **historical Tree at any commit OID**.
+- If opening from a historical commit (e.g., from Commit Details), Explorer retains the target commit context with a quick **"Back to Commit ({sha})"** navigation banner.
 - Expand subdirectories with animated folder/file icons (Code, JSON, Text, Binary, Folder).
+- **Preserved Expanded State:** Directory reloads and status refreshes preserve currently opened subfolders instead of collapsing them.
+- **Auto-Reveal File in Tree (VS Code-style):** Opening a file (via initial navigation, grep search result, or breadcrumb) automatically expands all ancestor folders recursively down to that file, smoothly scrolls the tree viewport to it, and pulses a temporary focus ring.
+- **Locate Active File Button:** Click the crosshair/locate button (`LocateFixed`) on the Explorer header at any time to re-reveal and focus the active file in the directory tree.
 - **Realtime File Filter (`treeSearchQuery`):** Instant search filtering within the tree.
 
 ### 2.2. Integrated Monaco Code Preview
@@ -64,6 +68,7 @@ Backend IPC: `get_tree_entries`, `get_file_content`
   - Full syntax highlighting for 50+ languages.
   - Line numbers, minimap, and word wrap.
   - Automated detection and warning flags for large binary files (`is_binary: true`).
+  - In-place editing (Ctrl+E) and Save to disk (Ctrl+S) for working tree files.
 
 ---
 
@@ -194,7 +199,11 @@ Backend IPC: `get_tree_entries`, `get_file_content`
 
 ### 2.1. Khám phá cây thư mục không cần Checkout
 - Cho phép người dùng chuyển đổi giữa chế độ xem **Working Tree hiện tại** hoặc **Cây thư mục tại một Commit OID bất kỳ**.
+- Khi mở sang Explorer từ một commit lịch sử (ví dụ: từ Commit Details), Explorer giữ nguyên ngữ cảnh commit đó kèm banner tiện ích **"Quay lại Commit ({sha})"** giúp quay lại đồ thị chỉ bằng 1 click.
 - Nhấp mở các thư mục con theo cấu trúc phân cấp mượt mà, phân loại icon theo đuôi tệp tự động (Code, JSON, Text, Binary, Folder).
+- **Ghi nhớ trạng thái mở thư mục:** Khi tải lại hoặc cập nhật git status, các thư mục đang mở được bảo toàn nguyên vẹn thay vì tự động thu gọn lại từ đầu.
+- **Tự động mở cây đến tệp (Auto-Reveal kiểu VS Code):** Khi mở bất kỳ file nào (từ commit, kết quả tìm kiếm grep hoặc breadcrumb), cây thư mục tự động mở tuần tự từng thư mục cha từ gốc xuống, cuộn mượt tới dòng tệp và kích hoạt hiệu ứng ring highlight trực quan.
+- **Nút định vị tệp đang mở:** Bấm nút tâm ngắm (`LocateFixed`) trên thanh tiêu đề Explorer để tái định vị và focus lại vị trí file đang mở trên cây thư mục bất cứ lúc nào.
 - **Bộ lọc tìm kiếm tệp realtime (`treeSearchQuery`):** Gõ tên tệp để lọc tức thì các file trong cây thư mục.
 
 ### 2.2. Tích hợp Trình xem mã nguồn Monaco Editor
@@ -202,6 +211,7 @@ Backend IPC: `get_tree_entries`, `get_file_content`
   - Tô màu cú pháp (Syntax Highlighting) cho hơn 50 ngôn ngữ lập trình.
   - Hiển thị số dòng, bản đồ thu nhỏ (Minimap), tự động ngắt dòng (Word Wrap).
   - Tự động nhận diện và cảnh báo nếu phát hiện tệp nhị phân lớn (`is_binary: true`).
+  - Cho phép sửa nhanh (Ctrl+E) và lưu trực tiếp xuống đĩa (Ctrl+S) với working tree.
 
 ---
 

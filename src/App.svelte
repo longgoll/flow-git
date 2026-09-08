@@ -53,6 +53,7 @@
   let comparisonResult = $state<ComparisonResult | null>(null);
   let isComparisonLoading = $state<boolean>(false);
   let explorerInitialFilePath = $state<string | null>(null);
+  let explorerInitialCommitOid = $state<string | null>(null);
 
   // Remotes & Identity
   let remotes = $state<RemoteInfo[]>([]);
@@ -276,6 +277,7 @@
     safety.reset();
     comparisonResult = null;
     explorerInitialFilePath = null;
+    explorerInitialCommitOid = null;
     modalState.aiDiffContext = '';
 
     recentPushedBranch = tab.recentPushedBranch || null;
@@ -748,8 +750,10 @@
         {isComparisonLoading}
         {originRemoteUrl}
         {explorerInitialFilePath}
+        {explorerInitialCommitOid}
         onChangeViewMode={(mode) => (viewMode = mode)}
         onSetExplorerInitialFilePath={(path) => (explorerInitialFilePath = path)}
+        onSetExplorerInitialCommitOid={(oid) => (explorerInitialCommitOid = oid)}
         {loadRepository}
         {refreshWorkingTreeAndDiff}
         handleCompareCommits={actions.compareCommits}

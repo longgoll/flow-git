@@ -44,8 +44,10 @@
     isComparisonLoading: boolean;
     originRemoteUrl: string | null;
     explorerInitialFilePath: string | null;
+    explorerInitialCommitOid?: string | null;
     onChangeViewMode: (mode: ViewMode) => void;
     onSetExplorerInitialFilePath: (path: string | null) => void;
+    onSetExplorerInitialCommitOid?: (oid: string | null) => void;
     loadRepository: (path: string) => Promise<void>;
     refreshWorkingTreeAndDiff: () => Promise<void>;
     handleCompareCommits: (c1: CommitNode, c2: CommitNode) => void;
@@ -76,8 +78,10 @@
     isComparisonLoading,
     originRemoteUrl,
     explorerInitialFilePath,
+    explorerInitialCommitOid = null,
     onChangeViewMode,
     onSetExplorerInitialFilePath,
+    onSetExplorerInitialCommitOid,
     loadRepository,
     refreshWorkingTreeAndDiff,
     handleCompareCommits,
@@ -208,8 +212,9 @@
           onToggleMaximize={() => (repo.isDetailMaximized = !repo.isDetailMaximized)}
           onClose={() => (repo.isDetailOpen = false)}
           onSelectParent={(pid) => repo.handleSelectParent(pid)}
-          onOpenFileInExplorer={(filePath) => {
+          onOpenFileInExplorer={(filePath, commitId) => {
             onSetExplorerInitialFilePath(filePath);
+            onSetExplorerInitialCommitOid?.(commitId || null);
             onChangeViewMode('files');
           }}
         />
@@ -440,6 +445,7 @@
     tags={repo.tags}
     workingTreeStatus={wt.workingTreeStatus}
     initialFilePath={explorerInitialFilePath}
+    initialCommitOid={explorerInitialCommitOid}
     onSelectCommit={(commitId: string) => {
       repo.selectedCommitId = commitId;
       onChangeViewMode('graph');

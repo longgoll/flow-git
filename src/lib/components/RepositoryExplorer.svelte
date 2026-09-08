@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import type {
     BlameHunkItem,
     BranchInfo,
@@ -37,6 +37,8 @@
     Copy,
     Check,
     WrapText,
+    ArrowLeft,
+    LocateFixed,
     Map as MapIcon,
     RefreshCw,
     GitCommit,
@@ -69,6 +71,7 @@
     tags?: TagInfo[];
     workingTreeStatus?: WorkingTreeStatus | null;
     initialFilePath?: string | null;
+    initialCommitOid?: string | null;
     onNukeFile?: (filePath: string) => void;
     onSelectCommit?: (commitId: string) => void;
     onStageFile?: (filePath: string) => Promise<void>;
@@ -83,6 +86,7 @@
     tags = [],
     workingTreeStatus = null,
     initialFilePath = null,
+    initialCommitOid = null,
     onNukeFile,
     onSelectCommit,
     onStageFile,
@@ -215,15 +219,17 @@
   );
 
   async function loadDirectory(dirPath: string = '') {
-    if (!repoPath) return;
+    if (!repoPath) return [];
     try {
       const items = await getTreeEntries(repoPath, dirPath, selectedCommitOid || undefined);
       directoryEntries = {
         ...directoryEntries,
         [dirPath]: items,
       };
+      return items;
     } catch (err) {
       console.error('Failed to load directory tree:', err);
+      return [];
     }
   }
 
@@ -240,10 +246,60 @@
     expandedDirs = next;
   }
 
-  async function selectFile(filePath: string, jumpToLine?: number) {
+  async function revealFileInTree(filePath: string, smoothScroll: boolean = true) {
+    if (!filePath || !repoPath) return;
+    explorerTab = 'tree';
+    isTreeCollapsed = false;
+    if (treeSearchQuery) treeSearchQuery = '';
+
+    const cleanPath = filePath.replace(/\\/g, '/').replace(/^\/+/, '');
+    const parts = cleanPath.split('/');
+    if (parts.length === 0) return;
+
+    // 1. Đảm bảo thư mục gốc đã được nạp
+    if (!directoryEntries['']) {
+      await loadDirectory('');
+    }
+
+    // 2. Thu thập và mở tuần tự tất cả các thư mục cha từ gốc xuống
+    const next = new Set(expandedDirs);
+    next.add('');
+
+    let current = '';
+    for (let i = 0; i < parts.length - 1; i++) {
+      current = current ? `${current}/${parts[i]}` : parts[i];
+      next.add(current);
+      if (!directoryEntries[current]) {
+        await loadDirectory(current);
+      }
+    }
+
+    expandedDirs = next;
+    await tick();
+
+    // 3. Cuộn mượt tới phần tử file và kích hoạt hiệu ứng ring highlight kiểu VS Code
+    setTimeout(() => {
+      const selector = `[data-tree-path="${CSS.escape(cleanPath)}"]`;
+      const el = document.querySelector(selector) as HTMLElement | null;
+      if (el) {
+        el.scrollIntoView({ block: 'nearest', behavior: smoothScroll ? 'smooth' : 'auto' });
+        el.classList.add('ring-2', 'ring-cyan-500/80', 'ring-offset-1', 'dark:ring-cyan-400');
+        setTimeout(() => {
+          el.classList.remove('ring-2', 'ring-cyan-500/80', 'ring-offset-1', 'dark:ring-cyan-400');
+        }, 1200);
+      }
+    }, 80);
+  }
+
+  async function selectFile(filePath: string, jumpToLine?: number, autoReveal: boolean = true) {
     selectedFilePath = filePath;
     targetLine = jumpToLine ?? null;
     isContentLoading = true;
+
+    if (autoReveal) {
+      void revealFileInTree(filePath);
+    }
+
     try {
       const res = await getFileContent(repoPath, filePath, selectedCommitOid || undefined);
       fileContent = res.content;
@@ -362,13 +418,21 @@
     return `${Math.floor(diff / 31536000)}y trước`;
   }
 
-  async function refreshTree() {
+  async function refreshTree(preserveExpanded: boolean = true) {
     isTreeLoading = true;
-    directoryEntries = {};
-    expandedDirs = new Set(['']);
+    if (!preserveExpanded) {
+      expandedDirs = new Set(['']);
+      directoryEntries = {};
+    }
     await loadDirectory('');
+    if (preserveExpanded && expandedDirs.size > 0) {
+      const dirsToReload = Array.from(expandedDirs).filter((d) => d !== '');
+      for (const d of dirsToReload) {
+        await loadDirectory(d);
+      }
+    }
     if (selectedFilePath) {
-      await selectFile(selectedFilePath, targetLine || undefined);
+      await revealFileInTree(selectedFilePath, false);
     }
     isTreeLoading = false;
   }
@@ -491,10 +555,19 @@
     window.addEventListener('mouseup', onMouseUp);
   }
 
+  let hasMounted = false;
+  let previousCommitOid: string | null = null;
+
   onMount(() => {
-    refreshTree();
+    hasMounted = true;
+    if (initialCommitOid) {
+      selectedCommitOid = initialCommitOid;
+      selectedRefLabel = `Commit: ${initialCommitOid.slice(0, 7)}`;
+      previousCommitOid = initialCommitOid;
+    }
+    void refreshTree(false);
     if (initialFilePath) {
-      selectFile(initialFilePath);
+      void selectFile(initialFilePath);
     }
 
     function handleGlobalKeyDown(e: KeyboardEvent) {
@@ -515,15 +588,26 @@
   });
 
   $effect(() => {
-    if (initialFilePath && initialFilePath !== selectedFilePath) {
-      selectFile(initialFilePath);
+    if (hasMounted && initialFilePath && initialFilePath !== selectedFilePath) {
+      void selectFile(initialFilePath);
     }
   });
 
   $effect(() => {
-    void selectedCommitOid;
-    if (repoPath) {
-      refreshTree();
+    if (hasMounted && initialCommitOid !== undefined && initialCommitOid !== selectedCommitOid) {
+      selectedCommitOid = initialCommitOid ?? null;
+      selectedRefLabel = initialCommitOid
+        ? `Commit: ${initialCommitOid.slice(0, 7)}`
+        : 'Working Tree (Live Files)';
+      previousCommitOid = selectedCommitOid;
+      void refreshTree(false);
+    }
+  });
+
+  $effect(() => {
+    if (hasMounted && selectedCommitOid !== previousCommitOid) {
+      previousCommitOid = selectedCommitOid;
+      void refreshTree(false);
     }
   });
 </script>
@@ -544,17 +628,26 @@
           </div>
 
           <div class="flex items-center gap-1">
+            {#if selectedFilePath}
+              <button
+                onclick={() => revealFileInTree(selectedFilePath!)}
+                class="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-cyan-600 dark:text-zinc-400 dark:hover:text-cyan-400 transition-colors cursor-pointer"
+                title={localeState.t('explorer.repository.locateActiveFile')}
+              >
+                <LocateFixed class="w-3.5 h-3.5" />
+              </button>
+            {/if}
             <button
-              onclick={refreshTree}
+              onclick={() => refreshTree(true)}
               class="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors cursor-pointer"
-              title="Tải lại cây thư mục"
+              title={localeState.t('explorer.repository.reloadTreeTooltip')}
             >
               <RefreshCw class="w-3.5 h-3.5 {isTreeLoading ? 'animate-spin text-cyan-600 dark:text-cyan-400' : ''}" />
             </button>
             <button
               onclick={() => (isTreeCollapsed = true)}
               class="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors cursor-pointer"
-              title="Thu gọn cột thư mục (Ctrl + B)"
+              title={localeState.t('explorer.repository.collapseTreeTooltip')}
             >
               <PanelLeftClose class="w-3.5 h-3.5" />
             </button>
@@ -578,6 +671,31 @@
           </div>
           <ChevronDown class="w-3 h-3 text-zinc-400 group-hover:text-cyan-500 transition-colors shrink-0 ml-1" />
         </button>
+
+        {#if selectedCommitOid}
+          <div class="flex items-center justify-between gap-1 px-2 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 text-[11px]">
+            {#if onSelectCommit}
+              <button
+                onclick={() => onSelectCommit(selectedCommitOid!)}
+                class="flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-indigo-100 font-medium cursor-pointer truncate"
+                title={localeState.t('explorer.repository.backToCommitTooltip', { sha: selectedCommitOid.slice(0, 7) })}
+              >
+                <ArrowLeft class="w-3.5 h-3.5 shrink-0" />
+                <span class="truncate">{localeState.t('explorer.repository.backToCommit', { sha: selectedCommitOid.slice(0, 7) })}</span>
+              </button>
+            {/if}
+            <button
+              onclick={() => {
+                selectedCommitOid = null;
+                selectedRefLabel = localeState.t('explorer.repository.workingTreeLabel');
+              }}
+              class="text-[10px] text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 underline cursor-pointer shrink-0 ml-auto"
+              title={localeState.t('explorer.repository.switchToLive')}
+            >
+              Live
+            </button>
+          </div>
+        {/if}
 
         <!-- Subtabs: File Tree vs Grep Search -->
         <div class="flex items-center gap-1 bg-zinc-200/50 dark:bg-zinc-950 p-0.5 rounded-lg text-[11px] font-medium">
@@ -669,6 +787,7 @@
                   <div>
                     <button
                       onclick={() => toggleDirectory(item.path)}
+                      data-tree-path={item.path}
                       class="w-full flex items-center justify-between py-1 px-1.5 rounded hover:bg-zinc-200/60 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer text-left group"
                       style="padding-left: {depth * 14 + 6}px"
                     >
@@ -702,7 +821,8 @@
                   {@const IconComponent = getFileIcon(item.name)}
                   {@const gitStatus = gitStatusMap.get(item.path)}
                   <button
-                    onclick={() => selectFile(item.path)}
+                    onclick={() => selectFile(item.path, undefined, false)}
+                    data-tree-path={item.path}
                     oncontextmenu={(e) => {
                       e.preventDefault();
                       contextMenu = { x: e.clientX, y: e.clientY, path: item.path };

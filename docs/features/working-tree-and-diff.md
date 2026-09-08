@@ -59,6 +59,8 @@ FlowGit integrates the core **Monaco Editor** engine powering VS Code:
 - **Unified Mode:** Seamless inline single-column stream of changes.
 - **Comprehensive Syntax Highlighting:** Native language support for 50+ languages (TypeScript, Rust, Python, Go, C++, HTML, CSS, etc.).
 - **Ignore Whitespace & Line Endings:** Filters out Windows `CRLF` vs `LF` line-ending noise.
+- **In-Place Full File Toggle (`Diff` ↔ `Full File`):** Switch between diff comparison and the entire file source code at that specific commit instantly with 0 latency using `MonacoEditor`, without context switching.
+- **Context-Preserved Explorer Navigation:** When opening a file in the Repository Explorer from Commit Details, the target commit SHA is preserved with a 1-click "Back to Commit" shortcut.
 
 ---
 
@@ -183,6 +185,8 @@ Diff Viewer của FlowGit được trang bị sức mạnh của **Monaco Editor
 - **Chế độ Unified:** Hiển thị cuộn một cột liền mạch theo từng khối thay đổi.
 - **Hỗ trợ Syntax Highlighting toàn diện:** Tự động tô màu cú pháp chuẩn xác cho hơn 50 ngôn ngữ (TypeScript, Rust, Python, Go, C++, HTML, CSS, v.v.).
 - **Tùy chọn Bỏ qua Whitespace & Line Endings:** Giúp lập trình viên Windows không bị phân tâm bởi các thay đổi do khác biệt ký tự xuống dòng `CRLF` vs `LF`.
+- **Xem Toàn bộ Tệp ngay tại chỗ (`Diff` ↔ `Toàn bộ tệp`):** Cho phép chuyển đổi linh hoạt giữa xem diff thay đổi và đọc trọn vẹn toàn bộ mã nguồn của file tại chính commit đó bằng `MonacoEditor` mà không cần đổi view hay rời khỏi trang Commit Details.
+- **Bảo toàn ngữ cảnh khi Xem trong Explorer:** Khi bấm "Xem trong Explorer" từ chi tiết commit, Explorer sẽ mở file tại đúng phiên bản `Commit OID` lịch sử tương ứng, kèm lối tắt "Quay lại Commit" 1-click.
 
 ---
 

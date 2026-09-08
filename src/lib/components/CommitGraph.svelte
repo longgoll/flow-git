@@ -5,7 +5,7 @@
   import { simulateDragAction } from "../api";
   import { renderCommitGraph } from "../utils/graphRenderer";
   import DragAvatarTooltip from "./graph/DragAvatarTooltip.svelte";
-  import GraphHeaderControls from "./graph/GraphHeaderControls.svelte";
+  import GraphHeaderControls, { type DatePreset } from "./graph/GraphHeaderControls.svelte";
   import GraphFloatingDock from "./graph/GraphFloatingDock.svelte";
   import { deriveDisplayCommits, buildCommitIndexMap, deriveGraphEdges } from "./graph/graphCapsuleUtils";
   import CommitContextMenu from "./CommitContextMenu.svelte";
@@ -101,6 +101,11 @@
   let expandedCapsuleIds = $state<Set<string>>(new Set());
   let lockedLane = $state<number | null>(null);
 
+  // Advanced Graph Filters & Features
+  let authorFilter = $state<string | null>(null);
+  let datePreset = $state<'all' | 'today' | 'week' | 'month' | 'quarter'>('all');
+  let showMinimap = $state<boolean>(false);
+
   let rowHeight = $derived.by(() => {
     switch (density) {
       case 'ultra':
@@ -113,10 +118,83 @@
     }
   });
 
+  // Filter commits by date range preset if active
+  let dateFilteredCommits = $derived.by(() => {
+    if (datePreset === 'all') return commits;
+    const now = Math.floor(Date.now() / 1000);
+    let minTimestamp = 0;
+    if (datePreset === 'today') minTimestamp = now - 86400;
+    else if (datePreset === 'week') minTimestamp = now - 7 * 86400;
+    else if (datePreset === 'month') minTimestamp = now - 30 * 86400;
+    else if (datePreset === 'quarter') minTimestamp = now - 90 * 86400;
+
+    return commits.filter((c) => (c.timestamp || 0) >= minTimestamp);
+  });
+
   // Derive displayCommits by applying Macro View filtering and Semantic Capsule collapsing
   let displayCommits = $derived(
-    deriveDisplayCommits(commits, viewMode, autoCapsule, expandedCapsuleIds)
+    deriveDisplayCommits(dateFilteredCommits, viewMode, autoCapsule, expandedCapsuleIds)
   );
+
+  // Compute Ancestor Path (Lineage) between 2 selected commits using BFS parent traversal
+  function computeAncestorPath(idA: string, idB: string, allCommits: CommitNode[]): Set<string> | null {
+    if (!idA || !idB || idA === idB) return null;
+
+    const map = new Map<string, CommitNode>();
+    for (const c of allCommits) {
+      map.set(c.id, c);
+    }
+
+    function findPath(startId: string, targetId: string): Set<string> | null {
+      const queue: string[] = [startId];
+      const visited = new Set<string>([startId]);
+      const cameFrom = new Map<string, string>();
+
+      let found = false;
+      while (queue.length > 0) {
+        const curr = queue.shift()!;
+        if (curr === targetId) {
+          found = true;
+          break;
+        }
+        const node = map.get(curr);
+        if (node && Array.isArray(node.parents)) {
+          for (const p of node.parents) {
+            if (!visited.has(p)) {
+              visited.add(p);
+              cameFrom.set(p, curr);
+              queue.push(p);
+            }
+          }
+        }
+      }
+
+      if (!found) return null;
+
+      const path = new Set<string>();
+      let curr: string | undefined = targetId;
+      while (curr) {
+        path.add(curr);
+        curr = cameFrom.get(curr);
+      }
+      return path;
+    }
+
+    const pathAtoB = findPath(idA, idB);
+    if (pathAtoB) return pathAtoB;
+
+    const pathBtoA = findPath(idB, idA);
+    if (pathBtoA) return pathBtoA;
+
+    return null;
+  }
+
+  let ancestorPathIds = $derived.by(() => {
+    if (activeSelectedIds.length === 2) {
+      return computeAncestorPath(activeSelectedIds[0], activeSelectedIds[1], commits);
+    }
+    return null;
+  });
 
   let totalHeight = $derived(displayCommits.length * rowHeight);
   let maxScrollTop = $derived(Math.max(0, totalHeight - containerHeight));
@@ -192,6 +270,9 @@
       viewMode,
       edges: graphEdges,
       rowHeight,
+      authorFilter,
+      ancestorPathIds,
+      showMinimap,
     });
   }
 
@@ -236,7 +317,7 @@
   });
 
   $effect(() => {
-    // Re-render when commits, selected commits, or scroll changes
+    // Re-render when commits, selected commits, filters, or scroll changes
     commits;
     activeSelectedIds;
     hoveredCommitId;
@@ -244,6 +325,9 @@
     hoveredTargetCommit;
     simulationResult;
     scrollTop;
+    authorFilter;
+    datePreset;
+    showMinimap;
     scheduleRender();
   });
 
@@ -389,11 +473,54 @@
   function handleClick(e: MouseEvent) {
     if (isDraggingNode || e.target !== canvasEl) return;
     const rect = containerEl.getBoundingClientRect();
-    const y = e.clientY - rect.top + scrollTop;
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    const y = clickY + scrollTop;
     const clickedIndex = Math.floor(y / rowHeight);
+
+    // 1. Minimap Click / Jump Navigation
+    if (showMinimap) {
+      const mapWidth = 46;
+      const mapRight = 14;
+      const mapTop = 10;
+      const mapHeight = containerHeight - 20;
+      const mapX = containerWidth - mapWidth - mapRight;
+
+      if (
+        clickX >= mapX &&
+        clickX <= mapX + mapWidth &&
+        clickY >= mapTop &&
+        clickY <= mapTop + mapHeight
+      ) {
+        const relY = (clickY - mapTop) / mapHeight;
+        scrollTop = Math.max(0, Math.min(maxScrollTop, relY * totalHeight - containerHeight / 2));
+        scheduleRender();
+        return;
+      }
+    }
 
     if (clickedIndex >= 0 && clickedIndex < displayCommits.length) {
       const commit = displayCommits[clickedIndex];
+
+      // 2. Author Click: Toggle filtering/highlighting by author
+      if (!commit.is_capsule && commit.author_name) {
+        const authorZoneStart = containerWidth - 280;
+        const authorZoneEnd = containerWidth - 60;
+        if (clickX >= authorZoneStart && clickX <= authorZoneEnd) {
+          if (authorFilter === commit.author_name) {
+            authorFilter = null;
+            toast.info(localeState.t('graph.headerControls.clearAuthorFilter'), '');
+          } else {
+            authorFilter = commit.author_name;
+            toast.info(
+              localeState.t('graph.headerControls.authorFilter', { name: commit.author_name }),
+              localeState.t('graph.headerControls.filterByAuthorTooltip')
+            );
+          }
+          scheduleRender();
+          return;
+        }
+      }
 
       // If clicked on capsule node: toggle expansion
       if (commit.is_capsule) {
@@ -657,10 +784,32 @@
     lockedLane={lockedLane}
     {hiddenBranchesCount}
     {onShowAllBranches}
+    {authorFilter}
+    {datePreset}
+    ancestorPathCount={ancestorPathIds ? ancestorPathIds.size : 0}
+    {showMinimap}
+    onClearAuthorFilter={() => {
+      authorFilter = null;
+      scheduleRender();
+    }}
+    onSelectDatePreset={(preset: DatePreset) => {
+      datePreset = preset;
+      scheduleRender();
+    }}
+    onClearAncestorPath={() => {
+      if (onSelectMultipleCommits) {
+        onSelectMultipleCommits([]);
+      }
+      scheduleRender();
+    }}
+    onToggleMinimap={() => {
+      showMinimap = !showMinimap;
+      scheduleRender();
+    }}
     bind:viewMode
     bind:autoCapsule
     {density}
-    onChangeDensity={(newDensity) => {
+    onChangeDensity={(newDensity: GraphDensity) => {
       density = newDensity;
       scheduleRender();
     }}
@@ -668,7 +817,7 @@
       lockedLane = null;
       scheduleRender();
     }}
-    onToggleViewMode={(mode) => {
+    onToggleViewMode={(mode: GraphViewMode) => {
       viewMode = mode;
       scheduleRender();
     }}

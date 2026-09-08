@@ -93,9 +93,11 @@ Enables Google / Meta style Stacked Diffs workflows:
 - **Branch Visibility Control (👁️):**
   - Hide / Solo specific branches to unclutter dense repositories.
   - Powered by a safe DAG BFS reachability filter that only prunes commits belonging exclusively to hidden branches.
-- **Advanced Commit Filters:**
-  - Dynamic Author filter with commit counts.
-  - Date Range filter (Last 24h, 7 days, 30 days, or Custom Range picker).
+- **Advanced Commit Filters & Interactive Canvas Tools:**
+  - **Direct Author Click Filter:** Click on any author avatar or name directly on the canvas to highlight their commits with a distinct cyan halo ring while dimming others (`alpha: 0.25`). An active filter chip `[Author: Name (X)]` appears in the graph sub-header for quick dismissal.
+  - **Date Range Presets:** Quick preset dropdown (All Time, Today / 24h, Past 7 days, Past 30 days, Past 90 days) dynamically recalculating commits in realtime via Svelte 5 `$derived`.
+  - **Glowing Ancestor Path Highlight:** When 2 commits are selected (Ctrl+Click or in Compare mode), a BFS lineage traversal over `parents` detects the exact ancestry chain and renders a vibrant cyan glowing Bezier path (`#38bdf8`, `shadowBlur: 8`) with halo rings around path nodes.
+  - **Overview Minimap:** Toggleable glassmorphism minimap on the top-right canvas showing commit lane micro-dots, highlighted ancestor path, and viewport position indicator with 1-click scroll navigation.
 
 ---
 
@@ -197,9 +199,11 @@ Theo tiêu chuẩn công nghệ hiện đại tại các công ty lớn (Google 
 - **Kiểm soát hiển thị nhánh (👁️ Branch Visibility):**
   - Bật/tắt con mắt hoặc chọn **"Solo this branch"** để dọn sạch các nhánh phụ gây rối mắt.
   - Vận hành trên thuật toán duyệt đồ thị DAG BFS Reachability: chỉ ẩn các commit thuộc riêng nhánh bị ẩn, tuyệt đối an toàn với dữ liệu kho mã nguồn.
-- **Bộ lọc commit nâng cao (Advanced Filters):**
-  - Lọc theo Tác giả (Author Filter) hiển thị số lượng commit tương ứng.
-  - Lọc theo Khoảng thời gian (24h qua, 7 ngày qua, 30 ngày qua hoặc tùy chọn Ngày bắt đầu - Ngày kết thúc).
+- **Bộ lọc commit nâng cao & Tương tác Canvas (Advanced Filters & Interactive Features):**
+  - **Lọc theo Tác giả trực tiếp (Author Click Filter):** Nhấp trực tiếp vào avatar hoặc tên tác giả trên bất kỳ dòng commit nào trên Canvas để kích hoạt chế độ làm nổi bật (highlight commits của tác giả kèm viền sáng, làm mờ các commit khác). Xuất hiện chip điều khiển `[Tác giả: Tên [X]]` ở thanh tiêu đề đồ thị để dễ dàng hủy lọc.
+  - **Lọc theo Khoảng thời gian (Date Range Presets):** Menu xổ chọn các mốc thời gian chuẩn hóa: Tất cả thời gian (All Time), Hôm nay (24h qua), 7 ngày qua, 30 ngày qua hoặc 3 tháng qua. Toàn bộ cây commit tự động tái tính toán hiển thị mượt mà.
+  - **Dò đường Thủy tổ phát sáng (Ancestor Path Highlight):** Khi chọn 2 commit (Ctrl + Click hoặc chế độ Compare), thuật toán BFS duyệt ngược cây phả hệ (`parents`) tự động tìm đường nối giữa 2 mốc và render hiệu ứng đường cong Bezier phát sáng neon màu ngọc lam (`#38bdf8`) nổi bật trên nền tối.
+  - **Bản đồ thu nhỏ toàn cảnh (Graph Minimap):** Bật/tắt thanh Minimap thu nhỏ ở góc phải Canvas. Hiển thị vi điểm phân bố các commit theo lane nhánh, tô sáng Ancestor Path và khung chữ nhật biểu diễn viewport hiện tại, cho phép nhấp chuột để cuộn tức thời đến vị trí bất kỳ trong các repository lớn.
 
 ---
 

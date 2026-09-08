@@ -116,6 +116,9 @@ export interface RenderGraphOptions {
   viewMode?: 'micro' | 'macro';
   edges?: GraphEdge[];
   rowHeight?: number;
+  authorFilter?: string | null;
+  ancestorPathIds?: Set<string> | null;
+  showMinimap?: boolean;
 }
 
 export function renderCommitGraph(
@@ -139,6 +142,9 @@ export function renderCommitGraph(
     viewMode = 'micro',
     edges,
     rowHeight: customRowHeight,
+    authorFilter = null,
+    ancestorPathIds = null,
+    showMinimap = false,
   } = options;
 
   const rowHeight = customRowHeight || ROW_HEIGHT;
@@ -248,6 +254,31 @@ export function renderCommitGraph(
         ctx.bezierCurveTo(childX, midY, parentX, midY, parentX, parentY);
       }
       ctx.stroke();
+
+      // Glowing Ancestor Path overlay
+      if (ancestorPathIds && ancestorPathIds.size > 0) {
+        const childCommit = commits[edge.childIndex];
+        const parentCommit = commits[edge.parentIndex];
+        if (childCommit && parentCommit && ancestorPathIds.has(childCommit.id) && ancestorPathIds.has(parentCommit.id)) {
+          ctx.save();
+          ctx.shadowColor = '#38bdf8';
+          ctx.shadowBlur = 8;
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 3.5;
+          ctx.globalAlpha = 1.0;
+          ctx.beginPath();
+          if (childLane === parentLane) {
+            ctx.moveTo(childX, childY);
+            ctx.lineTo(parentX, parentY);
+          } else {
+            const midY = (childY + parentY) / 2;
+            ctx.moveTo(childX, childY);
+            ctx.bezierCurveTo(childX, midY, parentX, midY, parentX, parentY);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
     }
   } else {
     // Fallback: Local window scan
@@ -298,6 +329,27 @@ export function renderCommitGraph(
             ctx.bezierCurveTo(childX, midY, parentX, midY, parentX, parentY);
           }
           ctx.stroke();
+
+          // Glowing Ancestor Path overlay (fallback loop)
+          if (ancestorPathIds && ancestorPathIds.size > 0 && ancestorPathIds.has(child.id) && ancestorPathIds.has(parent.id)) {
+            ctx.save();
+            ctx.shadowColor = '#38bdf8';
+            ctx.shadowBlur = 8;
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 3.5;
+            ctx.globalAlpha = 1.0;
+            ctx.beginPath();
+            if (childLane === parentLane) {
+              ctx.moveTo(childX, childY);
+              ctx.lineTo(parentX, parentY);
+            } else {
+              const midY = (childY + parentY) / 2;
+              ctx.moveTo(childX, childY);
+              ctx.bezierCurveTo(childX, midY, parentX, midY, parentX, parentY);
+            }
+            ctx.stroke();
+            ctx.restore();
+          }
         }
       }
     }
@@ -440,10 +492,16 @@ export function renderCommitGraph(
     const isGhostTarget = isDraggingNode && hoveredTargetCommit?.id === c.id;
     const isConflictTarget = isGhostTarget && !!simulationResult?.has_conflicts;
 
-    // Focus Dimming for node circle if another branch is focused (Locked or Hovered)
+    // Focus & Author Dimming for node circle
     const isNodeFocused = activeFocusLane === null || cLane === activeFocusLane || c.id === hoveredCommitId;
+    const isAuthorMatch = !authorFilter || c.author_name === authorFilter;
     const isGhostNode = !!c.is_ghost;
-    ctx.globalAlpha = isGhostNode ? 0.38 : (isNodeFocused ? 1.0 : 0.25);
+    
+    let baseAlpha = isGhostNode ? 0.38 : (isNodeFocused ? 1.0 : 0.25);
+    if (authorFilter && !isAuthorMatch) {
+      baseAlpha = Math.min(baseAlpha, 0.22);
+    }
+    ctx.globalAlpha = baseAlpha;
 
     if (c.is_capsule) {
       // Semantic Capsule Node
@@ -508,6 +566,16 @@ export function renderCommitGraph(
         ctx.fill();
       }
 
+      if (ancestorPathIds && ancestorPathIds.has(c.id)) {
+        ctx.beginPath();
+        ctx.arc(nodeX, centerY, NODE_RADIUS + 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = isDark ? 'rgba(56, 189, 248, 0.35)' : 'rgba(2, 132, 199, 0.25)';
+        ctx.fill();
+        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = '#38bdf8';
+        ctx.stroke();
+      }
+
       if (isGhostTarget) {
         ctx.beginPath();
         ctx.arc(nodeX, centerY, NODE_RADIUS + 5, 0, Math.PI * 2);
@@ -540,8 +608,8 @@ export function renderCommitGraph(
       }
     }
 
-    // Reset alpha for crisp text readability (unless it's an orphaned ghost node)
-    ctx.globalAlpha = isGhostNode ? 0.45 : 1.0;
+    // Reset alpha for crisp text readability (dim if not matching author filter)
+    ctx.globalAlpha = isGhostNode ? 0.45 : (authorFilter && !isAuthorMatch ? 0.28 : 1.0);
 
     // Draw Ref Badges
     let currentBadgeX = textLeftX;
@@ -661,6 +729,14 @@ export function renderCommitGraph(
       ctx.fillStyle = getAuthorColor(authorName);
       ctx.fill();
 
+      if (authorFilter && c.author_name === authorFilter) {
+        ctx.beginPath();
+        ctx.arc(avatarX + avatarRadius, avatarY, avatarRadius + 3, 0, Math.PI * 2);
+        ctx.strokeStyle = isDark ? '#22d3ee' : '#0891b2';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
       // Draw Initials
       ctx.font = '700 8px "Plus Jakarta Sans", sans-serif';
       ctx.fillStyle = '#ffffff';
@@ -677,6 +753,88 @@ export function renderCommitGraph(
     ctx.fillStyle = isDark ? '#71717a' : '#a1a1aa';
     ctx.fillText(dateStr, width - dateWidth - 16, centerY + 4);
   }
+
+  ctx.restore();
+
+  // 5. Overview Minimap (if enabled)
+  if (showMinimap) {
+    renderGraphMinimap(ctx, {
+      commits,
+      totalCommits,
+      scrollTop,
+      containerWidth: width,
+      containerHeight: height,
+      rowHeight,
+      isDark,
+      ancestorPathIds,
+    });
+  }
+}
+
+export function renderGraphMinimap(
+  ctx: CanvasRenderingContext2D,
+  options: {
+    commits: CommitNode[];
+    totalCommits: number;
+    scrollTop: number;
+    containerWidth: number;
+    containerHeight: number;
+    rowHeight: number;
+    isDark?: boolean;
+    ancestorPathIds?: Set<string> | null;
+  }
+) {
+  const { commits, totalCommits, scrollTop, containerWidth: width, containerHeight: height, rowHeight, isDark = true, ancestorPathIds } = options;
+  if (totalCommits <= 0) return;
+
+  const mapWidth = 46;
+  const mapRight = 14;
+  const mapTop = 10;
+  const mapBottom = 10;
+  const mapHeight = height - mapTop - mapBottom;
+  if (mapHeight <= 40) return;
+
+  const mapX = width - mapWidth - mapRight;
+  const mapY = mapTop;
+
+  // Background Glass panel
+  ctx.save();
+  ctx.fillStyle = isDark ? 'rgba(18, 18, 23, 0.82)' : 'rgba(244, 244, 248, 0.88)';
+  drawRoundedRect(ctx, mapX, mapY, mapWidth, mapHeight, 8);
+  ctx.fill();
+  ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Scale calculations
+  const totalContentHeight = totalCommits * rowHeight;
+  const scaleY = mapHeight / Math.max(height, totalContentHeight);
+  const laneScaleX = (mapWidth - 14) / Math.max(1, 8);
+
+  // Micro-dots for commits
+  const step = Math.max(1, Math.floor(totalCommits / (mapHeight * 1.5)));
+  for (let i = 0; i < totalCommits; i += step) {
+    const c = commits[i];
+    if (!c) continue;
+    const dotY = mapY + (i * rowHeight) * scaleY;
+    const dotX = mapX + 8 + (c.lane || 0) * laneScaleX;
+    const isPath = ancestorPathIds?.has(c.id);
+
+    ctx.fillStyle = isPath ? '#38bdf8' : getLaneColor(c.lane || 0, isDark);
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, isPath ? 2.2 : 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Viewport Indicator Box
+  const vpY = Math.min(mapY + mapHeight - 10, mapY + scrollTop * scaleY);
+  const vpH = Math.max(10, Math.min(mapHeight, height * scaleY));
+  ctx.fillStyle = isDark ? 'rgba(6, 182, 212, 0.16)' : 'rgba(8, 145, 178, 0.16)';
+  drawRoundedRect(ctx, mapX + 2, vpY, mapWidth - 4, vpH, 4);
+  ctx.fill();
+  ctx.strokeStyle = isDark ? 'rgba(6, 182, 212, 0.7)' : 'rgba(8, 145, 178, 0.7)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 
   ctx.restore();
 }

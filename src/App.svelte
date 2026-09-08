@@ -632,7 +632,10 @@
         onCreateBranchFrom={(b) => actions.openCreateBranch(b.shorthand)}
         onRebaseBranch={actions.rebaseBranch}
         onCleanMergedBranches={actions.openCleanMerged}
-        onDeleteTag={actions.deleteTag}
+        onSelectTag={actions.selectTag}
+        onDeleteTag={actions.openDeleteTag}
+        onCreateBranchFromTag={(tag) => actions.openCreateBranch(tag.name)}
+        onOpenReleases={actions.openGitHubReleases}
         onOpenWorktrees={actions.openWorktreesModal}
         onCreatePullRequest={(b) => actions.openCreatePR(b.shorthand)}
         {remotes}
@@ -804,6 +807,7 @@
     handleConfirmDeleteBranch={actions.confirmDeleteBranch}
     handleConfirmCreateBranch={actions.confirmCreateBranch}
     handleConfirmCreateTag={actions.confirmCreateTag}
+    handleConfirmDeleteTag={actions.confirmDeleteTag}
     handleConfirmSquash={actions.confirmSquash}
     handleConfirmCleanMerged={actions.confirmCleanMerged}
     handleStartQuickHotfix={actions.startQuickHotfix}

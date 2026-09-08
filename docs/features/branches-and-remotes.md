@@ -108,12 +108,28 @@ Takes 5–7 steps, interrupts IDE state, and triggers unnecessary project recomp
 
 ## 🏷️ 5. Release Tags Management
 
-Component: `src/lib/components/CreateTagModal.svelte`
+Components:
+- `src/lib/components/CreateTagModal.svelte`: Creation of lightweight and annotated tags.
+- `src/lib/components/DeleteTagModal.svelte`: Safe deletion with confirmation modal dialog.
+- `src/lib/components/GitHubReleasesModal.svelte`: GitHub Releases & Markdown Changelog viewer.
+- `src/lib/components/sidebar/SidebarSections.svelte`: Interactive tag tree in sidebar with quick actions.
+- `src/lib/components/CommitDetail.svelte`: Tag badge, annotated release note, and GitHub release link inspection.
 
-- Browse release tags (`v1.0.0`, `v1.1.0-beta`) across Sidebar and DAG canvas.
-- **Fast Tagging:** Right-click any commit ➔ **"Create Tag Here"**.
-- Supports both **Lightweight** and **Annotated Tags** with messages.
-- Safe deletion via context menu.
+### Features & Capabilities:
+- **Interactive Inspection (Click to Jump):** Clicking any tag in the sidebar immediately navigates to its target commit in the Commit Graph, auto-scrolling the viewport and loading its `CommitDetail` with diffs and files.
+- **GitHub Releases & Changelog Viewer (`GitHubReleasesModal.svelte`):**
+  - Displays a 2-column layout matching the GitHub web experience (`Release list` on the left, full Markdown Changelog on the right).
+  - Shows release title, draft/pre-release/latest badges, author avatar, date, and downloadable binary assets.
+  - Interactive clickable tags & commit SHAs that jump straight to the commit on the DAG graph.
+  - Quick action buttons: Copy Release Notes, Open in GitHub, Realtime search filter.
+  - One-click trigger from Sidebar Tag header, per-tag Globe button, or Commit Detail panel.
+- **Annotated Tag Release Notes:** If a tag has an annotated release message, `CommitDetail` highlights it in an amber release notes card alongside the commit message.
+- **No-Fear Safe Deletion:** Clicking the delete icon prompts `DeleteTagModal` with clear tag name, commit SHA, and caution warnings before removing the ref.
+- **Quick Tag Actions:**
+  - One-click copy tag name with visual feedback.
+  - Create a new branch directly starting from this tag reference.
+  - View GitHub Release Notes & Changelog directly.
+- **Fast Tag Creation:** Right-click any commit ➔ **"Create Tag Here"** (supports Lightweight & Annotated tags).
 
 ---
 
@@ -240,16 +256,30 @@ Thao tác này mất từ 5 đến 7 bước, phải chuyển đổi checkout qu
 
 ---
 
-## 🏷️ 5. QUẢN LÝ RELEASE TAGS
+## 🏷️ 5. QUẢN LÝ RELEASE TAGS (PHIÊN BẢN PHÁT HÀNH)
 
-Component: `src/lib/components/CreateTagModal.svelte`
+Components:
+- `src/lib/components/CreateTagModal.svelte`: Hộp thoại tạo thẻ Tag (Lightweight & Annotated).
+- `src/lib/components/DeleteTagModal.svelte`: Hộp thoại xác nhận xóa Tag an toàn (No-Fear Git).
+- `src/lib/components/GitHubReleasesModal.svelte`: Hộp thoại xem GitHub Releases & Changelog chuẩn GitHub web.
+- `src/lib/components/sidebar/SidebarSections.svelte`: Cây danh sách Tag tương tác trực tiếp ở thanh Sidebar.
+- `src/lib/components/CommitDetail.svelte`: Hiển thị huy hiệu thẻ Tag, ghi chú phát hành (Release Notes) và nút mở GitHub Releases.
 
-- Xem toàn bộ danh sách phiên bản phát hành (`v1.0.0`, `v1.1.0-beta`, v.v.) trên Sidebar và đồ thị.
-- **Tạo Tag nhanh:** Nhấp chuột phải vào bất kỳ node commit nào trên đồ thị -> Chọn **"Create Tag Here"**.
-- Hỗ trợ cả 2 chuẩn:
-  - **Lightweight Tag:** Gắn nhãn con trỏ đơn giản.
-  - **Annotated Tag:** Gắn kèm thông điệp phát hành và định danh người tạo.
-- Xóa Tag an toàn bằng menu chuột phải.
+### Tính năng & Trải nghiệm vượt trội:
+- **Tương tác trực tiếp (Click để nhảy tới commit):** Nhấp chuột vào bất kỳ thẻ Tag nào ở Sidebar, ứng dụng sẽ tự động định vị và cuộn tới commit mục tiêu trên Commit Graph, đồng thời mở bảng `CommitDetail` để xem toàn bộ diff, files và thông tin commit.
+- **Trình duyệt GitHub Releases & Changelog (`GitHubReleasesModal.svelte`):**
+  - Giao diện 2 cột tiêu chuẩn như trên GitHub web: Cột trái liệt kê danh sách Releases, Cột phải hiển thị chi tiết Changelog định dạng Markdown.
+  - Hiển thị tiêu đề bản phát hành, huy hiệu `Draft`, `Pre-release`, `Latest`, ảnh avatar tác giả, ngày phát hành, và danh sách tệp đính kèm tải về (Assets).
+  - Tương tác thông minh: Bấm vào tên Tag hoặc mã Commit SHA trong Release để tự động nhảy tới commit tương ứng trên đồ thị.
+  - Thao tác nhanh: Sao chép nội dung Release Notes vào Clipboard, Mở trực tiếp trên trình duyệt GitHub, Tìm kiếm lọc danh sách Release theo thời gian thực.
+  - Kích hoạt dễ dàng: Bấm biểu tượng quả địa cầu trên thanh tiêu đề Thẻ (Tags) ở Sidebar, nút quả địa cầu ở từng hàng Tag, hoặc nút "Release Notes" trong bảng Commit Detail.
+- **Đọc ghi chú phiên bản (Annotated Release Note):** Đối với thẻ có chú thích (`Annotated Tag`), bảng chi tiết commit sẽ hiển thị nổi bật khối Release Note màu hổ phách chứa thông điệp phát hành.
+- **Xác nhận xóa an toàn (Safe Deletion):** Nhấp vào icon thùng rác sẽ kích hoạt `DeleteTagModal` với cảnh báo chi tiết (tên tag, mã SHA, nội dung tag) trước khi thực hiện xóa, tránh hoàn toàn rủi ro click nhầm.
+- **Thao tác nhanh 1-Click:**
+  - Sao chép tên thẻ Tag nhanh vào Clipboard với phản hồi trực quan.
+  - Tạo nhanh nhánh mới (Create Branch) trực tiếp từ mốc phiên bản Tag đã chọn.
+  - Mở xem trực tiếp GitHub Release & Changelog của thẻ.
+- **Tạo Tag nhanh:** Chuột phải vào bất kỳ commit nào trên đồ thị ➔ **"Create Tag / Release here..."**.
 
 ---
 

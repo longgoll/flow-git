@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { CommitDetail, FileDiffDetail } from '../types';
+  import type { CommitDetail, FileDiffDetail, TagInfo } from '../types';
   import { getCommitFileDiff } from '../api/diff';
   import DiffViewer from './DiffViewer.svelte';
   import {
@@ -18,6 +18,8 @@
     Code2,
     ExternalLink,
     ShieldCheck,
+    Tag,
+    Globe,
   } from 'lucide-svelte';
   import { localeState } from '../state/localeState.svelte';
 
@@ -26,6 +28,8 @@
     isLoading: boolean;
     isMaximized?: boolean;
     repoPath?: string;
+    tags?: TagInfo[];
+    onOpenReleases?: (tagName?: string) => void;
     onToggleMaximize?: () => void;
     onClose?: () => void;
     onSelectParent?: (parentId: string) => void;
@@ -38,6 +42,8 @@
     isLoading = false,
     isMaximized = false,
     repoPath = '',
+    tags = [],
+    onOpenReleases,
     onToggleMaximize,
     onClose,
     onSelectParent,
@@ -112,6 +118,11 @@
   let totalDeletions = $derived(
     commitDetail?.files_changed?.reduce((acc, f) => acc + (f.deletions || 0), 0) || 0
   );
+
+  let matchingTags = $derived.by(() => {
+    if (!commitDetail || !tags) return [];
+    return tags.filter((t) => t.target_commit_id === commitDetail.id);
+  });
 
   let filteredFiles = $derived.by(() => {
     if (!commitDetail?.files_changed) return [];
@@ -211,6 +222,32 @@
             <Copy class="w-2.5 h-2.5 text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300" />
           {/if}
         </button>
+
+        <!-- Tags on this commit -->
+        {#if matchingTags.length > 0}
+          <div class="flex items-center gap-1 shrink-0">
+            {#each matchingTags as t (t.name)}
+              <div
+                class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 font-mono text-[10px] font-bold shadow-xs"
+                title={t.message ? `${t.name}: ${t.message}` : t.name}
+              >
+                <Tag class="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                <span>{t.name}</span>
+              </div>
+              {#if onOpenReleases}
+                <button
+                  type="button"
+                  onclick={() => onOpenReleases?.(t.name)}
+                  class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 font-mono text-[10px] font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors cursor-pointer shadow-xs"
+                  title="Xem GitHub Release Notes & Changelog ({t.name})"
+                >
+                  <Globe class="w-3 h-3 text-indigo-500" />
+                  <span>Release Notes</span>
+                </button>
+              {/if}
+            {/each}
+          </div>
+        {/if}
 
         {#if commitDetail.parents.length > 0}
           <div class="flex items-center gap-1 text-[11px] text-zinc-500 font-mono shrink-0">
@@ -361,6 +398,21 @@
         {#if description}
           <div class="mt-2 text-[11px] text-zinc-600 dark:text-zinc-400 font-mono whitespace-pre-wrap leading-relaxed select-text border-t border-zinc-200/80 dark:border-zinc-800/80 pt-2 flex-1">
             {description}
+          </div>
+        {/if}
+
+        <!-- Annotated Tag Release Notes / Message -->
+        {#if matchingTags.some((t) => Boolean(t.message))}
+          <div class="mt-2.5 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs">
+            {#each matchingTags.filter((t) => Boolean(t.message)) as t (t.name)}
+              <div class="flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 font-mono mb-1">
+                <Tag class="w-3 h-3" />
+                <span>{t.name} (Release Note)</span>
+              </div>
+              <p class="text-[11px] text-zinc-700 dark:text-zinc-300 italic whitespace-pre-wrap select-text leading-relaxed">
+                "{t.message}"
+              </p>
+            {/each}
           </div>
         {/if}
       </div>

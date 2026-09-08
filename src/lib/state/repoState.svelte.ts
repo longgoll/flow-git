@@ -483,6 +483,15 @@ export class RepoState {
     }
   }
 
+  async handleSelectTag(tag: TagInfo) {
+    const targetCommit = this.rawCommits.find((c) => c.id === tag.target_commit_id);
+    if (targetCommit) {
+      await this.handleSelectCommit(targetCommit);
+    } else {
+      await this.selectCommitById(tag.target_commit_id);
+    }
+  }
+
   handleSelectParent(parentId: string) {
     const parentCommit = this.rawCommits.find((c) => c.id === parentId);
     if (parentCommit) {

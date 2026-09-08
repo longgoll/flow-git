@@ -5,6 +5,7 @@ import type {
   GitHubPRCommit,
   GitHubCommitChecks,
   GitHubBranchComparison,
+  GitHubRelease,
 } from '../types';
 
 const GITHUB_API_BASE = 'https://api.github.com';
@@ -423,6 +424,37 @@ export async function compareGitHubBranches(
   if (!res.ok) {
     const errorText = await res.text();
     throw new Error(`Failed to compare branches (${res.status}): ${errorText}`);
+  }
+  return await res.json();
+}
+
+export async function listGitHubReleases(
+  owner: string,
+  repo: string,
+  token?: string
+): Promise<GitHubRelease[]> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/releases?per_page=50`;
+  const res = await fetchGitHub(url, { headers: getHeaders(token) });
+  if (!res.ok) {
+    if (res.status === 404) return [];
+    const errorText = await res.text();
+    throw new Error(`Failed to list releases (${res.status}): ${errorText}`);
+  }
+  return await res.json();
+}
+
+export async function getGitHubReleaseByTag(
+  owner: string,
+  repo: string,
+  tag: string,
+  token?: string
+): Promise<GitHubRelease | null> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/releases/tags/${encodeURIComponent(tag)}`;
+  const res = await fetchGitHub(url, { headers: getHeaders(token) });
+  if (!res.ok) {
+    if (res.status === 404) return null;
+    const errorText = await res.text();
+    throw new Error(`Failed to get release for tag '${tag}' (${res.status}): ${errorText}`);
   }
   return await res.json();
 }

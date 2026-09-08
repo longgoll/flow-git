@@ -11,6 +11,7 @@ import type {
   CommitNode,
   ComparisonResult,
   ConflictSimulationResult,
+  TagInfo,
   ViewMode,
   WorktreeInfo,
 } from '../types';
@@ -652,9 +653,21 @@ export function createGitActions(ctx: GitActionContext) {
     }
   }
 
-  async function deleteTagAction(tagName: string) {
+  function openDeleteTagAction(tagOrName: TagInfo | string) {
+    if (typeof tagOrName === 'string') {
+      const found = repo.tags.find((t) => t.name === tagOrName);
+      modalState.openDeleteTag(found || { name: tagOrName, target_commit_id: '' });
+    } else {
+      modalState.openDeleteTag(tagOrName);
+    }
+  }
+
+  async function confirmDeleteTagAction(tagOrName: TagInfo | string) {
+    const tagName = typeof tagOrName === 'string' ? tagOrName : tagOrName.name;
+    modalState.isDeleteTagLoading = true;
     try {
       await deleteTag(repo.currentRepoPath, tagName);
+      modalState.closeDeleteTag();
       toast.info(
         localeState.t('actions.tag.deleteSuccess'),
         localeState.t('actions.tag.deleteSuccessMsg', { name: tagName })
@@ -662,7 +675,18 @@ export function createGitActions(ctx: GitActionContext) {
       await loadRepository(repo.currentRepoPath);
     } catch (e: any) {
       toast.warning(localeState.t('actions.tag.deleteError'), e?.message || String(e));
+    } finally {
+      modalState.isDeleteTagLoading = false;
     }
+  }
+
+  async function selectTagAction(tag: TagInfo) {
+    await repo.handleSelectTag(tag);
+  }
+
+  function openGitHubReleasesAction(tagOrName?: TagInfo | string) {
+    const tagName = typeof tagOrName === 'string' ? tagOrName : tagOrName?.name;
+    modalState.openGitHubReleases(tagName);
   }
 
   async function revertCommitAction(commit: CommitNode) {
@@ -900,7 +924,11 @@ export function createGitActions(ctx: GitActionContext) {
     redo,
     openAI,
     confirmCreateTag,
-    deleteTag: deleteTagAction,
+    openDeleteTag: openDeleteTagAction,
+    deleteTag: openDeleteTagAction,
+    confirmDeleteTag: confirmDeleteTagAction,
+    selectTag: selectTagAction,
+    openGitHubReleases: openGitHubReleasesAction,
     revertCommit: revertCommitAction,
     resetToCommit: resetToCommitAction,
     confirmSquash,

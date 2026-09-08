@@ -229,6 +229,21 @@
   // Precalculate continuous graph edges for Pass-through viewport intersection
   let graphEdges = $derived(deriveGraphEdges(displayCommits, commitIndexMap));
 
+  // Auto-scroll viewport to selected commit when selected externally (Tags, Branches, etc.)
+  let lastScrolledCommitId: string | null = null;
+  $effect(() => {
+    const targetId = selectedCommitId;
+    if (targetId && targetId !== lastScrolledCommitId && commitIndexMap.has(targetId)) {
+      lastScrolledCommitId = targetId;
+      const idx = commitIndexMap.get(targetId)!;
+      const targetY = idx * rowHeight;
+      if (targetY < scrollTop || targetY > scrollTop + containerHeight - rowHeight * 2) {
+        scrollTop = Math.max(0, Math.min(maxScrollTop, targetY - Math.floor(containerHeight / 3)));
+        scheduleRender();
+      }
+    }
+  });
+
   let animFrameId: number | null = null;
 
   function scheduleRender() {

@@ -409,6 +409,31 @@ export interface GitHubBranchComparison {
   files: GitHubPRFile[];
 }
 
+export interface GitHubReleaseAsset {
+  id: number;
+  name: string;
+  size: number;
+  download_count: number;
+  browser_download_url: string;
+  content_type: string;
+  created_at: string;
+}
+
+export interface GitHubRelease {
+  id: number;
+  tag_name: string;
+  target_commitish: string;
+  name: string | null;
+  body: string | null;
+  draft: boolean;
+  prerelease: boolean;
+  created_at: string;
+  published_at: string | null;
+  html_url: string;
+  author: GitHubUser;
+  assets: GitHubReleaseAsset[];
+}
+
 export interface SmartFilters {
   hideMerges: boolean;
   myCommits: boolean;

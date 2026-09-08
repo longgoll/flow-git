@@ -11,6 +11,9 @@
     Plus,
     CloudUpload,
     Settings,
+    Copy,
+    Check,
+    GitBranch,
   } from 'lucide-svelte';
   import type { RemoteInfo, StashInfo, TagInfo, WorktreeInfo } from '../../types';
   import { localeState } from '../../state/localeState.svelte';
@@ -20,6 +23,7 @@
     remotes?: RemoteInfo[];
     tags?: TagInfo[];
     stashes?: StashInfo[];
+    selectedCommitId?: string | null;
     showWorktrees: boolean;
     showRemotes: boolean;
     showTags: boolean;
@@ -31,7 +35,10 @@
     onOpenRemoteManager?: () => void;
     onFetchRemote?: (name: string) => Promise<void>;
     onPublishRepo?: () => void;
-    onDeleteTag?: (tagName: string) => void;
+    onSelectTag?: (tag: TagInfo) => void;
+    onDeleteTag?: (tag: TagInfo) => void;
+    onCreateBranchFromTag?: (tag: TagInfo) => void;
+    onOpenReleases?: (tag?: TagInfo) => void;
     onOpenStashShelf?: (index?: number) => void;
   }
 
@@ -40,6 +47,7 @@
     remotes = [],
     tags = [],
     stashes = [],
+    selectedCommitId = null,
     showWorktrees = $bindable(true),
     showRemotes = $bindable(true),
     showTags = $bindable(false),
@@ -51,9 +59,23 @@
     onOpenRemoteManager,
     onFetchRemote,
     onPublishRepo,
+    onSelectTag,
     onDeleteTag,
+    onCreateBranchFromTag,
+    onOpenReleases,
     onOpenStashShelf,
   }: Props = $props();
+
+  let copiedTagName = $state<string | null>(null);
+
+  function handleCopyTag(name: string, e: MouseEvent) {
+    e.stopPropagation();
+    navigator.clipboard.writeText(name);
+    copiedTagName = name;
+    setTimeout(() => {
+      if (copiedTagName === name) copiedTagName = null;
+    }, 1500);
+  }
 </script>
 
 <!-- WORKTREES -->
@@ -240,20 +262,90 @@
     {#if showTags || standalone}
       <div class="space-y-0.5 {standalone ? 'flex-1 overflow-y-auto pr-0.5' : 'mt-1 pl-1'}">
         {#each tags as tag (tag.name)}
-          <div class="flex items-center justify-between px-2 py-1.5 rounded-md text-xs text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-900/60 hover:text-zinc-950 dark:hover:text-zinc-200 font-mono text-[11px] group">
-            <div class="flex items-center gap-2 truncate">
+          {@const isSelected = selectedCommitId === tag.target_commit_id}
+          <div
+            role="button"
+            tabindex="0"
+            onclick={() => onSelectTag?.(tag)}
+            onkeydown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelectTag?.(tag);
+              }
+            }}
+            class="w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs font-mono text-[11px] group cursor-pointer transition-colors {isSelected ? 'bg-amber-500/15 dark:bg-amber-500/20 text-amber-900 dark:text-amber-200 font-semibold' : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60 hover:text-zinc-950 dark:hover:text-zinc-100'}"
+            title={localeState.t('sidebar.tagClickTooltip', { name: tag.name, sha: tag.target_commit_id ? tag.target_commit_id.slice(0, 7) : '' })}
+          >
+            <div class="flex items-center gap-2 truncate flex-1 min-w-0 pr-1">
               <span class="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400 shrink-0"></span>
-              <span class="truncate">{tag.name}</span>
+              <span class="truncate font-medium">{tag.name}</span>
+              {#if tag.target_commit_id}
+                <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono opacity-80 shrink-0">
+                  {tag.target_commit_id.slice(0, 7)}
+                </span>
+              {/if}
             </div>
-            {#if onDeleteTag}
+
+            <div class="flex items-center gap-0.5 shrink-0">
+              <!-- Copy Tag Name -->
               <button
-                onclick={(e) => { e.stopPropagation(); onDeleteTag(tag.name); }}
-                class="{standalone ? 'opacity-75' : 'opacity-0'} group-hover:opacity-100 p-0.5 rounded text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all cursor-pointer"
-                title={localeState.t('sidebar.deleteTagTooltip', { name: tag.name })}
+                type="button"
+                onclick={(e) => handleCopyTag(tag.name, e)}
+                class="{standalone ? 'opacity-70' : 'opacity-0'} group-hover:opacity-100 p-1 rounded text-zinc-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-zinc-200/80 dark:hover:bg-zinc-700/80 transition-all cursor-pointer"
+                title={copiedTagName === tag.name ? localeState.t('sidebar.copiedTagName') : localeState.t('sidebar.copyTagName')}
               >
-                <Trash2 class="w-3 h-3" />
+                {#if copiedTagName === tag.name}
+                  <Check class="w-3 h-3 text-emerald-500" />
+                {:else}
+                  <Copy class="w-3 h-3" />
+                {/if}
               </button>
-            {/if}
+
+              <!-- View GitHub Release -->
+              {#if onOpenReleases}
+                <button
+                  type="button"
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    onOpenReleases(tag);
+                  }}
+                  class="{standalone ? 'opacity-70' : 'opacity-0'} group-hover:opacity-100 p-1 rounded text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-zinc-200/80 dark:hover:bg-zinc-700/80 transition-all cursor-pointer"
+                  title="Xem GitHub Release & Changelog ({tag.name})"
+                >
+                  <Globe class="w-3 h-3" />
+                </button>
+              {/if}
+
+              <!-- Create Branch from Tag -->
+              {#if onCreateBranchFromTag}
+                <button
+                  type="button"
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    onCreateBranchFromTag(tag);
+                  }}
+                  class="{standalone ? 'opacity-70' : 'opacity-0'} group-hover:opacity-100 p-1 rounded text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-zinc-200/80 dark:hover:bg-zinc-700/80 transition-all cursor-pointer"
+                  title={localeState.t('sidebar.createBranchFromTag')}
+                >
+                  <GitBranch class="w-3 h-3" />
+                </button>
+              {/if}
+
+              <!-- Delete Tag (Opens confirmation modal) -->
+              {#if onDeleteTag}
+                <button
+                  type="button"
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    onDeleteTag(tag);
+                  }}
+                  class="{standalone ? 'opacity-75' : 'opacity-0'} group-hover:opacity-100 p-1 rounded text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-zinc-200/80 dark:hover:bg-zinc-700/80 transition-all cursor-pointer"
+                  title={localeState.t('sidebar.deleteTagTooltip', { name: tag.name })}
+                >
+                  <Trash2 class="w-3 h-3" />
+                </button>
+              {/if}
+            </div>
           </div>
         {/each}
         {#if tags.length === 0}

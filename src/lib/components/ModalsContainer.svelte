@@ -7,6 +7,8 @@
   import CommandPalette from './CommandPalette.svelte';
   import CreateTagModal from './CreateTagModal.svelte';
   import DeleteBranchModal from './DeleteBranchModal.svelte';
+  import DeleteTagModal from './DeleteTagModal.svelte';
+  import GitHubReleasesModal from './GitHubReleasesModal.svelte';
   import DropActionModal from './DropActionModal.svelte';
   import LfsManager from './LfsManager.svelte';
   import SquashModal from './SquashModal.svelte';
@@ -45,6 +47,7 @@
   import type {
     BranchInfo,
     CommitNode,
+    TagInfo,
     ViewMode,
     WorktreeInfo,
   } from '../types';
@@ -68,6 +71,7 @@
     handleConfirmDeleteBranch: (branch: BranchInfo, deleteOnRemoteServer?: boolean) => Promise<void>;
     handleConfirmCreateBranch: (name: string, targetRef: string, checkout: boolean) => Promise<void>;
     handleConfirmCreateTag: (tagName: string, message?: string) => Promise<void>;
+    handleConfirmDeleteTag: (tag: TagInfo) => Promise<void>;
     handleConfirmSquash: (commitIds: string[], message: string) => Promise<void>;
     handleConfirmCleanMerged: (branchesToDelete: string[]) => Promise<void>;
     handleStartQuickHotfix: (hotfixBranchName: string, baseBranch: string) => Promise<void>;
@@ -102,6 +106,7 @@
     handleConfirmDeleteBranch,
     handleConfirmCreateBranch,
     handleConfirmCreateTag,
+    handleConfirmDeleteTag,
     handleConfirmSquash,
     handleConfirmCleanMerged,
     handleStartQuickHotfix,
@@ -466,6 +471,26 @@
   onConfirm={async (name, msg) => {
     await handleConfirmCreateTag(name, msg);
   }}
+/>
+
+<!-- Safe Delete Tag Modal Dialog -->
+<DeleteTagModal
+  show={modalState.showDeleteTagModal}
+  tag={modalState.deletingTag}
+  isLoading={modalState.isDeleteTagLoading}
+  onClose={() => modalState.closeDeleteTag()}
+  onConfirmDelete={async (tag) => {
+    await handleConfirmDeleteTag(tag);
+  }}
+/>
+
+<!-- GitHub Releases & Changelog Modal Dialog -->
+<GitHubReleasesModal
+  isOpen={modalState.showGitHubReleasesModal}
+  remoteUrl={originRemoteUrl}
+  initialTag={modalState.gitHubReleaseTag}
+  onClose={() => modalState.closeGitHubReleases()}
+  onSelectCommit={(commitId) => repo.selectCommitById(commitId)}
 />
 
 <!-- Squash Commits Modal -->

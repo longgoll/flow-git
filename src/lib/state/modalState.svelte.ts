@@ -2,6 +2,7 @@ import type {
   BranchInfo,
   CommitNode,
   ConflictSimulationResult,
+  TagInfo,
 } from '../types';
 
 export class ModalState {
@@ -49,6 +50,15 @@ export class ModalState {
   showCreateTagModal = $state<boolean>(false);
   tagTargetCommit = $state<CommitNode | null>(null);
   isCreateTagLoading = $state<boolean>(false);
+
+  // Safe Delete Tag Modal
+  showDeleteTagModal = $state<boolean>(false);
+  deletingTag = $state<TagInfo | null>(null);
+  isDeleteTagLoading = $state<boolean>(false);
+
+  // GitHub Releases Viewer Modal
+  showGitHubReleasesModal = $state<boolean>(false);
+  gitHubReleaseTag = $state<string | null>(null);
 
   // Clean Merged Branches
   showCleanMergedModal = $state<boolean>(false);
@@ -151,6 +161,24 @@ export class ModalState {
   closeCreateTag() {
     this.showCreateTagModal = false;
     this.tagTargetCommit = null;
+  }
+
+  openDeleteTag(tag: TagInfo) {
+    this.deletingTag = tag;
+    this.showDeleteTagModal = true;
+  }
+  closeDeleteTag() {
+    this.showDeleteTagModal = false;
+    this.deletingTag = null;
+  }
+
+  openGitHubReleases(tag?: string) {
+    this.gitHubReleaseTag = tag || null;
+    this.showGitHubReleasesModal = true;
+  }
+  closeGitHubReleases() {
+    this.showGitHubReleasesModal = false;
+    this.gitHubReleaseTag = null;
   }
 
   openSquash(commits: CommitNode[]) {

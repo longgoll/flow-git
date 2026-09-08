@@ -209,6 +209,8 @@
           isLoading={repo.isDetailLoading}
           isMaximized={repo.isDetailMaximized}
           repoPath={repo.currentRepoPath}
+          tags={repo.tags}
+          onOpenReleases={(tag) => modalState.openGitHubReleases(tag)}
           onToggleMaximize={() => (repo.isDetailMaximized = !repo.isDetailMaximized)}
           onClose={() => (repo.isDetailOpen = false)}
           onSelectParent={(pid) => repo.handleSelectParent(pid)}

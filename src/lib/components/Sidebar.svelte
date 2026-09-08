@@ -43,7 +43,10 @@
     onPublishRepo?: () => void;
     onRebaseBranch?: (branch: BranchInfo) => void;
     onCleanMergedBranches?: () => void;
-    onDeleteTag?: (tagName: string) => void;
+    onSelectTag?: (tag: TagInfo) => void;
+    onDeleteTag?: (tag: TagInfo) => void;
+    onCreateBranchFromTag?: (tag: TagInfo) => void;
+    onOpenReleases?: (tag?: TagInfo | string) => void;
     onCreatePullRequest?: (branch: BranchInfo) => void;
     onCloseSidebar?: () => void;
     onOpenStashShelf?: (index?: number) => void;
@@ -75,7 +78,10 @@
     onPublishRepo,
     onRebaseBranch,
     onCleanMergedBranches,
+    onSelectTag,
     onDeleteTag,
+    onCreateBranchFromTag,
+    onOpenReleases,
     onCreatePullRequest,
     onCloseSidebar,
     onOpenStashShelf,
@@ -412,6 +418,16 @@
                 <CloudUpload class="w-3.5 h-3.5" />
               </button>
             {/if}
+          {:else if activeRailTab === 'tags'}
+            {#if onOpenReleases}
+              <button
+                onclick={() => onOpenReleases?.()}
+                class="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-indigo-600 dark:text-indigo-400 transition-colors cursor-pointer"
+                title={localeState.t('modals.gitHubReleases.title')}
+              >
+                <Globe class="w-3.5 h-3.5" />
+              </button>
+            {/if}
           {:else if activeRailTab === 'stashes'}
             {#if onOpenStashShelf && stashes.length > 0}
               <button
@@ -482,7 +498,11 @@
             showRemotes={false}
             showTags={true}
             showStashes={false}
+            selectedCommitId={repo?.selectedCommitId}
+            {onSelectTag}
             {onDeleteTag}
+            {onCreateBranchFromTag}
+            onOpenReleases={(tag) => onOpenReleases?.(tag?.name)}
           />
         {:else if activeRailTab === 'stashes'}
           <SidebarSections

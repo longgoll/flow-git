@@ -64,8 +64,9 @@ pub use worktree::{
 };
 
 pub use advanced::{
-    get_lfs_info, get_submodule_diff, get_submodules, lock_lfs_file, pull_lfs_files, sync_submodules,
-    unlock_lfs_file, update_submodules,
+    disable_sparse_checkout, get_lfs_info, get_sparse_checkout_info, get_submodule_diff,
+    get_submodules, lock_lfs_file, pull_lfs_files, reapply_sparse_checkout, set_sparse_checkout,
+    sync_submodules, track_lfs_pattern, unlock_lfs_file, untrack_lfs_pattern, update_submodules,
 };
 
 pub use auth::{

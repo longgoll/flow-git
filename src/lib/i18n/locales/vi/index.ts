@@ -19,6 +19,7 @@ import { stash } from "./stash";
 import { insights } from "./insights";
 import { gitHooks } from "./gitHooks";
 import { patch } from "./patch";
+import { sparse } from "./sparse";
 
 export const vi = {
   common,
@@ -48,6 +49,7 @@ export const vi = {
   insights,
   gitHooks,
   patch,
+  sparse,
 };
 
 export type TranslationSchema = typeof vi;

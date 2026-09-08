@@ -30,6 +30,7 @@ pub mod search;
 pub mod patch;
 pub mod stats;
 pub mod signing;
+pub mod sparse;
 
 use serde::{Deserialize, Serialize};
 
@@ -47,6 +48,7 @@ pub use patch::{PatchApplyResult, PatchCheckResult, PatchFileItem};
 pub use rebase::RebaseExecutionResult;
 pub use remote_ops::RemoteInfo;
 pub use signing::{SignatureInfo, SigningConfig};
+pub use sparse::SparseCheckoutInfo;
 pub use stash_ops::{StashDetail, StashFileItem};
 pub use stats::FileChurnInfo;
 pub use submodule::SubmoduleInfo;

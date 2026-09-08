@@ -171,3 +171,35 @@ pub fn unlock_lfs_cli(repo_path: &str, file_path: &str, force: bool) -> AppResul
 
     Ok(format!("Unlocked {}", file_path))
 }
+
+pub fn track_lfs_pattern(repo_path: &str, pattern: &str) -> AppResult<String> {
+    let mut cmd = std::process::Command::new("git");
+    cmd.current_dir(Path::new(repo_path));
+    cmd.arg("lfs").arg("track").arg(pattern);
+
+    let output = cmd
+        .output()
+        .map_err(|e| AppError::GitMessage(format!("Failed to execute git lfs track: {}", e)))?;
+    if !output.status.success() {
+        let err_msg = String::from_utf8_lossy(&output.stderr).to_string();
+        return Err(AppError::GitMessage(format!("Git LFS track failed: {}", err_msg)));
+    }
+
+    Ok(format!("Tracking pattern: {}", pattern))
+}
+
+pub fn untrack_lfs_pattern(repo_path: &str, pattern: &str) -> AppResult<String> {
+    let mut cmd = std::process::Command::new("git");
+    cmd.current_dir(Path::new(repo_path));
+    cmd.arg("lfs").arg("untrack").arg(pattern);
+
+    let output = cmd
+        .output()
+        .map_err(|e| AppError::GitMessage(format!("Failed to execute git lfs untrack: {}", e)))?;
+    if !output.status.success() {
+        let err_msg = String::from_utf8_lossy(&output.stderr).to_string();
+        return Err(AppError::GitMessage(format!("Git LFS untrack failed: {}", err_msg)));
+    }
+
+    Ok(format!("Untracked pattern: {}", pattern))
+}

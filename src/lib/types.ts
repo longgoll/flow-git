@@ -604,6 +604,13 @@ export interface LfsSummary {
   locks: LfsLockInfo[];
 }
 
+export interface SparseCheckoutInfo {
+  is_enabled: boolean;
+  is_cone: boolean;
+  patterns: string[];
+  available_directories: string[];
+}
+
 export interface GitCredentials {
   auth_type: 'ssh_passphrase' | 'https_token' | 'https_basic' | 'oauth';
   ssh_passphrase?: string;

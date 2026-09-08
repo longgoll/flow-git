@@ -229,6 +229,23 @@ All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard
 
 ---
 
+## 📦 11. Git LFS & Sparse Checkout (Monorepo) Commands
+
+| Command Name | Parameters | Return Type | Description |
+| :--- | :--- | :--- | :--- |
+| `get_lfs_info` | `path: String` | `LfsSummary` | Reads `.gitattributes` patterns, listed LFS tracked files, and active locks. |
+| `pull_lfs_files` | `path: String, pattern: Option<String>` | `String` | Downloads LFS binary payloads for entire repo or specific file/pattern (`-I <pattern>`). |
+| `lock_lfs_file` | `path: String, file_path: String` | `String` | Locks specified LFS asset file on remote server to prevent team overwrite conflicts. |
+| `unlock_lfs_file` | `path: String, file_path: String, force: bool` | `String` | Unlocks specified LFS asset file (with optional `--force` override). |
+| `track_lfs_pattern` | `path: String, pattern: String` | `String` | Adds pattern to `.gitattributes` using `git lfs track "<pattern>"`. |
+| `untrack_lfs_pattern` | `path: String, pattern: String` | `String` | Removes pattern from `.gitattributes` using `git lfs untrack "<pattern>"`. |
+| `get_sparse_checkout_info` | `path: String` | `SparseCheckoutInfo` | Inspects sparse-checkout active state, cone mode flag, configured paths, and discovers monorepo directory tree. |
+| `set_sparse_checkout` | `path: String, patterns: Vec<String>, cone: bool` | `String` | Sets and applies sparse-checkout directories with optional `--cone` mode. |
+| `disable_sparse_checkout` | `path: String` | `String` | Disables sparse-checkout and restores full workspace checkout safely. |
+| `reapply_sparse_checkout` | `path: String` | `String` | Re-evaluates sparse checkout rules against working tree. |
+
+---
+
 <a name="-tiếng-việt"></a>
 # 🇻🇳 Tiếng Việt
 
@@ -442,4 +459,21 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `get_git_hooks` | `repo_path: String` | `Vec<GitHookInfo>` | Đọc toàn bộ 8 lifecycle hooks kèm trạng thái bật/tắt/sample và nội dung tệp. |
 | `save_git_hook` | `repo_path: String, name: String, content: String, enabled: bool` | `()` | Lưu nội dung script, xử lý phần mở rộng `.disabled` và cấp quyền `0o755`. |
 | `toggle_git_hook` | `repo_path: String, name: String, enabled: bool` | `()` | Bật/tắt 1-click bằng cách đổi tên tệp giữa `<hook>` và `<hook>.disabled` (hoặc sao chép `.sample`). |
+
+---
+
+## 📦 11. GIT LFS & SPARSE CHECKOUT (MONOREPO) COMMANDS
+
+| Tên Command | Tham số đầu vào | Kiểu dữ liệu trả về | Mô tả chi tiết |
+| :--- | :--- | :--- | :--- |
+| `get_lfs_info` | `path: String` | `LfsSummary` | Đọc danh sách pattern `.gitattributes`, các tệp LFS đã track và các lock đang hoạt động. |
+| `pull_lfs_files` | `path: String, pattern: Option<String>` | `String` | Tải dữ liệu nhị phân Git LFS cho toàn bộ repo hoặc tệp/mẫu cụ thể (`-I <pattern>`). |
+| `lock_lfs_file` | `path: String, file_path: String` | `String` | Khóa tệp tài nguyên trên LFS remote server nhằm ngăn xung đột ghi đè đồng đội. |
+| `unlock_lfs_file` | `path: String, file_path: String, force: bool` | `String` | Mở khóa tệp LFS (hỗ trợ cờ `--force` cho admin/lead). |
+| `track_lfs_pattern` | `path: String, pattern: String` | `String` | Thêm mẫu theo dõi vào `.gitattributes` bằng `git lfs track "<pattern>"`. |
+| `untrack_lfs_pattern` | `path: String, pattern: String` | `String` | Hủy theo dõi mẫu khỏi `.gitattributes` bằng `git lfs untrack "<pattern>"`. |
+| `get_sparse_checkout_info` | `path: String` | `SparseCheckoutInfo` | Kiểm tra trạng thái Sparse Checkout, cờ cone mode, các path đang active và tự động quét cây thư mục monorepo. |
+| `set_sparse_checkout` | `path: String, patterns: Vec<String>, cone: bool` | `String` | Thiết lập và áp dụng danh sách thư mục sparse checkout với chế độ `--cone` hoặc pattern tự do. |
+| `disable_sparse_checkout` | `path: String` | `String` | Tắt chế độ sparse checkout và khôi phục toàn bộ workspace an toàn. |
+| `reapply_sparse_checkout` | `path: String` | `String` | Tái áp dụng bộ lọc sparse checkout lên toàn bộ working tree. |
 

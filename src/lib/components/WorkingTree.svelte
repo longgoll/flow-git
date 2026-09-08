@@ -635,6 +635,7 @@
       {diffDetail}
       isLoading={isDiffLoading}
       {ignoreWhitespace}
+      {repoPath}
       {onToggleIgnoreWhitespace}
       onStageHunk={(idx) => onStageHunk(idx)}
       onUnstageHunk={(idx) => onUnstageHunk(idx)}

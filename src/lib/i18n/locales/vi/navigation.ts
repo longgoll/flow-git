@@ -21,6 +21,7 @@ export const toolbar = {
   worktrees: "Git Worktrees",
   submodules: "Git Submodules",
   gitLfs: "Git LFS",
+  sparseCheckout: "Sparse Checkout (Monorepo)",
   safeTrash: "Thùng rác Safe Discard (48h)",
   commitLimit: "Giới hạn Commit",
   quickSearch: "Tìm commit, hash, tác giả...",

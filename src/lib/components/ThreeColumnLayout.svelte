@@ -303,6 +303,7 @@
     <DiffViewer
       diffDetail={fileDiffDetail}
       isLoading={isDiffLoading}
+      {repoPath}
     />
   </div>
 </div>

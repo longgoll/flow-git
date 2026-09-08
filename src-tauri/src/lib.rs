@@ -156,6 +156,13 @@ pub fn run() {
             pull_lfs_files,
             lock_lfs_file,
             unlock_lfs_file,
+            track_lfs_pattern,
+            untrack_lfs_pattern,
+            // Sparse Checkout
+            get_sparse_checkout_info,
+            set_sparse_checkout,
+            disable_sparse_checkout,
+            reapply_sparse_checkout,
             // Auth, Identity & Multi-Account
             save_account_auth,
             get_active_account,

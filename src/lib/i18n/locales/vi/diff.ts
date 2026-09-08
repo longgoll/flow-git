@@ -26,6 +26,14 @@ export const diff = {
   stageHunkTooltip: "Stage hunk chứa dòng này",
   copyLineTooltip: "Sao chép dòng code",
   copiedLineToast: "Đã sao chép nội dung dòng code.",
+  lfsPointerDetected: "Git LFS Pointer",
+  lfsPointerDesc: "Tệp này hiện chỉ là con trỏ Git LFS trỏ tới tệp nhị phân trên remote storage.",
+  lfsPointerSize: "Kích thước tệp: {size}",
+  lfsPointerOid: "SHA-256: {oid}",
+  lfsPullButton: "Tải tệp từ LFS (Pull)",
+  lfsPulling: "Đang tải tệp LFS...",
+  lfsPullSuccess: "Đã tải thành công tệp nhị phân từ Git LFS!",
+  lfsPullError: "Lỗi tải tệp từ Git LFS",
 
   // ThreeColumnLayout
   commitsAndGraph: "Commits & Graph",

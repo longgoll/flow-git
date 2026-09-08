@@ -29,6 +29,7 @@ export const toolbar: typeof viToolbar = {
   worktrees: "Git Worktrees",
   submodules: "Git Submodules",
   gitLfs: "Git LFS",
+  sparseCheckout: "Sparse Checkout (Monorepo)",
   safeTrash: "Safe Discard Trash (48h)",
   commitLimit: "Commit Limit",
   quickSearch: "Search commit, hash, author...",

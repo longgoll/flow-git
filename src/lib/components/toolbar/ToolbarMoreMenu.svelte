@@ -23,6 +23,7 @@
     Activity,
     Anchor,
     FileDiff,
+    FolderTree,
   } from 'lucide-svelte';
   import { themeState } from '../../state/themeState.svelte';
   import { localeState } from '../../state/localeState.svelte';
@@ -323,6 +324,14 @@
           <span>{localeState.t('toolbar.gitLfs')}</span>
         </button>
       {/if}
+
+      <button
+        onclick={() => { onCloseToolsMenu(); modalState.showSparseModal = true; }}
+        class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer"
+      >
+        <FolderTree class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+        <span>{localeState.t('toolbar.sparseCheckout')}</span>
+      </button>
 
       {#if onOpenInsights}
         <button

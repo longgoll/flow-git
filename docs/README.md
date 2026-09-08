@@ -55,6 +55,7 @@ docs/
 │   ├── repo-insights-and-statistics.md # Repository Pulse & Insights Studio: 52-Week Heatmap & Hotspots
 │   ├── patch-file-manager.md           # Patch File Manager: Format-Patch Export & Dry-Run Import
 │   ├── remote-providers-and-signing.md # Multi-Cloud Remote Adapters (GitLab/Bitbucket) & Commit Signing
+│   ├── sparse-checkout-and-lfs.md      # Sparse Checkout Studio (Monorepo) & Git LFS Deep Awareness
 │   └── ai-assistant.md                 # Local AI Assistant: Conventional Commits & Conflict Solver
 │
 ├── playbook/                           # PRACTICAL PLAYBOOK

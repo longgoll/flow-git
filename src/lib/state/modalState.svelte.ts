@@ -36,9 +36,10 @@ export class ModalState {
   showAIModal = $state<boolean>(false);
   aiDiffContext = $state<string>('');
 
-  // Submodules, LFS & Git Hooks
+  // Submodules, LFS, Sparse Checkout & Git Hooks
   showSubmoduleModal = $state<boolean>(false);
   showLfsModal = $state<boolean>(false);
+  showSparseModal = $state<boolean>(false);
   showGitHooksModal = $state<boolean>(false);
 
   // User Guide / Playbook

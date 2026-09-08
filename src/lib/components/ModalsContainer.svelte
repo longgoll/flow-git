@@ -32,6 +32,7 @@
   import RepoInsightsModal from './RepoInsightsModal.svelte';
   import GitHooksModal from './GitHooksModal.svelte';
   import PatchManagerModal from './PatchManagerModal.svelte';
+  import SparseCheckoutModal from './SparseCheckoutModal.svelte';
   import { resetToCommit } from '../api';
   import { toast } from '../state/toastState.svelte';
   import { localeState } from '../state/localeState.svelte';
@@ -401,6 +402,13 @@
   repoPath={repo.currentRepoPath}
   isOpen={modalState.showLfsModal}
   onClose={() => (modalState.showLfsModal = false)}
+/>
+
+<!-- Git Sparse Checkout (Monorepo) Modal -->
+<SparseCheckoutModal
+  repoPath={repo.currentRepoPath}
+  isOpen={modalState.showSparseModal}
+  onClose={() => (modalState.showSparseModal = false)}
 />
 
 <!-- Interactive SSH Passphrase & HTTPS Auth Modal -->

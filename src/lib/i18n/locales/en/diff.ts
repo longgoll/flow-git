@@ -28,6 +28,14 @@ export const diff: typeof viDiff = {
   stageHunkTooltip: "Stage hunk containing this line",
   copyLineTooltip: "Copy code line",
   copiedLineToast: "Code line copied to clipboard.",
+  lfsPointerDetected: "Git LFS Pointer",
+  lfsPointerDesc: "This file is currently a Git LFS pointer referencing remote storage.",
+  lfsPointerSize: "File Size: {size}",
+  lfsPointerOid: "SHA-256: {oid}",
+  lfsPullButton: "Pull File with LFS",
+  lfsPulling: "Pulling LFS file...",
+  lfsPullSuccess: "Successfully pulled binary file from Git LFS!",
+  lfsPullError: "Failed to pull file from Git LFS",
 
   // ThreeColumnLayout
   commitsAndGraph: "Commits & Graph",

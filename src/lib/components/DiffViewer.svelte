@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { DiffLine, FileDiffDetail } from '../types';
   import { localeState } from '../state/localeState.svelte';
+  import { pullLfsFiles } from '../api';
   import MonacoDiffEditor from './MonacoDiffEditor.svelte';
   import {
     Columns2,
@@ -14,6 +15,8 @@
     Copy,
     Sparkles,
     ListOrdered,
+    Database,
+    Download,
   } from 'lucide-svelte';
   import { toast } from '../state/toastState.svelte';
 
@@ -21,6 +24,7 @@
     diffDetail: FileDiffDetail | null;
     isLoading?: boolean;
     ignoreWhitespace?: boolean;
+    repoPath?: string;
     onToggleIgnoreWhitespace?: () => void;
     onStageHunk?: (hunkIndex: number) => void;
     onUnstageHunk?: (hunkIndex: number) => void;
@@ -33,6 +37,7 @@
     diffDetail,
     isLoading = false,
     ignoreWhitespace = $bindable(false),
+    repoPath = '',
     onToggleIgnoreWhitespace,
     onStageHunk,
     onUnstageHunk,
@@ -45,6 +50,48 @@
   let viewMode = $state<'unified' | 'split'>('unified');
   // Diff engine: 'monaco' (VS Code rich engine) | 'hunks' (interactive staging)
   let diffEngine = $state<'monaco' | 'hunks'>('monaco');
+  let isPullingLfs = $state(false);
+
+  function formatBytes(bytes: number) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  let lfsPointerInfo = $derived.by(() => {
+    if (!diffDetail) return null;
+    const content = diffDetail.modified_content || diffDetail.original_content || '';
+    let text = content;
+    if (!text && diffDetail.hunks && diffDetail.hunks.length > 0) {
+      text = diffDetail.hunks.flatMap((h) => h.lines.map((l) => l.content)).join('\n');
+    }
+    if (text && text.includes('version https://git-lfs.github.com/spec/v1')) {
+      const oidMatch = text.match(/oid sha256:([0-9a-fA-F]{64})/);
+      const sizeMatch = text.match(/size (\d+)/);
+      const sizeBytes = sizeMatch ? parseInt(sizeMatch[1], 10) : 0;
+      return {
+        oid: oidMatch ? oidMatch[1] : '',
+        size: sizeBytes,
+        sizeFormatted: formatBytes(sizeBytes),
+      };
+    }
+    return null;
+  });
+
+  async function handlePullLfsFile() {
+    if (!diffDetail || !repoPath) return;
+    isPullingLfs = true;
+    try {
+      await pullLfsFiles(repoPath, diffDetail.path);
+      toast.success(localeState.t('diff.lfsPointerDetected'), localeState.t('diff.lfsPullSuccess'));
+    } catch (e: any) {
+      toast.error(localeState.t('diff.lfsPullError'), e?.toString() || '');
+    } finally {
+      isPullingLfs = false;
+    }
+  }
 </script>
 
 
@@ -163,6 +210,43 @@
       </div>
     {/if}
   </div>
+
+  <!-- LFS Pointer Detection Banner -->
+  {#if lfsPointerInfo}
+    <div
+      class="px-4 py-2.5 bg-sky-50 dark:bg-sky-950/50 border-b border-sky-200 dark:border-sky-800/60 flex items-center justify-between gap-3 text-xs select-none shrink-0"
+    >
+      <div class="flex items-center gap-2.5 text-sky-900 dark:text-sky-200">
+        <div class="p-1.5 rounded-lg bg-sky-100 dark:bg-sky-900/60 text-sky-600 dark:text-sky-400">
+          <Database class="w-4 h-4" />
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold">{localeState.t('diff.lfsPointerDetected')}</span>
+            <span
+              class="px-1.5 py-0.5 rounded text-[10px] bg-sky-200/80 dark:bg-sky-800/60 text-sky-800 dark:text-sky-200 font-mono font-semibold"
+            >
+              {localeState.t('diff.lfsPointerSize', { size: lfsPointerInfo.sizeFormatted })}
+            </span>
+          </div>
+          <p class="text-[11px] text-sky-700 dark:text-sky-400 font-mono mt-0.5">
+            {localeState.t('diff.lfsPointerOid', { oid: lfsPointerInfo.oid.slice(0, 16) + '...' })}
+          </p>
+        </div>
+      </div>
+
+      {#if repoPath}
+        <button
+          onclick={handlePullLfsFile}
+          disabled={isPullingLfs}
+          class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+        >
+          <Download class="w-3.5 h-3.5 {isPullingLfs ? 'animate-bounce' : ''}" />
+          <span>{isPullingLfs ? localeState.t('diff.lfsPulling') : localeState.t('diff.lfsPullButton')}</span>
+        </button>
+      {/if}
+    </div>
+  {/if}
 
   <!-- Diff Content Area -->
   <div class="flex-1 overflow-auto">

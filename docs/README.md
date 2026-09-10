@@ -66,6 +66,14 @@ docs/
     ├── user-manual.md                  # Comprehensive User Manual & Keyboard Shortcuts Cheat Sheet
     ├── development.md                  # Environment Setup, Local Build & Packaging
     └── version-management.md           # Version Management & Release Bumping
+│
+└── articles/                           # COMMUNITY & LAUNCH ARTICLES
+    ├── README.md                       # Content Calendar & Dev Marketing Strategy
+    ├── 2026-09-10-v0.1.3-flowgit-the-ultimate-visual-git-client-full-showcase.en.md # Full Showcase (English)
+    ├── 2026-09-10-v0.1.3-flowgit-the-ultimate-visual-git-client-full-showcase.vi.md # Toàn diện (Tiếng Việt)
+    ├── 2026-09-10-v0.1.3-introducing-flowgit-rust-svelte.en.md  # Launch Article (English)
+    ├── 2026-09-10-v0.1.3-introducing-flowgit-rust-svelte.vi.md  # Launch Article (Tiếng Việt)
+    └── _template.md                    # Standard Template for Future Version Announcements
 ```
 
 ---
@@ -195,6 +203,14 @@ docs/
     ├── user-manual.md                  # Hướng dẫn sử dụng & Bảng tra cứu phím tắt toàn năng
     ├── development.md                  # Hướng dẫn thiết lập môi trường, Build và Đóng gói
     └── version-management.md           # Quản lý phiên bản & Quy trình bump version
+│
+└── articles/                           # BÀI VIẾT QUẢNG BÁ & CỘNG ĐỒNG
+    ├── README.md                       # Kế hoạch đăng bài & Chiến lược Dev Marketing
+    ├── 2026-09-10-v0.1.3-flowgit-the-ultimate-visual-git-client-full-showcase.en.md # Bài Full Showcase (Tiếng Anh)
+    ├── 2026-09-10-v0.1.3-flowgit-the-ultimate-visual-git-client-full-showcase.vi.md # Bài Giới thiệu Toàn diện (Tiếng Việt)
+    ├── 2026-09-10-v0.1.3-introducing-flowgit-rust-svelte.en.md  # Bài viết ra mắt ngắn gọn (Tiếng Anh)
+    ├── 2026-09-10-v0.1.3-introducing-flowgit-rust-svelte.vi.md  # Bài viết ra mắt ngắn gọn (Tiếng Việt)
+    └── _template.md                    # File mẫu chuẩn bị cho các phiên bản tiếp theo
 ```
 
 ---

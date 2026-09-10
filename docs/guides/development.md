@@ -72,6 +72,18 @@ Tauri v2 outputs optimized installer bundles:
 - **Windows NSIS Setup (`.exe`):** `src-tauri/target/release/bundle/nsis/`
 - **Standalone Binary:** `src-tauri/target/release/flowgit.exe`
 
+### 🏪 Packaging for Microsoft Partner Center (MSIX):
+To produce a `.msix` package ready to submit to Microsoft Partner Center (`partner.microsoft.com`):
+```bash
+# 1. Build release binaries and MSI bundle
+npm run tauri build -b msi
+
+# 2. Package into MSIX using local MSI and Partner Center identity configured in .env.msix
+npm run msix
+```
+The output package will be generated at `dist-msix/FlowGit_<version>.msix`.
+Identity configuration (`MSIX_PACKAGE_NAME`, `MSIX_PUBLISHER`, `MSIX_PUBLISHER_DISPLAY_NAME`) is read from `.env.msix`.
+
 ---
 
 ## 📁 5. Project Layout
@@ -170,6 +182,18 @@ Sau khi hoàn tất, Tauri v2 sẽ sinh ra các bộ cài đặt tối ưu hóa 
 - **Windows Installer (`.msi`):** `src-tauri/target/release/bundle/msi/`
 - **Windows Setup (`.exe` NSIS):** `src-tauri/target/release/bundle/nsis/`
 - **Mã nhị phân độc lập:** `src-tauri/target/release/flowgit.exe`
+
+### 🏪 Đóng gói MSIX để nộp lên Microsoft Partner Center (`partner.microsoft.com`):
+Để xuất file `.msix` đã định danh và chuẩn hóa cấu trúc để tải lên Microsoft Store:
+```bash
+# 1. Biên dịch bản release và tạo MSI bundle
+npm run tauri build -b msi
+
+# 2. Đóng gói MSIX tự động bằng makeappx từ gói MSI cục bộ và cấu hình .env.msix
+npm run msix
+```
+Gói cài đặt `.msix` sẽ được tạo tại `dist-msix/FlowGit_<version>.msix`.
+Các thông tin định danh (`MSIX_PACKAGE_NAME`, `MSIX_PUBLISHER`, `MSIX_PUBLISHER_DISPLAY_NAME`) được lấy trực tiếp từ file cấu hình `.env.msix`.
 
 ---
 

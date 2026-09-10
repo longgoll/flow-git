@@ -12,7 +12,8 @@
     "tauri": "tauri",
     "bump": "node scripts/bump-version.mjs",
     "shots": "node scripts/capture_marketing_shots.mjs",
-    "demo-gif": "node scripts/generate_demo_gif.mjs"
+    "demo-gif": "node scripts/generate_demo_gif.mjs",
+    "msix": "powershell -ExecutionPolicy Bypass -File scripts/create-msix.ps1"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.2.0",

@@ -65,19 +65,25 @@ New-Item -ItemType Directory -Force -Path $pkgDir | Out-Null
 New-Item -ItemType Directory -Force -Path $assetsDir | Out-Null
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
-# 1. Get MSI file (from parameter or fallback download)
+# 1. Get MSI file (from parameter, local release build, or fallback download)
 if (-not $MsiPath -or -not (Test-Path $MsiPath)) {
-    $downloadMsi = Join-Path $workDir "FlowGit.msi"
-    Write-Host "Checking and downloading MSI file v0.1.1 from GitHub..." -ForegroundColor Yellow
-    $url = "https://github.com/longgoll/flow-git/releases/download/v0.1.1/FlowGit_0.1.1_x64_en-US.msi"
-    try {
-        Invoke-WebRequest -Uri $url -OutFile $downloadMsi -Headers @{"User-Agent"="PowerShell"}
-        $MsiPath = $downloadMsi
-    } catch {
-        Write-Host "v0.1.1 not yet on GitHub, trying fallback v0.1.0..." -ForegroundColor DarkYellow
-        $urlFallback = "https://github.com/longgoll/flow-git/releases/download/v0.1.0/FlowGit_0.1.0_x64_en-US.msi"
-        Invoke-WebRequest -Uri $urlFallback -OutFile $downloadMsi -Headers @{"User-Agent"="PowerShell"}
-        $MsiPath = $downloadMsi
+    $localMsi = Get-ChildItem -Path (Join-Path $PSScriptRoot "..\src-tauri\target\release\bundle\msi") -Filter "*.msi" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if ($localMsi -and (Test-Path $localMsi.FullName)) {
+        Write-Host "Found locally built MSI: $($localMsi.FullName)" -ForegroundColor Green
+        $MsiPath = $localMsi.FullName
+    } else {
+        $downloadMsi = Join-Path $workDir "FlowGit.msi"
+        Write-Host "Checking and downloading MSI file v0.1.1 from GitHub..." -ForegroundColor Yellow
+        $url = "https://github.com/longgoll/flow-git/releases/download/v0.1.1/FlowGit_0.1.1_x64_en-US.msi"
+        try {
+            Invoke-WebRequest -Uri $url -OutFile $downloadMsi -Headers @{"User-Agent"="PowerShell"}
+            $MsiPath = $downloadMsi
+        } catch {
+            Write-Host "v0.1.1 not yet on GitHub, trying fallback v0.1.0..." -ForegroundColor DarkYellow
+            $urlFallback = "https://github.com/longgoll/flow-git/releases/download/v0.1.0/FlowGit_0.1.0_x64_en-US.msi"
+            Invoke-WebRequest -Uri $urlFallback -OutFile $downloadMsi -Headers @{"User-Agent"="PowerShell"}
+            $MsiPath = $downloadMsi
+        }
     }
 }
 

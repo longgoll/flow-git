@@ -56,4 +56,12 @@ export const diff: typeof viDiff = {
   noMatchingFiles: "No matching files found",
   noChangesInCommit: "No changes in this commit",
   selectCommitPrompt: "Select a commit on the left to inspect its modified files",
+
+  // Semantic Diff (AST)
+  semanticEngine: "Semantic (AST)",
+  semanticTooltip: "AST-level semantic code comparison (Tree-sitter AST & Move Detection)",
+  movesDetectedBadge: "{count} moved function(s)/class(es) (100% identical)",
+  jumpToNewLocation: "Jump to new location (Line {line})",
+  jumpToOldLocation: "Jump to old location (Line {line})",
+  semanticSummary: "Semantic Summary: {summary}",
 };

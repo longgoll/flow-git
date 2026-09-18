@@ -1,7 +1,8 @@
 <script lang="ts">
-  import type { ConflictFileDetail } from '../types';
+  import type { ConflictFileDetail, SemanticConflictAnalysis } from '../types';
   import MonacoEditor from './MonacoEditor.svelte';
   import MonacoDiffEditor from './MonacoDiffEditor.svelte';
+  import { analyzeSemanticConflicts, autoResolveAstConflicts } from '../api';
   import { toast } from '../state/toastState.svelte';
   import { localeState } from '../state/localeState.svelte';
   import {
@@ -18,7 +19,8 @@
     RefreshCw,
     X,
     Code2,
-    Undo2
+    Undo2,
+    Sparkles
   } from 'lucide-svelte';
 
   interface Props {
@@ -53,6 +55,8 @@
   let layoutMode = $state<'2way' | '3way' | 'chunks'>('2way');
   let chunkChoices = $state<Record<number, 'ours' | 'theirs' | 'both-ours' | 'both-theirs' | 'base'>>({});
   let lastLoadedFile = $state<string | null>(null);
+  let semanticAnalysis = $state<SemanticConflictAnalysis | null>(null);
+  let isAutoResolvingAst = $state<boolean>(false);
 
   // Derived calculations
   let filteredFiles = $derived(
@@ -73,8 +77,43 @@
       lastLoadedFile = conflictDetail.path;
       chunkChoices = {};
       buildInitialResolvedText();
+      analyzeSemanticConflicts('', conflictDetail.path)
+        .then((res) => {
+          semanticAnalysis = res;
+        })
+        .catch(() => {
+          semanticAnalysis = null;
+        });
     }
   });
+
+  async function handleAutoResolveAst() {
+    if (!selectedFile || isAutoResolvingAst) return;
+    isAutoResolvingAst = true;
+    try {
+      const res = await autoResolveAstConflicts('', selectedFile, true);
+      if (res.success && res.resolved_content) {
+        resolvedText = res.resolved_content;
+        toast.success(
+          localeState.t('workflows.conflictResolver.astAutoMergeSuccess', {
+            count: res.applied_chunks,
+          })
+        );
+      } else {
+        toast.error(
+          localeState.t('workflows.conflictResolver.astSyntaxGuardFailed'),
+          res.error_message || ''
+        );
+      }
+    } catch (err: any) {
+      toast.error(
+        localeState.t('workflows.conflictResolver.astSyntaxGuardFailed'),
+        err?.message || String(err)
+      );
+    } finally {
+      isAutoResolvingAst = false;
+    }
+  }
 
   /**
    * Build initial clean resolved text.
@@ -270,6 +309,20 @@
     <!-- Right: Actions Toolbar -->
     <div class="flex items-center gap-2 shrink-0">
 
+      {#if semanticAnalysis && semanticAnalysis.ast_solvable_count > 0}
+        <button
+          onclick={handleAutoResolveAst}
+          disabled={isLoading || isAutoResolvingAst}
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 via-indigo-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 active:scale-95 disabled:opacity-50 text-white font-medium text-xs shadow-md shadow-cyan-900/20 transition-all cursor-pointer"
+          title={localeState.t('workflows.conflictResolver.astAutoMergeTooltip')}
+        >
+          <Sparkles class="w-3.5 h-3.5 text-cyan-200 {isAutoResolvingAst ? 'animate-spin' : ''}" />
+          <span>{isAutoResolvingAst ? localeState.t('workflows.conflictResolver.astResolving') : localeState.t('workflows.conflictResolver.astAutoMerge')}</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 font-bold font-mono">
+            {semanticAnalysis.ast_solvable_count}/{semanticAnalysis.total_conflicts}
+          </span>
+        </button>
+      {/if}
 
       <button
         onclick={handleStage}
@@ -538,6 +591,7 @@
 
               {#each conflictChunks as chunk, idx}
                 {@const currentChoice = chunkChoices[chunk.chunk_index]}
+                {@const chunkAnalysis = semanticAnalysis?.chunks.find((c) => c.chunk_index === chunk.chunk_index)}
                 <div class="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden shadow-xs">
                   <!-- Chunk Header -->
                   <div class="px-3 py-2 bg-zinc-100/80 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs">
@@ -552,6 +606,18 @@
                         <span class="px-1.5 py-0.2 rounded text-[10px] font-medium bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/30">
                           {localeState.t('workflows.conflictResolver.chunkDefault')}
                         </span>
+                      {/if}
+
+                      {#if chunkAnalysis}
+                        {#if chunkAnalysis.kind === 'ast_solvable_independent_addition'}
+                          <span class="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1" title={chunkAnalysis.explanation}>
+                            <span>🧬</span> {localeState.t('workflows.conflictResolver.astSolvableAdditionBadge')}
+                          </span>
+                        {:else if chunkAnalysis.kind === 'ast_solvable_imports'}
+                          <span class="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 flex items-center gap-1" title={chunkAnalysis.explanation}>
+                            <span>🧬</span> {localeState.t('workflows.conflictResolver.astSolvableImportsBadge')}
+                          </span>
+                        {/if}
                       {/if}
                     </div>
 

@@ -138,7 +138,7 @@ Bản cập nhật v0.2.0 tập trung giải quyết triệt để những giớ
 
 | Giai đoạn | Hạng mục công việc cốt lõi | Công nghệ phụ trách | Trạng thái |
 | :--- | :--- | :--- | :---: |
-| **Phase 1** | Tích hợp Tree-sitter Rust AST & Move Detection | `tree-sitter`, Rust, Monaco | 🟡 Planning |
+| **Phase 1** | Tích hợp Tree-sitter Rust AST, Move Detection & Auto-Merge | `tree-sitter`, Rust, Monaco | 🟢 Completed |
 | **Phase 2** | Local AI Pre-Flight Scanner & Changelog Studio | Rust Tokio, Ollama API, Svelte 5 | 🟡 Planning |
 | **Phase 3** | Visual Stacked PRs Workflow & GitHub Bridge | GitHub REST API, Rust `git2` | ⚪ Queued |
 | **Phase 4** | GitLab & Gitea Self-Hosted Adapters | GitLab REST API, Keychain Auth | ⚪ Queued |

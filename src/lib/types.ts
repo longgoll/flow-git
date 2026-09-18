@@ -969,6 +969,85 @@ export interface RemoteProviderInfo {
   apiUrl: string;
 }
 
+// ----------------------------------------------------------------------
+// Phase 5 / v0.2.0 Types: Semantic Diff & AST Conflict Resolution
+// ----------------------------------------------------------------------
+
+export type SemanticSymbolKind =
+  | 'function'
+  | 'method'
+  | 'class'
+  | 'struct'
+  | 'interface'
+  | 'enum'
+  | 'import'
+  | 'other';
+
+export interface SemanticSymbol {
+  id: string;
+  kind: SemanticSymbolKind;
+  name: string;
+  signature: string;
+  start_line: number;
+  end_line: number;
+  body_hash: number;
+  raw_content: string;
+}
+
+export interface SemanticMove {
+  symbol_name: string;
+  kind: SemanticSymbolKind;
+  old_start_line: number;
+  old_end_line: number;
+  new_start_line: number;
+  new_end_line: number;
+  is_identical: boolean;
+  similarity: number;
+}
+
+export interface SemanticDiffResult {
+  file_path: string;
+  language: string;
+  has_semantic_data: boolean;
+  moves: SemanticMove[];
+  modified_symbols: string[];
+  added_symbols: string[];
+  deleted_symbols: string[];
+  summary: string;
+}
+
+export type SemanticConflictChunkKind =
+  | 'ast_solvable_independent_addition'
+  | 'ast_solvable_imports'
+  | 'ast_colliding_modification'
+  | 'non_ast_conflict';
+
+export interface SemanticConflictChunkAnalysis {
+  chunk_index: number;
+  kind: SemanticConflictChunkKind;
+  can_auto_resolve: boolean;
+  explanation: string;
+  proposed_content?: string;
+}
+
+export interface SemanticConflictAnalysis {
+  file_path: string;
+  language: string;
+  total_conflicts: number;
+  ast_solvable_count: number;
+  chunks: SemanticConflictChunkAnalysis[];
+  full_auto_resolvable: boolean;
+}
+
+export interface AstResolveResult {
+  file_path: string;
+  success: boolean;
+  resolved_content?: string;
+  applied_chunks: number;
+  syntax_valid: boolean;
+  error_message?: string;
+}
+
 
 
 

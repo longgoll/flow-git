@@ -11,6 +11,7 @@ pub mod repo;
 pub mod state;
 pub mod worktree;
 pub mod hooks;
+pub mod semantic;
 
 // Re-export AppState and all commands for convenience
 pub use state::AppState;
@@ -84,4 +85,8 @@ pub use edge_cases::{
 
 pub use hooks::{
     get_git_hooks, save_git_hook, toggle_git_hook,
+};
+
+pub use semantic::{
+    analyze_semantic_conflicts, auto_resolve_ast_conflicts, get_semantic_diff,
 };

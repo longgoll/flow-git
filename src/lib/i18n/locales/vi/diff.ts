@@ -54,4 +54,12 @@ export const diff = {
   noMatchingFiles: "Không tìm thấy tệp phù hợp",
   noChangesInCommit: "Không có thay đổi trong commit này",
   selectCommitPrompt: "Chọn một commit ở bên trái để xem các tệp đã sửa đổi",
+
+  // Semantic Diff (AST)
+  semanticEngine: "Semantic (AST)",
+  semanticTooltip: "So sánh ngữ nghĩa cú pháp mã nguồn (Tree-sitter AST & Move Detection)",
+  movesDetectedBadge: "{count} hàm/lớp di chuyển vị trí (Giữ nguyên 100%)",
+  jumpToNewLocation: "Nhảy tới vị trí mới (Dòng {line})",
+  jumpToOldLocation: "Nhảy tới vị trí cũ (Dòng {line})",
+  semanticSummary: "Tóm tắt ngữ nghĩa: {summary}",
 };

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { DiffLine, FileDiffDetail } from '../types';
+  import type { DiffLine, FileDiffDetail, SemanticDiffResult } from '../types';
   import { localeState } from '../state/localeState.svelte';
-  import { pullLfsFiles } from '../api';
+  import { pullLfsFiles, getSemanticDiff } from '../api';
   import MonacoDiffEditor from './MonacoDiffEditor.svelte';
   import MonacoEditor from './MonacoEditor.svelte';
   import {
@@ -72,6 +72,28 @@
   let diffEngine = $state<'monaco' | 'hunks'>('monaco');
   let isPullingLfs = $state(false);
   let copiedFullContent = $state(false);
+  let semanticDiff = $state<SemanticDiffResult | null>(null);
+
+  $effect(() => {
+    const p = diffDetail?.path;
+    if (p && repoPath) {
+      getSemanticDiff(
+        repoPath,
+        p,
+        diffDetail.is_staged,
+        diffDetail.original_content ?? undefined,
+        diffDetail.modified_content ?? undefined
+      )
+        .then((res) => {
+          semanticDiff = res;
+        })
+        .catch(() => {
+          semanticDiff = null;
+        });
+    } else {
+      semanticDiff = null;
+    }
+  });
 
   let fullFileContent = $derived(
     diffDetail?.modified_content ?? diffDetail?.original_content ?? ''
@@ -402,6 +424,41 @@
           <Download class="w-3.5 h-3.5 {isPullingLfs ? 'animate-bounce' : ''}" />
           <span>{isPullingLfs ? localeState.t('diff.lfsPulling') : localeState.t('diff.lfsPullButton')}</span>
         </button>
+      {/if}
+    </div>
+  {/if}
+
+  <!-- Semantic Diff (AST) Move Detection & Entity Summary Banner -->
+  {#if semanticDiff && semanticDiff.has_semantic_data && (semanticDiff.moves.length > 0 || semanticDiff.modified_symbols.length > 0)}
+    <div
+      class="px-3.5 py-2 bg-gradient-to-r from-cyan-950/40 via-indigo-950/30 to-purple-950/20 border-b border-cyan-800/40 flex items-center justify-between gap-3 text-xs select-none shrink-0"
+    >
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="p-1 rounded-md bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shrink-0">
+          <Sparkles class="w-3.5 h-3.5" />
+        </div>
+        <div class="min-w-0 flex items-center gap-2 flex-wrap">
+          {#if semanticDiff.moves.length > 0}
+            <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-semibold text-[11px] border border-cyan-500/40 flex items-center gap-1 shrink-0">
+              <span>📦</span>
+              {localeState.t('diff.movesDetectedBadge', { count: semanticDiff.moves.length })}
+            </span>
+          {/if}
+          <span class="text-zinc-400 text-[11px] truncate">
+            {localeState.t('diff.semanticSummary', { summary: semanticDiff.summary })}
+          </span>
+        </div>
+      </div>
+
+      {#if semanticDiff.moves.length > 0}
+        <div class="flex items-center gap-1.5 shrink-0 overflow-x-auto max-w-[50%]">
+          {#each semanticDiff.moves as move}
+            <div class="flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-800/60 text-[10px] font-mono text-cyan-200 shrink-0">
+              <span class="font-bold text-cyan-300">{move.symbol_name}</span>
+              <span class="text-zinc-400">L{move.old_start_line} ➔ L{move.new_start_line}</span>
+            </div>
+          {/each}
+        </div>
       {/if}
     </div>
   {/if}

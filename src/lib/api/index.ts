@@ -19,4 +19,5 @@ export * from './ignore';
 export * from './hooks';
 export * from './remoteProviderApi';
 export * from './signing';
+export * from './semantic';
 

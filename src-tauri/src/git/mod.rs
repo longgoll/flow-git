@@ -32,6 +32,7 @@ pub mod patch;
 pub mod stats;
 pub mod signing;
 pub mod sparse;
+pub mod semantic;
 
 use serde::{Deserialize, Serialize};
 

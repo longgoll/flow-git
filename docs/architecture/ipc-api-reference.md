@@ -162,6 +162,9 @@ All IPC calls between Frontend (Svelte 5) and Backend (Rust) follow the standard
 | `abort_bisect` | `path: String` | `bool` | Aborts bisect and returns HEAD to original reference. |
 | `get_bisect_status` | `path: String` | `BisectStatus` | Queries active bisect status and estimated steps remaining. |
 | `run_auto_bisect` | `path: String, bad_id: String, good_id: String, test_script: String` | `AutoBisectResult` | **Auto-Bisect**: Automated script execution (`npm test`, `cargo test`) with real-time streaming step logs. |
+| `get_semantic_diff` | `path: String, file_path: String, staged: bool, old_content: Option<String>, new_content: Option<String>` | `SemanticDiffResult` | **Semantic Diff (AST)**: Tree-sitter AST analysis detecting moved functions/classes, entity modifications, and signature changes. |
+| `analyze_semantic_conflicts` | `path: String, file_path: String` | `SemanticConflictAnalysis` | **AST Conflict Classifier**: Categorizes 3-way conflict chunks into independent additions, import merges, or colliding edits. |
+| `auto_resolve_ast_conflicts` | `path: String, file_path: String, dry_run: bool` | `AstResolveResult` | **AST 3-Way Auto-Merge**: Automatically weaves independent additions & imports with post-merge Tree-sitter syntax validation guard. |
 
 ---
 
@@ -395,6 +398,9 @@ Tất cả các hàm giao tiếp IPC giữa Frontend (Svelte 5) và Backend (Rus
 | `abort_bisect` | `path: String` | `bool` | Hủy bỏ chế độ Bisect và đưa HEAD trở về vị trí ban đầu. |
 | `get_bisect_status` | `path: String` | `BisectStatus` | Lấy trạng thái hiện tại của phiên Bisect (ước tính số bước còn lại, danh sách commit nghi vấn). |
 | `run_auto_bisect` | `path: String, bad_id: String, good_id: String, test_script: String` | `AutoBisectResult` | **Auto-Bisect Tự Động**: Chạy script kiểm thử (`npm test`, `cargo test`) tự động phân nhánh nhị phân và stream log thời gian thực. |
+| `get_semantic_diff` | `path: String, file_path: String, staged: bool, old_content: Option<String>, new_content: Option<String>` | `SemanticDiffResult` | **Semantic Diff (Tree-sitter AST)**: Phân tích cú pháp sâu, nhận diện các hàm/lớp chỉ bị dời vị trí (Move Detection) và tóm tắt thực thể thay đổi. |
+| `analyze_semantic_conflicts` | `path: String, file_path: String` | `SemanticConflictAnalysis` | **Phân Loại Xung Đột AST**: Kiểm tra từng chunk xung đột để xác định khả năng tự động gộp (thêm độc lập, gộp imports, hoặc va chạm logic). |
+| `auto_resolve_ast_conflicts` | `path: String, file_path: String, dry_run: bool` | `AstResolveResult` | **Tự Động Gộp Bằng AST**: Tự động giải quyết các khối xung đột an toàn và kiểm tra cú pháp ngược lại qua Tree-sitter (`has_error()`) trước khi lưu. |
 
 ---
 

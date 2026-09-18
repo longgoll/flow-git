@@ -132,11 +132,14 @@ pub fn run() {
             scan_staged_secrets,
             get_reflog_entries,
             restore_lost_commit,
-            // Conflicts
+            // Conflicts & Semantic AST
             get_conflicted_files,
             get_conflict_details,
             resolve_conflict_file,
             abort_merge_or_rebase,
+            get_semantic_diff,
+            analyze_semantic_conflicts,
+            auto_resolve_ast_conflicts,
             // Bisect
             start_bisect,
             bisect_step,

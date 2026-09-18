@@ -67,6 +67,9 @@ docs/
     ├── development.md                  # Environment Setup, Local Build & Packaging
     └── version-management.md           # Version Management & Release Bumping
 │
+├── log_version/                        # VERSION ROADMAPS & RELEASE LOGS
+│   └── v0.2.0/README.md                # v0.2.0 Next-Gen Milestone: Semantic AST, AI Agent, Stacked PRs
+│
 └── articles/                           # COMMUNITY & LAUNCH ARTICLES
     ├── README.md                       # Content Calendar & Dev Marketing Strategy
     ├── 2026-09-10-v0.1.3-flowgit-the-ultimate-visual-git-client-full-showcase.en.md # Full Showcase (English)
@@ -203,6 +206,9 @@ docs/
     ├── user-manual.md                  # Hướng dẫn sử dụng & Bảng tra cứu phím tắt toàn năng
     ├── development.md                  # Hướng dẫn thiết lập môi trường, Build và Đóng gói
     └── version-management.md           # Quản lý phiên bản & Quy trình bump version
+│
+├── log_version/                        # LỘ TRÌNH & NHẬT KÝ PHÁT TRIỂN PHIÊN BẢN
+│   └── v0.2.0/README.md                # Cột Mốc v0.2.0: Cú Pháp AST, Trợ Lý AI, Stacked PRs Big-Tech
 │
 └── articles/                           # BÀI VIẾT QUẢNG BÁ & CỘNG ĐỒNG
     ├── README.md                       # Kế hoạch đăng bài & Chiến lược Dev Marketing
